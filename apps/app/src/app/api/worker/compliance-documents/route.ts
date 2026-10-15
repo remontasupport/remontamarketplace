@@ -2,7 +2,7 @@
  * Generic Compliance Documents API
  *
  * GET /api/worker/compliance-documents?documentType={type} - Get document
- * PATCH /api/worker/compliance-documents - Update document metadata
+ * PATCH /api/worker/compliance-documents - The Right to Work citizenship answer (only; C1)
  *
  * NOTE: POST and DELETE have been migrated to server actions:
  * - uploadComplianceDocument() in @/services/worker/compliance.service
@@ -13,6 +13,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
+import { checkServerActionRateLimit, dbWriteRateLimit } from "@/lib/ratelimit";
 
 /**
  * GET - Fetch compliance documents by type
@@ -133,16 +134,19 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Parse request body
-    const body = await request.json();
-    const { documentType, metadata } = body;
-
-    if (!documentType) {
-      return NextResponse.json({ error: "Document type is required" }, { status: 400 });
+    const limit = await checkServerActionRateLimit(session.user.id, dbWriteRateLimit);
+    if (!limit.success) {
+      return NextResponse.json({ error: limit.error }, { status: 429 });
     }
 
-    if (!metadata) {
-      return NextResponse.json({ error: "Metadata is required" }, { status: 400 });
+    // C1 (api-review 2026-10-15): this answer is the Right to Work "I am an Australian citizen" question and
+    // nothing else. Any other document type -- a police check, a screening -- was accepted, with `isCitizen: true`
+    // marking it SUBMITTED with no file, and completion counted it.
+    const body = await request.json().catch(() => null);
+    const documentType = body?.documentType;
+    const isCitizen = body?.metadata?.isCitizen;
+    if (documentType !== "right-to-work" || typeof isCitizen !== "boolean" || Object.keys(body?.metadata ?? {}).length !== 1) {
+      return NextResponse.json({ error: "Only the Right to Work citizenship answer can be saved here" }, { status: 400 });
     }
 
     // Get worker profile
@@ -164,14 +168,15 @@ export async function PATCH(request: Request) {
     });
 
     if (existingRecord) {
-      // Update existing record
+      // The answer joins the row's metadata (an upload's own keys stay). A citizen is SUBMITTED; a "no" leaves an
+      // uploaded document's status alone, and takes back a citizen claim that has no file.
+      const previous = existingRecord.metadata && typeof existingRecord.metadata === "object" && !Array.isArray(existingRecord.metadata) ? existingRecord.metadata : {};
       await authPrisma.verificationRequirement.update({
         where: { id: existingRecord.id },
         data: {
-          metadata,
-          // If Australian citizen, mark as submitted
-          status: metadata.isCitizen ? "SUBMITTED" : existingRecord.status,
-          submittedAt: metadata.isCitizen && !existingRecord.submittedAt ? new Date() : existingRecord.submittedAt,
+          metadata: { ...(previous as Record<string, unknown>), isCitizen },
+          status: isCitizen ? "SUBMITTED" : existingRecord.documentUrl ? existingRecord.status : "PENDING",
+          submittedAt: isCitizen ? (existingRecord.submittedAt ?? new Date()) : existingRecord.documentUrl ? existingRecord.submittedAt : null,
           updatedAt: new Date(),
         },
       });
@@ -181,11 +186,11 @@ export async function PATCH(request: Request) {
         data: {
           workerProfileId: workerProfile.id,
           requirementType: documentType,
-          requirementName: documentType === "right-to-work" ? "Right to Work Documents" : documentType,
+          requirementName: "Right to Work Documents",
           isRequired: true,
-          status: metadata.isCitizen ? "SUBMITTED" : "PENDING",
-          submittedAt: metadata.isCitizen ? new Date() : null,
-          metadata,
+          status: isCitizen ? "SUBMITTED" : "PENDING",
+          submittedAt: isCitizen ? new Date() : null,
+          metadata: { isCitizen },
           updatedAt: new Date(),
         },
       });
@@ -193,7 +198,7 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: metadata.isCitizen
+      message: isCitizen
         ? "Australian citizenship confirmed"
         : "Citizenship status saved",
     });
