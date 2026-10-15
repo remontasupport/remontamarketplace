@@ -4199,3 +4199,14 @@ form-engine 73; api-contract 79. PR #57 not merged.
 
 **User input**: "can you save this to ai dlc so I can go back tomorrow"
 **AI response**: refs checked (main `f66cb6c`, PR #57 `22d82b3`, the nine open api/app branches all in PR #57 and none on main, production api still old, staging has the one-photo api but not the deletes). aidlc-state.md "Current Stage" rewritten for the resume: what is on main/staging/production, the nine open PRs in merge order, PR #57 contents and gates, the go-live order, a numbered "Resume here" (the combined api PR question, the open answers, the local api notes, today's follow-ups incl. the flaky completion test). The review gains F11 and a status section (F1 fixed, F9 corrected). Memory updated.
+
+## 2026-10-15 -- api-review cycle resumed; Services section opened
+
+**User input**: "continue ai dlc and start the 2 local servers"
+**AI response**: refs unchanged (main `f66cb6c`, PR #57 `22d82b3`, record `d968da6`). Local api (127.0.0.1:4000, health 200) and app (localhost:3000) started from `../remonta-pr57` on the dev Neon branch. Asked: the combined api PR, the open answers from 2026-10-14.
+
+**User input**: "there is an erro Application error: a client-side exception has occurred while loading localhost (see the browser console for more information)."
+**AI response**: not reproduced (headless load of / -> /login, no console error). The app log shows "Fast Refresh had to perform a full reload due to a runtime error" during the first compile of /login, then a clean sign-in, /dashboard/worker and /api/auth/api-token. Read as the first-compile race; asked for a hard reload and, if it returns, the console's first line (follow-up 20).
+
+**User input**: "let us continue the dlc which is migrating the server actions to the new api backend, and let us work on with the apis on the Services. are we going to create a new pr for this? or continue the PR57? THIS is a seperate section"
+**AI response**: new PRs, not PR #57: an api PR from main (new worker.contract.ts entries + handlers; staging image, promoted on its own) and an app PR stacked on `feat/edit-profile-app` (reuses its section machinery), merged after PR #57 and after the api promotion. Targeted inventory of the Services section started.
