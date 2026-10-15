@@ -110,6 +110,17 @@ describe.skipIf(!local)('U3a services on PostGIS', () => {
     expect(res.json().services.map((s: any) => s.categoryId)).toEqual([care(), 'nursing-services'])
   })
 
+  it('P6: re-sending the same services writes no service row', async () => {
+    const body = { services: [care(), 'nursing-services'], subcategoryIds: [] }
+    expect((await put('/v1/worker/services', body)).statusCode).toBe(200)
+    h.queries.length = 0
+    const res = await put('/v1/worker/services', body)
+    expect(res.statusCode).toBe(200)
+    expect(res.json().services.map((s: any) => s.categoryId)).toEqual([care(), 'nursing-services'])
+    const writes = h.queries.filter((q) => /^(UPDATE|INSERT|DELETE).*"worker_services"/s.test(q.trim()))
+    expect(writes).toEqual([])
+  })
+
   it('stored junk reads tolerantly: an expiry of "-01-00" and an empty number read as null', async () => {
     await h.db.workerService.update({
       where: { workerProfileId_categoryId: { workerProfileId: h.b.profileId, categoryId: 'nursing-services' } },
