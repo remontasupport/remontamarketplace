@@ -33,7 +33,8 @@ export async function writeServices(tx: Tx, profileId: string, body: ServicesBod
     if (e instanceof ApiError && e.fields?.supportWorkerCategories) throw new ApiError(400, e.cause_, { subcategoryIds: e.fields.supportWorkerCategories })
     throw e
   })
-  const existing = await tx.workerService.findMany({ where: { workerProfileId: profileId }, select: { id: true, categoryId: true, categoryName: true } })
+  // In the read's order (createdAt, id): the answer is built from these rows, with no re-read (audit P6).
+  const existing = await tx.workerService.findMany({ where: { workerProfileId: profileId }, select: { id: true, ...SERVICE_SELECT }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] })
   const keep = new Set(chosen.map((c) => c.categoryId))
 
   const removed = existing.filter((r) => !keep.has(r.categoryId))
@@ -46,16 +47,25 @@ export async function writeServices(tx: Tx, profileId: string, body: ServicesBod
     await tx.workerService.deleteMany({ where: { id: { in: removed.map((r) => r.id) } } })
   }
 
-  // New rows get distinct, increasing createdAt values so the read (createdAt order) shows them in the order chosen.
-  let added = 0
-  for (const c of chosen) {
-    const row = existing.find((r) => r.categoryId === c.categoryId)
-    if (row) await tx.workerService.update({ where: { id: row.id }, data: { categoryName: c.categoryName, subcategoryIds: c.subcategoryIds, subcategoryNames: c.subcategoryNames } })
-    else await tx.workerService.create({ data: { workerProfileId: profileId, ...c, createdAt: new Date(now.getTime() + added++) } })
+  // A kept row is written only when the catalogue's names or the chosen sub-categories changed (usually never: audit P6).
+  // New rows get distinct, increasing createdAt values after every kept one, so they follow in the order chosen.
+  const same = (a: readonly string[], b: readonly string[]) => a.length === b.length && a.every((x, i) => x === b[i])
+  const services: ServicesWrite['body']['services'] = []
+  const added: ServicesWrite['body']['services'] = []
+  for (const r of existing) {
+    const c = chosen.find((x) => x.categoryId === r.categoryId)
+    if (!c) continue
+    if (c.categoryName !== r.categoryName || !same(c.subcategoryIds, r.subcategoryIds) || !same(c.subcategoryNames, r.subcategoryNames)) {
+      await tx.workerService.update({ where: { id: r.id }, data: { categoryName: c.categoryName, subcategoryIds: c.subcategoryIds, subcategoryNames: c.subcategoryNames } })
+    }
+    services.push({ categoryId: c.categoryId, categoryName: c.categoryName, subcategoryIds: c.subcategoryIds, subcategoryNames: c.subcategoryNames })
   }
-
-  const services = await tx.workerService.findMany({ where: { workerProfileId: profileId }, select: SERVICE_SELECT, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }] })
-  return { body: { services }, files }
+  for (const c of chosen) {
+    if (existing.some((r) => r.categoryId === c.categoryId)) continue
+    await tx.workerService.create({ data: { workerProfileId: profileId, ...c, createdAt: new Date(now.getTime() + added.length) }, select: { id: true } })
+    added.push({ categoryId: c.categoryId, categoryName: c.categoryName, subcategoryIds: c.subcategoryIds, subcategoryNames: c.subcategoryNames })
+  }
+  return { body: { services: [...services, ...added] }, files }
 }
 
 /**
