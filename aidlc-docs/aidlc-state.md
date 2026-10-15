@@ -8,58 +8,61 @@
   first"). Record branch `aidlc/api-review` (from `aidlc/worker-profile-api` `b217341`). The previous cycle,
   worker-profile-api, is **parked** with open work: `aidlc-docs/archive/worker-profile-api/PARKED.md` (PR #57 held,
   the prod promotion of `182f94f...`, the column tests).
-- **Current Stage** (saved 2026-10-14 end of day, for the resume): the review is scoped to **My Profile**
-  (`inception/review/my-profile-api-review.md`: 20 entries, layers, findings F1-F11). Unit 0 `local-dev` is merged
-  (PR #61). Today's work, in order, all tested locally on the user's dev Neon branch:
+- **Current Stage** (saved 2026-10-15 end of day, for the resume). The review covers three worker sections: **My
+  Profile** (2026-10-14, `inception/review/my-profile-api-review.md`, F1-F11), **Services** (2026-10-15,
+  `inception/review/services-inventory.md`, S1-S9, D1-D4) and **Compliance** (2026-10-15,
+  `inception/review/compliance-inventory.md`, C1-C9, DC1-DC4), plus a **performance audit**
+  (`inception/review/api-performance-audit.md`, P1-P10). Designs: `u3b-service-documents-design.md`,
+  `u4a-compliance-documents-design.md`.
 
-  **On `main` (merged, on staging, NOT on production):** PR #62 F1 photo-delete ownership (`521e455`); PR #63 one
-  photo per worker (`6dbc65b`); PR #65 profile read by join, saves faster (`f66cb6c`). Production api is still the
-  old image (POST /v1/worker/photos/main answers 401 there, 404 on staging); rollback revision `remonta-api-00009-gct`.
+  **On `main` `813107d` (merged; the api on STAGING only, the app parts LIVE):**
+  - #66 (merged 2026-10-15): U3a services api (`PUT /v1/worker/services`, `.../:categoryId/registration`; a removed
+    service is deleted entirely, D2) + the performance fixes P1-P8 (`perf/api-round-trips`) + U3b service documents
+    (ticket -> private bucket `documents/<profileId>/` -> confirm; links; admin link).
+  - #67 S1: the per-worker requirement lists `private, no-store` (app, live).
+  - #69 C1: the citizenship PATCH accepts the Right to Work answer only (app, live; no use of the hole on the copy).
+  - #70 U4a compliance documents api (confirm/delete/citizenship/any-own-document link, `complianceDocuments` in the
+    profile), with the null-category fix (`e1a1408`) and the flaky completion test made deterministic (`9ec8bc0`).
+  - **Production api: still the old image** (not promoted today). Its rollback revision is `remonta-api-00009-gct`.
 
-  **Open api PRs, NOT merged, every one already inside PR #57** (merge in this order; the deletes and the message
-  PRs are stacked, so each shows only its own commit once the one before is merged):
-  1. `feat/additional-info-split-api` `252f089` -- nine additional-info entries (was one `:group` entry)
-  2. `fix/dob-age` `223736f` -- the age follows the date of birth (write + computed read)
-  3. `feat/gender-prefer-not-to-say` `405790f` -- "Prefer not to say"
-  4. `feat/delete-experience-api` `bc83ebd` -- DELETE /v1/worker/experience/:domain; the pipeline refuses a body on a body-less entry
-  5. `feat/delete-job-history-api` `07c7740` -- DELETE /v1/worker/job-history/:entryId (on 4)
-  6. `feat/delete-education-api` `4620077` -- DELETE /v1/worker/education/:entryId (on 5)
-  7. `fix/friendly-validation-messages` `cea8497` -- plain-English messages (api-contract `friendlyError`)
-  8. `fix/friendly-messages-signup` `833f6fa` -- the same on the live sign-up form (on 7; changes a live page on merge)
-  9. `fix/suburb-field-clear` `997168a` -- the suburb box can be cleared (app; fixes My Profile, sign-up unaffected)
-  1-3 overlap each other (docs, openapi.json, sections.int.test): merging them one by one conflicts. **Proposed and
-  not yet answered:** one combined api PR (`main` + 1-9, conflicts resolved as on PR #57).
+  **PR #57** (`feat/edit-profile-app` `6b4a9bd`): held until the api is promoted (the contract client refuses the old
+  api's shapes). #68 (U3c, the Services pages) was merged INTO it at `f0ad86a`.
 
-  **PR #57** (`feat/edit-profile-app`, head `22d82b3`, worktree `../remonta-pr57`, where the local servers run):
-  held, **do not merge before the api is promoted** -- the app's contract client refuses the old api's shapes, so
-  every My Profile page would read "temporarily unavailable" for real workers. It contains all of the above plus
-  app-only work: one-photo page, the nine additional-info pages, the delete confirm (ConfirmDialog) on Experience,
-  Work History, Education (ROW_DELETES, form-engine `rowKey`), the kept-draft notice removed, "Course or degree"
-  wording on Education, no numbered row titles, no row title on Work History, list rows without move arrows
-  (trash then pen on the left; a saved row is a summary until the pen opens it; form-engine `identity` +
-  `itemSummary`). Gates on PR #57 at `22d82b3`: app 139 type / 470 lint known, 213 tests; form-engine 76;
-  api-contract 84; api 650 (database tests skip locally, CI runs them).
+  **`feat/services-app` `e49438a`** (worktree `../remonta-pr57`, where the local servers run): PR #57 + U3c + the
+  redirect fix + C1 + U4a + the test fix. Its commits after `f0ad86a` are not yet in PR #57 (they reach it through
+  `main`, or a new PR from this branch into `feat/edit-profile-app`).
 
-  **Go-live order:** merge 1-9 (or the combined PR) -> CI + deploy-api (staging) -> check the PR #57 preview ->
-  Actions -> deploy-api -> stage `prod`, imageTag = the FULL 40-character sha of the last merge -> production probes
-  -> merge PR #57 -> production checks.
+  **Still open, not merged:** the nine My Profile api branches of 2026-10-14 (none in main: `252f089`, `223736f`
+  (#64 open), `405790f`, `bc83ebd`, `07c7740`, `4620077`, `cea8497`, `833f6fa`, `997168a`; all inside PR #57);
+  `chore/staging-services-check` `8933b42` (the staging checklist script; PR optional).
+
+  **Go-live order (unchanged):** the My Profile api changes onto main (one combined PR recommended) -> staging ->
+  the preview checks -> Actions -> deploy-api -> stage `prod`, imageTag = the FULL 40-character sha -> production
+  probes -> merge PR #57 (with U3c) -> production checks.
 
   **Resume here:**
-  1. `git ls-remote origin main feat/edit-profile-app`; ask what was merged since.
-  2. Ask: build the combined api PR? (recommended)
-  3. Open answers owed by the user: the existing home addresses (0 new, 571 street-looking `location`s: leave empty /
-     dry-run copy / remind workers) and whether admins see the home address; sort jobs and courses by start date now
-     that reordering is gone (offered); drop the draft entirely or keep it silent (kept silent); Education's typed
-     course as its row title (kept); the sign-up form's own draft notice (untouched).
-  4. Local api: `bash scripts/local/run-api.sh` from `../remonta-pr57` (with a build after any api change; stop it
-     before `pnpm --filter @remonta/api run quality`, `prisma generate` hits EPERM while it runs). Uploads fail
-     locally (no Google credentials) and a read can pass the 10 s transaction limit on the slow link (~0.3 s a round
-     trip): both local only; a local-only longer limit and a local photo folder were offered, not built.
-  5. Follow-ups found today: the completion property test ("both partitions are large") fails at random about once
-     in ten runs -- make its generator guarantee both partitions; F2 the legacy `"use server"` profile writes still
-     callable (retire with PR #57); F3-F5 bank account (notify, encryption, impersonation policy); F11 street-level
-     coordinates from the old address page; `test/my-profile-columns` (`e23df59`) never opened as a PR and is behind
-     the new entries.
+  1. `git ls-remote origin main feat/edit-profile-app feat/services-app`; ask what was merged since.
+  2. Staging checks owed (the deploy of `813107d` was running at end of day): run
+     `cd apps/api && node --import tsx scripts/staging-services-check.ts` (after `gcloud auth login`; on
+     `chore/staging-services-check`) and upload a document on the U3c preview with a staging-only worker -- the
+     upload itself has never run end to end (no bucket credentials locally).
+  3. **Next unit: U4b** -- the mandatory Compliance steps (identity 100 points, police, WWC, screening, right to
+     work + citizenship, Code of Conduct) on the U4a api, stacked on `feat/services-app`; the app document route
+     moves to `GET /v1/worker/documents/:id/link`. Then U4c trainings, U4d ABN/contract (the tax id out of the URL,
+     C3), U4e Additional Credentials, U4f retire + the legacy public files to the private bucket (DC3: early,
+     identity first).
+  4. Ask: the combined My Profile api PR (still unanswered since 2026-10-14).
+  5. Answers owed: expired dates -- refused today ("This registration has expired" / "This document has expired"),
+     or accepted and marked expired? The 2026-10-14 list (home addresses, admins seeing them, job/course order,
+     the draft).
+  6. Local: `bash scripts/local/run-api.sh` and `run-app.sh` from `../remonta-pr57` (stop the api before a gate:
+     EPERM; rebuild after an api change; uploads fail locally -- no Google credentials -- a local folder store was
+     offered). The browser smoke scripts used today mint a local NextAuth session for a dev-copy worker
+     (`next-auth/jwt` encode with the local NEXTAUTH_SECRET) and the api token with the local secret
+     `local-dev-only-token-secret-0123456789abcdef`.
+  7. Follow-ups: F2 the remaining legacy `"use server"` writes (profile, compliance until U4b-U4f); F3-F5 bank
+     account; F11; the xhr uploader's 120 s timeout for large documents; "Other Documents" still on the legacy
+     action (U4e); `test/my-profile-columns` never opened.
 
 ## Previous cycles (archived, read-only)
 
