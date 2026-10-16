@@ -32,8 +32,8 @@ of each training step and the dead fallback steps.
 ## Retired in U4b
 
 `/api/compliance/upload`, `/api/worker/compliance-documents` (GET + PATCH), `/api/worker/identity-documents`
-(GET + DELETE), `lib/backgroundUploadQueue.ts`'s fetch, the `deleteComplianceDocument` action, the dead
-`Step4PersonalInfo` (no importer). `uploadComplianceDocument` (the action) stays for the contract (U4d) and
+(GET + DELETE), `lib/backgroundUploadQueue.ts`'s fetch, the `deleteComplianceDocument` and
+`saveComplianceDocumentRecord` actions. `uploadComplianceDocument` (the action) stays for the contract (U4d) and
 `Step6OtherRequirements` (fallback only, U4c/U4f).
 
 ## Not in U4b
