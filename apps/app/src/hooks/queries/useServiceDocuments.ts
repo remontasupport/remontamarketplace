@@ -90,7 +90,11 @@ export function useUploadServiceDocument() {
   });
 }
 
-/** Delete one document; found by its URL in the cached list (the pages hold the URL), the legacy action otherwise. */
+/**
+ * Delete one document, found by its URL in the cached list (the pages hold the URL). The id is looked up before the
+ * row leaves the cache: the optimistic removal used to run first, so the lookup never found it and every delete fell
+ * back to the legacy action (found 2026-10-16).
+ */
 export function useDeleteServiceDocument() {
   const qc = useQueryClient();
   return useMutation({
@@ -98,15 +102,15 @@ export function useDeleteServiceDocument() {
       const profile = await currentProfile(qc);
       const doc = profile.serviceDocuments.find((d) => d.url === documentUrl && !d.id.startsWith("temp-"));
       if (!doc) throw new Error("This document is no longer on your profile. Please refresh the page.");
+      // Shown gone at once; onError puts the snapshot back.
+      qc.setQueryData<Profile>(PROFILE_QUERY_KEY, (p) => (p ? { ...p, serviceDocuments: p.serviceDocuments.filter((d) => d.id !== doc.id) } : p));
       const r = await workerApi.deleteServiceDocument(doc.id);
       if (r.kind !== "ok") throw new Error(messageOf(r));
       return { success: true as const };
     },
-    onMutate: async ({ documentUrl }) => {
+    onMutate: async () => {
       await qc.cancelQueries({ queryKey: PROFILE_QUERY_KEY });
-      const previous = qc.getQueryData<Profile>(PROFILE_QUERY_KEY);
-      qc.setQueryData<Profile>(PROFILE_QUERY_KEY, (p) => (p ? { ...p, serviceDocuments: p.serviceDocuments.filter((d) => d.url !== documentUrl) } : p));
-      return { previous };
+      return { previous: qc.getQueryData<Profile>(PROFILE_QUERY_KEY) };
     },
     onError: (_err, _vars, ctx) => {
       if (ctx?.previous) qc.setQueryData(PROFILE_QUERY_KEY, ctx.previous);
