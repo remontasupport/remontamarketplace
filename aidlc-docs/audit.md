@@ -4381,3 +4381,11 @@ interceptor's `done()` ended it as soon as any request finished.
 finishes only when the last is done; the dashboard page fades in (220 ms). Measured locally ("Modify your Service",
 sampled every 50 ms): bar from 50 ms after the click until the account page's data has loaded; page opacity 0 -> 1 on
 arrival. App gate: 243 tests.
+
+## 2026-10-16 -- Services "Complete" goes to the dashboard
+
+**User input (verbatim):** "perfect. Now on the Services and Completed button, I noticed it navigates to the Additional Credentials, can you make it to the dashboard instead."
+
+**Change (`feat/account-app`):** the final step of `/dashboard/worker/services/setup` pushes `/dashboard/worker` (was
+`/dashboard/worker/additional-documents`), with the navigation bar. Verified locally: Next -> Complete on the last
+service (cleaning-services, documents view) ended on `/dashboard/worker`. App gate passed.
