@@ -9,12 +9,14 @@
  * built-ins in src/. Enforced by ESLint; test/boundary.test.ts proves it rejects.
  */
 import type { Contract } from './define'
+import { accountContract } from './account.contract'
 import { adminContract } from './admin.contract'
 import { platformContract } from './platform.contract'
 import { registrationContract } from './registration.contract'
 import { workerContract } from './worker.contract'
 
 export * from './define'
+export * from './account.contract'
 export * from './auth'
 export * from './canonical'
 export * from './admin.contract'
@@ -29,4 +31,4 @@ export * from './worker.contract'
 export * from './worker.sections'
 
 /** Every area's contract. apps/api must bind all of them. */
-export const contracts: readonly Contract[] = [platformContract, registrationContract, adminContract, workerContract]
+export const contracts: readonly Contract[] = [platformContract, registrationContract, adminContract, workerContract, accountContract]
