@@ -1,5 +1,6 @@
 // Boot order (S1-design 2.1): config check -> contract check -> listen.
 // Any failure exits non-zero with the reason; nothing is served half-configured.
+import { accountHandlers } from './modules/account/account.handlers'
 import publicEndpoints from '@remonta/api-contract/public-endpoints.json'
 import { contracts, type PublicEndpoint } from '@remonta/api-contract'
 import { createApp } from './app'
@@ -46,16 +47,19 @@ async function main() {
   // Vercel Blob: where every photo lives and is served from -- the clean copies go there.
   const bucket = new GcsPhotoStore({ bucket: config.PHOTO_BUCKET, publicBaseUrl: config.PHOTO_PUBLIC_BASE_URL, apiEndpoint: config.GCS_API_ENDPOINT, timeoutMs: config.GCS_TIMEOUT_MS })
   const blobStore = new VercelBlobPhotoStore(config.BLOB_READ_WRITE_TOKEN)
+  const breaches = new PwnedPasswordsChecker(http)
   const handlerSets = [
     platformHandlers({ db, clock: systemClock }),
     // The admin lists (U2): behind the api token; the search is memoised per instance.
     adminHandlers({ db, clock: systemClock, bucket }),
     // The worker's own profile (worker-profile-api U1): per-user bodies, never memoised.
     workerHandlers({ db, clock: systemClock, photos: { bucket, publicBaseUrl: config.PHOTO_PUBLIC_BASE_URL, ipHashSecret: config.IP_HASH_SECRET, blob: blobStore } }),
+    // The signed-in user's own sign-in details (api-review U5d): email and password.
+    accountHandlers({ db, clock: systemClock, hasher, breaches }),
     registrationHandlers({
       db,
       hasher,
-      breaches: new PwnedPasswordsChecker(http),
+      breaches,
       localities: new LocalityDirectory(db),
       bucket,
       publicBaseUrl: config.PHOTO_PUBLIC_BASE_URL,

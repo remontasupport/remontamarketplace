@@ -148,6 +148,8 @@ model User {
   id                   String              @id @default(cuid())
   email                String              @unique
   passwordHash         String
+  /// api-review U5d: sessions and api tokens issued before this are refused.
+  passwordChangedAt    DateTime?
   role                 UserRole
   status               AccountStatus       @default(ACTIVE)
   resetPasswordToken   String?             @unique

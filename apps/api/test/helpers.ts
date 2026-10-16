@@ -36,13 +36,13 @@ export class FakeCaptcha implements CaptchaVerifier {
   }
 }
 
-/** Reads the caller from `x-test-principal: <userId>:<ROLE>`. */
+/** Reads the caller from `x-test-principal: <userId>:<ROLE>[:<impersonating admin id>]`. */
 export class FakeAuthenticator implements Authenticator {
   async authenticate(headers: Record<string, string | string[] | undefined>): Promise<Principal | null> {
     const h = headers['x-test-principal']
     if (typeof h !== 'string') return null
-    const [userId, role] = h.split(':')
-    return userId && role ? { userId, role: role as Role } : null
+    const [userId, role, impersonatorId] = h.split(':')
+    return userId && role ? { userId, role: role as Role, ...(impersonatorId ? { impersonatorId } : {}) } : null
   }
 }
 
