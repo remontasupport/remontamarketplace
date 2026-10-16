@@ -5,7 +5,7 @@
 // reload that bypasses the browser's cache after a save. The root layout provides the
 // query client, so the sharing needs no provider of its own.
 import { useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import type { Profile } from "@remonta/api-contract";
 import type { ApiOutcome } from "@/lib/api/outcome";
 import { workerApi } from "./api";
@@ -26,6 +26,27 @@ export async function readProfile(cache: "default" | "reload", signal?: AbortSig
   const r = await workerApi.getProfile({ cache, signal });
   if (r.kind === "ok") return r.body;
   throw new ProfileReadError(r);
+}
+
+/** After a change on a page that selects from the profile: the fresh read into the cache (a refetch if it fails). */
+export async function reloadProfileInto(qc: QueryClient): Promise<void> {
+  try {
+    qc.setQueryData(PROFILE_QUERY_KEY, await readProfile("reload"));
+  } catch {
+    await qc.invalidateQueries({ queryKey: PROFILE_QUERY_KEY });
+  }
+}
+
+/** The cached profile, or a read when there is none yet (a mutation's lookup). */
+export async function currentProfile(qc: QueryClient): Promise<Profile> {
+  return qc.getQueryData<Profile>(PROFILE_QUERY_KEY) ?? qc.fetchQuery({ queryKey: PROFILE_QUERY_KEY, queryFn: () => readProfile("default"), staleTime: PROFILE_STALE_MS });
+}
+
+/** The legacy profile query (setupProgress, the setup pages' Code of Conduct and contract) catches up after a change. */
+export function refreshLegacyProfile(qc: QueryClient): void {
+  import("@/hooks/queries/useWorkerProfile")
+    .then(({ workerProfileKeys }) => qc.invalidateQueries({ queryKey: workerProfileKeys.all }))
+    .catch(() => {});
 }
 
 export function useWorkerProfile() {

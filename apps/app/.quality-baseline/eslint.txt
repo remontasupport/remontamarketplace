@@ -13,7 +13,6 @@
 3	src/app/api/categories/route.ts::@typescript-eslint/no-explicit-any
 1	src/app/api/client/service-request/route.ts::@typescript-eslint/no-explicit-any
 3	src/app/api/client/workers/route.ts::@typescript-eslint/no-explicit-any
-5	src/app/api/compliance/upload/route.ts::@typescript-eslint/no-explicit-any
 3	src/app/api/contractors/route.ts::@typescript-eslint/no-explicit-any
 1	src/app/api/contractors/route.ts::prefer-const
 1	src/app/api/public/workers/route.ts::@typescript-eslint/no-explicit-any
@@ -23,9 +22,6 @@
 1	src/app/api/upload/other-requirements/route.ts::@typescript-eslint/no-explicit-any
 1	src/app/api/upload/vehicle-photo/route.ts::@typescript-eslint/no-explicit-any
 1	src/app/api/upload/worker-photo/route.ts::@typescript-eslint/no-explicit-any
-2	src/app/api/worker/compliance-documents/route.ts::@typescript-eslint/no-explicit-any
-1	src/app/api/worker/identity-documents/copy-reference/route.ts::@typescript-eslint/no-explicit-any
-4	src/app/api/worker/identity-documents/route.ts::@typescript-eslint/no-explicit-any
 1	src/app/api/worker/other-requirements/[id]/route.ts::@typescript-eslint/no-explicit-any
 1	src/app/api/worker/other-requirements/route.ts::@typescript-eslint/no-explicit-any
 2	src/app/api/worker/profile/[userId]/route.ts::@typescript-eslint/no-explicit-any
@@ -121,10 +117,8 @@
 1	src/config/mandatoryRequirementsSetupSteps.ts::@typescript-eslint/no-explicit-any
 1	src/config/servicesSetupSteps.ts::@typescript-eslint/no-explicit-any
 1	src/constants/onboardingQuestions.ts::@typescript-eslint/no-explicit-any
-2	src/hooks/queries/useComplianceDocuments.ts::@typescript-eslint/no-explicit-any
 2	src/hooks/queries/useWorkerProfile.ts::@typescript-eslint/no-explicit-any
 3	src/lib/auth.config.ts::@typescript-eslint/no-explicit-any
-5	src/lib/backgroundUploadQueue.ts::@typescript-eslint/no-explicit-any
 1	src/lib/constants/onboardingQuestions.ts::@typescript-eslint/no-explicit-any
 4	src/lib/impersonation.ts::@typescript-eslint/no-explicit-any
 1	src/lib/logger.ts::@typescript-eslint/no-explicit-any
@@ -133,7 +127,7 @@
 1	src/services/user/account.service.ts::@typescript-eslint/no-explicit-any
 13	src/services/worker/additionalInfo.service.ts::@typescript-eslint/no-explicit-any
 4	src/services/worker/availability.service.ts::@typescript-eslint/no-explicit-any
-6	src/services/worker/compliance.service.ts::@typescript-eslint/no-explicit-any
+4	src/services/worker/compliance.service.ts::@typescript-eslint/no-explicit-any
 4	src/services/worker/experience.service.ts::@typescript-eslint/no-explicit-any
 10	src/services/worker/profile.service.ts::@typescript-eslint/no-explicit-any
 15	src/services/worker/profilePreview.service.ts::@typescript-eslint/no-explicit-any

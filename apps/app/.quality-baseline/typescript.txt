@@ -16,7 +16,6 @@
 1	src/app/api/client/participants/route.ts::TS2322
 1	src/app/api/client/workers/route.ts::TS2322
 1	src/app/api/upload/vehicle-photo/route.ts::TS2322
-1	src/app/api/worker/identity-documents/route.ts::TS7006
 1	src/app/api/worker/requirements/route.ts::TS2322
 2	src/app/api/worker/requirements/route.ts::TS2339
 3	src/app/api/worker/requirements/route.ts::TS7006
@@ -43,8 +42,6 @@
 2	src/components/pdf/WorkerProfilePDF.tsx::TS7006
 1	src/components/profile-building/sections/AboutMeSection.tsx::TS2345
 1	src/components/requirements-setup/steps/GenericComplianceDocument.tsx::TS2322
-2	src/components/requirements-setup/steps/Step1ProofOfIdentity.tsx::TS2322
-2	src/components/requirements-setup/steps/Step1ProofOfIdentity.tsx::TS2345
 1	src/components/services-setup/steps/Step1ServicesOffer.tsx::TS2322
 2	src/lib/auth.config.ts::TS2322
 3	src/lib/feature-access.ts::TS2339

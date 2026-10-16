@@ -52,27 +52,43 @@ export async function documentTypeOf(file: Blob): Promise<DocumentType | null> {
   return t === "image/heic" && file.type === "image/heif" ? "image/heif" : t;
 }
 
+/** An upload that did not go through; `retryable` when trying again could help (the api or the network away). */
+export type UploadFailure = { ok: false; message: string; retryable: boolean };
+
+/** True for an outcome a second attempt could change (not a refusal of the request itself). */
+export function isTransient(r: Exclude<ApiOutcome<unknown>, { kind: "ok" }>): boolean {
+  return r.kind === "unavailable" || (r.kind === "failed" && r.status >= 500);
+}
+
 /**
- * One document, the whole way: check it here, a ticket, the bytes straight to the bucket, the confirm. The answer is
- * the document as recorded, or a message for the page.
+ * The first two of a document's three calls (U3b, U4a): the file checked here, a ticket, the bytes straight to the
+ * private bucket. The answer is the upload's id for the confirm, or a message for the page.
  */
+export async function stageDocument(file: File, opts: { onProgress?: (percent: number) => void; api?: WorkerApi } = {}): Promise<{ ok: true; uploadId: string } | UploadFailure> {
+  const api = opts.api ?? workerApi;
+  const type = await documentTypeOf(file);
+  if (!type) return { ok: false, message: DOCUMENT_TYPE_MESSAGE, retryable: false };
+  if (file.size > DOCUMENT_MAX_BYTES) return { ok: false, message: DOCUMENT_SIZE_MESSAGE, retryable: false };
+  const ticket = await api.createServiceDocumentTicket({ contentType: type, sizeBytes: file.size });
+  if (ticket.kind !== "ok") return { ok: false, message: messageOf(ticket), retryable: isTransient(ticket) };
+  try {
+    await xhrUploader.upload(file, ticket.body.upload, { onProgress: (sent, total) => opts.onProgress?.(Math.round((sent / total) * 100)) });
+  } catch {
+    return { ok: false, message: DOCUMENT_SERVICE_MESSAGE, retryable: true };
+  }
+  return { ok: true, uploadId: ticket.body.uploadId };
+}
+
+/** One service document, the whole way: staged, then confirmed. The answer is the document as recorded, or a message for the page. */
 export async function uploadServiceDocument(
   file: File,
   target: { categoryId: string; requirementType: string },
   opts: { onProgress?: (percent: number) => void; api?: WorkerApi } = {},
 ): Promise<{ ok: true; document: ServiceDocument } | { ok: false; message: string }> {
   const api = opts.api ?? workerApi;
-  const type = await documentTypeOf(file);
-  if (!type) return { ok: false, message: DOCUMENT_TYPE_MESSAGE };
-  if (file.size > DOCUMENT_MAX_BYTES) return { ok: false, message: DOCUMENT_SIZE_MESSAGE };
-  const ticket = await api.createServiceDocumentTicket({ contentType: type, sizeBytes: file.size });
-  if (ticket.kind !== "ok") return { ok: false, message: messageOf(ticket) };
-  try {
-    await xhrUploader.upload(file, ticket.body.upload, { onProgress: (sent, total) => opts.onProgress?.(Math.round((sent / total) * 100)) });
-  } catch {
-    return { ok: false, message: DOCUMENT_SERVICE_MESSAGE };
-  }
-  const confirmed = await api.confirmServiceDocument({ uploadId: ticket.body.uploadId, categoryId: target.categoryId, requirementType: target.requirementType, fileName: fileNameOf(file) });
+  const staged = await stageDocument(file, opts);
+  if (!staged.ok) return { ok: false, message: staged.message };
+  const confirmed = await api.confirmServiceDocument({ uploadId: staged.uploadId, categoryId: target.categoryId, requirementType: target.requirementType, fileName: fileNameOf(file) });
   return confirmed.kind === "ok" ? { ok: true, document: confirmed.body } : { ok: false, message: messageOf(confirmed) };
 }
 

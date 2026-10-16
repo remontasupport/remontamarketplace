@@ -31,8 +31,9 @@ import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { TextField, SelectField, DatePickerField } from "@/components/forms/fields";
 import StepContentWrapper from "../shared/StepContentWrapper";
-import { useDriverLicense, useIdentityDocuments, identityDocumentsKeys } from "@/hooks/queries/useIdentityDocuments";
-import { uploadComplianceDocument } from "@/services/worker/compliance.service";
+import { useDriverLicense, useIdentityDocuments } from "@/hooks/queries/useIdentityDocuments";
+import { uploadComplianceDocument } from "@/features/worker/compliance";
+import { refreshLegacyProfile, reloadProfileInto } from "@/features/worker/profile";
 import Loader from "@/components/ui/Loader";
 
 // Storage keys for persisting user decisions
@@ -188,22 +189,16 @@ export default function Step4PersonalInfo({
     setUploadError(null);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      // Use a different document type for vehicle/driver access verification
-      formData.append("documentType", "driver-license-vehicle");
+      // A different document type for vehicle/driver access verification; straight to the private bucket, then
+      // recorded by apps/api (U4b).
+      const result = await uploadComplianceDocument(file, { requirementType: "driver-license-vehicle" });
 
-      // Use server action instead of API endpoint
-      const result = await uploadComplianceDocument(formData);
-
-      if (!result.success) {
-        throw new Error(result.error || "Upload failed");
+      if (!result.ok) {
+        throw new Error(result.message);
       }
 
-      // Invalidate cache to refetch documents and update UI automatically
-      await queryClient.invalidateQueries({
-        queryKey: identityDocumentsKeys.all,
-      });
+      await reloadProfileInto(queryClient);
+      refreshLegacyProfile(queryClient);
 
       // Clear sessionStorage since user has now uploaded their own document
       clearDriverLicenseStorage();
