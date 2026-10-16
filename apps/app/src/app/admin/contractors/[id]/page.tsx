@@ -29,7 +29,7 @@ interface WorkerProfile {
   uniqueService?: string | null
   qualifications?: string | null
   /** U2: the private home address (never on the card). */
-  homeAddress?: { streetLine: string; suburb: string; state: string; postcode: string } | null
+  homeAddress?: { streetLine: string | null; suburb: string; state: string; postcode: string } | null
   /** U2: masked by the route; the full numbers never reach the browser. */
   bankAccount?: MaskedBankAccount | null
 }
@@ -40,7 +40,7 @@ function PrivateDetails({ homeAddress, bankAccount }: { homeAddress: WorkerProfi
     <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm grid gap-3 sm:grid-cols-2" data-private="true">
       <div>
         <p className="font-semibold text-amber-900">Home address (private)</p>
-        <p className="text-amber-900">{homeAddress ? `${homeAddress.streetLine}, ${homeAddress.suburb} ${homeAddress.state} ${homeAddress.postcode}` : 'Not provided'}</p>
+        <p className="text-amber-900">{homeAddress ? `${homeAddress.streetLine ? `${homeAddress.streetLine}, ` : ''}${homeAddress.suburb} ${homeAddress.state} ${homeAddress.postcode}` : 'Not provided'}</p>
       </div>
       <div>
         <p className="font-semibold text-amber-900">Bank account</p>

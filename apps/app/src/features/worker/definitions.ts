@@ -96,12 +96,12 @@ export const homeAddressSection = defineSection({
   pick: "homeAddress",
   writeEntry: "putHomeAddress",
   fields: [
-    { name: "streetLine", kind: "text", label: "Street address", placeholder: "12 Example St" },
+    { name: "streetLine", kind: "text", label: "Street address (optional)", placeholder: "12 Example St" },
     { name: "localityId", kind: "locality", label: "Suburb", placeholder: "Start typing your suburb" },
   ],
   seed: (p) => {
-    const h = p as { streetLine: string; localityId: number; suburb: string; state: string; postcode: string } | null;
-    return h ? { streetLine: h.streetLine, localityId: { id: h.localityId, name: h.suburb, state: h.state, postcode: h.postcode } } : {};
+    const h = p as { streetLine: string | null; localityId: number; suburb: string; state: string; postcode: string } | null;
+    return h ? { streetLine: h.streetLine ?? "", localityId: { id: h.localityId, name: h.suburb, state: h.state, postcode: h.postcode } } : {};
   },
 });
 

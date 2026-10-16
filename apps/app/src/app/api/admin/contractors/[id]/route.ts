@@ -85,7 +85,8 @@ export async function GET(
         uniqueService: worker.uniqueService,
         qualifications: worker.qualifications,
         services,
-        homeAddress: worker.homeStreetLine && worker.homeLocality ? { streetLine: worker.homeStreetLine, ...worker.homeLocality } : null,
+        // The street line is optional (2026-10-16): a suburb alone is an address.
+        homeAddress: worker.homeLocality ? { streetLine: worker.homeStreetLine || null, ...worker.homeLocality } : null,
         // Masked here, so the stored BSB and account number never reach the browser.
         bankAccount: maskBankAccount(worker.workerAdditionalInfo?.bankAccount ?? null),
       }
