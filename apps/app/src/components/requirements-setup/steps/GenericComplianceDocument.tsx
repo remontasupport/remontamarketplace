@@ -34,6 +34,8 @@ interface GenericComplianceDocumentProps {
   // Additional props for dynamic rendering
   requirement?: RequirementDocument;
   apiEndpoint?: string;
+  /** Shown above the upload when one step holds several documents (First Aid & CPR). */
+  heading?: string;
 }
 
 // Helper to check if document is a PDF
@@ -47,6 +49,7 @@ export default function GenericComplianceDocument({
   errors = {},
   requirement,
   apiEndpoint = "/api/worker/compliance-documents",
+  heading,
 }: GenericComplianceDocumentProps) {
   const { data: session } = useSession();
 
@@ -209,6 +212,7 @@ export default function GenericComplianceDocument({
           </>
         }
       >
+      {heading && <h3 className="text-lg font-semibold text-gray-900 font-poppins">{heading}</h3>}
       {/* Error Message */}
       {errors[documentType] && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">

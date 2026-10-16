@@ -178,12 +178,13 @@ function TrainingsSetupContent() {
     }
   };
 
-  // Redirect to first step if invalid slug
+  // Redirect to first step if invalid slug; a document folded into a combined step (CPR) goes to that step
   useEffect(() => {
     if (currentStepIndex < 0 && STEPS.length > 0) {
-      router.push(`/dashboard/worker/trainings/setup?step=${STEPS[0].slug}`);
+      const host = STEPS.find((s) => s.parts?.some((p) => p.id === stepSlug)) ?? STEPS[0];
+      router.replace(`/dashboard/worker/trainings/setup?step=${host.slug}`);
     }
-  }, [currentStepIndex, router, STEPS]);
+  }, [currentStepIndex, router, STEPS, stepSlug]);
 
   // Extract primary service for role display
   const primaryService = profileData?.services?.[0] || 'Support Worker';
@@ -286,6 +287,7 @@ function TrainingsSetupContent() {
             // Pass additional props for dynamic components
             requirement={currentStepData?.requirement}
             apiEndpoint={currentStepData?.apiEndpoint}
+            parts={currentStepData?.parts}
           />
         </StepContainer>
       ) : (
