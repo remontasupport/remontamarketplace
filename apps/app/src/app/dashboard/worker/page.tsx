@@ -1,7 +1,7 @@
 /**
  * Worker Dashboard - Server Component
  * Protected route - only accessible to users with WORKER role
- * Uses getServerSession for server-side authentication (PRODUCTION-READY)
+ * Uses getServerSession for server-side authentication (PRODUCTION-READY); the profile data is the api's (U5c)
  */
 
 import { getServerSession } from "next-auth";
@@ -9,15 +9,10 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { authOptions } from "@/lib/auth.config";
 import { UserRole } from "@/types/auth";
-import { authPrisma, withRetry } from "@/lib/auth-prisma";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import NewsSlider from "@/components/dashboard/NewsSlider";
 import NewsSliderAsync from "@/components/dashboard/NewsSliderAsync";
 import ProfileCompletionReminder from "@/components/dashboard/ProfileCompletionReminder";
-import {
-  getAllCompletionStatusOptimized,
-} from "@/services/worker/setupProgress.service";
-import { getOrFetch, CACHE_KEYS, CACHE_TTL } from "@/lib/redis";
 
 // Disable caching for this page - CRITICAL for security
 export const dynamic = 'force-dynamic';
@@ -35,56 +30,13 @@ export default async function WorkerDashboard() {
     redirect("/unauthorized");
   }
 
-  // Run profile fetch + completion status in parallel — both cached independently
-  const [workerProfile, completionResult] = await Promise.all([
-    getOrFetch(
-      CACHE_KEYS.workerProfile(session.user.id),
-      () => withRetry(() => authPrisma.workerProfile.findUnique({
-        where: { userId: session.user.id },
-        select: {
-          firstName: true,
-          lastName: true,
-          photos: true,
-          workerServices: {
-            select: { categoryName: true },
-            orderBy: { createdAt: 'asc' },
-            take: 1,
-          },
-        },
-      })),
-      CACHE_TTL.WORKER_PROFILE
-    ),
-    getOrFetch(
-      CACHE_KEYS.completionStatus(session.user.id),
-      () => getAllCompletionStatusOptimized(session.user.id),
-      CACHE_TTL.COMPLETION_STATUS
-    ),
-  ]);
-  
-  // Construct setupProgress from optimized single-query result
-  const setupProgress = completionResult.success && completionResult.data
-    ? completionResult.data
-    : {
-        accountDetails: false,
-        compliance: false,
-        trainings: false,
-        services: false,
-      };
-
-  // Extract primary service for role display
-  const primaryService = workerProfile?.workerServices?.[0]?.categoryName || 'Support Worker';
+  // U5c: the name, photo, role and completion come from the api's profile read on the client (the sidebar, the
+  // reminder and the jobs share it); this server page no longer reads the database or the completion action.
 
   // At this point, we have a valid WORKER session
   // This code only runs server-side, so it's completely secure
   return (
-    <DashboardLayout
-      profileData={{
-        firstName: workerProfile?.firstName || 'Worker',
-        // photos is now a string (single photo URL), not an array
-        photo: workerProfile?.photos || null,
-        role: primaryService,
-      }}
-    >
+    <DashboardLayout>
       {/* Hero Banner - Flex approach for mobile */}
       <div className="hero-banner" style={{ marginTop: '0' }}>
         <div className="hero-content">
@@ -127,7 +79,7 @@ export default async function WorkerDashboard() {
           </a>
 
           {/* Profile Completion Reminder */}
-          <ProfileCompletionReminder initialSetupProgress={setupProgress} />
+          <ProfileCompletionReminder />
         </div>
         {/* Decorative elements */}
         <div className="hero-decoration hero-decoration-1"></div>
@@ -137,7 +89,7 @@ export default async function WorkerDashboard() {
       {/* Jobs Section - Streaming with Suspense */}
       <div style={{ marginTop: '0' }}>
         <Suspense fallback={<NewsSlider jobs={[]} isLoading={true} />}>
-          <NewsSliderAsync setupProgress={setupProgress} />
+          <NewsSliderAsync />
         </Suspense>
       </div>
     </DashboardLayout>

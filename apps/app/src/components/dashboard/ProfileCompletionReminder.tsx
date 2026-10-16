@@ -2,11 +2,11 @@
 
 import { CheckCircleIcon } from '@heroicons/react/24/solid'
 import { XCircleIcon, ArrowRightIcon, XMarkIcon } from '@heroicons/react/24/outline'
-import { useWorkerProfile } from '@/hooks/queries/useWorkerProfile'
+import { useWorkerProfile as useApiProfile } from '@/features/worker/profile'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState, useEffect } from 'react'
-import { parseSetupProgress, type SetupProgress } from '@/types/setupProgress'
+import type { SetupProgress } from '@/types/setupProgress'
 import { BRAND_COLORS } from '@/constants'
 
 interface ChecklistItem {
@@ -28,49 +28,16 @@ export default function ProfileCompletionReminder({ initialSetupProgress }: Prof
   // Congratulations modal state
   const [showCongratulationsModal, setShowCongratulationsModal] = useState(false)
 
-  // Auto-refresh state: Poll for 10 seconds after mount to catch background updates
-  const [enablePolling, setEnablePolling] = useState(true)
+  // The api's profile read (U5c): completion is stored by apps/api with every save; the sidebar shares the entry.
+  const { profile, isLoading } = useApiProfile()
 
-  // Stop polling after 10 seconds
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setEnablePolling(false)
-    }, 10000) // 10 seconds
-
-    return () => clearTimeout(timer)
-  }, [])
-
-  // Fetch profile data with smart polling
-  const { data: profileData, isLoading } = useWorkerProfile(session?.user?.id, {
-    // Poll every 2 seconds for the first 10 seconds to catch background updates
-    refetchInterval: enablePolling ? 2000 : false,
-    // Always refetch on mount to get fresh data
-    refetchOnMount: 'always',
-    // Refetch when window regains focus
-    refetchOnWindowFocus: true,
-  })
-
-  // ADVANCED HYDRATION: Use server data for instant render, then hydrate with real-time client data
-  // This eliminates the delay on login while maintaining real-time updates
-  const setupProgress = useMemo(() => {
-    // Priority 1: Use fresh client data if available (real-time updates)
-    if (profileData?.setupProgress) {
-      return parseSetupProgress(profileData.setupProgress)
+  const setupProgress = useMemo<SetupProgress>(() => {
+    if (profile) {
+      const c = profile.completion
+      return { accountDetails: c.accountDetails, compliance: c.compliance, trainings: c.trainings, services: c.services }
     }
-
-    // Priority 2: Use server-side initial data for instant rendering (no delay)
-    if (initialSetupProgress) {
-      return initialSetupProgress
-    }
-
-    // Priority 3: Fallback to defaults
-    return {
-      accountDetails: false,
-      compliance: false,
-      trainings: false,
-      services: false,
-    }
-  }, [profileData?.setupProgress, initialSetupProgress])
+    return initialSetupProgress ?? { accountDetails: false, compliance: false, trainings: false, services: false }
+  }, [profile, initialSetupProgress])
 
   // Map setupProgress to checklist items
   const checklistItems: ChecklistItem[] = useMemo(() => [

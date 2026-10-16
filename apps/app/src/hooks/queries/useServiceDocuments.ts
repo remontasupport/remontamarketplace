@@ -14,7 +14,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Profile, ServiceDocument } from "@remonta/api-contract";
 import { workerApi } from "@/features/worker/api";
-import { currentProfile, PROFILE_QUERY_KEY, PROFILE_STALE_MS, readProfile, refreshLegacyProfile, reloadProfileInto } from "@/features/worker/profile";
+import { currentProfile, PROFILE_QUERY_KEY, PROFILE_STALE_MS, readProfile, reloadProfileInto } from "@/features/worker/profile";
 import { categoryIdOf, legacyDocumentOf, messageOf, uploadServiceDocument as uploadToApi, type LegacyServiceDocument } from "@/features/worker/services";
 
 /** Kept for the pages that invalidate by it: the documents now live in the profile entry. */
@@ -85,7 +85,6 @@ export function useUploadServiceDocument() {
     },
     onSettled: async () => {
       await reloadProfileInto(qc);
-      refreshLegacyProfile(qc);
     },
   });
 }
@@ -117,7 +116,6 @@ export function useDeleteServiceDocument() {
     },
     onSettled: async () => {
       await reloadProfileInto(qc);
-      refreshLegacyProfile(qc);
     },
   });
 }

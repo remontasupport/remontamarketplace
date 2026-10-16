@@ -7,22 +7,15 @@
 // read picks up on focus. Remove calls its entry.
 import { useRef, useState } from "react";
 import { Loader2, Upload } from "lucide-react";
-import { PHOTO_MAX_BYTES } from "@remonta/api-contract";
-import { declaredTypeOf, HEIC_MESSAGE, isHeicHeader, PHOTO_SERVICE_MESSAGE, PHOTO_TOO_LARGE_MESSAGE, UPLOAD_FAILED_MESSAGE } from "@remonta/form-engine";
 import { SIGNUP_PHOTO_ACCEPT } from "@/components/ui/form-wizard/fields";
-import { readHeader } from "@/features/forms/adapters/readHeader";
-import { shrinkImage } from "@/features/forms/adapters/shrinkImage";
-import { xhrUploader } from "@/features/forms/adapters/xhrUploader";
 import type { ApiOutcome } from "@/lib/api/outcome";
 import { workerApi, type Photos } from "./api";
+import { photoMessageOf as messageOf, uploadProfilePhoto } from "./photo";
 import { useWorkerProfile } from "./profile";
 import { Notice, SectionSkeleton } from "./SectionPage";
 import { UNAVAILABLE_MESSAGE } from "./useSection";
 
 type Busy = { kind: "idle" } | { kind: "uploading"; percent: number } | { kind: "working" };
-
-const messageOf = (r: Exclude<ApiOutcome<unknown>, { kind: "ok" }>) =>
-  r.kind === "rateLimited" ? "Too many photo changes at once. Please wait a moment and try again." : r.kind === "unauthenticated" ? "Your session has ended. Please sign in again." : r.kind === "failed" && r.fields ? (Object.values(r.fields)[0]?.[0] ?? PHOTO_SERVICE_MESSAGE) : PHOTO_SERVICE_MESSAGE;
 
 export default function PhotoSection() {
   const { profile, isLoading, error: readError, patch, reload } = useWorkerProfile();
@@ -42,17 +35,9 @@ export default function PhotoSection() {
     setMessage(null);
     setBusy({ kind: "uploading", percent: 0 });
     try {
-      const header = await readHeader(file);
-      if (isHeicHeader(header)) return setMessage(HEIC_MESSAGE);
-      const small = await shrinkImage(file);
-      if (small.size > PHOTO_MAX_BYTES) return setMessage(PHOTO_TOO_LARGE_MESSAGE);
-      const contentType = declaredTypeOf(await readHeader(small), small.type);
-      const ticket = await workerApi.createPhotoTicket({ contentType, sizeBytes: small.size });
-      if (ticket.kind !== "ok") return setMessage(messageOf(ticket));
-      await xhrUploader.upload(small, ticket.body.upload, { onProgress: (sent, total) => setBusy({ kind: "uploading", percent: Math.round((sent / total) * 100) }) });
-      applied(await workerApi.confirmPhoto({ uploadId: ticket.body.photoUploadId }));
-    } catch {
-      setMessage(UPLOAD_FAILED_MESSAGE);
+      const r = await uploadProfilePhoto(file, { onProgress: (percent) => setBusy({ kind: "uploading", percent }) });
+      if (r.ok) applied({ kind: "ok", body: r.photos });
+      else setMessage(r.message);
     } finally {
       setBusy({ kind: "idle" });
     }

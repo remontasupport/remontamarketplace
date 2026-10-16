@@ -18,7 +18,6 @@
 1	src/app/api/public/workers/route.ts::@typescript-eslint/no-explicit-any
 1	src/app/api/sms/send-verification/route.ts::prefer-const
 1	src/app/api/upload/worker-photo/route.ts::@typescript-eslint/no-explicit-any
-2	src/app/api/worker/profile/[userId]/route.ts::@typescript-eslint/no-explicit-any
 2	src/app/apply/page.tsx::react/no-unescaped-entities
 2	src/app/dashboard/client/request-service/edit/[participantId]/page.tsx::@typescript-eslint/no-explicit-any
 8	src/app/dashboard/client/request-service/edit/[participantId]/page.tsx::react/no-unescaped-entities
@@ -87,7 +86,6 @@
 1	src/config/complianceDocumentMapping.ts::@typescript-eslint/no-explicit-any
 1	src/config/servicesSetupSteps.ts::@typescript-eslint/no-explicit-any
 1	src/constants/onboardingQuestions.ts::@typescript-eslint/no-explicit-any
-1	src/hooks/queries/useWorkerProfile.ts::@typescript-eslint/no-explicit-any
 3	src/lib/auth.config.ts::@typescript-eslint/no-explicit-any
 1	src/lib/constants/onboardingQuestions.ts::@typescript-eslint/no-explicit-any
 4	src/lib/impersonation.ts::@typescript-eslint/no-explicit-any
@@ -95,9 +93,7 @@
 2	src/lib/password.ts::@typescript-eslint/no-require-imports
 11	src/lib/profileData.ts::@typescript-eslint/no-explicit-any
 1	src/services/user/account.service.ts::@typescript-eslint/no-explicit-any
-10	src/services/worker/profile.service.ts::@typescript-eslint/no-explicit-any
 14	src/services/worker/profilePreview.service.ts::@typescript-eslint/no-explicit-any
-20	src/services/worker/setupProgress.service.ts::@typescript-eslint/no-explicit-any
 2	src/store/onboardingStore.ts::@typescript-eslint/no-explicit-any
 1	src/utils/dynamicComplianceSteps.ts::@typescript-eslint/no-explicit-any
 1	src/utils/dynamicTrainingSteps.ts::@typescript-eslint/no-explicit-any

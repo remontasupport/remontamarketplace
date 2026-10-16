@@ -45,7 +45,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useIdentityDocuments, useDriverLicense } from "@/hooks/queries/useIdentityDocuments";
 import { workerApi } from "@/features/worker/api";
 import { uploadComplianceDocument } from "@/features/worker/compliance";
-import { refreshLegacyProfile, reloadProfileInto } from "@/features/worker/profile";
+import { reloadProfileInto } from "@/features/worker/profile";
 import { messageOf } from "@/features/worker/services";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -343,7 +343,6 @@ export default function Step1ProofOfIdentity({
 
       // Invalidate cache to update all steps automatically
       await reloadProfileInto(queryClient);
-      refreshLegacyProfile(queryClient);
 
       // Exit edit mode after successful upload
       const isPrimary = PRIMARY_DOCUMENTS.some(d => d.type === documentType);
@@ -409,7 +408,6 @@ export default function Step1ProofOfIdentity({
 
       // Invalidate cache to update all steps automatically
       await reloadProfileInto(queryClient);
-      refreshLegacyProfile(queryClient);
     } catch (error: any) {
       showErrorModal(
         error.message || "Unknown error occurred",

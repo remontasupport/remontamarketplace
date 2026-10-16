@@ -23,7 +23,7 @@ import {
   useDeleteComplianceDocument,
 } from "@/hooks/queries/useComplianceDocuments";
 import { saveCitizenship } from "@/features/worker/compliance";
-import { refreshLegacyProfile, reloadProfileInto } from "@/features/worker/profile";
+import { reloadProfileInto } from "@/features/worker/profile";
 import "@/app/styles/requirements-setup.css";
 
 interface StepRightToWorkProps {
@@ -144,7 +144,6 @@ export default function StepRightToWork({
       }
 
       await reloadProfileInto(queryClient);
-      refreshLegacyProfile(queryClient);
     } catch (error: any) {
       showErrorModal(error.message || "Failed to save. Please try again.", "Save Failed");
     } finally {

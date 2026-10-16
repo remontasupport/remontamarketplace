@@ -16,7 +16,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { ComplianceDocument as ApiComplianceDocument, Profile } from "@remonta/api-contract";
 import { workerApi } from "@/features/worker/api";
 import { documentOf, documentsOf, type LegacyComplianceDocument } from "@/features/worker/compliance";
-import { PROFILE_QUERY_KEY, PROFILE_STALE_MS, readProfile, refreshLegacyProfile, reloadProfileInto } from "@/features/worker/profile";
+import { PROFILE_QUERY_KEY, PROFILE_STALE_MS, readProfile, reloadProfileInto } from "@/features/worker/profile";
 import { messageOf } from "@/features/worker/services";
 import { backgroundUploadQueue } from "@/lib/backgroundUploadQueue";
 
@@ -92,7 +92,6 @@ export function useUploadComplianceDocument() {
     },
     onSettled: async () => {
       await reloadProfileInto(qc);
-      refreshLegacyProfile(qc);
     },
   });
 }
@@ -117,7 +116,6 @@ export function useDeleteComplianceDocument() {
     },
     onSettled: async () => {
       await reloadProfileInto(qc);
-      refreshLegacyProfile(qc);
     },
   });
 }

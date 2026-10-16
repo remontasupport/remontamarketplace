@@ -13,7 +13,7 @@ import { pdf } from "@react-pdf/renderer";
 import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
 import { CODE_OF_CONDUCT_PART2, CODE_OF_CONDUCT_ACKNOWLEDGMENT } from "@/config/codeOfConductContent";
 import { uploadComplianceDocument } from "@/features/worker/compliance";
-import { refreshLegacyProfile, reloadProfileInto } from "@/features/worker/profile";
+import { reloadProfileInto } from "@/features/worker/profile";
 import CodeOfConductPDF from "@/components/pdf/CodeOfConductPDF";
 import "@/app/styles/requirements-setup.css";
 
@@ -231,7 +231,6 @@ export default function StepCodeOfConductPart2({
       });
       // The sidebar's tick and the setup page's legacy read catch up.
       void reloadProfileInto(queryClient);
-      refreshLegacyProfile(queryClient);
     } catch (err: any) {
       console.error("Failed to save Code of Conduct:", err);
       setSaveError(err.message || "Failed to save document. Please try again.");

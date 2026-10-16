@@ -11,7 +11,6 @@ import { useState, useEffect, useRef, useMemo, Suspense } from "react";
 import { flushSync } from "react-dom";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import StepContainer from "@/components/account-setup/shared/StepContainer";
 import { useWorkerProfile as useApiProfile } from "@/features/worker/profile";
@@ -60,7 +59,6 @@ function TrainingsSetupContent() {
   const currentStepData = STEPS[currentStep - 1];
 
   // TanStack Query hooks
-  const queryClient = useQueryClient();
   // The api's profile read (U5b).
   const { profile: apiProfile, isLoading: isLoadingProfile, reload: reloadProfile } = useApiProfile();
   const profileData = useMemo(() => (apiProfile ? setupProfileOf(apiProfile) : undefined), [apiProfile]);
@@ -150,7 +148,6 @@ function TrainingsSetupContent() {
         // LAST STEP COMPLETED: apps/api recomputed and stored completion with every upload (U5b: the
         // autoUpdateTrainingsCompletion action is gone); the dashboard reads it fresh.
         await reloadProfile();
-        queryClient.invalidateQueries({ queryKey: ["worker-profile"] });
 
         // Force Next.js to invalidate server cache and refetch on next navigation
         router.refresh();

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { X } from "lucide-react";
 import { useProfilePreview } from "@/hooks/useProfilePreview";
 import QueryProvider from "@/providers/QueryProvider";
@@ -52,7 +53,7 @@ function ApplyModalContent({ jobTitle, jobId, jobZohoId, jobService, onClose, on
 
       // Fire-and-forget webhook — does not block or fail the apply flow
       const fullName = [profile?.firstName, profile?.lastName].filter(Boolean).join(' ');
-      const userId = profileData?.userId ?? '';
+      const userId = session?.user?.id ?? '';
       fetch(N8N_WEBHOOK_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -71,6 +72,7 @@ function ApplyModalContent({ jobTitle, jobId, jobZohoId, jobService, onClose, on
     }
   };
   const { data: profileData, isLoading, error } = useProfilePreview();
+  const { data: session } = useSession();
 
   // Lock body scroll when modal is open
   useEffect(() => {

@@ -11,7 +11,6 @@ import { useState, useEffect, useRef, useMemo, Suspense } from "react";
 import { flushSync } from "react-dom";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import StepContainer from "@/components/account-setup/shared/StepContainer";
 import { useWorkerProfile as useApiProfile } from "@/features/worker/profile";
@@ -88,7 +87,6 @@ function MandatoryRequirementsSetupContent() {
   const currentStepData = STEPS[currentStep - 1];
 
   // TanStack Query hooks
-  const queryClient = useQueryClient();
   // The api's profile read (U5b): the engagement, the contract and the Code of Conduct, in the shape this page reads.
   const { profile: apiProfile, isLoading: isLoadingProfile, reload: refetchProfile } = useApiProfile();
   const profileData = useMemo(() => (apiProfile ? setupProfileOf(apiProfile) : undefined), [apiProfile]);
@@ -336,7 +334,6 @@ function MandatoryRequirementsSetupContent() {
         // LAST STEP COMPLETED: apps/api recomputed and stored completion with every upload (U5b: the
         // autoUpdateComplianceCompletion action is gone); the dashboard reads it fresh.
         await refetchProfile();
-        queryClient.invalidateQueries({ queryKey: ["worker-profile"] });
 
         // Force Next.js to invalidate server cache and refetch on next navigation
         router.refresh();

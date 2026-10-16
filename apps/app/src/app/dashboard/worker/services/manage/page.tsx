@@ -12,7 +12,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import Step1ServicesOffer from "@/components/services-setup/steps/Step1ServicesOffer";
 import type { Category } from "@/hooks/queries/useCategories";
@@ -27,7 +26,6 @@ export default function ManageServicesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const returnUrl = searchParams.get("returnUrl");
-  const queryClient = useQueryClient();
 
   // The worker's own profile and the catalogue, both from apps/api.
   const { profile, isLoading: isLoadingProfile, reload } = useWorkerProfile();
@@ -93,8 +91,8 @@ export default function ManageServicesPage() {
       throw new Error(message);
     }
     setErrors({});
-    // The api's profile (services, registrations, documents), read fresh; the legacy reads other pages still make.
-    await Promise.all([reload(), queryClient.invalidateQueries({ queryKey: ['worker-profile'] })]);
+    // The api's profile (services, registrations, documents), read fresh.
+    await reload();
   };
 
   // "Done": the services as shown.
@@ -119,7 +117,6 @@ export default function ManageServicesPage() {
         // Invalidate and refetch to ensure fresh data is in cache before redirect
         await Promise.all([
           reload(),
-          queryClient.invalidateQueries({ queryKey: ['worker-profile'] }),
         ]);
 
         // Navigate with router.push (no need for router.refresh as data is already fresh)
@@ -131,7 +128,7 @@ export default function ManageServicesPage() {
 
       invalidateAndRedirect();
     }
-  }, [shouldRedirect, returnUrl, queryClient, router, reload]);
+  }, [shouldRedirect, returnUrl, router, reload]);
 
   // The role line under the name, as the api names it.
   const primaryService = profile?.displayRole || 'Support Worker';

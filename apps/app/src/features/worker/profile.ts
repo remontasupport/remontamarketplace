@@ -42,13 +42,6 @@ export async function currentProfile(qc: QueryClient): Promise<Profile> {
   return qc.getQueryData<Profile>(PROFILE_QUERY_KEY) ?? qc.fetchQuery({ queryKey: PROFILE_QUERY_KEY, queryFn: () => readProfile("default"), staleTime: PROFILE_STALE_MS });
 }
 
-/** The legacy profile query (setupProgress, the setup pages' Code of Conduct and contract) catches up after a change. */
-export function refreshLegacyProfile(qc: QueryClient): void {
-  import("@/hooks/queries/useWorkerProfile")
-    .then(({ workerProfileKeys }) => qc.invalidateQueries({ queryKey: workerProfileKeys.all }))
-    .catch(() => {});
-}
-
 export function useWorkerProfile() {
   const qc = useQueryClient();
   const q = useQuery({
