@@ -4299,3 +4299,6 @@ form-engine 73; api-contract 79. PR #57 not merged.
 
 **User input**: "there is an error to the api CI (api) / API Quality (Node 22.x) (pull_request)"
 **AI response**: CI annotations: one database-gated test (`test/worker/profile.int.test.ts:92`, skipped locally) expected `requirements` to be `{mandatory, trainings}`; the profile now carries `additional: []`. Fixed the expectation (`001045b` on `feat/other-documents-api`), no other test asserts the whole object; merged into `feat/services-api-reads` (`f6e91f0`). CI re-running.
+
+**User input**: "what is the PR preview link to test?"
+**AI response**: verified #72 (`feat/other-documents-api`) merged to main `65d6c0b` (contains `001045b`); deploy-api to staging in progress at 01:37Z. App preview for `feat/services-api-reads` `f6e91f0` built: https://remonta-app-git-feat-services-api-reads-remontas-projects.vercel.app (deployment EYDeDi43XgwTvGFVMj3PavaShT53); test it after the staging deploy finishes.
