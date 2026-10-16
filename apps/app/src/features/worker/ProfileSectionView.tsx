@@ -10,14 +10,23 @@ import PhotoSection from "./PhotoSection";
 import ProfileShell from "./ProfileShell";
 import { useWorkerProfile } from "./profile";
 import SectionPage, { Notice, SectionPair } from "./SectionPage";
+import { startNavigationProgress } from "@/components/ui/NavigationProgress";
 
-/** In the Services group (user, 2026-10-13): the suburb clients find the worker at, and how far they travel. */
+/**
+ * In the Services group (user, 2026-10-13): the suburb clients find the worker at, and how far they travel. The last
+ * step of the services setup comes here, and a Save goes on to the dashboard (user, 2026-10-16).
+ */
 function ServiceAreaPage() {
   const { profile } = useWorkerProfile();
+  const router = useRouter();
+  const toDashboard = () => {
+    startNavigationProgress();
+    router.push("/dashboard/worker");
+  };
   return (
     <div className="space-y-5">
       {profile && profile.serviceArea === null && <Notice tone="warn">Clients cannot find you until you set the suburb you work around.</Notice>}
-      <SectionPage def={serviceAreaSection} />
+      <SectionPage def={serviceAreaSection} onSaved={toDashboard} />
     </div>
   );
 }

@@ -27,6 +27,7 @@ import LoadingOverlay from "@/components/ui/LoadingOverlay";
 import { useWorkerServices } from "@/hooks/queries/useServiceSubcategories";
 import { useServiceDocuments } from "@/hooks/queries/useServiceDocuments";
 import { startNavigationProgress } from "@/components/ui/NavigationProgress";
+import { SERVICE_AREA_LINK } from "@/features/navigation/workerMenu";
 
 // Form data interface
 interface FormData {
@@ -320,9 +321,10 @@ function ServicesSetupContent() {
       // Nothing to save here (S9): every answer of these pages is saved where it is given -- the registrations
       // above, each document as it uploads. The step save this replaced matched no case and stored nothing.
       if (isFinalStep) {
-        // The last service is done: back to the dashboard (user, 2026-10-16; was Additional Credentials).
+        // The last service is done: on to Service Area, whose Save goes to the dashboard (user, 2026-10-16; was
+        // Additional Credentials).
         startNavigationProgress();
-        router.push("/dashboard/worker");
+        router.push(SERVICE_AREA_LINK.href);
       } else {
         setIsNavigating(false);
         router.push(`/dashboard/worker/services/setup?step=${STEPS[currentStep].slug}`);

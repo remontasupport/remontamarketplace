@@ -270,9 +270,15 @@ export function SectionPair({ title, first, second }: { title: string; first: Se
   );
 }
 
-/** A section's form. Its title is for screen readers only: the sidebar names the page (user, 2026-10-13). */
-export default function SectionPage({ def }: { def: SectionDefinition }) {
-  const { profile, isLoading, readError, values, errors, setValue, submit, save, deleteRow } = useSection(def);
+/**
+ * A section's form. Its title is for screen readers only: the sidebar names the page (user, 2026-10-13).
+ * `onSaved` runs once a Save is stored (Service Area then goes to the dashboard, user 2026-10-16).
+ */
+export default function SectionPage({ def, onSaved }: { def: SectionDefinition; onSaved?: () => void }) {
+  const { profile, isLoading, readError, values, errors, setValue, submit: saveSection, save, deleteRow } = useSection(def);
+  const submit = async () => {
+    if ((await saveSection()) && onSaved) onSaved();
+  };
   const rowDelete = ROW_DELETES[def.name];
   const [pending, setPending] = useState<{ path: string; index: number } | null>(null);
   const [deleting, setDeleting] = useState(false);
