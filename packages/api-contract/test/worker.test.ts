@@ -91,6 +91,8 @@ const requirementItem = fc.record({
   requirementType: str(80),
   documentType: fc.constantFrom('REQUIRED', 'OPTIONAL'),
   status: fc.constantFrom(...REQUIREMENT_ITEM_STATUSES),
+  description: fc.string({ maxLength: 1000 }),
+  hasExpiration: fc.boolean(),
 })
 
 const additionalCredential = fc.record({
@@ -215,6 +217,13 @@ describe('profileSchema (E1)', () => {
       }),
       { numRuns: 60 },
     )
+  })
+
+  it('U5b: an item from an api older than its description and expiry flag reads with neither', () => {
+    const p = fc.sample(profileArb, 1)[0]!
+    const old = { id: 'police-check', name: 'Police Check', requirementType: 'police-check', documentType: 'REQUIRED', status: 'missing' }
+    const parsed = profileSchema.safeParse({ ...p, requirements: { ...p.requirements, mandatory: [old] } })
+    expect(parsed.success && parsed.data.requirements.mandatory[0]).toEqual({ ...old, description: '', hasExpiration: false })
   })
 
   it('U4e: an api older than requirements.additional still reads (none); an unknown category does not', () => {

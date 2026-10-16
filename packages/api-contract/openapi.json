@@ -2917,6 +2917,15 @@
                                   "rejected",
                                   "expired"
                                 ]
+                              },
+                              "description": {
+                                "default": "",
+                                "type": "string",
+                                "maxLength": 1000
+                              },
+                              "hasExpiration": {
+                                "default": false,
+                                "type": "boolean"
                               }
                             },
                             "required": [
@@ -2924,7 +2933,9 @@
                               "name",
                               "requirementType",
                               "documentType",
-                              "status"
+                              "status",
+                              "description",
+                              "hasExpiration"
                             ],
                             "additionalProperties": false
                           }
@@ -2963,6 +2974,15 @@
                                   "rejected",
                                   "expired"
                                 ]
+                              },
+                              "description": {
+                                "default": "",
+                                "type": "string",
+                                "maxLength": 1000
+                              },
+                              "hasExpiration": {
+                                "default": false,
+                                "type": "boolean"
                               }
                             },
                             "required": [
@@ -2970,7 +2990,9 @@
                               "name",
                               "requirementType",
                               "documentType",
-                              "status"
+                              "status",
+                              "description",
+                              "hasExpiration"
                             ],
                             "additionalProperties": false
                           }
