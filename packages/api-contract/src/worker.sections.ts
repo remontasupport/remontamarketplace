@@ -97,7 +97,14 @@ export type AbnView = z.output<typeof abnViewSchema>
 
 // ---- The two addresses (R3) ------------------------------------------------------------------
 
-export const homeAddressInputSchema = z.strictObject({ streetLine: plainText(1, 120).refine((s) => !s.includes('\n'), 'One line'), localityId: positiveInt })
+/** The street line is optional (user, 2026-10-16): blank or left out is stored as none; the suburb is required. */
+export const homeAddressInputSchema = z.strictObject({
+  streetLine: z.preprocess(
+    (v) => (v === undefined || (typeof v === 'string' && v.trim() === '') ? null : v),
+    plainText(1, 120).refine((s) => !s.includes('\n'), 'One line').nullable(),
+  ),
+  localityId: positiveInt,
+})
 export type HomeAddressInput = z.output<typeof homeAddressInputSchema>
 // The stored shape (`homeAddressSchema`, with suburb/state/postcode) lives in worker.contract.ts beside the read.
 

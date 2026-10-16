@@ -216,6 +216,12 @@ describe.skipIf(!local)('the section writes on PostGIS', () => {
     expect(await h.db.workerProfile.findUniqueOrThrow({ where: { id: h.a.profileId }, select: LEGACY })).toEqual(before)
     expect(await h.db.workerLocation.findFirst({ where: { workerProfileId: h.a.profileId, kind: 'HOME' } })).toEqual(homeBefore)
     expect((await put('/v1/worker/profile/home-address', { streetLine: '1 A St', localityId: 999_999_999 })).json().error.fields).toHaveProperty('localityId')
+    // The street line is optional (2026-10-16): a suburb alone is saved and read back with no street.
+    const suburbOnly = await put('/v1/worker/profile/home-address', { streetLine: '', localityId: locality.id })
+    expect(suburbOnly.statusCode, suburbOnly.body).toBe(200)
+    expect(suburbOnly.json()).toEqual({ streetLine: null, localityId: locality.id, suburb: locality.suburb, state: locality.state, postcode: locality.postcode })
+    expect((await profile()).homeAddress).toEqual(suburbOnly.json())
+    expect((await h.db.workerProfile.findUniqueOrThrow({ where: { id: h.a.profileId }, select: { homeStreetLine: true } })).homeStreetLine).toBeNull()
   })
 
   it('P6: the service area places the worker (an unplaced one too), writes the legacy columns, and the reconciler keeps it', async () => {
