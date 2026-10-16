@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useMemo, type ReactNode } from "react";
+import { useState, useEffect, useMemo, Suspense, type ReactNode } from "react";
+import { useSearchParams } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { accountApi } from "@/lib/api/account";
 import type { ApiOutcome } from "@/lib/api/outcome";
@@ -26,7 +27,11 @@ function accountMessageOf(r: Exclude<ApiOutcome<unknown>, { kind: "ok" }>, fallb
 
 function AccountSettingsPanelContent({ extraTabs = [] }: { extraTabs?: readonly ExtraTab[] }) {
   const { data: session, update } = useSession();
-  const [activeTab, setActiveTab] = useState<Tab>("username");
+  // A link straight to an added tab (?tab=services, ?tab=bank-account) opens on it from the first render: choosing it in
+  // an effect after the first paint showed Username & password for a moment (user, 2026-10-16: "the screen flicks").
+  const requestedTab = useSearchParams().get("tab");
+  const wantedTab = requestedTab && extraTabs.some((t) => t.id === requestedTab) ? requestedTab : null;
+  const [activeTab, setActiveTab] = useState<Tab>(wantedTab ?? "username");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -52,16 +57,15 @@ function AccountSettingsPanelContent({ extraTabs = [] }: { extraTabs?: readonly 
     if (session?.user?.email) {
       setEmail(session.user.email);
     }
-    if (session?.user?.role === "COORDINATOR") {
+    if (session?.user?.role === "COORDINATOR" && !wantedTab) {
       setActiveTab("personal");
     }
-  }, [session]);
+  }, [session, wantedTab]);
 
-  // A link straight to an added tab (the old bank-account page sends workers here).
+  // A later change of ?tab= on the same page (a link from one tab to another) follows it.
   useEffect(() => {
-    const wanted = new URLSearchParams(window.location.search).get("tab");
-    if (wanted && extraTabs.some((t) => t.id === wanted)) setActiveTab(wanted);
-  }, [extraTabs]);
+    if (wantedTab) setActiveTab(wantedTab);
+  }, [wantedTab]);
 
   // Fetch coordinator profile on mount
   useEffect(() => {
@@ -364,5 +368,10 @@ function AccountSettingsPanelContent({ extraTabs = [] }: { extraTabs?: readonly 
 // The app's one query cache (the root layout's), not one of its own (bug 2026-10-16: a private cache here meant a
 // service added in the Services tab, or the bank account, did not reach the other pages until a hard refresh).
 export default function AccountSettingsPanel({ extraTabs }: { extraTabs?: readonly ExtraTab[] }) {
-  return <AccountSettingsPanelContent extraTabs={extraTabs} />;
+  // Next asks for a Suspense boundary around useSearchParams (a server render shows the fallback; a navigation never does).
+  return (
+    <Suspense fallback={null}>
+      <AccountSettingsPanelContent extraTabs={extraTabs} />
+    </Suspense>
+  );
 }

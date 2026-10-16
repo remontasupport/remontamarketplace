@@ -1,6 +1,6 @@
 // P10 (U2 R8.5): the sidebar's order, every static link is a page under src/app, every Edit
 // Profile child is a profile page, and every old Edit Profile URL redirects to one.
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { profileSchema, type Profile } from "@remonta/api-contract";
 import { describe, expect, it } from "vitest";
@@ -9,7 +9,12 @@ import { isProfilePage } from "@/features/worker/definitions";
 import { applyReadiness, EDIT_SERVICES_LINK, editProfileBadge, editProfileChildren, groupOfPath, requirementsForSteps, SERVICE_AREA_LINK, servicesChildren, WORKER_MENU } from "./workerMenu";
 
 const APP = join(__dirname, "../../app");
-const pageExists = (href: string) => existsSync(join(APP, ...href.split("/").filter(Boolean), "page.tsx"));
+// A page file at the path, or in a route group under it ("(home)", 2026-10-16): groups do not change the URL.
+const pageExists = (href: string) => {
+  const dir = join(APP, ...href.split("?")[0]!.split("/").filter(Boolean));
+  if (existsSync(join(dir, "page.tsx"))) return true;
+  return existsSync(dir) && readdirSync(dir).some((d) => d.startsWith("(") && existsSync(join(dir, d, "page.tsx")));
+};
 const profileSlug = (href: string) => /^\/dashboard\/worker\/profile\/([^/?]+)$/.exec(href)?.[1];
 
 const base: Profile = profileSchema.parse({

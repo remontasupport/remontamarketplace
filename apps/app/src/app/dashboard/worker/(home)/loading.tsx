@@ -5,6 +5,9 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
  * Next.js App Router shows this file instantly when navigating TO /dashboard/worker
  * while the server is fetching session, profile, and job data.
  * Mirrors the exact structure of WorkerDashboard to prevent layout shift.
+ *
+ * In the (home) route group (2026-10-16) so it covers the dashboard home only: at the worker level it was shown while
+ * navigating to every worker page -- Account, the Services pages -- a flash of the home skeleton ("the screen flicks").
  */
 export default function DashboardLoading() {
   return (
