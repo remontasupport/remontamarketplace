@@ -150,8 +150,11 @@ export const UNIQUE_SERVICES = [
 
 export const PERSONALITIES = ['Outgoing and engaging', 'Calm and relaxed'] as const
 
-/** Today's stored values; the admin filter is built on them (normalisation is follow-up 13). */
-export const GENDERS = ['Male', 'Female'] as const
+/**
+ * Today's stored values; the admin filter is built on Male and Female (normalisation is follow-up 13). "Prefer not to
+ * say" (user, 2026-10-14) is an answer: it completes the field, and such a worker matches neither gender filter.
+ */
+export const GENDERS = ['Male', 'Female', 'Prefer not to say'] as const
 
 export const VEHICLE_ANSWERS = ['Yes', 'No'] as const
 
