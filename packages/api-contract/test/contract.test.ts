@@ -53,8 +53,8 @@ describe('the contracts as committed', () => {
     expect(extra.success).toBe(false)
   })
 
-  it('declare the three admin lists behind the ADMIN role, per-user limited, privately cacheable for a minute (U2)', () => {
-    expect(Object.keys(adminContract.entries).sort()).toEqual(['listSuspendedWorkers', 'listUsers', 'searchWorkers'])
+  it('declare the three admin lists and the document link (U3b) behind the ADMIN role, per-user limited, privately cacheable for a minute (U2)', () => {
+    expect(Object.keys(adminContract.entries).sort()).toEqual(['getDocumentLink', 'listSuspendedWorkers', 'listUsers', 'searchWorkers'])
     for (const e of Object.values(adminContract.entries)) {
       expect(e.method).toBe('GET')
       expect(e.meta.access).toEqual({ roles: ['ADMIN'] })

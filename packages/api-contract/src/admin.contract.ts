@@ -184,6 +184,10 @@ const adminRead = (limits: { user: number; ip: number }) =>
     privateCacheSeconds: 60,
   })
 
+/** U3b: a short-lived link to view a worker's private document (the compliance review page opens it through the app). */
+export const adminDocumentParamsSchema = z.strictObject({ documentId: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/, 'Not a document id') })
+export const adminDocumentLinkSchema = z.strictObject({ url: z.url().max(4096), expiresAt: z.iso.datetime({ offset: true }).nullable() })
+
 export const adminContract = defineContract('admin', {
   searchWorkers: {
     method: 'GET',
@@ -210,5 +214,14 @@ export const adminContract = defineContract('admin', {
     query: suspendedListQuerySchema,
     responses: { 200: suspendedListResponseSchema },
     meta: adminRead(ADMIN_LIST_LIMITS),
+  },
+
+  getDocumentLink: {
+    method: 'GET',
+    path: '/v1/admin/documents/:documentId/link',
+    summary: "A five-minute link to view one worker's service document (a private file), or the stored URL of a legacy public one.",
+    pathParams: adminDocumentParamsSchema,
+    responses: { 200: adminDocumentLinkSchema },
+    meta: adminRead({ user: 120, ip: 300 }),
   },
 })

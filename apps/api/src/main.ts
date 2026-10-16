@@ -41,14 +41,15 @@ async function main() {
   const hasher = new WorkerPoolHasher({ threads: config.HASH_CONCURRENCY })
   // EMAIL_MODE=log (local development on a copy of real data): nothing is sent, the email is printed.
   const mailer: Mailer = config.EMAIL_MODE === 'log' ? new LogMailer() : new ResendMailer(http, { apiKey: config.RESEND_API_KEY, from: config.EMAIL_FROM })
-  // The bucket (U3): the browser uploads straight to it under a ticket; private, upload-only.
+  // The bucket (U3): the browser uploads straight to it under a ticket; private. Photos leave it for Blob; service
+  // documents (U3b) stay in it under documents/<profileId>/ and are viewed through signed links.
   // Vercel Blob: where every photo lives and is served from -- the clean copies go there.
   const bucket = new GcsPhotoStore({ bucket: config.PHOTO_BUCKET, publicBaseUrl: config.PHOTO_PUBLIC_BASE_URL, apiEndpoint: config.GCS_API_ENDPOINT, timeoutMs: config.GCS_TIMEOUT_MS })
   const blobStore = new VercelBlobPhotoStore(config.BLOB_READ_WRITE_TOKEN)
   const handlerSets = [
     platformHandlers({ db, clock: systemClock }),
     // The admin lists (U2): behind the api token; the search is memoised per instance.
-    adminHandlers({ db, clock: systemClock }),
+    adminHandlers({ db, clock: systemClock, bucket }),
     // The worker's own profile (worker-profile-api U1): per-user bodies, never memoised.
     workerHandlers({ db, clock: systemClock, photos: { bucket, publicBaseUrl: config.PHOTO_PUBLIC_BASE_URL, ipHashSecret: config.IP_HASH_SECRET, blob: blobStore } }),
     registrationHandlers({

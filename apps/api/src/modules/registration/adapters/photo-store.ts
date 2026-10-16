@@ -3,9 +3,10 @@
 //
 // Two ports (U3, option 2):
 //   PhotoStore      the bucket: the browser uploads under a ticket; the api inspects,
-//                   reads and deletes (gcs-photo-store.ts). Private, upload-only.
+//                   reads and deletes (gcs-photo-store.ts). Private: photos leave it; service documents (U3b) stay under documents/.
 //   BlobPhotoStore  Vercel Blob, where every photo lives and is served from: the
 //                   processing handler puts the clean copies there.
+import type { DocumentType } from '@remonta/schemas/document-type'
 import type { ImageType } from '@remonta/schemas/image-type'
 
 /** A signed POST policy: the browser sends `fields` plus the file as a multipart form to `url`. */
@@ -29,17 +30,26 @@ export class StoreUnavailable extends Error {
 }
 
 export interface PhotoStore {
-  /** A policy bound to exactly `key`, `contentType`, at most `maxBytes`, until `expiresAt` (R1.4). */
-  createUploadTicket(key: string, contentType: ImageType, maxBytes: number, expiresAt: Date): Promise<UploadTicket>
+  /** A policy bound to exactly `key`, `contentType`, at most `maxBytes`, until `expiresAt` (R1.4). A photo or (U3b) a service document. */
+  createUploadTicket(key: string, contentType: ImageType | DocumentType, maxBytes: number, expiresAt: Date): Promise<UploadTicket>
   /** Size and content type, or null when the object does not exist. */
   inspect(key: string): Promise<ObjectInfo | null>
   /** The first `bytes` bytes (fewer if the object is shorter). */
   readPrefix(key: string, bytes: number): Promise<Uint8Array>
+  /**
+   * inspect and readPrefix in one call where the store allows it (audit P8: the confirm made two): the first `bytes`
+   * bytes with the object's size and content type, or null when the object does not exist.
+   */
+  inspectWithPrefix(key: string, bytes: number): Promise<{ info: ObjectInfo; head: Uint8Array } | null>
   read(key: string): Promise<Buffer>
   /** Stores `data` and returns its public URL (public only where the bucket's prefix allows it). */
   write(key: string, data: Buffer, contentType: string, opts: { cacheControl: string }): Promise<string>
   /** A missing object is not an error. */
   delete(key: string): Promise<void>
+  /** U3b: a server-side copy inside the bucket (the bytes never leave it). */
+  copy(fromKey: string, toKey: string): Promise<void>
+  /** U3b: a V4 signed GET for a private object, shown inline under `fileName`, valid until `expiresAt`. */
+  signedReadUrl(key: string, expiresAt: Date, opts: { fileName: string; contentType: string }): Promise<string>
 }
 
 export interface BlobPhotoStore {

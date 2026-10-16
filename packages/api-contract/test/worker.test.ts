@@ -93,6 +93,17 @@ const requirementItem = fc.record({
   status: fc.constantFrom(...REQUIREMENT_ITEM_STATUSES),
 })
 
+const additionalCredential = fc.record({
+  id: str(80),
+  name: str(120),
+  category: fc.constantFrom('INSURANCE' as const, 'TRANSPORT' as const),
+  description: fc.string({ maxLength: 1000 }),
+  documentType: fc.constantFrom('REQUIRED' as const, 'OPTIONAL' as const, 'CONDITIONAL' as const),
+  conditionKey: nstr(80),
+  requiredIfTrue: fc.option(fc.boolean(), { nil: null }),
+  status: fc.constantFrom(...REQUIREMENT_ITEM_STATUSES),
+})
+
 export const profileArb: fc.Arbitrary<Profile> = fc.record({
   id: str(40),
   names: fc.record({ firstName: str(100), middleName: nstr(100), lastName: str(100) }),
@@ -120,8 +131,46 @@ export const profileArb: fc.Arbitrary<Profile> = fc.record({
     profileCompleted: fc.boolean(),
     percent: fc.integer({ min: 0, max: 100 }),
   }),
-  requirements: fc.record({ mandatory: fc.array(requirementItem, { maxLength: 20 }), trainings: fc.array(requirementItem, { maxLength: 20 }) }),
+  requirements: fc.record({ mandatory: fc.array(requirementItem, { maxLength: 20 }), trainings: fc.array(requirementItem, { maxLength: 20 }), additional: fc.array(additionalCredential, { maxLength: 6 }) }),
   services: fc.array(fc.record({ categoryId: str(80), categoryName: str(120), subcategoryIds: fc.array(str(80), { maxLength: 5 }), subcategoryNames: fc.array(str(120), { maxLength: 5 }) }), { maxLength: 10 }),
+  serviceRegistrations: fc.array(
+    fc.record({
+      categoryId: fc.constantFrom('nursing-services' as const, 'therapeutic-supports' as const),
+      nursingType: fc.option(fc.constantFrom('registered' as const, 'enrolled' as const), { nil: null }),
+      hasExperience: fc.option(fc.boolean(), { nil: null }),
+      registrationNumber: nstr(60),
+      expiryDate: fc.option(fc.constantFrom('2027-05-31', '2035-06-22'), { nil: null }),
+    }),
+    { maxLength: 2 },
+  ),
+  serviceDocuments: fc.array(
+    fc.record({
+      id: str(40),
+      serviceName: str(120),
+      requirementType: str(80),
+      name: str(200),
+      status: fc.constantFrom('SUBMITTED', 'APPROVED', 'REJECTED'),
+      url: nstr(2048),
+      fileName: nstr(200),
+      uploadedAt: fc.option(fc.constant('2026-10-15T01:02:03.000Z'), { nil: null }),
+    }),
+    { maxLength: 3 },
+  ),
+  complianceDocuments: fc.array(
+    fc.record({
+      id: str(40),
+      requirementType: str(120),
+      name: str(200),
+      status: fc.constantFrom('SUBMITTED', 'APPROVED', 'PENDING'),
+      documentCategory: fc.option(fc.constantFrom('PRIMARY', 'SECONDARY', 'WORKING_RIGHTS'), { nil: null }),
+      url: nstr(2048),
+      fileName: nstr(200),
+      uploadedAt: fc.option(fc.constant('2026-10-15T01:02:03.000Z'), { nil: null }),
+      expiresAt: fc.option(fc.constant('2027-01-01T00:00:00.000Z'), { nil: null }),
+      isCitizen: fc.option(fc.boolean(), { nil: null }),
+    }),
+    { maxLength: 3 },
+  ),
   sections: fc.record({
     availability: fc.array(fc.record({ day: fc.constantFrom(...DAYS_OF_WEEK), startMinute: fc.integer({ min: 0, max: 1440 }), endMinute: fc.integer({ min: 0, max: 1440 }) }), { maxLength: 20 }),
     experience: fc.array(fc.record({ domain: fc.constantFrom(...CARE_DOMAINS), isProfessional: fc.boolean(), isPersonal: fc.boolean(), specificAreas: fc.array(str(120), { maxLength: 5 }), otherAreas: fc.array(str(120), { maxLength: 5 }), description: nstr(2000) }), { maxLength: 5 }),
@@ -166,6 +215,15 @@ describe('profileSchema (E1)', () => {
       }),
       { numRuns: 60 },
     )
+  })
+
+  it('U4e: an api older than requirements.additional still reads (none); an unknown category does not', () => {
+    const p = fc.sample(profileArb, 1)[0]!
+    const { additional: _gone, ...older } = p.requirements
+    const parsed = profileSchema.safeParse({ ...p, requirements: older })
+    expect(parsed.success && parsed.data.requirements.additional).toEqual([])
+    const bad = { ...p, requirements: { ...p.requirements, additional: [{ id: 'x', name: 'X', category: 'IDENTITY', description: '', documentType: 'REQUIRED', conditionKey: null, requiredIfTrue: null, status: 'missing' }] } }
+    expect(profileSchema.safeParse(bad).success).toBe(false)
   })
 
   it('never carries the stored bank account: only the masked shape fits', () => {

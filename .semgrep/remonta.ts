@@ -19,6 +19,8 @@ async function handler(deps: any, req: any) {
   // ruleid: remonta-api-no-manual-limit-or-captcha
   await deps.rateLimiter.hit(`x:${req.ip}`, 10, "1h");
   // ruleid: remonta-api-no-manual-limit-or-captcha
+  await deps.rateLimiter.hitMany([{ key: `x:${req.ip}`, limit: 10, window: "1h" }]);
+  // ruleid: remonta-api-no-manual-limit-or-captcha
   await deps.captcha.verify(req.body.captchaToken, "worker_register", req.ip);
   // ok: remonta-api-no-manual-limit-or-captcha
   await deps.localities.search(req.query.q);
