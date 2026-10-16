@@ -4328,3 +4328,6 @@ Noted: #73 (`feat/services-api-reads` at `d77b29f`) merged into `feat/services-a
 
 **User input**: "c85d20c i dont see this in Vercel"
 **AI response**: nothing in `apps/app/vercel.json` skips builds (same file built the earlier merges); previews deployed at 03:04Z, so the integration worked just before; Vercel status page shows no incident today. Conclusion: the push event for `c85d20c` was not received/processed. Gave the user the manual production deploy steps (Vercel -> remonta-app -> Create Deployment from `main` / `c85d20c`; same for remontamarketplace for consistency) and the fallback (a small PR to main to fire a new push event).
+
+**User input**: "c85d20c has been deployed"
+**AI response**: verified: GitHub deployment "Production – remonta-app" for `c85d20c` at 04:23:39Z, Vercel status "Deployment has completed". Production check (booleans only, body never printed): `/workers/<id>/profile` of a worker with bank details, signed out -> 1 action call, no profile data, no bank fields. The fix is live. Rollback deployment for CLAUDE.md to be re-recorded at the next deployment-settings change (the c85d20c deployment is now production). Next: U5c.
