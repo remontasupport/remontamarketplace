@@ -3,7 +3,7 @@
 // a 401 with a fresh token, and a typed outcome instead of a thrown error. The section
 // saves go through the form engine (saveSection); this client holds the read and the
 // photo calls, which upload files rather than save a body.
-import { createClient, workerContract, type ConfirmServiceDocumentBody, type DocumentLink, type Profile, type ServiceDocument, type ServiceDocumentTicketRequest, type ServiceDocumentTicketResponse, type ServiceRegistrationBody, type ServiceRegistrationView, type ServicesBody } from "@remonta/api-contract";
+import { createClient, workerContract, type CitizenshipBody, type ComplianceDocument, type ConfirmComplianceDocumentBody, type ConfirmServiceDocumentBody, type DocumentLink, type Profile, type ServiceDocument, type ServiceDocumentTicketRequest, type ServiceDocumentTicketResponse, type ServiceRegistrationBody, type ServiceRegistrationView, type ServicesBody } from "@remonta/api-contract";
 import { apiToken } from "@/lib/api/admin";
 import { failure, type ApiOutcome } from "@/lib/api/outcome";
 import { Unauthenticated, type TokenSource } from "@/lib/api/token";
@@ -41,6 +41,12 @@ export interface WorkerApi {
   deleteServiceDocument(documentId: string): Promise<ApiOutcome<{ documentId: string }>>;
   /** U3b: a five-minute link to view one of the worker's service documents. */
   getServiceDocumentLink(documentId: string): Promise<ApiOutcome<DocumentLink>>;
+  /** U4a: record an uploaded compliance document (identity, a check, a training, the Code of Conduct). */
+  confirmComplianceDocument(body: ConfirmComplianceDocumentBody): Promise<ApiOutcome<ComplianceDocument>>;
+  /** U4a: delete one of the worker's compliance documents and its file. */
+  deleteComplianceDocument(documentId: string): Promise<ApiOutcome<{ documentId: string }>>;
+  /** U4a: the Right to Work citizenship answer. */
+  putCitizenship(body: CitizenshipBody): Promise<ApiOutcome<ComplianceDocument>>;
 }
 
 export interface WorkerApiDeps {
@@ -62,7 +68,10 @@ type EntryName =
   | "createServiceDocumentTicket"
   | "confirmServiceDocument"
   | "deleteServiceDocument"
-  | "getServiceDocumentLink";
+  | "getServiceDocumentLink"
+  | "confirmComplianceDocument"
+  | "deleteComplianceDocument"
+  | "putCitizenship";
 
 export function createWorkerApi(deps: WorkerApiDeps): WorkerApi {
   const doFetch = deps.fetch ?? ((input: RequestInfo | URL, init?: RequestInit) => globalThis.fetch(input, init));
@@ -122,6 +131,9 @@ export function createWorkerApi(deps: WorkerApiDeps): WorkerApi {
     confirmServiceDocument: (body) => call("confirmServiceDocument", { body }),
     deleteServiceDocument: (documentId) => call("deleteServiceDocument", { params: { documentId } }),
     getServiceDocumentLink: (documentId) => call("getServiceDocumentLink", { params: { documentId } }),
+    confirmComplianceDocument: (body) => call("confirmComplianceDocument", { body }),
+    deleteComplianceDocument: (documentId) => call("deleteComplianceDocument", { params: { documentId } }),
+    putCitizenship: (body) => call("putCitizenship", { body }),
   };
 }
 

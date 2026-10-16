@@ -1,87 +1,27 @@
 /**
- * Identity Documents Query Hook
- *
- * Manages fetching and caching of identity documents
- * Uses TanStack Query for smart caching and automatic refetching
- *
- * Following Best_Fetching_Practic.md:
- * ✅ 5-minute staleTime
- * ✅ 30-minute cache
- * ✅ Single source of truth
- * ✅ Automatic cache invalidation
+ * Identity documents (api-review U4b): the 100-point documents and the vehicle driver's licence, selected from the
+ * profile read's `complianceDocuments` (apps/api) in the shape the identity step reads.
  */
 
-import { useQuery } from '@tanstack/react-query';
-import { useSession } from 'next-auth/react';
+"use client";
 
-interface IdentityDocument {
-  id: string;
-  documentType: string;
-  documentUrl: string;
-  documentCategory: string | null;
-  status: string;
-  uploadedAt: string | null;
-  reviewedAt: string | null;
-  approvedAt: string | null;
-  rejectedAt: string | null;
-  rejectionReason: string | null;
-}
+import { identityDocumentsOf } from "@/features/worker/compliance";
+import { PROFILE_QUERY_KEY } from "@/features/worker/profile";
+import { useProfileSelect } from "./useComplianceDocuments";
 
-interface IdentityDocumentsResponse {
-  success: boolean;
-  documents: IdentityDocument[];
-}
-
-/**
- * Query key factory for identity documents
- */
+/** Kept for the pages that invalidate by it: the documents now live in the profile entry. */
 export const identityDocumentsKeys = {
-  all: ['identity-documents'] as const,
-  user: (userId: string | undefined) => [...identityDocumentsKeys.all, userId] as const,
+  all: PROFILE_QUERY_KEY,
 };
 
-/**
- * Fetch all identity documents for the current user
- */
+/** All identity documents of the signed-in worker. */
 export function useIdentityDocuments() {
-  const { data: session } = useSession();
-
-  return useQuery({
-    queryKey: identityDocumentsKeys.user(session?.user?.id),
-    queryFn: async () => {
-      const response = await fetch('/api/worker/identity-documents');
-      if (!response.ok) {
-        throw new Error('Failed to fetch identity documents');
-      }
-      const data: IdentityDocumentsResponse = await response.json();
-      return data;
-    },
-    enabled: !!session?.user?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutes - data considered fresh
-    gcTime: 30 * 60 * 1000,   // 30 minutes - cache retention
-  });
+  return useProfileSelect(identityDocumentsOf);
 }
 
-/**
- * Hook to check if driver's license exists (for vehicle access) and get its details
- *
- * Returns:
- * - driverLicense: The document object if exists
- * - isLoading: True while fetching
- * - hasDriverLicense: Boolean indicating if license exists
- */
+/** The driver's licence uploaded for vehicle access, if any. */
 export function useDriverLicense() {
   const { data, isLoading, error } = useIdentityDocuments();
-
-  // Check for driver's license uploaded in "Other Personal Info" (vehicle access)
-  const driverLicense = data?.documents?.find(
-    (doc) => doc.documentType === 'driver-license-vehicle'
-  );
-
-  return {
-    driverLicense: driverLicense || null,
-    isLoading,
-    hasDriverLicense: !!driverLicense,
-    error,
-  };
+  const driverLicense = data?.documents.find((doc) => doc.documentType === "driver-license-vehicle") ?? null;
+  return { driverLicense, isLoading, hasDriverLicense: !!driverLicense, error };
 }

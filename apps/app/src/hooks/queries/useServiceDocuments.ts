@@ -14,7 +14,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Profile, ServiceDocument } from "@remonta/api-contract";
 import { workerApi } from "@/features/worker/api";
-import { PROFILE_QUERY_KEY, PROFILE_STALE_MS, readProfile } from "@/features/worker/profile";
+import { currentProfile, PROFILE_QUERY_KEY, PROFILE_STALE_MS, readProfile, refreshLegacyProfile, reloadProfileInto } from "@/features/worker/profile";
 import { categoryIdOf, legacyDocumentOf, messageOf, uploadServiceDocument as uploadToApi, type LegacyServiceDocument } from "@/features/worker/services";
 import { deleteServiceDocument as legacyDelete, uploadServiceDocument as legacyUpload } from "@/services/worker/serviceDocuments.service";
 
@@ -27,26 +27,6 @@ export const serviceDocumentsKeys = {
 export interface ServiceDocumentsResponse {
   success: boolean;
   documents: LegacyServiceDocument[];
-}
-
-type QueryClient = ReturnType<typeof useQueryClient>;
-
-function refreshLegacyProfile(qc: QueryClient): void {
-  import("@/hooks/queries/useWorkerProfile")
-    .then(({ workerProfileKeys }) => qc.invalidateQueries({ queryKey: workerProfileKeys.all }))
-    .catch(() => {});
-}
-
-async function reloadProfile(qc: QueryClient): Promise<void> {
-  try {
-    qc.setQueryData(PROFILE_QUERY_KEY, await readProfile("reload"));
-  } catch {
-    await qc.invalidateQueries({ queryKey: PROFILE_QUERY_KEY });
-  }
-}
-
-async function currentProfile(qc: QueryClient): Promise<Profile> {
-  return qc.getQueryData<Profile>(PROFILE_QUERY_KEY) ?? qc.fetchQuery({ queryKey: PROFILE_QUERY_KEY, queryFn: () => readProfile("default"), staleTime: PROFILE_STALE_MS });
 }
 
 /** The worker's service documents, from the profile read. */
@@ -111,7 +91,7 @@ export function useUploadServiceDocument() {
       if (ctx?.previous) qc.setQueryData(PROFILE_QUERY_KEY, ctx.previous);
     },
     onSettled: async () => {
-      await reloadProfile(qc);
+      await reloadProfileInto(qc);
       refreshLegacyProfile(qc);
     },
   });
@@ -143,7 +123,7 @@ export function useDeleteServiceDocument() {
       if (ctx?.previous) qc.setQueryData(PROFILE_QUERY_KEY, ctx.previous);
     },
     onSettled: async () => {
-      await reloadProfile(qc);
+      await reloadProfileInto(qc);
       refreshLegacyProfile(qc);
     },
   });

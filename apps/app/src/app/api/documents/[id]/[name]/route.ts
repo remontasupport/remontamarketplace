@@ -1,9 +1,9 @@
-// GET /api/documents/<id>/<file name>: a worker's private document (api-review U3c, U3b design). This path is what a
-// service document row stores as `documentUrl`, ending in the file's real extension, so every page that opens
-// `documentUrl` directly -- the admin compliance review (link, iframe for a PDF, img for a photo) and the worker's
-// Services pages -- keeps working. The route checks the session, asks apps/api for a five-minute signed link (the
-// worker's own document, or any document for an admin) and redirects to it. Nothing is cached; the name segment is
-// only for the viewer and is not trusted.
+// GET /api/documents/<id>/<file name>: a worker's private document (api-review U3c, U3b design; compliance U4b). This
+// path is what a service or compliance document row stores as `documentUrl`, ending in the file's real extension, so
+// every page that opens `documentUrl` directly -- the admin compliance review (link, iframe for a PDF, img for a photo)
+// and the worker's Services and Compliance pages -- keeps working. The route checks the session, asks apps/api for a
+// five-minute signed link (any of the worker's own documents, or any document for an admin) and redirects to it.
+// Nothing is cached; the name segment is only for the viewer and is not trusted.
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { adminContract, createClient, workerContract } from "@remonta/api-contract";
@@ -44,7 +44,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     res =
       session.user.role === "ADMIN"
         ? await createClient(adminContract, { baseUrl }).getDocumentLink({ params: { documentId: id } }, { headers })
-        : await createClient(workerContract, { baseUrl }).getServiceDocumentLink({ params: { documentId: id } }, { headers });
+        : await createClient(workerContract, { baseUrl }).getDocumentLink({ params: { documentId: id } }, { headers });
   } catch {
     // The api unreachable, or an answer outside the contract.
     return answer(503, "This document can't be opened right now. Please try again.");

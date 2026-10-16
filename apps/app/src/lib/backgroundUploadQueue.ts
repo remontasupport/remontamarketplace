@@ -3,17 +3,9 @@
 /**
  * Background Upload Queue
  *
- * Uploads compliance documents via POST /api/compliance/upload.
- * Uses plain fetch() with FormData — no server action serialization,
- * no RPC layer, each request is a standard multipart HTTP POST.
- *
- * Why fetch() instead of a server action?
- * ─────────────────────────────────────────
- * Server actions go through Next.js's RPC serialization layer. Under
- * concurrent load (4 simultaneous uploads) this layer creates race
- * conditions in FormData/File parsing. A plain fetch() sends each file
- * as a standard multipart/form-data request that the route handles
- * independently with no shared state between concurrent requests.
+ * Uploads compliance documents to apps/api (api-review U4b): the file straight to the private bucket, then the
+ * confirm (`uploadComplianceDocument` in features/worker/compliance.ts). It no longer passes through a Next.js
+ * function.
  *
  * Lifecycle safety
  * ─────────────────
@@ -23,10 +15,12 @@
  *
  * Retry policy
  * ─────────────
- * Up to 3 attempts with 600 ms → 1 200 ms back-off.
- * HTTP 4xx errors (auth, validation) are non-retryable.
- * HTTP 5xx and network errors are retried.
+ * Up to 3 attempts with 600 ms → 1 200 ms back-off, only when the api or the
+ * network was away. A refusal (the file's type or size, a date already passed,
+ * a type not asked for) is shown at once.
  */
+
+import { uploadComplianceDocument } from "@/features/worker/compliance";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -35,32 +29,20 @@
 export type UploadInput = {
   file: File;
   documentType: string;
+  /** The api names the document from its key; kept for the callers. */
   requirementName?: string;
   expiryDate?: string;
 };
 
-export type UploadCallbacks = {
-  onSuccess?: (result: any) => void;
-  onError?: (error: Error) => void;
+export type UploadResult = {
+  success: true;
+  data: { id: string; documentUrl: string; documentType: string; uploadedAt: string };
 };
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function buildFormData(input: UploadInput): FormData {
-  const fd = new FormData();
-  fd.append("file", input.file);
-  fd.append("documentType", input.documentType);
-  if (input.requirementName) fd.append("documentName", input.requirementName);
-  if (input.expiryDate)      fd.append("expiryDate",   input.expiryDate);
-  return fd;
-}
-
-/** 4xx responses indicate client errors — retrying won't help. */
-function isNonRetryableStatus(status: number): boolean {
-  return status >= 400 && status < 500;
-}
+export type UploadCallbacks = {
+  onSuccess?: (result: UploadResult) => void;
+  onError?: (error: Error) => void;
+};
 
 // ---------------------------------------------------------------------------
 // Queue class
@@ -69,7 +51,7 @@ function isNonRetryableStatus(status: number): boolean {
 class BackgroundUploadQueue {
   private active = new Map<string, Promise<void>>();
 
-  enqueue(input: UploadInput, callbacks: UploadCallbacks = {}): Promise<any> {
+  enqueue(input: UploadInput, callbacks: UploadCallbacks = {}): Promise<UploadResult> {
     const id = `${input.documentType}-${Date.now()}-${Math.random()
       .toString(36)
       .slice(2, 8)}`;
@@ -91,67 +73,26 @@ class BackgroundUploadQueue {
   // Internal
   // -------------------------------------------------------------------------
 
-  private async run(
-    input: UploadInput,
-    callbacks: UploadCallbacks
-  ): Promise<any> {
+  private async run(input: UploadInput, callbacks: UploadCallbacks): Promise<UploadResult> {
     const MAX = 3;
     let lastError: Error = new Error("Upload failed");
 
     for (let attempt = 0; attempt < MAX; attempt++) {
-      let response: Response;
-
-      try {
-        response = await fetch("/api/compliance/upload", {
-          method:      "POST",
-          body:        buildFormData(input),
-          credentials: "same-origin", // send session cookie
-        });
-      } catch (networkErr: any) {
-        // Network-level error (offline, DNS failure, etc.) — retry
-        lastError = networkErr instanceof Error ? networkErr : new Error(String(networkErr));
-        if (attempt < MAX - 1) await wait(600 * (attempt + 1));
-        continue;
+      const r = await uploadComplianceDocument(input.file, { requirementType: input.documentType, expiryDate: input.expiryDate ?? null });
+      if (r.ok) {
+        const d = r.document;
+        const result: UploadResult = {
+          success: true,
+          data: { id: d.id, documentUrl: d.url ?? "", documentType: d.requirementType, uploadedAt: d.uploadedAt ?? new Date().toISOString() },
+        };
+        callbacks.onSuccess?.(result);
+        return result;
       }
-
-      // 4xx = non-retryable (auth failure, validation error, file too large, etc.)
-      if (isNonRetryableStatus(response.status)) {
-        const body = await response.json().catch(() => ({}));
-        lastError = new Error(body?.error || `Upload rejected (${response.status})`);
-        callbacks.onError?.(lastError);
-        throw lastError;
-      }
-
-      // 5xx = server / Neon cold-start / transient error — retry
-      if (!response.ok) {
-        const body = await response.json().catch(() => ({}));
-        lastError = new Error(body?.error || `Server error (${response.status})`);
-        if (attempt < MAX - 1) await wait(600 * (attempt + 1));
-        continue;
-      }
-
-      // Parse success response
-      let result: any;
-      try {
-        result = await response.json();
-      } catch {
-        lastError = new Error("Invalid response from server");
-        if (attempt < MAX - 1) await wait(600 * (attempt + 1));
-        continue;
-      }
-
-      if (!result.success) {
-        lastError = new Error(result.error || "Upload failed");
-        if (attempt < MAX - 1) await wait(600 * (attempt + 1));
-        continue;
-      }
-
-      // ✅ Upload succeeded
-      callbacks.onSuccess?.(result);
-      return result;
+      lastError = new Error(r.message);
+      if (!r.retryable) break;
+      if (attempt < MAX - 1) await wait(600 * (attempt + 1));
     }
 
-    // All attempts exhausted
     callbacks.onError?.(lastError);
     throw lastError;
   }
