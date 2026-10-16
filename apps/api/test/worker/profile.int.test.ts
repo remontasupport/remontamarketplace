@@ -89,7 +89,7 @@ describe.skipIf(!local)('GET /v1/worker/profile on PostGIS', () => {
     expect(body.id).toBe(h.b.profileId)
     expect(body.serviceArea).toBeNull()
     expect(body.services).toEqual([])
-    expect(body.requirements).toEqual({ mandatory: [], trainings: [] })
+    expect(body.requirements).toEqual({ mandatory: [], trainings: [], additional: [] })
     expect(body.completion).toMatchObject({ accountDetails: false, compliance: false, trainings: false, services: false, profileCompleted: false })
     for (const foreign of [h.a.profileId, 'Mary', 'Parramatta', '0412345678']) expect(res.body).not.toContain(foreign)
     const none = await h.get(h.orphan.userId)
