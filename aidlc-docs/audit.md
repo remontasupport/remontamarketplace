@@ -4368,3 +4368,16 @@ Noted: #73 (`feat/services-api-reads` at `d77b29f`) merged into `feat/services-a
 
 **User input**: "Lastly, when I clicked the Modify your Service, it does not have a smooth navigation, the screen flicks in a second and then goes to the account in an instant, can you improve it"
 **AI response**: measured on the local servers (50 ms samples + screenshots): the main area showed the dashboard home's loading skeleton from ~175 ms to ~575 ms -- `app/dashboard/worker/loading.tsx` is the loading boundary of the whole worker segment. (The Account panel's tab chosen in an effect was a suspect too; the measurement showed the Username form never painted, but the tab now comes from the first render anyway.) Fix `01455ad` on `feat/account-app`: the home page and its skeleton moved into a `(home)` route group (same URL); the panel reads ?tab= via useSearchParams in a Suspense boundary; the menu test's page check knows route groups. After: the service page stays until the Account page renders on its Services tab; no skeleton. Signed out -> sign-in, a client -> unauthorized, a worker -> the home, as before. App 243.
+
+## 2026-10-16 -- Navigation effect, second attempt
+
+**User input (verbatim):** "It didn't fixed, there is still no navigation effect or a loading effect during the navigation"
+
+**Cause:** the new top bar listened for link clicks in the bubbling phase, after Next's `<Link>` had already called
+`preventDefault()`, so every link click looked handled and the bar never started. Where a bar did show, the fetch
+interceptor's `done()` ended it as soon as any request finished.
+
+**Fix (`feat/account-app` `fe3c9a3`):** click listener in the capture phase; the progress hook counts its callers and
+finishes only when the last is done; the dashboard page fades in (220 ms). Measured locally ("Modify your Service",
+sampled every 50 ms): bar from 50 ms after the click until the account page's data has loaded; page opacity 0 -> 1 on
+arrival. App gate: 243 tests.
