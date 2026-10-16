@@ -96,6 +96,10 @@ const password = z
     'Password must include uppercase and lowercase letters, numbers and special characters (e.g. @, !, #, %)',
   )
 
+/** The sign-up's email and password rules, reused by Account Settings (api-review U5d). */
+export const accountEmailSchema = email
+export const accountPasswordSchema = password
+
 const identifier = z
   .string()
   .max(200)

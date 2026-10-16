@@ -20,8 +20,8 @@ import {
 } from '../src/index'
 
 describe('the worker contract', () => {
-  it('passes every check beside the other three areas', () => {
-    expect(contracts.map((c) => c.area)).toEqual(['platform', 'registration', 'admin', 'worker'])
+  it('passes every check beside the other areas', () => {
+    expect(contracts.map((c) => c.area)).toEqual(['platform', 'registration', 'admin', 'worker', 'account'])
     expect(checkContracts(contracts, publicEndpoints as PublicEndpoint[])).toEqual([])
   })
 
