@@ -4422,3 +4422,17 @@ separate CPR), two upload buttons on the page, `?step=cpr` -> `?step=first-aid-c
 **Correction:** the entry above says "App gate passed"; it did not. The gate failed on two `no-explicit-any` in the new
 `FirstAidCprStep.tsx`, and `53dcb89` was pushed regardless (the gate's result was not checked before the push).
 `1253532` types the props (`unknown`); the app gate now passes. No behaviour change.
+
+## 2026-10-16 -- Release position recorded
+
+**User input (verbatim):** "great! Now for the final confirmation, the only api that left in a server side is the My Jobs, right? and then all the changes will jsut take effect if we merge pr# 57?"
+
+**Answer (checked against the refs):** the worker dashboard is on apps/api except the jobs (My Jobs, apply/withdraw, the
+dashboard's job slider and `/api/geocode`); sign-in, the sign-up phone check and the coordinator/client/admin areas stay
+on the app by design. PR #57 alone is not the release: `feat/account-app` `1253532` holds 65 commits not in it; the
+production api (`182f94f`) must be promoted (`4b41ba1`, with the migrations) before the app merges.
+
+**User input (verbatim):** "can you update the ai dlc with that? I still need have to add a feature before I release these new updates, make sure the ai dlc should be in order that you have mentioned"
+
+**Record:** `aidlc-state.md` Current Stage rewritten (2026-10-16 end of day) and "Resume here" set to: the next feature
+-> preview checklist -> promote the api -> production api checks -> merge the app -> production checks.

@@ -8,7 +8,27 @@
   first"). Record branch `aidlc/api-review` (from `aidlc/worker-profile-api` `b217341`). The previous cycle,
   worker-profile-api, is **parked** with open work: `aidlc-docs/archive/worker-profile-api/PARKED.md` (PR #57 held,
   the prod promotion of `182f94f...`, the column tests).
-- **Current Stage** (saved 2026-10-15 end of day, for the resume). The review covers three worker sections: **My
+- **Current Stage (saved 2026-10-16 end of day -- READ THIS FIRST).** The worker dashboard is on `apps/api` except
+  the jobs (excluded by the user). Everything is built and pushed; **nothing of it is released**: the user will add one
+  more feature first (user, 2026-10-16: "I still need have to add a feature before I release these new updates").
+
+  **Where things are:**
+  - `main` `4b41ba1` (#84). Every api change is merged (#72, #74, #76-#84); staging runs image
+    `4b41ba18ced9375f2c303c7f00f5058f8fbe093b` (= `main`), healthy.
+  - **Production api: `182f94f`** (#60, 2026-10-14), 59 commits behind `main`. Not promoted.
+  - **App: all of it on `feat/account-app` `1253532`** (worktree `../remonta-pr57`, where the local servers run).
+    It contains PR #57 (`feat/edit-profile-app` `6b4a9bd`) and the whole stack: services-app (#68, #71, #73, #75) <-
+    U5a `feat/retire-old-profile-pages` <- U5b `feat/compliance-frame` <- U5c `feat/dashboard-home` <- U5d + the
+    2026-10-16 fixes (photo, street optional, Services menu and Account tab, shared query cache, flicker, navigation
+    bar and fade, Complete -> Service Area -> dashboard, Compliance Next into the trainings, First Aid & CPR on one
+    step). Checked: every branch's content is in `feat/account-app` (only merge commits differ).
+  - **PR #57 alone is NOT the release**: 65 commits of `feat/account-app` are not in it (U5a-U5d and the fixes).
+  - Preview (staging api): https://remonta-app-git-feat-account-app-remontas-projects.vercel.app
+  - Still on the app's own server (by design): the jobs (My Jobs, `/api/worker/jobs/apply` apply/withdraw, the
+    dashboard's job slider and its `/api/geocode`); sign-in/session (NextAuth) and the api-token route; the sign-up
+    phone check `/api/sms/send-verification`; the coordinator, client and admin areas (except the admin lists).
+
+- **Earlier (saved 2026-10-15 end of day; superseded by the block above).** The review covers three worker sections: **My
   Profile** (2026-10-14, `inception/review/my-profile-api-review.md`, F1-F11), **Services** (2026-10-15,
   `inception/review/services-inventory.md`, S1-S9, D1-D4) and **Compliance** (2026-10-15,
   `inception/review/compliance-inventory.md`, C1-C9, DC1-DC4), plus a **performance audit**
@@ -58,26 +78,31 @@
   dashboard-home <- account-app. Left on old routes in the worker area: the jobs (excluded), `/api/geocode` (job search),
   the coordinator profile route (coordinator area).
 
-  **Resume here:**
-  1. `git ls-remote origin main feat/edit-profile-app feat/services-app feat/compliance-app`; ask what was merged since.
-  2. U4b: PR `feat/compliance-app` -> base `feat/services-app` (no App Quality CI on a non-main base: the local gate is
-     the proof; Vercel builds the preview). On the preview (staging api + bucket), with a staging-only worker: one
-     upload per kind (police check, an identity document, right to work with a future expiry and with a past one ->
-     "This document has expired", a training, the Code of Conduct signature), view it (the document route), delete.
-  3. Staging checks still owed from 2026-10-15: `cd apps/api && node --import tsx scripts/staging-services-check.ts`
-     (after `gcloud auth login`; on `chore/staging-services-check`) and one service-document upload on the preview.
-  4. Next units: U4c (trainings: a check of each step now that the hooks moved; the dead fallback steps), U4d ABN +
-     contract (the tax id out of the URL, C3), U4e Additional Credentials, U4f retire (the ignored `apiEndpoint`
-     strings, `/api/worker/requirements` onto the api) + the legacy public files to the private bucket (DC3: identity
-     first).
-  5. Answers owed: the 2026-10-14 list (home addresses, admins seeing them, job/course order, the draft).
-  6. Local: `bash scripts/local/run-api.sh` and `run-app.sh` from `../remonta-pr57` (stop the api before a gate:
-     EPERM; rebuild after an api change; uploads fail locally -- no Google credentials). The browser smoke mints a
-     local NextAuth session (`next-auth/jwt` encode, the local NEXTAUTH_SECRET) for a dev-copy worker; playwright-core
-     lives in an old scratchpad (`2bee6707-.../scratchpad/pw`).
-  7. Follow-ups: F2 the remaining legacy `"use server"` writes (profile, contract until U4d); F3-F5 bank account; F11;
-     the xhr uploader's 120 s timeout for large documents; "Other Documents" still on the legacy action (U4e);
-     `test/my-profile-columns` never opened.
+  **Resume here (2026-10-16 end of day, in this order):**
+  1. `git ls-remote origin main feat/account-app feat/edit-profile-app`; ask what was merged since.
+  2. **The user's next feature** (named at the next session): build it on `feat/account-app` (app) and, if it needs
+     the api, on its own branch from `main` (merge -> staging) -- the rules of [[pr57-carries-local-changes]] still
+     hold. Test locally, then on the preview.
+  3. **Release, in this order, only when the user says** (CLAUDE.md "Preview before production"):
+     a. Preview checklist against staging on the `feat/account-app` preview: sign in (staging-only worker) and open the
+        dashboard · api health 200 · suburb search · a photo upload · a document upload (compliance + a service
+        document) · a full sign-up with an internal email · duplicate-email notice · production domain unchanged.
+        Record it in the construction notes.
+     b. **Promote the api first**: Actions -> deploy-api -> Run workflow -> `stage=prod`, `imageTag=` the FULL
+        40-character sha that passed (a) (today `4b41ba18ced9375f2c303c7f00f5058f8fbe093b`; a newer one if the
+        feature changed the api). The workflow applies the pending migrations to production first
+        (`users.passwordChangedAt`, #78). Re-record the rollback rows (CLAUDE.md) before it.
+     c. Production api checks: `/v1/health` 200, the logs clean.
+     d. **Then the app**: one PR `feat/account-app` -> `main` (contains PR #57; close #57 as superseded), or PR #57
+        then the stack in order -- the user chooses. "Merge pull request", never squash. The app before the api
+        shows "temporarily unavailable" (the contract client refuses the old api's shapes).
+     e. Production checks on `app.remontaservices.com.au`: the same as (a).
+  4. Open items: CodeQL's HaveIBeenPwned SHA-1 alert (false positive; the user dismisses it); "Previous" on the first
+     training does not go back to the last mandatory step (offered, not asked); the answers owed from 2026-10-14; the
+     2026-10-15 staging checks if still wanted.
+  5. Local: `bash scripts/local/run-api.sh` and `run-app.sh` from `../remonta-pr57` (stop the api before a gate:
+     EPERM; rebuild after an api change; uploads fail locally). Browser smoke: a local NextAuth session for a dev-copy
+     worker; playwright-core in `2bee6707-.../scratchpad/pw`. Run the app gate and **check its exit before pushing**.
 
 ## Previous cycles (archived, read-only)
 
