@@ -185,7 +185,7 @@ export async function GET(request: Request) {
     if (!data) return NextResponse.json({ error: 'Worker profile not found' }, { status: 404 })
 
     return NextResponse.json(data, {
-      headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60' },
+      headers: { 'Cache-Control': 'private, no-store' }, // per worker: never a shared cache
     })
   } catch (error: any) {
     return NextResponse.json(

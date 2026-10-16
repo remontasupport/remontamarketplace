@@ -12,6 +12,11 @@ export type Db = PrismaClient
  * P2024 alike to 503 + Retry-After (reason: pool).
  */
 export const TRANSACTION_MAX_WAIT_MS = 5_000
+/**
+ * Every transaction runs at the database's default isolation, READ COMMITTED (Postgres' default; checked on Neon,
+ * `default_transaction_isolation`, 2026-10-15). It is not passed to Prisma: an explicit level costs a
+ * `SET TRANSACTION ISOLATION LEVEL` statement, a round trip, on every transaction (audit P2).
+ */
 /** A transaction handle: what a unit of work passes to writers. */
 export type Tx = Prisma.TransactionClient
 
@@ -34,7 +39,7 @@ export function createDb(url: string, pool: { poolSize: number; poolTimeoutS: nu
  * commit together or not at all (NFR-ARCH-03).
  */
 export async function unitOfWork<T>(db: Db, work: (tx: Tx) => Promise<T>): Promise<T> {
-  const result = await db.$transaction(work, { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted, timeout: 10_000, maxWait: TRANSACTION_MAX_WAIT_MS })
+  const result = await db.$transaction(work, { timeout: 10_000, maxWait: TRANSACTION_MAX_WAIT_MS })
   recordDbSuccess()
   return result
 }
@@ -46,7 +51,7 @@ export async function unitOfWork<T>(db: Db, work: (tx: Tx) => Promise<T>): Promi
  * cancels surfaces as Postgres 57014, which errors.ts maps to 503 + Retry-After.
  */
 export async function readTransaction<T>(db: Db, statementTimeoutMs: number, work: (tx: Tx) => Promise<T>, opts: { transactionTimeoutMs?: number } = {}): Promise<T> {
-  const timeout = Math.max(100, Math.min(60_000, Math.trunc(statementTimeoutMs)))
+  const timeout = statementTimeoutSetting(statementTimeoutMs)
   // The whole transaction's deadline: 10 s for a request; a backfill page (many statements, each a
   // round trip from wherever the script runs) may ask for more, never above two minutes.
   const transactionTimeout = Math.max(1_000, Math.min(120_000, Math.trunc(opts.transactionTimeoutMs ?? 10_000)))
@@ -54,13 +59,18 @@ export async function readTransaction<T>(db: Db, statementTimeoutMs: number, wor
     async (tx) => {
       // set_config(..., true) is SET LOCAL with a bind parameter (SET itself takes none), so the
       // statement stays a tagged template: no Prisma.raw anywhere in the service (Semgrep rule).
-      await tx.$executeRaw`SELECT set_config('statement_timeout', ${String(timeout)}, true)`
+      await tx.$executeRaw`SELECT set_config('statement_timeout', ${timeout}, true)`
       return work(tx)
     },
-    { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted, timeout: transactionTimeout, maxWait: TRANSACTION_MAX_WAIT_MS },
+    { timeout: transactionTimeout, maxWait: TRANSACTION_MAX_WAIT_MS },
   )
   recordDbSuccess()
   return result
+}
+
+/** The statement timeout as set_config takes it: a clamped integer constant from the caller (never input), as a string. */
+export function statementTimeoutSetting(ms: number): string {
+  return String(Math.max(100, Math.min(60_000, Math.trunc(ms))))
 }
 
 /**
@@ -68,9 +78,9 @@ export async function readTransaction<T>(db: Db, statementTimeoutMs: number, wor
  * first, as readTransaction does for reads. 5 s per statement, 10 s for the transaction.
  */
 export async function writeTransaction<T>(db: Db, work: (tx: Tx) => Promise<T>, statementTimeoutMs = 5000): Promise<T> {
-  const timeout = Math.max(100, Math.min(60_000, Math.trunc(statementTimeoutMs)))
+  const timeout = statementTimeoutSetting(statementTimeoutMs)
   return unitOfWork(db, async (tx) => {
-    await tx.$executeRaw`SELECT set_config('statement_timeout', ${String(timeout)}, true)`
+    await tx.$executeRaw`SELECT set_config('statement_timeout', ${timeout}, true)`
     return work(tx)
   })
 }
