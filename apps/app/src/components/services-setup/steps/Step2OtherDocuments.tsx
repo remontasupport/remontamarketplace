@@ -2,7 +2,9 @@
 
 /**
  * Step 2: Other Documents
- * Displays insurance and transport documents from the API
+ * The insurance and transport documents of the worker's services, all on apps/api (api-review U4e): the list is the
+ * profile read's `requirements.additional`, an upload goes ticket -> private bucket -> confirm with the fixed target
+ * `other-documents` (only the catalogue's insurance and transport documents are accepted), a delete is by id.
  *
  * **DRIVER'S LICENSE HANDLING:**
  * This component automatically fetches and displays the Driver's License if it exists
@@ -23,10 +25,10 @@ import { DocumentIcon, PaperClipIcon, XMarkIcon } from "@heroicons/react/24/outl
 import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
 import { Label } from "@/components/ui/label";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
-import { useServiceDocuments, serviceDocumentsKeys } from "@/hooks/queries/useServiceDocuments";
+import { useDeleteServiceDocument, useServiceDocuments, useUploadServiceDocument } from "@/hooks/queries/useServiceDocuments";
 import { useIdentityDocuments, useDriverLicense } from "@/hooks/queries/useIdentityDocuments";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
-import axios from "axios";
+import { useWorkerProfile } from "@/features/worker/profile";
+import type { AdditionalCredential } from "@remonta/api-contract";
 import Loader from "@/components/ui/Loader";
 
 interface Step2OtherDocumentsProps {
@@ -82,27 +84,20 @@ function sortByDisplayOrder(documents: Document[]): Document[] {
   );
 }
 
-// OPTIMIZED: TanStack Query hook for requirements (replaces useEffect + useState)
-const useWorkerRequirements = () => {
-  return useQuery({
-    queryKey: ['worker-requirements'],
-    queryFn: async () => {
-      const response = await axios.get('/api/worker/requirements');
-      return response.data;
-    },
-    staleTime: 2 * 60 * 1000, // 2 minutes - cached for 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes - kept in memory for 5 minutes
-    retry: 1,
-    refetchOnWindowFocus: false,
-  });
-};
+/** An api item in the shape the rows render (the catalogue's documents carry no expiry here). */
+const OTHER_DOCUMENTS = "Other Documents";
+
+function documentOf(d: AdditionalCredential): Document {
+  return { id: d.id, name: d.name, category: d.category, description: d.description, hasExpiration: false, documentType: d.documentType, conditionKey: d.conditionKey ?? undefined, requiredIfTrue: d.requiredIfTrue ?? undefined };
+}
 
 export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocumentsProps) {
   const { data: session } = useSession();
-  const queryClient = useQueryClient();
-
-  // OPTIMIZED: Use TanStack Query instead of manual fetch
-  const { data: requirementsData, isLoading: isLoadingRequirements } = useWorkerRequirements();
+  // The list of insurance and transport documents for the worker's services, from the api's profile read.
+  const { profile, isLoading: isLoadingRequirements } = useWorkerProfile();
+  const additional = profile?.requirements.additional;
+  const uploadMutation = useUploadServiceDocument();
+  const deleteMutation = useDeleteServiceDocument();
 
   // Fetch existing uploaded documents
   const { data: serviceDocumentsData, isLoading: isLoadingDocuments } = useServiceDocuments();
@@ -120,13 +115,13 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
 
   // OPTIMIZED: Extract documents from query data with useMemo
   const insuranceDocuments = useMemo(() =>
-    sortByDisplayOrder(requirementsData?.requirements?.insurance || []),
-    [requirementsData]
+    sortByDisplayOrder((additional ?? []).filter((d) => d.category === "INSURANCE").map(documentOf)),
+    [additional]
   );
 
   const transportDocuments = useMemo(() =>
-    sortByDisplayOrder(requirementsData?.requirements?.transport || []),
-    [requirementsData]
+    sortByDisplayOrder((additional ?? []).filter((d) => d.category === "TRANSPORT").map(documentOf)),
+    [additional]
   );
 
   // OPTIMIZED: Memoize uploaded documents map (was running on every render)
@@ -176,7 +171,7 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
     return null;
   }, [identityDocumentsData?.documents, driverLicense]);
 
-  // Handle file upload using server action
+  // Upload: straight to the private bucket, then recorded by apps/api under the fixed target "Other Documents".
   const handleFileUpload = async (documentId: string, event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (!files || files.length === 0 || !session?.user?.id) {
@@ -185,7 +180,7 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
 
     const file = files[0];
 
-    // Validate file type
+    // Validate file type (the api checks the file's real type again from its first bytes)
     const validTypes = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
     if (!validTypes.includes(file.type)) {
       alert("Please upload a JPG, PNG, or PDF file");
@@ -199,39 +194,11 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
       return;
     }
 
-    // Set uploading state
     setUploadingFiles(prev => ({ ...prev, [documentId]: true }));
 
     try {
-      // Import the server action
-      const { uploadServiceDocument } = await import("@/services/worker/serviceDocuments.service");
-
-      // Create FormData
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("serviceTitle", "Other Documents");
-      formData.append("requirementType", documentId);
-
-      // Upload using server action
-      const result = await uploadServiceDocument(formData);
-
-      if (!result.success) {
-        throw new Error(result.error || "Upload failed");
-      }
-
-
-      // Invalidate the service documents query to refresh UI
-      await queryClient.invalidateQueries({
-        queryKey: serviceDocumentsKeys.all,
-        refetchType: 'active',
-      });
-
-      // Force immediate refetch
-      await queryClient.refetchQueries({
-        queryKey: serviceDocumentsKeys.all,
-      });
+      await uploadMutation.mutateAsync({ file, serviceTitle: OTHER_DOCUMENTS, requirementType: documentId });
     } catch (error: any) {
-  
       alert(`Failed to upload: ${error.message}`);
     } finally {
       setUploadingFiles(prev => ({ ...prev, [documentId]: false }));
@@ -251,7 +218,7 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
     setDeleteDialogOpen(true);
   };
 
-  // Confirm delete using server action
+  // Delete: by the document's id on apps/api, which deletes its file too.
   const confirmDelete = async () => {
     setDeleteDialogOpen(false);
 
@@ -260,35 +227,9 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
     }
 
     try {
-      // Import the server action
-      const { deleteServiceDocument } = await import("@/services/worker/serviceDocuments.service");
-
-      // Delete from server (database + blob storage)
-      const result = await deleteServiceDocument(
-        session.user.id,
-        documentToDelete.id,
-        documentToDelete.url
-      );
-
-      if (!result.success) {
-        alert(`Failed to delete document: ${result.error}`);
-        return;
-      }
-
-      // Invalidate and refetch service documents query to get fresh data
-      await queryClient.invalidateQueries({
-        queryKey: serviceDocumentsKeys.all,
-        refetchType: 'active',
-      });
-
-      // Force immediate refetch
-      await queryClient.refetchQueries({
-        queryKey: serviceDocumentsKeys.all,
-      });
-
+      await deleteMutation.mutateAsync({ userId: session.user.id, requirementType: documentToDelete.id, documentUrl: documentToDelete.url });
       setDocumentToDelete(null);
     } catch (error) {
-    
       alert(`Failed to delete document: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
@@ -322,8 +263,13 @@ export default function Step2OtherDocuments({ data, onChange }: Step2OtherDocume
     // Example: driver-license-vehicle-1767067012044-Screenshot_2025-12-30_083835.png
     // We want to show only: Screenshot_2025-12-30_083835.png
     const getFileName = (url: string) => {
-      const urlParts = url.split('/');
-      const fullFileName = urlParts[urlParts.length - 1];
+      const urlParts = url.split('?')[0].split('/');
+      let fullFileName = urlParts[urlParts.length - 1];
+      try {
+        fullFileName = decodeURIComponent(fullFileName);
+      } catch {
+        // not encoded
+      }
 
       // Match pattern: {documentType}-{timestamp}-{originalFileName}
       // documentType can have dashes, so match greedily: .+-\d+-{filename}

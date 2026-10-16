@@ -4,27 +4,26 @@
  * Additional Documents Page - Section 3
  * Route: /dashboard/worker/additional-documents
  *
- * Optional documents that enhance worker qualifications
+ * Optional documents that enhance worker qualifications: the insurance and transport documents of the worker's
+ * services, all on apps/api (api-review U4e). Each document saves as it is uploaded; "Complete" only moves on (the
+ * legacy "step 300" save it made had no case in the update-step route and wrote nothing).
  */
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import StepContainer from "@/components/account-setup/shared/StepContainer";
-import { useWorkerProfile, useUpdateProfileStep, workerProfileKeys } from "@/hooks/queries/useWorkerProfile";
+import { useWorkerProfile } from "@/features/worker/profile";
 import Step2OtherDocuments from "@/components/services-setup/steps/Step2OtherDocuments";
 import Loader from "@/components/ui/Loader";
 
 function AdditionalDocumentsContent() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
-  const queryClient = useQueryClient();
 
-  // Fetch profile data
-  const { data: profileData, isLoading: isLoadingProfile } = useWorkerProfile(session?.user?.id);
-  const updateProfileMutation = useUpdateProfileStep();
+  // The api's profile read (the list on this page comes from it).
+  const { isLoading: isLoadingProfile } = useWorkerProfile();
 
   // Form data state
   const [formData, setFormData] = useState({
@@ -32,17 +31,7 @@ function AdditionalDocumentsContent() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [successMessage, setSuccessMessage] = useState("");
-  const [isNavigating, setIsNavigating] = useState(false);
-
-  // Populate form data on load
-  useEffect(() => {
-    if (profileData) {
-      setFormData({
-        selectedQualifications: profileData.selectedQualifications || [],
-      });
-    }
-  }, [profileData]);
+  const successMessage = "";
 
   // Handle field change
   const handleFieldChange = (field: string, value: any) => {
@@ -60,38 +49,9 @@ function AdditionalDocumentsContent() {
     }
   };
 
-  // Save and complete
-  const handleNext = async () => {
-    if (!session?.user?.id) return;
-
-    try {
-      // Show loading state
-      setIsNavigating(true);
-
-      // Save to database (step 300 for Section 3)
-      await updateProfileMutation.mutateAsync({
-        userId: session.user.id,
-        step: 300,
-        data: {
-          selectedQualifications: formData.selectedQualifications,
-        },
-      });
-
-      // OPTIMIZED FOR INSTANT NAVIGATION
-
-      // Navigate immediately (optimistic UI)
-      router.push("/dashboard/worker");
-
-      // Invalidate cache in background so next dashboard visit shows updated data
-      setTimeout(() => {
-        queryClient.invalidateQueries({
-          queryKey: workerProfileKeys.all,
-        });
-      }, 100);
-    } catch (error) {
-      setIsNavigating(false);
-      setErrors({ general: "Failed to save. Please try again." });
-    }
+  // Complete: the documents are already saved; back to the dashboard.
+  const handleNext = () => {
+    router.push("/dashboard/worker");
   };
 
   // Go back to services

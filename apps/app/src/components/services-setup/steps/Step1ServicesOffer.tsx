@@ -11,7 +11,7 @@ import { useRouter } from "next/navigation";
 import { TrashIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { CategorySubcategoriesDialog } from "@/components/forms/workerRegistration/CategorySubcategoriesDialog";
 import { AddServiceDialog } from "@/components/services-setup/AddServiceDialog";
-import { useCategories } from "@/hooks/queries/useCategories";
+import { useCatalogue } from "@/features/forms/adapters/useServiceCategories";
 import { serviceNameToSlug } from "@/utils/serviceSlugMapping";
 import "@/app/styles/services-setup.css";
 
@@ -140,7 +140,7 @@ export default function Step1ServicesOffer({
   const [isEditMode, setIsEditMode] = useState(false);
 
   // Fetch categories from database
-  const { data: categories } = useCategories();
+  const { data: categories } = useCatalogue();
 
   // OPTIMIZED: Create a Map for instant category lookups by name (O(1) instead of O(n))
   // This prevents doing .find() for every service on every render

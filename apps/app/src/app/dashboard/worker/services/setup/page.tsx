@@ -14,7 +14,6 @@ import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import StepContainer from "@/components/account-setup/shared/StepContainer";
-import { useWorkerProfile } from "@/hooks/queries/useWorkerProfile";
 import { useWorkerProfile as useApiProfile } from "@/features/worker/profile";
 import { formOf, saveRegistration } from "@/features/worker/services";
 import { generateServicesSetupSteps, SERVICES_SETUP_STEPS } from "@/config/servicesSetupSteps";
@@ -61,10 +60,10 @@ function ServicesSetupContent() {
   const stepSlug = searchParams.get("step") || "";
   const viewParam = searchParams.get("view") || ""; // URL-based view state
 
-  // Fetch profile data
-  const { data: profileData, isLoading: isLoadingProfile } = useWorkerProfile(session?.user?.id);
-  // The api's profile read (U3c): the registrations, the services and the documents of these pages.
-  const { profile: apiProfile } = useApiProfile();
+  // The api's profile read (U3c; the only profile read of this page since api-review): the services, the
+  // registrations and the documents.
+  const { profile: apiProfile, isLoading: isLoadingProfile } = useApiProfile();
+  const serviceNames = useMemo(() => apiProfile?.services.map((s) => s.categoryName) ?? [], [apiProfile]);
 
   // Fetch worker's selected services with SUSPENSE MODE
   // This throws a promise until data loads, preventing component render
@@ -97,8 +96,8 @@ function ServicesSetupContent() {
   const [isFinalSaving, setIsFinalSaving] = useState(false);
 
   // Generate dynamic steps based on selected services
-  const STEPS = profileData?.services && profileData.services.length > 0
-    ? generateServicesSetupSteps(profileData.services)
+  const STEPS = serviceNames.length > 0
+    ? generateServicesSetupSteps(serviceNames)
     : SERVICES_SETUP_STEPS;
 
   // Find current step by slug
@@ -139,18 +138,24 @@ function ServicesSetupContent() {
 
   // Populate form data ONLY on initial load
   useEffect(() => {
-    if (profileData && !hasInitializedFormData.current) {
-      // The registrations are the api's (filled by the effect below, whichever read answers first): kept as they are.
+    if (apiProfile && !hasInitializedFormData.current) {
+      // The documents' URLs by service and type, from the api's service documents; the registrations are filled by
+      // the effect below.
+      const documentsByService: Record<string, Record<string, string[]>> = {};
+      for (const d of apiProfile.serviceDocuments) {
+        if (!d.url || !d.serviceName) continue;
+        ((documentsByService[d.serviceName] ??= {})[d.requirementType] ??= []).push(d.url);
+      }
       setFormData((prev) => ({
         ...prev,
-        qualificationsByService: profileData.qualificationsByService || {},
+        qualificationsByService: {},
         offeringsByService: {}, // No longer used - offerings are managed via TanStack Query
-        documentsByService: profileData.documentsByService || {},
+        documentsByService,
         selectedQualifications: [],
       }));
       hasInitializedFormData.current = true;
     }
-  }, [profileData]);
+  }, [apiProfile]);
 
   // The registrations come with the profile read (U3c): filled in once, when the profile arrives.
   const registrationsLoaded = useRef(false);
@@ -422,7 +427,7 @@ function ServicesSetupContent() {
   // there are: before it answers STEPS is the empty default, and a page opened directly (a refresh, a link) was sent
   // to Edit Services every time (U3c, seen 2026-10-15).
   useEffect(() => {
-    if (isLoadingProfile || !profileData) return;
+    if (isLoadingProfile || !apiProfile) return;
     if (!stepSlug && STEPS.length > 0) {
       // No step specified - redirect to first step
       router.push(`/dashboard/worker/services/setup?step=${STEPS[0].slug}`);
@@ -433,7 +438,7 @@ function ServicesSetupContent() {
       // No services selected - redirect to Edit Services page
       router.push("/dashboard/worker/services/manage");
     }
-  }, [currentStepIndex, router, stepSlug, STEPS, isLoadingProfile, profileData]);
+  }, [currentStepIndex, router, stepSlug, STEPS, isLoadingProfile, apiProfile]);
 
   // AUTO-REDIRECT: Set initial view parameter when missing
   // With Suspense mode, component won't render until workerServices exists

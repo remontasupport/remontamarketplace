@@ -2,7 +2,7 @@
 import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
 import { BASE_COMPLIANCE_CATEGORIES, complianceOf, type RequirementRow } from '../../src/modules/worker/domain/completion'
-import { FOLDED_TRAINING_IDS, linkedDocuments, requirementGroups, statusOfRows, TRAINING_STEP_ORDER } from '../../src/modules/worker/domain/requirement-groups'
+import { additionalCredentials, FOLDED_TRAINING_IDS, linkedDocuments, requirementGroups, statusOfRows, TRAINING_STEP_ORDER } from '../../src/modules/worker/domain/requirement-groups'
 import { completionInput, DOCUMENTS } from './generators'
 
 describe('P5: requirementGroups', () => {
@@ -11,7 +11,7 @@ describe('P5: requirementGroups', () => {
       fc.property(completionInput, (input) => {
         const g = requirementGroups({ profile: input.profile, services: input.services, requirements: input.requirements, catalogue: input.catalogue })
         if (input.services.length === 0) {
-          expect(g).toEqual({ mandatory: [], trainings: [] })
+          expect(g).toEqual({ mandatory: [], trainings: [], additional: [] })
           return
         }
         const linked = new Set(linkedDocuments(input.catalogue).map((d) => d.id))
@@ -47,6 +47,33 @@ describe('P5: requirementGroups', () => {
   })
   const services = [{ categoryId: 'support-worker', categoryName: 'Support Worker', subcategoryIds: ['personal-care'], subcategoryNames: ['Personal Care'] }]
   const row = (requirementType: string, status: RequirementRow['status'] = 'SUBMITTED', documentCategory: RequirementRow['documentCategory'] = null): RequirementRow => ({ requirementType, status, documentCategory, documentUrl: null })
+
+  it("U4e: the insurance and transport documents of the services, with the link's type and condition, the status of the Other Documents rows", () => {
+    const doc = (id: string) => ({ ...DOCUMENTS.find((d) => d.id === id)!, description: `About ${id}` })
+    const catalogue = {
+      categories: [
+        {
+          id: 'support-worker',
+          name: 'Support Worker',
+          documents: [
+            { document: doc('police-check'), documentType: 'REQUIRED', conditionKey: null, requiredIfTrue: null },
+            { document: doc('public-liability-10m'), documentType: 'OPTIONAL', conditionKey: null, requiredIfTrue: null },
+            { document: doc('drivers-licence'), documentType: 'CONDITIONAL', conditionKey: 'hasVehicle', requiredIfTrue: true },
+          ],
+          subcategories: [{ id: 'personal-care', name: 'Personal Care', additionalDocuments: [{ document: doc('public-liability-10m') }] }],
+        },
+      ],
+    }
+    const out = additionalCredentials(catalogue, [row('Other Documents:drivers-licence', 'REJECTED', 'SERVICE_QUALIFICATION'), row('Other Documents:public-liability-10m', 'APPROVED', 'SERVICE_QUALIFICATION'), row('public-liability-10m', 'PENDING')])
+    expect(out).toEqual([
+      { id: 'public-liability-10m', name: 'Public Liability Insurance (min $10M)', category: 'INSURANCE', description: 'About public-liability-10m', documentType: 'OPTIONAL', conditionKey: null, requiredIfTrue: null, status: 'approved' },
+      { id: 'drivers-licence', name: "Driver's Licence", category: 'TRANSPORT', description: 'About drivers-licence', documentType: 'CONDITIONAL', conditionKey: 'hasVehicle', requiredIfTrue: true, status: 'rejected' },
+    ])
+    expect(requirementGroups({ profile: { abn: null, hasVehicle: null }, services, requirements: [], catalogue }).additional.map((d) => [d.id, d.status])).toEqual([
+      ['public-liability-10m', 'missing'],
+      ['drivers-licence', 'missing'],
+    ])
+  })
 
   it('splices Code of Conduct (Part 1) after abn-contractor, or appends it; carries documentType; folds the three NDIS modules', () => {
     const g = requirementGroups({ profile: { abn: null, hasVehicle: null }, services, requirements: [], catalogue: cat(['police-check', 'abn-contractor', 'right-to-work', 'ndis-induction-module', 'cpr', 'ndis-worker-orientation', 'safe-enjoyable-meals']) })
@@ -84,6 +111,6 @@ describe('P5: requirementGroups', () => {
   })
 
   it('is empty without services (R4.1), whatever the catalogue holds', () => {
-    expect(requirementGroups({ profile: { abn: null, hasVehicle: null }, services: [], requirements: [row('police-check')], catalogue: cat(['police-check', 'cpr']) })).toEqual({ mandatory: [], trainings: [] })
+    expect(requirementGroups({ profile: { abn: null, hasVehicle: null }, services: [], requirements: [row('police-check')], catalogue: cat(['police-check', 'cpr']) })).toEqual({ mandatory: [], trainings: [], additional: [] })
   })
 })
