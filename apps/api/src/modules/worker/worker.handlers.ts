@@ -77,13 +77,14 @@ export function workerHandlers(deps: WorkerModuleDeps) {
     },
     removePhoto: async (req, ctx) => {
       let profileId = ''
-      const body = await replaceSection(s, ctx, { section: 'removePhoto', completion: true }, (tx, p) => {
+      const out = await replaceSection(s, ctx, { section: 'removePhoto', completion: true }, (tx, p) => {
         profileId = p.id
         return removeOne(tx, p.id, req.body.url)
       })
-      // Only a file in the caller's own folder is deleted (F1): the URL being in their columns proves nothing.
-      if (deps.photos) await deleteStoredPhoto(deps.photos.blob, req.body.url, profileId, ctx.log)
-      return { status: 200, body }
+      // The address actually removed (the page may name the staging copy). Only a file in the caller's own folder is
+      // deleted (F1): the URL being in their columns proves nothing.
+      if (deps.photos && out.removed) await deleteStoredPhoto(deps.photos.blob, out.removed, profileId, ctx.log)
+      return { status: 200, body: out.photos }
     },
 
     putAvailability: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putAvailability', completion: true }, (tx, p) => writeAvailability(tx, p.id, req.body)) }),
