@@ -45,6 +45,12 @@
   `feat/services-app` (design + Built: `inception/review/u4b-compliance-steps-design.md`); the trainings moved with
   the shared hooks.
 
+  **Later 2026-10-16:** #71 (U4b) merged into `feat/services-app` (`60b6598`). The Services pages taken off the legacy
+  routes (user: "change the 3 pages that uses the old api now and make sure they have securities"): api
+  `feat/other-documents-api` `4617f34` (from main; Other Documents confirm target + `requirements.additional`) and app
+  `feat/services-api-reads` `d77b29f` (stacked on `feat/services-app`, the api merged in). The service-document delete
+  bug (always legacy since U3c) fixed there. Merge the api PR first (staging), then test the app PR's preview.
+
   **Resume here:**
   1. `git ls-remote origin main feat/edit-profile-app feat/services-app feat/compliance-app`; ask what was merged since.
   2. U4b: PR `feat/compliance-app` -> base `feat/services-app` (no App Quality CI on a non-main base: the local gate is
