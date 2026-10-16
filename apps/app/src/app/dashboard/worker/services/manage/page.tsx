@@ -5,7 +5,8 @@
  * Route: /dashboard/worker/services/manage
  *
  * Allows workers to add/remove services. Saves through apps/api (U3c): PUT /v1/worker/services with catalogue ids;
- * removing a service deletes its registration and documents (D2).
+ * removing a service deletes its registration and documents (D2). Reads apps/api too (api-review): the worker's
+ * services from GET /v1/worker/profile, the catalogue from GET /v1/service-categories.
  */
 
 import { useState, useEffect, useRef } from "react";
@@ -14,10 +15,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import Step1ServicesOffer from "@/components/services-setup/steps/Step1ServicesOffer";
-import { useWorkerProfile } from "@/hooks/queries/useWorkerProfile";
-import { useCategories, type Category } from "@/hooks/queries/useCategories";
+import type { Category } from "@/hooks/queries/useCategories";
+import { useCatalogue } from "@/features/forms/adapters/useServiceCategories";
 import { workerApi } from "@/features/worker/api";
-import { PROFILE_QUERY_KEY } from "@/features/worker/profile";
+import { useWorkerProfile } from "@/features/worker/profile";
 import { messageOf } from "@/features/worker/services";
 import Loader from "@/components/ui/Loader";
 
@@ -28,9 +29,9 @@ export default function ManageServicesPage() {
   const returnUrl = searchParams.get("returnUrl");
   const queryClient = useQueryClient();
 
-  // Fetch profile data
-  const { data: profileData, isLoading: isLoadingProfile } = useWorkerProfile(session?.user?.id);
-  const { data: categories } = useCategories();
+  // The worker's own profile and the catalogue, both from apps/api.
+  const { profile, isLoading: isLoadingProfile, reload } = useWorkerProfile();
+  const { data: categories } = useCatalogue();
 
   // Track if we've initialized form data
   const hasInitializedFormData = useRef(false);
@@ -46,14 +47,14 @@ export default function ManageServicesPage() {
 
   // Populate form data on initial load
   useEffect(() => {
-    if (profileData && !hasInitializedFormData.current) {
+    if (profile && !hasInitializedFormData.current) {
       setFormData({
-        services: profileData.services || [],
-        supportWorkerCategories: profileData.supportWorkerCategories || [],
+        services: profile.services.map((s) => s.categoryName),
+        supportWorkerCategories: profile.services.flatMap((s) => s.subcategoryIds),
       });
       hasInitializedFormData.current = true;
     }
-  }, [profileData]);
+  }, [profile]);
 
   // Handle field change
   const handleFieldChange = (field: string, value: any) => {
@@ -92,11 +93,8 @@ export default function ManageServicesPage() {
       throw new Error(message);
     }
     setErrors({});
-    // The api's profile (services, registrations, documents) and the legacy reads of these pages.
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: PROFILE_QUERY_KEY }),
-      queryClient.invalidateQueries({ queryKey: ['worker-profile'] }),
-    ]);
+    // The api's profile (services, registrations, documents), read fresh; the legacy reads other pages still make.
+    await Promise.all([reload(), queryClient.invalidateQueries({ queryKey: ['worker-profile'] })]);
   };
 
   // "Done": the services as shown.
@@ -120,7 +118,7 @@ export default function ManageServicesPage() {
       const invalidateAndRedirect = async () => {
         // Invalidate and refetch to ensure fresh data is in cache before redirect
         await Promise.all([
-          queryClient.refetchQueries({ queryKey: PROFILE_QUERY_KEY }),
+          reload(),
           queryClient.invalidateQueries({ queryKey: ['worker-profile'] }),
         ]);
 
@@ -133,10 +131,10 @@ export default function ManageServicesPage() {
 
       invalidateAndRedirect();
     }
-  }, [shouldRedirect, returnUrl, queryClient, router]);
+  }, [shouldRedirect, returnUrl, queryClient, router, reload]);
 
-  // Extract primary service for role display
-  const primaryService = profileData?.services?.[0] || 'Support Worker';
+  // The role line under the name, as the api names it.
+  const primaryService = profile?.displayRole || 'Support Worker';
 
   // Loading state
   if (status === "loading" || isLoadingProfile) {
@@ -144,8 +142,8 @@ export default function ManageServicesPage() {
       <DashboardLayout
         showProfileCard={false}
         profileData={{
-          firstName: profileData?.firstName || 'Worker',
-          photo: profileData?.photos || null,
+          firstName: profile?.names.firstName || 'Worker',
+          photo: profile?.photos.main ?? null,
           role: primaryService,
         }}
       >
@@ -160,8 +158,8 @@ export default function ManageServicesPage() {
     <DashboardLayout
       showProfileCard={false}
       profileData={{
-        firstName: profileData?.firstName || 'Worker',
-        photo: profileData?.photos || null,
+        firstName: profile?.names.firstName || 'Worker',
+        photo: profile?.photos.main ?? null,
         role: primaryService,
       }}
     >
