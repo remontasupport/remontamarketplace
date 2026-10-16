@@ -4325,3 +4325,6 @@ Noted: #73 (`feat/services-api-reads` at `d77b29f`) merged into `feat/services-a
 
 **User input**: "merged now"
 **AI response**: verified #76 merged to main `c85d20c` at 03:15:37Z (contains `adeecc4`); its CI green (App Quality both Node versions, CodeQL, Semgrep, supply chain). But at 03:27Z Vercel had created no deployment for `c85d20c` (no commit status, no GitHub deployment record; the previous merges got Production deployments within ~2 min: `5096420` at 02:18Z). A signed-out probe of production with a made-up id cannot tell old from new (production hides error messages). Asked the user to check Vercel and deploy `main` if it is missing.
+
+**User input**: "c85d20c i dont see this in Vercel"
+**AI response**: nothing in `apps/app/vercel.json` skips builds (same file built the earlier merges); previews deployed at 03:04Z, so the integration worked just before; Vercel status page shows no incident today. Conclusion: the push event for `c85d20c` was not received/processed. Gave the user the manual production deploy steps (Vercel -> remonta-app -> Create Deployment from `main` / `c85d20c`; same for remontamarketplace for consistency) and the fallback (a small PR to main to fire a new push event).
