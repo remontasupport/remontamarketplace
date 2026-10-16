@@ -40,29 +40,31 @@
   the preview checks -> Actions -> deploy-api -> stage `prod`, imageTag = the FULL 40-character sha -> production
   probes -> merge PR #57 (with U3c) -> production checks.
 
+  **2026-10-16:** DC5 an expiry date already passed is refused (the api's message; nothing saved). The nine My Profile
+  api branches stay separate (no combined PR; user). **U4b built**: `feat/compliance-app` `a26ff55` stacked on
+  `feat/services-app` (design + Built: `inception/review/u4b-compliance-steps-design.md`); the trainings moved with
+  the shared hooks.
+
   **Resume here:**
-  1. `git ls-remote origin main feat/edit-profile-app feat/services-app`; ask what was merged since.
-  2. Staging checks owed (the deploy of `813107d` was running at end of day): run
-     `cd apps/api && node --import tsx scripts/staging-services-check.ts` (after `gcloud auth login`; on
-     `chore/staging-services-check`) and upload a document on the U3c preview with a staging-only worker -- the
-     upload itself has never run end to end (no bucket credentials locally).
-  3. **Next unit: U4b** -- the mandatory Compliance steps (identity 100 points, police, WWC, screening, right to
-     work + citizenship, Code of Conduct) on the U4a api, stacked on `feat/services-app`; the app document route
-     moves to `GET /v1/worker/documents/:id/link`. Then U4c trainings, U4d ABN/contract (the tax id out of the URL,
-     C3), U4e Additional Credentials, U4f retire + the legacy public files to the private bucket (DC3: early,
-     identity first).
-  4. Ask: the combined My Profile api PR (still unanswered since 2026-10-14).
-  5. Answers owed: expired dates -- refused today ("This registration has expired" / "This document has expired"),
-     or accepted and marked expired? The 2026-10-14 list (home addresses, admins seeing them, job/course order,
-     the draft).
+  1. `git ls-remote origin main feat/edit-profile-app feat/services-app feat/compliance-app`; ask what was merged since.
+  2. U4b: PR `feat/compliance-app` -> base `feat/services-app` (no App Quality CI on a non-main base: the local gate is
+     the proof; Vercel builds the preview). On the preview (staging api + bucket), with a staging-only worker: one
+     upload per kind (police check, an identity document, right to work with a future expiry and with a past one ->
+     "This document has expired", a training, the Code of Conduct signature), view it (the document route), delete.
+  3. Staging checks still owed from 2026-10-15: `cd apps/api && node --import tsx scripts/staging-services-check.ts`
+     (after `gcloud auth login`; on `chore/staging-services-check`) and one service-document upload on the preview.
+  4. Next units: U4c (trainings: a check of each step now that the hooks moved; the dead fallback steps), U4d ABN +
+     contract (the tax id out of the URL, C3), U4e Additional Credentials, U4f retire (the ignored `apiEndpoint`
+     strings, `/api/worker/requirements` onto the api) + the legacy public files to the private bucket (DC3: identity
+     first).
+  5. Answers owed: the 2026-10-14 list (home addresses, admins seeing them, job/course order, the draft).
   6. Local: `bash scripts/local/run-api.sh` and `run-app.sh` from `../remonta-pr57` (stop the api before a gate:
-     EPERM; rebuild after an api change; uploads fail locally -- no Google credentials -- a local folder store was
-     offered). The browser smoke scripts used today mint a local NextAuth session for a dev-copy worker
-     (`next-auth/jwt` encode with the local NEXTAUTH_SECRET) and the api token with the local secret
-     `local-dev-only-token-secret-0123456789abcdef`.
-  7. Follow-ups: F2 the remaining legacy `"use server"` writes (profile, compliance until U4b-U4f); F3-F5 bank
-     account; F11; the xhr uploader's 120 s timeout for large documents; "Other Documents" still on the legacy
-     action (U4e); `test/my-profile-columns` never opened.
+     EPERM; rebuild after an api change; uploads fail locally -- no Google credentials). The browser smoke mints a
+     local NextAuth session (`next-auth/jwt` encode, the local NEXTAUTH_SECRET) for a dev-copy worker; playwright-core
+     lives in an old scratchpad (`2bee6707-.../scratchpad/pw`).
+  7. Follow-ups: F2 the remaining legacy `"use server"` writes (profile, contract until U4d); F3-F5 bank account; F11;
+     the xhr uploader's 120 s timeout for large documents; "Other Documents" still on the legacy action (U4e);
+     `test/my-profile-columns` never opened.
 
 ## Previous cycles (archived, read-only)
 
