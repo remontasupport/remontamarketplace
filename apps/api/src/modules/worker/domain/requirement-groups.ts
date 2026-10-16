@@ -4,7 +4,7 @@
 // (part 2 dropped) and `utils/dynamicTrainingSteps.ts` (the three NDIS modules folded
 // into ndis-worker-orientation; TRAINING_STEP_ORDER). The constants below are copies
 // of those files' lists, 2026-10-12; the app's copies go when the sidebar reads this.
-import type { RequirementItem, RequirementItemStatus } from '@remonta/api-contract'
+import type { AdditionalCredential, RequirementItem, RequirementItemStatus } from '@remonta/api-contract'
 import {
   BASE_COMPLIANCE_CATEGORIES,
   baseType,
@@ -49,6 +49,38 @@ export interface RequirementGroupsInput {
 export interface RequirementGroups {
   mandatory: RequirementItem[]
   trainings: RequirementItem[]
+  additional: AdditionalCredential[]
+}
+
+/** "Other Documents" on the Services pages: the row prefix the app has always written (`Other Documents:<id>`). */
+export const OTHER_DOCUMENTS_NAME = 'Other Documents'
+export const ADDITIONAL_CATEGORIES: ReadonlySet<string> = new Set(['INSURANCE', 'TRANSPORT'])
+
+/**
+ * U4e: the insurance and transport documents linked to the worker's services, as today's requirements route lists
+ * them (the link's own type and condition; a sub-category's documents are required), first link wins, catalogue order.
+ * The status is the worst of the worker's `Other Documents:<id>` rows.
+ */
+export function additionalCredentials(catalogue: CatalogueRows, rows: readonly RequirementRow[]): AdditionalCredential[] {
+  const seen = new Map<string, AdditionalCredential>()
+  const add = (d: { id: string; name: string; category: string; description?: string }, documentType: string, conditionKey: string | null, requiredIfTrue: boolean | null) => {
+    if (!ADDITIONAL_CATEGORIES.has(d.category) || seen.has(d.id)) return
+    const type = String(documentType).toUpperCase()
+    const statuses = rows.filter((r) => r.requirementType === `${OTHER_DOCUMENTS_NAME}:${d.id}`).map((r) => r.status)
+    seen.set(d.id, {
+      id: d.id.slice(0, 80),
+      name: d.name.slice(0, 120),
+      category: d.category as AdditionalCredential['category'],
+      description: (d.description ?? '').slice(0, 1000),
+      documentType: type === 'OPTIONAL' || type === 'CONDITIONAL' ? type : 'REQUIRED',
+      conditionKey: conditionKey ? conditionKey.slice(0, 80) : null,
+      requiredIfTrue,
+      status: statusOfRows(statuses),
+    })
+  }
+  for (const c of catalogue.categories) for (const l of c.documents) add(l.document, l.documentType, l.conditionKey, l.requiredIfTrue)
+  for (const c of catalogue.categories) for (const s of c.subcategories) for (const d of s.additionalDocuments) add(d.document, 'REQUIRED', null, null)
+  return [...seen.values()]
 }
 
 interface Doc {
@@ -83,7 +115,7 @@ export function statusOfRows(statuses: readonly RequirementStatus[]): Requiremen
 }
 
 export function requirementGroups(input: RequirementGroupsInput): RequirementGroups {
-  if (input.services.length === 0) return { mandatory: [], trainings: [] } // R4.1: "choose your services first"
+  if (input.services.length === 0) return { mandatory: [], trainings: [], additional: [] } // R4.1: "choose your services first"
   const docs = linkedDocuments(input.catalogue)
   const rows = input.requirements
 
@@ -117,5 +149,5 @@ export function requirementGroups(input: RequirementGroupsInput): RequirementGro
   }
   const trainingDocs = docs.filter((d) => d.category === TRAINING_CATEGORY && !FOLDED_TRAINING_IDS.has(d.id)).sort((a, b) => order(a.id) - order(b.id))
 
-  return { mandatory: mandatoryDocs.map(item), trainings: trainingDocs.map(item) }
+  return { mandatory: mandatoryDocs.map(item), trainings: trainingDocs.map(item), additional: additionalCredentials(input.catalogue, rows) }
 }

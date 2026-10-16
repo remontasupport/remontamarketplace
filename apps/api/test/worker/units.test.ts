@@ -97,7 +97,7 @@ export function sampleRows(patch: Partial<ProfileRows['profile']> = {}): Profile
       locations: [{ localityId: 42, travelRadiusKm: 50, precision: 'LOCALITY', locality: { suburb: 'Parramatta', state: 'NSW', postcode: '2150' } }],
       ...patch,
     },
-    catalogue: [{ id: 'support-worker', name: 'Support Worker', documents: [{ documentType: 'REQUIRED', conditionKey: null, requiredIfTrue: null, document: { id: 'police-check', name: 'Police Check', category: 'COMPLIANCE' } }], subcategories: [] }],
+    catalogue: [{ id: 'support-worker', name: 'Support Worker', documents: [{ documentType: 'REQUIRED', conditionKey: null, requiredIfTrue: null, document: { id: 'police-check', name: 'Police Check', category: 'COMPLIANCE', description: '' } }], subcategories: [] }],
   }
 }
 

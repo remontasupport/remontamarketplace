@@ -50,6 +50,8 @@ export interface CatalogueDoc {
   name: string
   /** Free text in the database: IDENTITY, BUSINESS, COMPLIANCE, TRAINING, QUALIFICATION, ... */
   category: string
+  /** Shown on the Additional Credentials list (U4e); optional for the callers that build rows by hand. */
+  description?: string
 }
 
 export interface CategoryLink {

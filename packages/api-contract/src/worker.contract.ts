@@ -130,6 +130,20 @@ export const requirementItemSchema = z.strictObject({
 })
 export type RequirementItem = z.output<typeof requirementItemSchema>
 
+/** U4e: an insurance or transport document linked to the worker's services ("Other Documents" on the Services pages). */
+export const additionalCredentialSchema = z.strictObject({
+  id: str(80),
+  name: str(120),
+  category: z.enum(['INSURANCE', 'TRANSPORT']),
+  description: z.string().max(1000),
+  documentType: z.enum(['REQUIRED', 'OPTIONAL', 'CONDITIONAL']),
+  /** A CONDITIONAL link's question (`hasVehicle`) and the answer that makes it required. */
+  conditionKey: str(80).nullable(),
+  requiredIfTrue: z.boolean().nullable(),
+  status: z.enum(REQUIREMENT_ITEM_STATUSES),
+})
+export type AdditionalCredential = z.output<typeof additionalCredentialSchema>
+
 /** R2.3: the stored bank account never leaves; the last three digits identify it to its owner. */
 export const maskedBankAccountSchema = z.strictObject({
   accountName: str(100),
@@ -244,7 +258,12 @@ export const profileSchema = z.strictObject({
   verificationStatus: str(40),
   isPublished: z.boolean(),
   completion: completionSchema,
-  requirements: z.strictObject({ mandatory: z.array(requirementItemSchema).max(100), trainings: z.array(requirementItemSchema).max(100) }),
+  requirements: z.strictObject({
+    mandatory: z.array(requirementItemSchema).max(100),
+    trainings: z.array(requirementItemSchema).max(100),
+    /** U4e: absent from an api older than this field, so it defaults to none. */
+    additional: z.array(additionalCredentialSchema).max(50).default([]),
+  }),
   services: z.array(workerServiceSchema).max(50),
   /** U3a: the registrations of the chosen services that carry one (nursing, therapeutic). */
   serviceRegistrations: z.array(serviceRegistrationViewSchema).max(2),
@@ -295,7 +314,7 @@ export const workerContract = defineContract('worker', {
   putServiceRegistration: { method: 'PUT', path: '/v1/worker/services/:categoryId/registration', summary: 'Replace the registration of a chosen nursing or therapeutic service; 404 when the service is not chosen.', pathParams: serviceRegistrationParamsSchema, body: json(serviceRegistrationBodySchema), responses: { 200: serviceRegistrationViewSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 2 }) },
   // ---- U3b service documents: straight to a private bucket by ticket, confirmed, viewed through a short signed link.
   createServiceDocumentTicket: { method: 'POST', path: '/v1/worker/service-documents/tickets', summary: 'A ticket to upload one worker document (PDF or a photo, 50 MB) straight to the private bucket: a service document or (U4a) a compliance document.', body: json(serviceDocumentTicketRequestSchema), responses: { 201: serviceDocumentTicketResponseSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1, limit: 20 }) },
-  confirmServiceDocument: { method: 'POST', path: '/v1/worker/service-documents', summary: 'Confirm an uploaded document as one the chosen service calls for: checked, kept privately, recorded (it replaces the previous file of that type).', body: json(confirmServiceDocumentSchema), responses: { 201: serviceDocumentSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 2 }) },
+  confirmServiceDocument: { method: 'POST', path: '/v1/worker/service-documents', summary: 'Confirm an uploaded document as one the chosen service calls for -- or, with categoryId other-documents, an insurance or transport document: checked, kept privately, recorded (it replaces the previous file of that type).', body: json(confirmServiceDocumentSchema), responses: { 201: serviceDocumentSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 2 }) },
   deleteServiceDocument: { method: 'DELETE', path: '/v1/worker/service-documents/:documentId', summary: "Delete one of the worker's service documents and its file; 404 when it is not theirs.", pathParams: serviceDocumentParamsSchema, responses: { 200: serviceDocumentParamsSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1 }) },
   getServiceDocumentLink: { method: 'GET', path: '/v1/worker/service-documents/:documentId/link', summary: "A five-minute link to view one of the worker's own service documents.", pathParams: serviceDocumentParamsSchema, responses: { 200: documentLinkSchema }, meta: workerRead({ privateCacheSeconds: 30 }) },
   // ---- U4a compliance documents: the same ticket and bucket; one row per type; viewed through the app's link.
