@@ -4389,3 +4389,12 @@ arrival. App gate: 243 tests.
 **Change (`feat/account-app`):** the final step of `/dashboard/worker/services/setup` pushes `/dashboard/worker` (was
 `/dashboard/worker/additional-documents`), with the navigation bar. Verified locally: Next -> Complete on the last
 service (cleaning-services, documents view) ended on `/dashboard/worker`. App gate passed.
+
+## 2026-10-16 -- Services "Complete" goes to Service Area, then the dashboard
+
+**User input (verbatim):** "my fault, it should be navigate to the Service Area and then when the Service area is save, it should go to the dashboard now"
+
+**Change (`feat/account-app`):** the final services step pushes `/dashboard/worker/profile/service-area`; `SectionPage`
+takes an `onSaved`, and Service Area's goes to `/dashboard/worker` once the Save is stored (a failed or invalid Save
+stays on the page). Verified locally: Next -> Complete on the last service -> Service Area -> Save -> `/dashboard/worker`.
+App gate passed.
