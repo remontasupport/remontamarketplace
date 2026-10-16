@@ -4,6 +4,16 @@ import { getServerSession } from "next-auth";
 import { readAllPromoted } from "@/lib/w1/read";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
+import { UserRole } from "@/types/auth";
+
+/**
+ * Who may read whose profile (security fix 2026-10-16). This file is "use server": every export is an action any
+ * browser can call with any arguments. The action took a user id and read that worker's profile with no session
+ * check -- a signed-out caller received the full profile including the stored bank account. Now: a session is
+ * required; a worker reads only their own; admins, clients and coordinators may read a worker's (the admin profile
+ * page, a client's request table); the bank account is never part of the answer.
+ */
+const MAY_READ_OTHERS: ReadonlySet<string> = new Set([UserRole.ADMIN, UserRole.CLIENT, UserRole.COORDINATOR]);
 
 /**
  * Backend Service: Profile Preview Data
@@ -57,7 +67,6 @@ export type ProfilePreviewResponse = {
       religion: any;
       interests: any;
       workPreferences: any;
-      bankAccount: any;
       jobHistory: any;
       education: any;
       lgbtqiaSupport: boolean | null;
@@ -100,13 +109,19 @@ export async function getProfilePreviewData(userId?: string): Promise<ProfilePre
     // 1. Authentication check
     const session = await getServerSession(authOptions);
 
-    // If no userId provided, use session user's ID (worker viewing own profile)
-    const targetUserId = userId || session?.user?.id;
-
-    if (!targetUserId) {
+    if (!session?.user?.id) {
       return {
         success: false,
         error: "Unauthorized. Please log in.",
+      };
+    }
+
+    // A worker's own profile when no user id is given; another's only for the roles that view workers.
+    const targetUserId = userId || session.user.id;
+    if (targetUserId !== session.user.id && !MAY_READ_OTHERS.has(session.user.role)) {
+      return {
+        success: false,
+        error: "You do not have access to this profile.",
       };
     }
 
@@ -135,7 +150,6 @@ export async function getProfilePreviewData(userId?: string): Promise<ProfilePre
             religion: true,
             interests: true,
             workPreferences: true,
-            bankAccount: true,
             lgbtqiaSupport: true,
             uniqueService: true,
             funFact: true,
