@@ -12,7 +12,9 @@ import { useState, useEffect, useLayoutEffect, useMemo, useRef, Suspense } from 
 import { flushSync } from "react-dom";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import { manageServicesHref } from "@/features/worker/manageServicesLink";
 import StepContainer from "@/components/account-setup/shared/StepContainer";
 import { useWorkerProfile as useApiProfile } from "@/features/worker/profile";
 import { formOf, saveRegistration } from "@/features/worker/services";
@@ -436,7 +438,7 @@ function ServicesSetupContent() {
       router.push(`/dashboard/worker/services/setup?step=${STEPS[0].slug}`);
     } else if (STEPS.length === 0) {
       // No services selected - redirect to Edit Services page
-      router.push("/dashboard/worker/services/manage");
+      router.push("/dashboard/worker/account?tab=services");
     }
   }, [currentStepIndex, router, stepSlug, STEPS, isLoadingProfile, apiProfile]);
 
@@ -667,6 +669,13 @@ function ServicesSetupContent() {
               {errors.general}
             </div>
           )}
+
+          {/* Adding or removing services is in Account (user, 2026-10-16): from every service, a link there and back. */}
+          <p className="mb-4 text-sm font-poppins">
+            <Link href={manageServicesHref(`/dashboard/worker/services/setup?step=${stepSlug}`)} className="text-teal-600 hover:text-teal-700 underline font-medium">
+              Modify your Service
+            </Link>
+          </p>
 
           {/* Render current step */}
           <CurrentStepComponent {...stepProps} />

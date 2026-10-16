@@ -56,7 +56,7 @@ function AdditionalDocumentsContent() {
 
   // Go back to services
   const handlePrevious = () => {
-    router.push("/dashboard/worker/services/manage");
+    router.push("/dashboard/worker/account?tab=services");
   };
 
   // Loading state

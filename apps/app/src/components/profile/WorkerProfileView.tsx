@@ -718,7 +718,7 @@ export default function WorkerProfileView({
                 {!isAdminView && !isPublicView && (
                   <button
                     className="profile-preview-edit-link mt-3"
-                    onClick={() => router.push('/dashboard/worker/services/manage')}
+                    onClick={() => router.push('/dashboard/worker/account?tab=services')}
                   >
                     Add more services
                   </button>

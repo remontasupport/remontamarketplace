@@ -2,6 +2,7 @@
 // Sidebar.tsx renders this array and holds no item of its own. Pure data and functions of
 // the profile read: icons are named here and mapped to components by the sidebar, so the
 // order and the links are tested without rendering.
+import { MANAGE_SERVICES_HREF } from "@/features/worker/manageServicesLink";
 import type { Profile } from "@remonta/api-contract";
 
 export type MenuIcon = "dashboard" | "editProfile" | "compliance" | "myServices" | "credentials" | "jobs" | "account";
@@ -112,23 +113,20 @@ export function requirementsForSteps(profile: Profile | undefined) {
   return { requirements: { baseCompliance: profile.requirements.mandatory.map(asDoc), trainings: profile.requirements.trainings.map(asDoc) } };
 }
 
-/** Choosing services (the old "Edit Services" item): the last link of Modify Services. */
-export const EDIT_SERVICES_LINK: MenuLink = { id: "edit-services", label: "+ Add or remove services", href: "/dashboard/worker/services/manage" };
+/** Choosing services: a tab in Account (user, 2026-10-16); the Services group links to it only before any is chosen. */
+export const EDIT_SERVICES_LINK: MenuLink = { id: "edit-services", label: "+ Add services", href: MANAGE_SERVICES_HREF };
 
 /** The suburb clients find the worker at and how far they travel: in Services, not the address (user, 2026-10-13). */
 export const SERVICE_AREA_LINK: MenuLink = { id: "service-area", label: "Service Area", href: sectionHref("service-area") };
 
 /**
- * The Services group (user, 2026-10-13): Modify Services, a sub-group of one setup step per chosen service (hrefs
- * unchanged until U3) then the chooser, and Service Area. Like every sub-group its own href is its first link.
+ * The Services group (user, 2026-10-16): one setup step per chosen service, then Service Area (was a "Modify Services"
+ * sub-group; adding and removing services moved to Account). Before any service is chosen: the link to choose them.
  */
-export const servicesChildren = (steps: readonly MenuLink[], profile?: Profile): MenuLink[] => {
-  const mine = [...steps, EDIT_SERVICES_LINK];
-  return [
-    { id: "modify-services", label: "Modify Services", href: mine[0]!.href, children: mine },
-    { ...SERVICE_AREA_LINK, done: profile ? profile.serviceArea !== null : undefined },
-  ];
-};
+export const servicesChildren = (steps: readonly MenuLink[], profile?: Profile): MenuLink[] => [
+  ...(steps.length ? steps : [EDIT_SERVICES_LINK]),
+  { ...SERVICE_AREA_LINK, done: profile ? profile.serviceArea !== null : undefined },
+];
 
 /** The service names the services steps are generated from. */
 export const serviceNamesOf = (profile: Profile | undefined) => profile?.services.map((s) => s.categoryName) ?? [];

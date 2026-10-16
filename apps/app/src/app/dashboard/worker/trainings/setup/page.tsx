@@ -212,7 +212,7 @@ function TrainingsSetupContent() {
         <div className="form-page-container">
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-8 text-center font-poppins">
             <p className="text-gray-700">Choose the services you offer first: your trainings depend on them.</p>
-            <a href="/dashboard/worker/services/manage" className="mt-4 inline-block font-semibold underline" style={{ color: "#0C1628" }}>
+            <a href="/dashboard/worker/account?tab=services" className="mt-4 inline-block font-semibold underline" style={{ color: "#0C1628" }}>
               Choose your services
             </a>
           </div>

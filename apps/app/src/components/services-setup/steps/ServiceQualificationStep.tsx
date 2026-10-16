@@ -936,7 +936,7 @@ export default function ServiceQualificationStep({
               <div className="text-center py-6">
                 <p className="text-sm text-gray-500 mb-4">No service offerings selected for this Service.</p>
                 <Link
-                  href={`/dashboard/worker/services/manage?returnUrl=${encodeURIComponent(returnUrl)}`}
+                  href={`/dashboard/worker/account?tab=services&returnUrl=${encodeURIComponent(returnUrl)}`}
                   className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins font-medium"
                 >
                   Edit/Add more services here

@@ -89,15 +89,14 @@ describe("WORKER_MENU", () => {
     expect(groupOfPath("/dashboard/worker/trainings/setup")).toBe("compliance"); // one group since 2026-10-13
   });
 
-  it("Services: Modify Services (each service, then the chooser), then Service Area; the service pages open the group", () => {
+  it("Services: each chosen service, then Service Area (user, 2026-10-16: no Modify Services sub-group; adding and removing is in Account)", () => {
     const nursing = { id: "nursing", label: "Nursing", href: "/dashboard/worker/services/setup?step=nursing" };
-    const [mine, area] = servicesChildren([nursing]);
-    expect([mine!.label, area!.label]).toEqual(["Modify Services", "Service Area"]);
-    expect(mine!.children!.map((l) => l.label)).toEqual(["Nursing", "+ Add or remove services"]);
-    expect(mine!.href).toBe(nursing.href);
-    expect(servicesChildren([])[0]!.children).toEqual([EDIT_SERVICES_LINK]); // no service yet: only the chooser
-    expect(servicesChildren([])[0]!.href).toBe(EDIT_SERVICES_LINK.href);
-    expect(pageExists(EDIT_SERVICES_LINK.href)).toBe(true);
+    const cleaning = { id: "cleaning", label: "Cleaning", href: "/dashboard/worker/services/setup?step=cleaning" };
+    expect(servicesChildren([nursing, cleaning]).map((l) => l.label)).toEqual(["Nursing", "Cleaning", "Service Area"]);
+    expect(servicesChildren([nursing]).some((l) => l.children)).toBe(false);
+    expect(servicesChildren([]).map((l) => l.label)).toEqual(["+ Add services", "Service Area"]); // none chosen yet: the way to choose
+    expect(EDIT_SERVICES_LINK.href).toBe("/dashboard/worker/account?tab=services");
+    expect(pageExists("/dashboard/worker/account")).toBe(true);
     expect(isProfilePage(profileSlug(SERVICE_AREA_LINK.href) ?? "")).toBe(true);
     expect(groupOfPath(SERVICE_AREA_LINK.href)).toBe("services"); // a profile URL, in the Services group (user, 2026-10-13)
     expect(servicesChildren([], base)[1]!.done).toBe(false);
