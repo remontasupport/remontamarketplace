@@ -206,19 +206,32 @@ export const educationViewSchema = z.strictObject({ entries: z.array(courseBase.
 
 // ---- Additional info (R7.2) ---------------------------------------------------------------------------------
 
-export const additionalInfoGroupSchema = z.enum(ADDITIONAL_INFO_GROUPS)
-export const goodToKnowSchema = z.strictObject({ group: z.literal('good-to-know'), lgbtqiaSupport: z.boolean() })
-export const languagesSchema = z.strictObject({ group: z.literal('languages'), languages: uniqueList(listedOrOwn(LANGUAGES, 40), 20) })
-export const culturalBackgroundSchema = z.strictObject({ group: z.literal('cultural-background'), culturalBackground: uniqueList(z.enum(CULTURAL_BACKGROUNDS), 20) })
-export const religionSchema = z.strictObject({ group: z.literal('religion'), religion: uniqueList(z.enum(RELIGIONS), 20) })
-export const interestsSchema = z.strictObject({ group: z.literal('interests'), interests: uniqueList(listedOrOwn(INTERESTS, 60), 20) })
-export const supportActivitiesSchema = z.strictObject({ group: z.literal('support-activities'), uniqueService: uniqueList(z.enum(UNIQUE_SERVICES), 10, 1) })
-export const funFactSchema = z.strictObject({ group: z.literal('fun-fact'), funFact: plainText(50, 1000) })
-export const preferencesSchema = z.strictObject({ group: z.literal('preferences'), workPreferences: uniqueList(z.enum(WORK_PREFERENCES), 20) })
-export const personalitySchema = z.strictObject({ group: z.literal('personality'), personality: z.enum(PERSONALITIES), nonSmoker: z.boolean(), petFriendly: z.boolean() })
-export const additionalInfoBodySchema = z.discriminatedUnion('group', [goodToKnowSchema, languagesSchema, culturalBackgroundSchema, religionSchema, interestsSchema, supportActivitiesSchema, funFactSchema, preferencesSchema, personalitySchema])
-export type AdditionalInfoBody = z.output<typeof additionalInfoBodySchema>
-export const additionalInfoParamsSchema = z.strictObject({ group: additionalInfoGroupSchema })
+// One entry per group (user, 2026-10-14: each page its own api), each at /v1/worker/additional-info/<group>. The address
+// names the group, so a body holds only that group's columns; it saves those and nothing else.
+export const goodToKnowSchema = z.strictObject({ lgbtqiaSupport: z.boolean() })
+export const languagesSchema = z.strictObject({ languages: uniqueList(listedOrOwn(LANGUAGES, 40), 20) })
+export const culturalBackgroundSchema = z.strictObject({ culturalBackground: uniqueList(z.enum(CULTURAL_BACKGROUNDS), 20) })
+export const religionSchema = z.strictObject({ religion: uniqueList(z.enum(RELIGIONS), 20) })
+export const interestsSchema = z.strictObject({ interests: uniqueList(listedOrOwn(INTERESTS, 60), 20) })
+export const supportActivitiesSchema = z.strictObject({ uniqueService: uniqueList(z.enum(UNIQUE_SERVICES), 10, 1) })
+export const funFactSchema = z.strictObject({ funFact: plainText(50, 1000) })
+export const preferencesSchema = z.strictObject({ workPreferences: uniqueList(z.enum(WORK_PREFERENCES), 20) })
+export const personalitySchema = z.strictObject({ personality: z.enum(PERSONALITIES), nonSmoker: z.boolean(), petFriendly: z.boolean() })
+
+/** Each group's address segment, entry and body: the one table the contract, the api and the tests read. */
+export const ADDITIONAL_INFO_ENTRIES = {
+  'good-to-know': { entry: 'putGoodToKnow', schema: goodToKnowSchema },
+  languages: { entry: 'putLanguages', schema: languagesSchema },
+  'cultural-background': { entry: 'putCulturalBackground', schema: culturalBackgroundSchema },
+  religion: { entry: 'putReligion', schema: religionSchema },
+  interests: { entry: 'putInterests', schema: interestsSchema },
+  'support-activities': { entry: 'putSupportActivities', schema: supportActivitiesSchema },
+  'fun-fact': { entry: 'putFunFact', schema: funFactSchema },
+  preferences: { entry: 'putPreferences', schema: preferencesSchema },
+  personality: { entry: 'putPersonality', schema: personalitySchema },
+} as const satisfies Record<(typeof ADDITIONAL_INFO_GROUPS)[number], { entry: string; schema: z.ZodType }>
+export type AdditionalInfoGroup = keyof typeof ADDITIONAL_INFO_ENTRIES
+export type AdditionalInfoBody<G extends AdditionalInfoGroup = AdditionalInfoGroup> = z.output<(typeof ADDITIONAL_INFO_ENTRIES)[G]['schema']>
 
 // ---- Bank account (R6) ----------------------------------------------------------------------------------------
 

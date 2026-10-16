@@ -1,6 +1,7 @@
 // The U2 section writes on PostGIS (edit-profile properties P1, P2, P4-P7, P9; rules R1-R7):
 // through the real pipeline and transactions, on the seeded worker harness. Runs only when
 // TEST_DATABASE_URL points at localhost (CI's API Quality job).
+import { CULTURAL_BACKGROUNDS, INTERESTS, LANGUAGES, PERSONALITIES, RELIGIONS, UNIQUE_SERVICES, WORK_PREFERENCES } from '@remonta/schemas/data/profileOptions'
 import { EXAMPLE_ABN } from '@remonta/schemas/validations/abn'
 import pino from 'pino'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -80,24 +81,44 @@ describe.skipIf(!local)('the section writes on PostGIS', () => {
   })
 
   it('P7: a group write changes only that group', async () => {
-    await put('/v1/worker/additional-info/languages', { group: 'languages', languages: ['English', 'Hindi'] })
-    await put('/v1/worker/additional-info/personality', { group: 'personality', personality: 'Calm and relaxed', nonSmoker: true, petFriendly: true })
+    await put('/v1/worker/additional-info/languages', { languages: ['English', 'Hindi'] })
+    await put('/v1/worker/additional-info/personality', { personality: 'Calm and relaxed', nonSmoker: true, petFriendly: true })
     const before = (await profile()).sections.additionalInfo
-    const res = await put('/v1/worker/additional-info/religion', { group: 'religion', religion: ['Buddhist'] })
-    expect(res.json()).toEqual({ group: 'religion', religion: ['Buddhist'] })
+    const res = await put('/v1/worker/additional-info/religion', { religion: ['Buddhist'] })
+    expect(res.json()).toEqual({ religion: ['Buddhist'] })
     const after = (await profile()).sections.additionalInfo
     expect(after).toEqual({ ...before, religion: ['Buddhist'] })
-    expect((await put('/v1/worker/additional-info/religion', { group: 'languages', languages: [] })).statusCode).toBe(400) // path and body must agree
+    expect((await put('/v1/worker/additional-info/religion', { languages: [] })).statusCode).toBe(400) // another group's field
+  })
+
+  it('every group entry saves its own columns and records its own audit section (2026-10-14: one entry per group)', async () => {
+    const bodies: Record<string, object> = {
+      'good-to-know': { lgbtqiaSupport: true },
+      languages: { languages: [LANGUAGES[0]] },
+      'cultural-background': { culturalBackground: [CULTURAL_BACKGROUNDS[0]] },
+      religion: { religion: [RELIGIONS[0]] },
+      interests: { interests: [INTERESTS[0]] },
+      'support-activities': { uniqueService: [UNIQUE_SERVICES[0]] },
+      'fun-fact': { funFact: 'I once cycled from Brisbane to the Gold Coast for a fundraiser.' },
+      preferences: { workPreferences: [WORK_PREFERENCES[0]] },
+      personality: { personality: PERSONALITIES[0], nonSmoker: true, petFriendly: false },
+    }
+    for (const [g, body] of Object.entries(bodies)) {
+      const res = await put(`/v1/worker/additional-info/${g}`, body)
+      expect(res.statusCode, `${g}: ${res.body}`).toBe(200)
+      expect(res.json(), g).toEqual(body)
+      expect(await h.db.auditLog.count({ where: { userId: h.a.userId, action: 'PROFILE_UPDATE', metadata: { path: ['section'], equals: `putAdditionalInfo.${g}` } } }), g).toBeGreaterThan(0)
+    }
   })
 
   it('the activities and the fun fact save alone, each leaving the other as it was (2026-10-13: about-me split in two)', async () => {
     const fact = 'I once cycled from Brisbane to the Gold Coast for a fundraiser.'
-    expect((await put('/v1/worker/additional-info/fun-fact', { group: 'fun-fact', funFact: fact })).json()).toEqual({ group: 'fun-fact', funFact: fact })
-    await put('/v1/worker/additional-info/support-activities', { group: 'support-activities', uniqueService: ['Fishing trips'] })
+    expect((await put('/v1/worker/additional-info/fun-fact', { funFact: fact })).json()).toEqual({ funFact: fact })
+    await put('/v1/worker/additional-info/support-activities', { uniqueService: ['Fishing trips'] })
     expect((await profile()).sections.additionalInfo).toMatchObject({ funFact: fact, uniqueService: ['Fishing trips'] })
-    await put('/v1/worker/additional-info/fun-fact', { group: 'fun-fact', funFact: fact.replace('cycled', 'walked') })
+    await put('/v1/worker/additional-info/fun-fact', { funFact: fact.replace('cycled', 'walked') })
     expect((await profile()).sections.additionalInfo).toMatchObject({ uniqueService: ['Fishing trips'] })
-    expect((await put('/v1/worker/additional-info/about-me', { group: 'about-me', uniqueService: ['Fishing trips'], funFact: fact })).statusCode).toBe(400)
+    expect((await put('/v1/worker/additional-info/about-me', { uniqueService: ['Fishing trips'], funFact: fact })).statusCode).toBe(404)
   })
 
   it('the date of birth, the gender and the vehicle answer save alone, each leaving the other two as they were (2026-10-14: personal-info split in three)', async () => {

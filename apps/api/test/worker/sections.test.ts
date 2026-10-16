@@ -1,7 +1,7 @@
 // U2's pure pieces: the one-photo rule (R4.4), the handler's repoint (R4.2), the
 // additional-info column selection (R7.3, P7's mechanism), the bank account's stored and
 // masked shapes (R6, P4), and the HTTP path through the pipeline without a database.
-import { contracts, platformContract, workerContract, type PublicEndpoint } from '@remonta/api-contract'
+import { ADDITIONAL_INFO_ENTRIES, contracts, platformContract, workerContract, type PublicEndpoint } from '@remonta/api-contract'
 import publicEndpoints from '@remonta/api-contract/public-endpoints.json'
 import fc from 'fast-check'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -96,10 +96,12 @@ describe('the processing handler repoints the slot that holds the staged URL (R4
 
 describe('additional info columns (R7.3)', () => {
   it('a group writes exactly its own columns', () => {
-    expect(columnsOf({ group: 'personality', personality: 'Calm and relaxed', nonSmoker: true, petFriendly: false })).toEqual({ personality: 'Calm and relaxed', nonSmoker: true, petFriendly: false })
-    expect(columnsOf({ group: 'languages', languages: ['English'] })).toEqual({ languages: ['English'] })
-    expect(columnsOf({ group: 'fun-fact', funFact: 'f'.repeat(50) })).toEqual({ funFact: 'f'.repeat(50) }) // the activities are untouched (2026-10-13)
-    expect(columnsOf({ group: 'support-activities', uniqueService: ['Fishing trips'] })).toEqual({ uniqueService: ['Fishing trips'] })
+    expect(columnsOf('personality', { personality: 'Calm and relaxed', nonSmoker: true, petFriendly: false })).toEqual({ personality: 'Calm and relaxed', nonSmoker: true, petFriendly: false })
+    expect(columnsOf('languages', { languages: ['English'] })).toEqual({ languages: ['English'] })
+    expect(columnsOf('fun-fact', { funFact: 'f'.repeat(50) })).toEqual({ funFact: 'f'.repeat(50) }) // the activities are untouched (2026-10-13)
+    expect(columnsOf('support-activities', { uniqueService: ['Fishing trips'] })).toEqual({ uniqueService: ['Fishing trips'] })
+    expect(columnsOf('religion', { religion: ['Buddhist'], languages: ['English'] })).toEqual({ religion: ['Buddhist'] }) // another group's column never passes
+    expect(Object.keys(GROUP_COLUMNS).sort()).toEqual(Object.keys(ADDITIONAL_INFO_ENTRIES).sort()) // a column list per entry
     const all = Object.values(GROUP_COLUMNS).flat()
     expect(new Set(all).size).toBe(all.length) // no column belongs to two groups
     expect(all).not.toContain('bankAccount')
@@ -144,10 +146,13 @@ describe('the write entries through the pipeline (no database)', () => {
     expect(hours.statusCode).toBe(400)
     expect(Object.keys(hours.json().error.fields)).toContain('slots.0.startMinute')
   })
-  it('the group in the path and the body must agree on the parse (an unknown group is 400)', async () => {
+  it("each group is its own entry (2026-10-14): another group's field is 400, the old group field is refused, an unknown group is 404", async () => {
     const a = await app()
-    const res = await a.fastify.inject({ method: 'PUT', url: '/v1/worker/additional-info/nope', headers: workerToken('u1'), payload: { group: 'nope' } })
-    expect(res.statusCode).toBe(400)
+    const put = (url: string, payload: object) => a.fastify.inject({ method: 'PUT', url, headers: workerToken('u1'), payload })
+    expect((await put('/v1/worker/additional-info/religion', { languages: ['English'] })).statusCode).toBe(400)
+    expect((await put('/v1/worker/additional-info/religion', { group: 'religion', religion: ['Buddhist'] })).statusCode).toBe(400)
+    expect((await put('/v1/worker/additional-info/nope', {})).statusCode).toBe(404)
+    expect((await put('/v1/worker/additional-info/about-me', { uniqueService: ['Fishing trips'] })).statusCode).toBe(404)
   })
   it('the date of birth, gender and vehicle writes take their own answer only; the combined personal-info write is gone (2026-10-14)', async () => {
     const a = await app()
