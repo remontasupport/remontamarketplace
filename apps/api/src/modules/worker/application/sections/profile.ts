@@ -37,6 +37,18 @@ export async function writeVehicle(tx: Tx, profileId: string, body: VehicleBody)
 }
 
 /** R5: the ATO check re-run; `signed` kept when the stored engagement is an ABN, else false (a TFN is replaced, D17). */
+/**
+ * U4d: the engagement marked signed, with the contract that proves it (the caller records the PDF in the same
+ * transaction). An ABN already stored stays when the engagement is still ABN; a TFN is never stored (D17).
+ */
+export async function writeSignedEngagement(tx: Tx, profileId: string, type: 'abn' | 'tfn'): Promise<{ type: 'abn' | 'tfn'; signed: true }> {
+  const stored = await tx.workerProfile.findUnique({ where: { id: profileId }, select: { abn: true } })
+  const prev = (stored?.abn as { workerEngagementType?: { type?: unknown; value?: unknown } } | null)?.workerEngagementType
+  const keep = type === 'abn' && prev?.type === 'abn' && typeof prev.value === 'string' && /^\d{11}$/.test(prev.value) ? { value: prev.value } : {}
+  await tx.workerProfile.update({ where: { id: profileId }, data: { abn: { workerEngagementType: { type, signed: true, ...keep } } }, select: { id: true } })
+  return { type, signed: true }
+}
+
 export async function writeAbn(tx: Tx, profileId: string, body: AbnBody): Promise<AbnView> {
   if (!abnChecksum(body.abn)) throw new ApiError(400, 'abn checksum', { abn: ['That is not a valid ABN'] })
   const stored = await tx.workerProfile.findUnique({ where: { id: profileId }, select: { abn: true } })
