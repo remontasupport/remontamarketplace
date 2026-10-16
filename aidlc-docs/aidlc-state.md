@@ -51,6 +51,13 @@
   `feat/services-api-reads` `d77b29f` (stacked on `feat/services-app`, the api merged in). The service-document delete
   bug (always legacy since U3c) fixed there. Merge the api PR first (staging), then test the app PR's preview.
 
+  **U5 (2026-10-16, jobs excluded):** U5a `feat/retire-old-profile-pages` (old account-setup/profile-building pages,
+  -8.9k lines), U5b `feat/requirement-details-api` (api) + `feat/compliance-frame`, U5c `feat/dashboard-home`, U5d
+  `feat/account-api` (api, migration) + `feat/account-app`. Security hotfix #76 (profile preview leaked bank details)
+  merged and verified live in production. App PRs stack: services-app <- retire-old <- compliance-frame <-
+  dashboard-home <- account-app. Left on old routes in the worker area: the jobs (excluded), `/api/geocode` (job search),
+  the coordinator profile route (coordinator area).
+
   **Resume here:**
   1. `git ls-remote origin main feat/edit-profile-app feat/services-app feat/compliance-app`; ask what was merged since.
   2. U4b: PR `feat/compliance-app` -> base `feat/services-app` (no App Quality CI on a non-main base: the local gate is
