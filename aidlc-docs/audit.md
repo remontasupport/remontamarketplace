@@ -4398,3 +4398,13 @@ service (cleaning-services, documents view) ended on `/dashboard/worker`. App ga
 takes an `onSaved`, and Service Area's goes to `/dashboard/worker` once the Save is stored (a failed or invalid Save
 stays on the page). Verified locally: Next -> Complete on the last service -> Service Area -> Save -> `/dashboard/worker`.
 App gate passed.
+
+## 2026-10-16 -- Compliance continues from the mandatory steps to the trainings
+
+**User input (verbatim):** "Hey claude, I noticed when the worker has finished uploading the primary compliance document and Save, it navigates to the Home and didn't continue to the requirements that the services needed, I think instead of Save, it should be Next until the required document for all the services has been uploaded"
+
+**Change (`feat/account-app`):** on `/dashboard/worker/requirements/setup` the last mandatory step shows "Next" and
+goes to the first training step (`/dashboard/worker/trainings/setup?step=...`) when the worker's services need any;
+"Save" -> dashboard only when there are none. The last training step keeps "Save" -> dashboard. Verified locally (a
+worker with 7 mandatory steps and 4 trainings): the last mandatory step's button read "Next" and led to
+`trainings/setup?step=ndis-worker-orientation`. App gate passed.
