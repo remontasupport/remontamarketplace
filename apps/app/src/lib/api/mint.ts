@@ -9,13 +9,13 @@ export const SECRET_MIN_LENGTH = 32
 export const DB_RETRY_AFTER_S = 2
 
 export interface MintSession {
-  user: { id: string; role: string; impersonatedBy?: string }
+  user: { id: string; role: string; impersonatedBy?: string; /** U5d: sign-in time, seconds. */ authAt?: number }
 }
 
 export interface MintDeps {
   session: MintSession | null
-  /** The subject's account by id: `{status, role}` or null when it does not exist. May throw on a database error. */
-  readAccount: (userId: string) => Promise<{ status: string; role: string } | null>
+  /** The subject's account by id: `{status, role, passwordChangedAt}` or null when it does not exist. May throw on a database error. */
+  readAccount: (userId: string) => Promise<{ status: string; role: string; passwordChangedAt?: Date | null } | null>
   /** The app's strict limiter keyed by the subject (R2.4); fails open inside. */
   rateLimit: (userId: string) => Promise<{ success: boolean; retryAfter?: number }>
   secret: string | undefined
@@ -46,7 +46,7 @@ export async function mintApiToken(deps: MintDeps): Promise<MintResult> {
 
   // R2.2 / R2.6: the subject is the signed-in user; during impersonation that is the impersonated user.
   const subject = session.user.id
-  let account: { status: string; role: string } | null
+  let account: { status: string; role: string; passwordChangedAt?: Date | null } | null
   try {
     account = await deps.readAccount(subject)
   } catch (err) {
@@ -55,6 +55,13 @@ export async function mintApiToken(deps: MintDeps): Promise<MintResult> {
   }
   if (!account || account.status !== 'ACTIVE') {
     log('info', { route: 'api-token', userId: subject, reason: 'account-inactive' }, 'token refused')
+    return { status: 401, body: { error: 'unauthenticated' }, headers: NO_STORE }
+  }
+  // U5d: a session that signed in before the password changed gets no token (its other checks, in the session
+  // callback, run at most once a minute; this one runs on every mint).
+  const changed = account.passwordChangedAt ? Math.floor(account.passwordChangedAt.getTime() / 1000) : null
+  if (changed !== null && (session.user.authAt ?? 0) < changed) {
+    log('info', { route: 'api-token', userId: subject, reason: 'password-changed' }, 'token refused')
     return { status: 401, body: { error: 'unauthenticated' }, headers: NO_STORE }
   }
   if (account.role !== session.user.role || !(ROLES as readonly string[]).includes(account.role)) {

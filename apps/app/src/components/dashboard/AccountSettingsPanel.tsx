@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo, type ReactNode } from "react";
 import { useSession, signOut } from "next-auth/react";
 import QueryProvider from "@/providers/QueryProvider";
-import { updateUserEmail, updateUserPassword } from "@/services/user/account.service";
+import { accountApi } from "@/lib/api/account";
+import type { ApiOutcome } from "@/lib/api/outcome";
 import "@/app/styles/account-settings.css";
 
 type Tab = string;
@@ -13,6 +14,15 @@ export interface ExtraTab {
   id: string;
   label: string;
   content: ReactNode;
+}
+
+/** The words for a refused or failed account change (the api's field messages are shown beside their fields). */
+function accountMessageOf(r: Exclude<ApiOutcome<unknown>, { kind: "ok" }>, fallback: string): string {
+  if (r.kind === "rateLimited") return "Too many changes at once. Please wait a moment and try again.";
+  if (r.kind === "unauthenticated") return "Your session has ended. Please sign in again.";
+  if (r.kind === "forbidden") return "Sign-in details can only be changed by the account's owner, not while impersonating.";
+  if (r.kind === "failed" && r.fields) return Object.values(r.fields)[0]?.[0] ?? fallback;
+  return fallback;
 }
 
 function AccountSettingsPanelContent({ extraTabs = [] }: { extraTabs?: readonly ExtraTab[] }) {
@@ -128,29 +138,42 @@ function AccountSettingsPanelContent({ extraTabs = [] }: { extraTabs?: readonly 
     setErrorMessage("");
     setFieldErrors({});
 
+    // U5d: on apps/api. An impersonating admin cannot change sign-in details (the api refuses it too).
+    if (session?.user?.impersonatedBy) {
+      setErrorMessage("Sign-in details can only be changed by the account's owner, not while impersonating.");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       let passwordChanged = false;
 
-      const emailResult = await updateUserEmail({ email });
-      if (!emailResult.success) {
-        if (emailResult.fieldErrors) setFieldErrors(emailResult.fieldErrors);
-        setErrorMessage(emailResult.error || "Failed to update email");
-        setIsLoading(false);
-        return;
+      if (email.trim().toLowerCase() !== (session?.user?.email ?? "").toLowerCase()) {
+        const emailResult = await accountApi.putEmail({ email });
+        if (emailResult.kind !== "ok") {
+          if (emailResult.kind === "failed" && emailResult.fields) setFieldErrors(emailResult.fields);
+          setErrorMessage(accountMessageOf(emailResult, "Failed to update email"));
+          return;
+        }
       }
 
-      if (password && confirmPassword) {
-        const passwordResult = await updateUserPassword({ password, confirmPassword });
-        if (!passwordResult.success) {
-          if (passwordResult.fieldErrors) setFieldErrors(passwordResult.fieldErrors);
-          setErrorMessage(passwordResult.error || "Failed to update password");
-          setIsLoading(false);
+      if (password || confirmPassword) {
+        if (password !== confirmPassword) {
+          setFieldErrors({ confirmPassword: ["Passwords do not match"] });
+          setErrorMessage("Passwords do not match");
+          return;
+        }
+        const passwordResult = await accountApi.putPassword({ password });
+        if (passwordResult.kind !== "ok") {
+          if (passwordResult.kind === "failed" && passwordResult.fields) setFieldErrors(passwordResult.fields);
+          setErrorMessage(accountMessageOf(passwordResult, "Failed to update password"));
           return;
         }
         passwordChanged = true;
       }
 
       if (passwordChanged) {
+        // Every session from before the change is now refused, this one included: sign in again with the new password.
         setSuccessMessage("Password updated successfully! You will be logged out in 3 seconds...");
         setTimeout(async () => {
           await signOut({ callbackUrl: "/login?message=password-changed" });

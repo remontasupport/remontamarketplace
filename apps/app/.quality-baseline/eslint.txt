@@ -92,7 +92,6 @@
 1	src/lib/logger.ts::@typescript-eslint/no-explicit-any
 2	src/lib/password.ts::@typescript-eslint/no-require-imports
 11	src/lib/profileData.ts::@typescript-eslint/no-explicit-any
-1	src/services/user/account.service.ts::@typescript-eslint/no-explicit-any
 14	src/services/worker/profilePreview.service.ts::@typescript-eslint/no-explicit-any
 2	src/store/onboardingStore.ts::@typescript-eslint/no-explicit-any
 1	src/utils/dynamicComplianceSteps.ts::@typescript-eslint/no-explicit-any

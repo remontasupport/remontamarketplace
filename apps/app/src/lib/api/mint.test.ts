@@ -112,4 +112,16 @@ describe('mintApiToken', () => {
     status = 'SUSPENDED'
     expect((await mintApiToken(d)).status).toBe(401)
   })
+
+  it('U5d: a session that signed in before the password changed gets no token; one after it does', async () => {
+    const changed = new Date('2026-10-16T05:00:00Z')
+    const t = changed.getTime() / 1000
+    const at = (authAt: number | undefined) => deps({ session: { user: { id: 'u1', role: 'ADMIN', authAt } }, readAccount: async () => ({ status: 'ACTIVE', role: 'ADMIN', passwordChangedAt: changed }) })
+    expect((await mintApiToken(at(t - 1))).status).toBe(401)
+    expect((await mintApiToken(at(undefined))).status).toBe(401)
+    expect((await mintApiToken(at(t))).status).toBe(200)
+    expect((await mintApiToken(at(t + 60))).status).toBe(200)
+    // Never changed: no sign-in time needed.
+    expect((await mintApiToken(deps({ readAccount: async () => ({ status: 'ACTIVE', role: 'ADMIN', passwordChangedAt: null }) }))).status).toBe(200)
+  })
 })

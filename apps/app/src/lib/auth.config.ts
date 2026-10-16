@@ -5,6 +5,7 @@ import { authPrisma, withRetry } from "./auth-prisma";
 import { userIdByEmail } from "./user-lookup";
 import { UserRole } from "@/types/auth";
 import { getCached, setCached, CACHE_KEYS, invalidateCache } from "./redis";
+import { sessionAfterPasswordCheck } from "./sessionRevocation";
 
 // ============================================================================
 // SHARED HELPERS
@@ -227,7 +228,10 @@ export const authOptions: NextAuthOptions = {
 
   callbacks: {
     async jwt({ token, user, trigger }) {
+      const nowS = Math.floor(Date.now() / 1000)
       if (user) {
+        token.authAt = nowS
+        token.checkedAt = nowS
         token.id = user.id
         token.role = user.role
         token.email = user.email
@@ -239,20 +243,31 @@ export const authOptions: NextAuthOptions = {
       }
 
       if (trigger === "update" && token.id) {
-        const cacheKey = CACHE_KEYS.user(token.email as string)
-        const cached = await getCached<{ email: string; role: string }>(cacheKey)
-        if (cached?.email) {
-          token.email = cached.email
-          token.role = cached.role
-        } else {
-          const freshUser = await withRetry(() => authPrisma.user.findUnique({
-            where: { id: token.id as string },
-            select: { email: true, role: true },
-          }))
-          if (freshUser) {
-            token.email = freshUser.email
-            token.role = freshUser.role
-          }
+        // Read by id, not through the cache keyed by the (possibly just changed) email (U5d: an email change is
+        // followed by update(), and the cached record under the old address would put the old email back).
+        const freshUser = await withRetry(() => authPrisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { email: true, role: true },
+        }))
+        if (freshUser) {
+          token.email = freshUser.email
+          token.role = freshUser.role
+        }
+      }
+
+      // U5d (user, 2026-10-16): a password change signs out the other sessions. At most once a minute, a session
+      // that signed in before users.passwordChangedAt is refused. A session from before this check existed has no
+      // authAt: it is kept unless a change has happened since. A database error skips the check (never signs out).
+      if (token.id && !token.revoked && (!token.checkedAt || nowS - token.checkedAt >= 60)) {
+        try {
+          const account = await authPrisma.user.findUnique({ where: { id: token.id as string }, select: { passwordChangedAt: true } })
+          const changed = account?.passwordChangedAt ? Math.floor(account.passwordChangedAt.getTime() / 1000) : null
+          const checked = sessionAfterPasswordCheck(token, changed, nowS)
+          token.authAt = checked.authAt
+          if (checked.revoked) token.revoked = true
+          token.checkedAt = nowS
+        } catch {
+          // checked again on the next request
         }
       }
 
@@ -260,7 +275,10 @@ export const authOptions: NextAuthOptions = {
     },
 
     async session({ session, token }) {
+      // U5d: a refused session has no user: every page and route treats it as signed out.
+      if (token.revoked) return { ...session, user: undefined as never }
       if (session.user) {
+        session.user.authAt = token.authAt
         session.user.id = token.id
         session.user.role = token.role
         session.user.email = token.email as string

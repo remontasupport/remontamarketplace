@@ -14,8 +14,8 @@ export const dynamic = 'force-dynamic'
 export async function GET() {
   const session = await getServerSession(authOptions)
   const result = await mintApiToken({
-    session: session?.user?.id ? { user: { id: session.user.id, role: session.user.role, impersonatedBy: session.user.impersonatedBy } } : null,
-    readAccount: (userId) => withRetry(() => authPrisma.user.findUnique({ where: { id: userId }, select: { status: true, role: true } })),
+    session: session?.user?.id ? { user: { id: session.user.id, role: session.user.role, impersonatedBy: session.user.impersonatedBy, authAt: session.user.authAt } } : null,
+    readAccount: (userId) => withRetry(() => authPrisma.user.findUnique({ where: { id: userId }, select: { status: true, role: true, passwordChangedAt: true } })),
     rateLimit: (userId) => checkServerActionRateLimit(userId, strictApiRateLimit),
     secret: process.env.API_TOKEN_SECRET,
   })

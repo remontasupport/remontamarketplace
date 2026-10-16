@@ -28,8 +28,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   if (!session?.user?.id) return answer(401, "Please sign in to view this document.");
 
   const minted = await mintApiToken({
-    session: { user: { id: session.user.id, role: session.user.role, impersonatedBy: session.user.impersonatedBy } },
-    readAccount: (userId) => withRetry(() => authPrisma.user.findUnique({ where: { id: userId }, select: { status: true, role: true } })),
+    session: { user: { id: session.user.id, role: session.user.role, impersonatedBy: session.user.impersonatedBy, authAt: session.user.authAt } },
+    readAccount: (userId) => withRetry(() => authPrisma.user.findUnique({ where: { id: userId }, select: { status: true, role: true, passwordChangedAt: true } })),
     rateLimit: (userId) => checkServerActionRateLimit(userId, publicApiRateLimit),
     secret: process.env.API_TOKEN_SECRET,
   });
