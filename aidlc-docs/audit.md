@@ -4280,3 +4280,11 @@ form-engine 73; api-contract 79. PR #57 not merged.
 
 **User input**: "Merged, can you save this to ai dlc so I can continue tomorrow"
 **AI response**: verified main `813107d` (Merge #70) contains `d087e6e`, `e1a1408`, `9ec8bc0`; deploy-api for it running; none of the nine My Profile branches in main; PR #57 `6b4a9bd` (#68 U3c in it), `feat/services-app` `e49438a` ahead of it. aidlc-state.md "Current Stage" rewritten for the resume (what is on main/staging/production, PR #57 and feat/services-app, the open branches, the go-live order, a numbered "Resume here": refs, the staging checks owed, U4b next, the combined PR question, the answers owed, the local notes, follow-ups). Memory updated.
+
+## 2026-10-16
+
+**User input**: "continue ai dlc"
+**AI response**: refs unchanged since the end of 2026-10-15 (main `813107d`, `feat/edit-profile-app` `6b4a9bd`, `feat/services-app` `e49438a`); deploy-api for `813107d` succeeded 10:46Z (staging). Asked the two open questions.
+
+**User input** (answers): "Refuse it (Recommended)"; "Keep them separate"
+**AI response**: DC5 an expiry date already passed is refused (the api's current behaviour: "This document has expired"; nothing saved). The nine My Profile api branches stay separate (no combined PR). Starting U4b (the mandatory Compliance steps on the U4a api), stacked on `feat/services-app`.
