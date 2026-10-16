@@ -4344,3 +4344,6 @@ Noted: #73 (`feat/services-api-reads` at `d77b29f`) merged into `feat/services-a
 
 **User input**: "there are errors in #78 and #64, they cannot be merge, can you fix this"
 **AI response**: main has #77 and #79. Both PRs report mergeable (state "unstable": a failing non-required check). #78: only the CodeQL false positive (SHA-1 of the HaveIBeenPwned range lookup), all quality checks green. #64: API Quality failed in `profile.int.test.ts` (DB-gated, CI only): the expectation `age: null` predates #64's own change (the age follows the date of birth; 1990-01-01 -> 36). Fixed the expectation with `ageOn(...)` (`91edbb1` on fix/dob-age); merged it into `feat/gender-prefer-not-to-say` (`34d2a29`), which carries #64's change and would fail the same way.
+
+**User input**: "all 7 has merged"
+**AI response**: verified main `76568ae` (#82) contains all seven: #77 requirement-details-api, #78 account-api, #79 additional-info-split-api, #64 fix/dob-age, #80 gender, #81 delete-education-api, #82 friendly-validation-messages. Staging deploys: 7bcfcf56, 36f8e018, 20785afe, aa310125 succeeded (aa310125 includes #78 and its migration; #78's own run was cancelled by the newer merge); 0c3d1304 and 76568ae running. main's worker/account contracts and worker.sections.ts are identical to `feat/account-app`'s (the preview).
