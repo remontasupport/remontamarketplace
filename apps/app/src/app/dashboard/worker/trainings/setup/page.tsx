@@ -14,10 +14,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import StepContainer from "@/components/account-setup/shared/StepContainer";
-import { useWorkerProfile, workerProfileKeys } from "@/hooks/queries/useWorkerProfile";
+import { useWorkerProfile as useApiProfile } from "@/features/worker/profile";
+import { setupProfileOf } from "@/features/worker/compliance";
 import { useWorkerRequirements } from "@/hooks/queries/useWorkerRequirements";
 import { generateTrainingSteps, findStepBySlug, getStepIndex } from "@/utils/dynamicTrainingSteps";
-import { autoUpdateTrainingsCompletion } from "@/services/worker/setupProgress.service";
 import Loader from "@/components/ui/Loader";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 
@@ -61,7 +61,9 @@ function TrainingsSetupContent() {
 
   // TanStack Query hooks
   const queryClient = useQueryClient();
-  const { data: profileData, isLoading: isLoadingProfile } = useWorkerProfile(session?.user?.id);
+  // The api's profile read (U5b).
+  const { profile: apiProfile, isLoading: isLoadingProfile, reload: reloadProfile } = useApiProfile();
+  const profileData = useMemo(() => (apiProfile ? setupProfileOf(apiProfile) : undefined), [apiProfile]);
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [successMessage, setSuccessMessage] = useState("");
@@ -145,22 +147,10 @@ function TrainingsSetupContent() {
         const nextStepSlug = STEPS[currentStep].slug;
         router.push(`/dashboard/worker/trainings/setup?step=${nextStepSlug}`);
       } else {
-        // LAST STEP COMPLETED - Wait for update with timeout (max 3 seconds)
-        try {
-          // Race between update and timeout - whichever finishes first
-          await Promise.race([
-            autoUpdateTrainingsCompletion(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
-          ]);
-        } catch (err) {
-          // If timeout or error, continue anyway (dashboard will poll)
-          
-        }
-
-        // Invalidate cache to refresh data
-        queryClient.invalidateQueries({
-          queryKey: workerProfileKeys.all,
-        });
+        // LAST STEP COMPLETED: apps/api recomputed and stored completion with every upload (U5b: the
+        // autoUpdateTrainingsCompletion action is gone); the dashboard reads it fresh.
+        await reloadProfile();
+        queryClient.invalidateQueries({ queryKey: ["worker-profile"] });
 
         // Force Next.js to invalidate server cache and refetch on next navigation
         router.refresh();
@@ -218,6 +208,22 @@ function TrainingsSetupContent() {
       </DashboardLayout>
     );
   }
+  // No services chosen: the api lists no steps (R4.1, U5b) -- the services come first.
+  if (STEPS.length === 0) {
+    return (
+      <DashboardLayout showProfileCard={false}>
+        <div className="form-page-container">
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-8 text-center font-poppins">
+            <p className="text-gray-700">Choose the services you offer first: your trainings depend on them.</p>
+            <a href="/dashboard/worker/services/manage" className="mt-4 inline-block font-semibold underline" style={{ color: "#0C1628" }}>
+              Choose your services
+            </a>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
 
   // Get current step component
   const CurrentStepComponent = currentStepData?.component;

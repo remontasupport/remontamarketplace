@@ -17,17 +17,8 @@
 1	src/app/api/contractors/route.ts::prefer-const
 1	src/app/api/public/workers/route.ts::@typescript-eslint/no-explicit-any
 1	src/app/api/sms/send-verification/route.ts::prefer-const
-1	src/app/api/upload/certificates/route.ts::@typescript-eslint/no-explicit-any
-1	src/app/api/upload/identity-documents/route.ts::@typescript-eslint/no-explicit-any
-1	src/app/api/upload/other-requirements/route.ts::@typescript-eslint/no-explicit-any
-1	src/app/api/upload/vehicle-photo/route.ts::@typescript-eslint/no-explicit-any
 1	src/app/api/upload/worker-photo/route.ts::@typescript-eslint/no-explicit-any
-1	src/app/api/worker/other-requirements/[id]/route.ts::@typescript-eslint/no-explicit-any
-1	src/app/api/worker/other-requirements/route.ts::@typescript-eslint/no-explicit-any
 2	src/app/api/worker/profile/[userId]/route.ts::@typescript-eslint/no-explicit-any
-3	src/app/api/worker/profile/update-step/route.ts::@typescript-eslint/no-explicit-any
-4	src/app/api/worker/requirements/route.ts::@typescript-eslint/no-explicit-any
-2	src/app/api/worker/vehicle-photo/route.ts::@typescript-eslint/no-explicit-any
 2	src/app/apply/page.tsx::react/no-unescaped-entities
 2	src/app/dashboard/client/request-service/edit/[participantId]/page.tsx::@typescript-eslint/no-explicit-any
 8	src/app/dashboard/client/request-service/edit/[participantId]/page.tsx::react/no-unescaped-entities
@@ -72,13 +63,9 @@
 1	src/components/requirements-setup/steps/Step2PoliceCheck.tsx::react/no-unescaped-entities
 4	src/components/requirements-setup/steps/Step3WorkingWithChildren.tsx::@typescript-eslint/no-explicit-any
 1	src/components/requirements-setup/steps/Step3WorkingWithChildren.tsx::react/no-unescaped-entities
-2	src/components/requirements-setup/steps/Step4aNDISOrientation.tsx::@typescript-eslint/no-explicit-any
-1	src/components/requirements-setup/steps/Step4aNDISOrientation.tsx::react/no-unescaped-entities
-4	src/components/requirements-setup/steps/Step4NDISTraining.tsx::@typescript-eslint/no-explicit-any
 4	src/components/requirements-setup/steps/Step4NDISTrainingsMultiple.tsx::@typescript-eslint/no-explicit-any
 4	src/components/requirements-setup/steps/Step5InfectionControl.tsx::@typescript-eslint/no-explicit-any
 3	src/components/requirements-setup/steps/Step5InfectionControl.tsx::react/no-unescaped-entities
-4	src/components/requirements-setup/steps/Step6OtherRequirements.tsx::@typescript-eslint/no-explicit-any
 1	src/components/requirements-setup/steps/StepCodeOfConduct.tsx::@typescript-eslint/no-explicit-any
 1	src/components/requirements-setup/steps/StepCodeOfConductPart1.tsx::@typescript-eslint/no-explicit-any
 2	src/components/requirements-setup/steps/StepCodeOfConductPart1.tsx::react/no-unescaped-entities
@@ -98,7 +85,6 @@
 1	src/components/ui/ProgressLink.tsx::@typescript-eslint/no-explicit-any
 1	src/components/ui/textarea.tsx::@typescript-eslint/no-empty-object-type
 1	src/config/complianceDocumentMapping.ts::@typescript-eslint/no-explicit-any
-1	src/config/mandatoryRequirementsSetupSteps.ts::@typescript-eslint/no-explicit-any
 1	src/config/servicesSetupSteps.ts::@typescript-eslint/no-explicit-any
 1	src/constants/onboardingQuestions.ts::@typescript-eslint/no-explicit-any
 1	src/hooks/queries/useWorkerProfile.ts::@typescript-eslint/no-explicit-any
@@ -109,7 +95,6 @@
 2	src/lib/password.ts::@typescript-eslint/no-require-imports
 11	src/lib/profileData.ts::@typescript-eslint/no-explicit-any
 1	src/services/user/account.service.ts::@typescript-eslint/no-explicit-any
-3	src/services/worker/compliance.service.ts::@typescript-eslint/no-explicit-any
 10	src/services/worker/profile.service.ts::@typescript-eslint/no-explicit-any
 15	src/services/worker/profilePreview.service.ts::@typescript-eslint/no-explicit-any
 20	src/services/worker/setupProgress.service.ts::@typescript-eslint/no-explicit-any

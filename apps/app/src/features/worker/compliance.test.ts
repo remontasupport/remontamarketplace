@@ -7,7 +7,8 @@ const upload = vi.fn(async () => undefined);
 vi.mock("@/features/forms/adapters/xhrUploader", () => ({ xhrUploader: { upload: (...a: unknown[]) => (upload as (...b: unknown[]) => Promise<void>)(...a) } }));
 
 import type { WorkerApi } from "./api";
-import { documentOf, documentsOf, identityDocumentsOf, legacyComplianceOf, saveCitizenship, signContract, takeHandedTaxId, uploadComplianceDocument } from "./compliance";
+import { documentOf, documentsOf, identityDocumentsOf, legacyComplianceOf, saveCitizenship, setupProfileOf, signContract, takeHandedTaxId, uploadComplianceDocument } from "./compliance";
+import { requirementsOf } from "@/hooks/queries/useWorkerRequirements";
 
 const PDF = new Uint8Array([...("%PDF-1.7\n")].map((c) => c.charCodeAt(0)));
 const pdf = (name = "check.pdf") => new File([new Uint8Array(PDF).buffer as ArrayBuffer], name, { type: "application/pdf" });
@@ -141,5 +142,34 @@ describe("U4d the contract", () => {
 
   it("the handed tax number: none without browser storage (the worker types it on the contract)", () => {
     expect(takeHandedTaxId()).toBe("");
+  });
+});
+
+describe("U5b the setup pages from the profile read", () => {
+  const profile = {
+    names: { firstName: "Sam", middleName: null, lastName: "Lee" },
+    photos: { main: "https://img/x.jpg" },
+    services: [{ categoryId: "support-worker", categoryName: "Support Worker", subcategoryIds: [], subcategoryNames: [] }],
+    abn: { type: "tfn", value: null, signed: true },
+    requirements: {
+      mandatory: [{ id: "police-check", name: "Police Check", requirementType: "police-check", documentType: "REQUIRED", status: "missing", description: "A national check", hasExpiration: false }],
+      trainings: [{ id: "first-aid", name: "First Aid", requirementType: "first-aid", documentType: "OPTIONAL", status: "submitted", description: "", hasExpiration: true }],
+      additional: [],
+    },
+    complianceDocuments: [row({ id: "c1", requirementType: "contract-of-agreement", url: "/api/documents/c1/C.pdf" }), row({ id: "x", requirementType: "right-to-work", url: null })],
+  } as never;
+
+  it("the steps: the api's lists with their description and expiry flag", () => {
+    const r = requirementsOf(profile);
+    expect(r.services).toEqual(["Support Worker"]);
+    expect(r.requirements.baseCompliance).toEqual([{ id: "police-check", name: "Police Check", category: "COMPLIANCE", description: "A national check", hasExpiration: false, documentType: "REQUIRED", serviceCategory: "" }]);
+    expect(r.requirements.trainings[0]).toMatchObject({ id: "first-aid", category: "TRAINING", description: null, hasExpiration: true });
+  });
+
+  it("the engagement and the documents with a file, as the pages read them; a TFN carries no number", () => {
+    const v = setupProfileOf(profile);
+    expect(v.abn).toEqual({ workerEngagementType: { type: "tfn", signed: true } });
+    expect(v.verificationRequirements.map((d) => d.requirementType)).toEqual(["contract-of-agreement"]);
+    expect(v).toMatchObject({ firstName: "Sam", photos: "https://img/x.jpg", services: ["Support Worker"] });
   });
 });

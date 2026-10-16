@@ -131,3 +131,27 @@ export function takeHandedTaxId(): string {
   }
   return handed;
 }
+
+/**
+ * U5b: the setup pages' view of the profile -- the engagement and the documents they show (the contract, the Code of
+ * Conduct), in the shape they read from the legacy /api/worker/profile/<id> -- from the api's profile read.
+ */
+export interface SetupProfile {
+  firstName: string;
+  photos: string | null;
+  services: string[];
+  abn: { workerEngagementType: { type: "abn" | "tfn"; signed: boolean; value?: string } } | null;
+  verificationRequirements: { id: string; requirementType: string; documentUrl: string; documentUploadedAt: string | null; createdAt: string }[];
+}
+
+export function setupProfileOf(p: Profile): SetupProfile {
+  return {
+    firstName: p.names.firstName,
+    photos: p.photos.main,
+    services: p.services.map((s) => s.categoryName),
+    abn: p.abn ? { workerEngagementType: { type: p.abn.type, signed: p.abn.signed, ...(p.abn.value ? { value: p.abn.value } : {}) } } : null,
+    verificationRequirements: p.complianceDocuments
+      .filter((d) => d.url)
+      .map((d) => ({ id: d.id, requirementType: d.requirementType, documentUrl: d.url ?? "", documentUploadedAt: d.uploadedAt, createdAt: d.uploadedAt ?? "" })),
+  };
+}

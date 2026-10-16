@@ -14,12 +14,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import StepContainer from "@/components/account-setup/shared/StepContainer";
-import { useWorkerProfile, workerProfileKeys } from "@/hooks/queries/useWorkerProfile";
+import { useWorkerProfile as useApiProfile } from "@/features/worker/profile";
+import { setupProfileOf } from "@/features/worker/compliance";
 import { useWorkerRequirements } from "@/hooks/queries/useWorkerRequirements";
 import { generateComplianceSteps, findStepBySlug, getStepIndex } from "@/utils/dynamicComplianceSteps";
-import { MANDATORY_REQUIREMENTS_SETUP_STEPS } from "@/config/mandatoryRequirementsSetupSteps";
-import { autoUpdateComplianceCompletion } from "@/services/worker/setupProgress.service";
-import { reloadProfileInto } from "@/features/worker/profile";
 import Loader from "@/components/ui/Loader";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 
@@ -78,7 +76,7 @@ function MandatoryRequirementsSetupContent() {
   }, [requirementsData]);
 
   // Use dynamic steps if available, otherwise fallback to static
-  const STEPS = dynamicSteps.length > 0 ? dynamicSteps : MANDATORY_REQUIREMENTS_SETUP_STEPS;
+  const STEPS = dynamicSteps;
 
   // Determine the default step slug
   const defaultStepSlug = STEPS.length > 0 ? STEPS[0].slug : "worker-screening-check";
@@ -91,7 +89,9 @@ function MandatoryRequirementsSetupContent() {
 
   // TanStack Query hooks
   const queryClient = useQueryClient();
-  const { data: profileData, isLoading: isLoadingProfile, refetch: refetchProfile } = useWorkerProfile(session?.user?.id);
+  // The api's profile read (U5b): the engagement, the contract and the Code of Conduct, in the shape this page reads.
+  const { profile: apiProfile, isLoading: isLoadingProfile, reload: refetchProfile } = useApiProfile();
+  const profileData = useMemo(() => (apiProfile ? setupProfileOf(apiProfile) : undefined), [apiProfile]);
 
   // Two-layer instant update strategy — both call refetch() directly (not just invalidate):
   //
@@ -102,8 +102,7 @@ function MandatoryRequirementsSetupContent() {
   //   100% reliable regardless of BroadcastChannel support or timing.
   useEffect(() => {
     const refetch = () => {
-      refetchProfile();
-      void reloadProfileInto(queryClient); // the api's profile (the sidebar's ticks), past its private cache
+      void refetchProfile(); // the api's profile, past its private cache (the sidebar's ticks follow)
     };
 
     // Layer 1: BroadcastChannel (instant, while contract tab is still open)
@@ -334,22 +333,10 @@ function MandatoryRequirementsSetupContent() {
         const nextStepSlug = STEPS[currentStep].slug;
         router.push(`/dashboard/worker/requirements/setup?step=${nextStepSlug}`);
       } else {
-        // LAST STEP COMPLETED - Wait for update with timeout (max 3 seconds)
-        try {
-          // Race between update and timeout - whichever finishes first
-          await Promise.race([
-            autoUpdateComplianceCompletion(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
-          ]);
-        } catch (err) {
-          // If timeout or error, continue anyway (dashboard will poll)
-        
-        }
-
-        // Invalidate cache to refresh data
-        queryClient.invalidateQueries({
-          queryKey: workerProfileKeys.all,
-        });
+        // LAST STEP COMPLETED: apps/api recomputed and stored completion with every upload (U5b: the
+        // autoUpdateComplianceCompletion action is gone); the dashboard reads it fresh.
+        await refetchProfile();
+        queryClient.invalidateQueries({ queryKey: ["worker-profile"] });
 
         // Force Next.js to invalidate server cache and refetch on next navigation
         router.refresh();
@@ -402,6 +389,23 @@ function MandatoryRequirementsSetupContent() {
       <DashboardLayout showProfileCard={false}>
         <div className="form-page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
           <Loader size="lg" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+
+  // No services chosen: the api lists no steps (R4.1, U5b) -- the services come first.
+  if (STEPS.length === 0) {
+    return (
+      <DashboardLayout showProfileCard={false}>
+        <div className="form-page-container">
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-8 text-center font-poppins">
+            <p className="text-gray-700">Choose the services you offer first: your compliance documents depend on them.</p>
+            <a href="/dashboard/worker/services/manage" className="mt-4 inline-block font-semibold underline" style={{ color: "#0C1628" }}>
+              Choose your services
+            </a>
+          </div>
         </div>
       </DashboardLayout>
     );
