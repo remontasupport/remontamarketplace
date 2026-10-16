@@ -14,11 +14,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import StepContainer from "@/components/account-setup/shared/StepContainer";
-import { useWorkerProfile, useUpdateProfileStep, workerProfileKeys } from "@/hooks/queries/useWorkerProfile";
+import { useWorkerProfile, workerProfileKeys } from "@/hooks/queries/useWorkerProfile";
 import { useWorkerRequirements } from "@/hooks/queries/useWorkerRequirements";
 import { generateComplianceSteps, findStepBySlug, getStepIndex } from "@/utils/dynamicComplianceSteps";
 import { MANDATORY_REQUIREMENTS_SETUP_STEPS } from "@/config/mandatoryRequirementsSetupSteps";
 import { autoUpdateComplianceCompletion } from "@/services/worker/setupProgress.service";
+import { reloadProfileInto } from "@/features/worker/profile";
 import Loader from "@/components/ui/Loader";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 
@@ -91,7 +92,6 @@ function MandatoryRequirementsSetupContent() {
   // TanStack Query hooks
   const queryClient = useQueryClient();
   const { data: profileData, isLoading: isLoadingProfile, refetch: refetchProfile } = useWorkerProfile(session?.user?.id);
-  const updateProfileMutation = useUpdateProfileStep();
 
   // Two-layer instant update strategy — both call refetch() directly (not just invalidate):
   //
@@ -101,7 +101,10 @@ function MandatoryRequirementsSetupContent() {
   // Layer 2 — visibilitychange: fires the moment the worker switches back to this tab,
   //   100% reliable regardless of BroadcastChannel support or timing.
   useEffect(() => {
-    const refetch = () => { refetchProfile(); };
+    const refetch = () => {
+      refetchProfile();
+      void reloadProfileInto(queryClient); // the api's profile (the sidebar's ticks), past its private cache
+    };
 
     // Layer 1: BroadcastChannel (instant, while contract tab is still open)
     let bc: BroadcastChannel | undefined;
@@ -233,23 +236,6 @@ function MandatoryRequirementsSetupContent() {
         return newErrors;
       });
     }
-
-    // Auto-save workerEngagementType when contract is uploaded so a page refresh
-    // doesn't lose the ABN/TFN selection (which is only normally saved on Next click)
-    if (field === "contractDocument" && value && formData.workerEngagementType && session?.user?.id) {
-      updateProfileMutation.mutate({
-        userId: session.user.id,
-        step: currentStep,
-        data: {
-          abn: {
-            workerEngagementType: {
-              type: formData.workerEngagementType.type,
-              signed: true,
-            },
-          },
-        },
-      });
-    }
   };
 
   // Validate current step
@@ -337,25 +323,7 @@ function MandatoryRequirementsSetupContent() {
         setIsNavigating(true);
       }
 
-      // Determine if this step needs to save data to the database
-      const needsSaving = currentStepData?.documentId === "abn-contractor";
-
-      // Save worker engagement type if needed (await it to ensure it completes before navigation)
-      // Only save the type and signed status, not the actual ABN/TFN value
-      if (needsSaving && formData.workerEngagementType) {
-        await updateProfileMutation.mutateAsync({
-          userId: session.user.id,
-          step: currentStep,
-          data: {
-            abn: {
-              workerEngagementType: {
-                type: formData.workerEngagementType.type,
-                signed: true,
-              },
-            },
-          },
-        });
-      }
+      // The engagement is saved when the contract is signed (POST /v1/worker/contract, U4d): nothing to save here.
 
       // Move to next step or finish
       if (!isFinalStep) {

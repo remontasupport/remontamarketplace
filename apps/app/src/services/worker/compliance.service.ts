@@ -4,10 +4,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma, withRetry } from "@/lib/auth-prisma";
 import { revalidatePath } from "next/cache";
-import {
-  updateWorkerABNSchema,
-  type UpdateWorkerABNData,
-} from "@/schema/workerProfileSchema";
 import { dbWriteRateLimit, checkServerActionRateLimit } from "@/lib/ratelimit";
 import { autoUpdateComplianceCompletion, autoUpdateTrainingsCompletion } from "./setupProgress.service";
 import { put, del } from "@vercel/blob";
@@ -26,93 +22,6 @@ export type ActionResponse<T = any> = {
   error?: string;
   fieldErrors?: Record<string, string[]>;
 };
-
-/**
- * Server Action: Update worker's ABN or TFN (Worker Engagement Type)
- * Uses Zod schema validation and rate limiting
- * Stores as JSON: { workerEngagementType: { type: "abn" | "tfn", signed: true } }
- */
-export async function updateWorkerABN(
-  data: UpdateWorkerABNData
-): Promise<ActionResponse> {
-  try {
-    // 1. Authentication check
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
-      return {
-        success: false,
-        error: "Unauthorized. Please log in.",
-      };
-    }
-
-    // 2. Rate limiting check (protect Neon DB)
-    const rateLimitCheck = await checkServerActionRateLimit(
-      session.user.id,
-      dbWriteRateLimit
-    );
-    if (!rateLimitCheck.success) {
-      return {
-        success: false,
-        error: rateLimitCheck.error,
-      };
-    }
-
-    // 3. Validate input data with Zod
-    const validationResult = updateWorkerABNSchema.safeParse(data);
-
-    if (!validationResult.success) {
-      const fieldErrors = validationResult.error.flatten().fieldErrors;
-      return {
-        success: false,
-        error: "Validation failed",
-        fieldErrors: fieldErrors as Record<string, string[]>,
-      };
-    }
-
-    const validatedData = validationResult.data;
-
-    // 4. Update worker profile ABN in database (stored as JSON)
-    const updatedProfile = await authPrisma.workerProfile.update({
-      where: {
-        userId: session.user.id,
-      },
-      data: {
-        abn: validatedData.abn,
-      },
-      select: {
-        abn: true,
-      },
-    });
-
-    // 5. Return SUCCESS immediately for instant navigation
-    const engagementType = validatedData.abn.workerEngagementType.type.toUpperCase();
-    const response = {
-      success: true,
-      message: `Your ${engagementType} has been saved successfully!`,
-      data: updatedProfile,
-    };
-
-    // 6. BACKGROUND: bust Redis cache + revalidate paths + sync completion (fire-and-forget)
-    Promise.all([
-      invalidateCache(CACHE_KEYS.workerProfileBase(session.user.id)).catch(() => {}),
-      Promise.resolve().then(() => {
-        revalidatePath("/dashboard/worker/account/setup");
-        revalidatePath("/dashboard/worker");
-      }),
-      autoUpdateComplianceCompletion().catch((error) => {
-        console.error("[Compliance] Background compliance update failed (non-critical):", error);
-      }),
-    ]).catch(() => {});
-
-    return response;
-  } catch (error: any) {
-
-    return {
-      success: false,
-      error: "Please enter a valid ABN or TFN",
-    };
-  }
-}
 
 // Document type configuration
 type DocumentCategory = "PRIMARY" | "SECONDARY" | "WORKING_RIGHTS" | null;

@@ -52,7 +52,7 @@ export const COMPLIANCE_DOCUMENT_MAPPING: Record<string, ComplianceStepMapping> 
     apiEndpoint: "/api/worker/identity-documents",
   },
 
-  // Australian Business Number (text field, numbers only)
+  // Signed on the contract page: POST /v1/worker/contract (apps/api, U4d) records the contract and the engagement
   // Uses server action: updateWorkerABN from @/services/worker/compliance.service.ts
   "abn-contractor": {
     documentId: "abn-contractor",

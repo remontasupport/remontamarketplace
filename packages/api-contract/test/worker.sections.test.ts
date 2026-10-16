@@ -9,6 +9,7 @@ import type * as z from 'zod'
 import {
   abnBodySchema,
   ADDITIONAL_INFO_ENTRIES,
+  signContractSchema,
   ageOn,
   availabilitySchema,
   bankAccountSchema,
@@ -59,7 +60,7 @@ const yearsAgo = (n: number) => {
 describe('the entries (E2)', () => {
   it('declares the 18 U2 writes (personal info is three since 2026-10-14) beside the read, every write with an audit action, a body limit and both rate limits', () => {
     const names = Object.keys(workerContract.entries)
-    expect(names).toHaveLength(39) // makeMainPhoto removed, the additional-info split in nine, deleteExperience, deleteJobHistoryEntry and deleteEducationEntry added (2026-10-14); U3a adds putServices, putServiceRegistration; U3b the four document entries; U4a four more
+    expect(names).toHaveLength(40) // makeMainPhoto removed, the additional-info split in nine, deleteExperience, deleteJobHistoryEntry and deleteEducationEntry added (2026-10-14); U3a adds putServices, putServiceRegistration; U3b the four document entries; U4a four more; U4d signContract
     expect(workerContract.entries.deleteEducationEntry).toMatchObject({ method: 'DELETE', path: '/v1/worker/education/:entryId' })
     expect(workerContract.entries.deleteEducationEntry.pathParams.safeParse({ entryId: 'cm12abc_9-Z' }).success).toBe(true)
     expect(workerContract.entries.deleteEducationEntry.pathParams.safeParse({ entryId: '../x' }).success).toBe(false)
@@ -81,6 +82,15 @@ describe('the entries (E2)', () => {
     expect(workerContract.entries.createPhotoTicket.meta.rateLimit[0]).toEqual({ per: 'user', limit: 10, window: '1m' })
     for (const [group, { entry }] of Object.entries(ADDITIONAL_INFO_ENTRIES)) expect(workerContract.entries[entry].path, entry).toBe(`/v1/worker/additional-info/${group}`)
     expect(names).not.toContain('putAdditionalInfo') // one entry per group since 2026-10-14
+  })
+})
+
+describe('U4d signContract', () => {
+  it('takes the upload, the engagement and the file name only: never a tax number', () => {
+    ok(signContractSchema, { uploadId: '7d3f1a2b-1c2d-4e5f-8a9b-0c1d2e3f4a5b', engagementType: 'tfn', fileName: 'Contract.pdf' })
+    bad(signContractSchema, { uploadId: '7d3f1a2b-1c2d-4e5f-8a9b-0c1d2e3f4a5b', engagementType: 'acn', fileName: 'Contract.pdf' }, 'engagementType')
+    expect(signContractSchema.safeParse({ uploadId: '7d3f1a2b-1c2d-4e5f-8a9b-0c1d2e3f4a5b', engagementType: 'tfn', fileName: 'Contract.pdf', tfn: '123456782' }).success).toBe(false)
+    expect(workerContract.entries.signContract).toMatchObject({ method: 'POST', path: '/v1/worker/contract' })
   })
 })
 
