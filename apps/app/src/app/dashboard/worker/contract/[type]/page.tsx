@@ -6,10 +6,10 @@
 
 "use client";
 
-import { use } from "react";
-import { useSearchParams } from "next/navigation";
+import { use, useState } from "react";
 import { notFound } from "next/navigation";
 import { ContractPage } from "@/components/contracts";
+import { takeHandedTaxId } from "@/features/worker/compliance";
 import "@/app/styles/contract.css";
 
 interface ContractPageRouteProps {
@@ -20,10 +20,9 @@ interface ContractPageRouteProps {
 
 export default function ContractPageRoute({ params }: ContractPageRouteProps) {
   const { type } = use(params);
-  const searchParams = useSearchParams();
 
-  // Get pre-filled tax ID from URL query params
-  const initialTaxId = searchParams.get("taxId") || "";
+  // The ABN or TFN the worker typed on the setup page, handed over in session storage (C3: never in the URL).
+  const [initialTaxId] = useState(takeHandedTaxId);
 
   // Validate contract type
   if (type !== "abn" && type !== "tfn") {

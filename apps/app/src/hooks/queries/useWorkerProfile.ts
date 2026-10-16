@@ -20,9 +20,6 @@ import {
   updateWorkerAddress,
   updateWorkerPersonalInfo,
 } from "@/services/worker/profile.service";
-import {
-  updateWorkerABN,
-} from "@/services/worker/compliance.service";
 
 // Query Keys - centralized for consistency
 export const workerProfileKeys = {
@@ -82,17 +79,6 @@ async function fetchWorkerProfile(userId: string): Promise<WorkerProfile> {
 
 async function updateProfileStep(updateData: UpdateStepData): Promise<void> {
   const { step, data } = updateData;
-
-  // Check if this is an ABN/TFN update (compliance step - data.abn is now a JSON object)
-  if (data.abn !== undefined && typeof data.abn === "object" && data.abn.workerEngagementType) {
-    const abnResult = await updateWorkerABN({
-      abn: data.abn,
-    });
-    if (!abnResult.success) {
-      throw new Error(abnResult.error || "Failed to update ABN/TFN");
-    }
-    return;
-  }
 
   // Route to appropriate server action based on step
   switch (step) {

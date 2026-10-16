@@ -3,7 +3,7 @@
 // a 401 with a fresh token, and a typed outcome instead of a thrown error. The section
 // saves go through the form engine (saveSection); this client holds the read and the
 // photo calls, which upload files rather than save a body.
-import { createClient, workerContract, type CitizenshipBody, type ComplianceDocument, type ConfirmComplianceDocumentBody, type ConfirmServiceDocumentBody, type DocumentLink, type Profile, type ServiceDocument, type ServiceDocumentTicketRequest, type ServiceDocumentTicketResponse, type ServiceRegistrationBody, type ServiceRegistrationView, type ServicesBody } from "@remonta/api-contract";
+import { createClient, workerContract, type CitizenshipBody, type ComplianceDocument, type ConfirmComplianceDocumentBody, type ConfirmServiceDocumentBody, type SignContractBody, type SignedContract, type DocumentLink, type Profile, type ServiceDocument, type ServiceDocumentTicketRequest, type ServiceDocumentTicketResponse, type ServiceRegistrationBody, type ServiceRegistrationView, type ServicesBody } from "@remonta/api-contract";
 import { apiToken } from "@/lib/api/admin";
 import { failure, type ApiOutcome } from "@/lib/api/outcome";
 import { Unauthenticated, type TokenSource } from "@/lib/api/token";
@@ -47,6 +47,8 @@ export interface WorkerApi {
   deleteComplianceDocument(documentId: string): Promise<ApiOutcome<{ documentId: string }>>;
   /** U4a: the Right to Work citizenship answer. */
   putCitizenship(body: CitizenshipBody): Promise<ApiOutcome<ComplianceDocument>>;
+  /** U4d: the signed contract and its engagement, recorded together. */
+  signContract(body: SignContractBody): Promise<ApiOutcome<SignedContract>>;
 }
 
 export interface WorkerApiDeps {
@@ -71,7 +73,8 @@ type EntryName =
   | "getServiceDocumentLink"
   | "confirmComplianceDocument"
   | "deleteComplianceDocument"
-  | "putCitizenship";
+  | "putCitizenship"
+  | "signContract";
 
 export function createWorkerApi(deps: WorkerApiDeps): WorkerApi {
   const doFetch = deps.fetch ?? ((input: RequestInfo | URL, init?: RequestInit) => globalThis.fetch(input, init));
@@ -134,6 +137,7 @@ export function createWorkerApi(deps: WorkerApiDeps): WorkerApi {
     confirmComplianceDocument: (body) => call("confirmComplianceDocument", { body }),
     deleteComplianceDocument: (documentId) => call("deleteComplianceDocument", { params: { documentId } }),
     putCitizenship: (body) => call("putCitizenship", { body }),
+    signContract: (body) => call("signContract", { body }),
   };
 }
 

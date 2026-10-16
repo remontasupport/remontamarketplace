@@ -7,7 +7,7 @@ const upload = vi.fn(async () => undefined);
 vi.mock("@/features/forms/adapters/xhrUploader", () => ({ xhrUploader: { upload: (...a: unknown[]) => (upload as (...b: unknown[]) => Promise<void>)(...a) } }));
 
 import type { WorkerApi } from "./api";
-import { documentOf, documentsOf, identityDocumentsOf, legacyComplianceOf, saveCitizenship, uploadComplianceDocument } from "./compliance";
+import { documentOf, documentsOf, identityDocumentsOf, legacyComplianceOf, saveCitizenship, signContract, takeHandedTaxId, uploadComplianceDocument } from "./compliance";
 
 const PDF = new Uint8Array([...("%PDF-1.7\n")].map((c) => c.charCodeAt(0)));
 const pdf = (name = "check.pdf") => new File([new Uint8Array(PDF).buffer as ArrayBuffer], name, { type: "application/pdf" });
@@ -120,5 +120,26 @@ describe("the citizenship answer", () => {
     expect(api.putCitizenship).toHaveBeenCalledWith({ isCitizen: true });
     const limited = { putCitizenship: vi.fn(async () => ({ kind: "rateLimited", retryAfterSeconds: 5 })) } as unknown as WorkerApi;
     expect(await saveCitizenship(false, limited)).toEqual({ ok: false, message: "Too many changes at once. Please wait a moment and try again." });
+  });
+});
+
+describe("U4d the contract", () => {
+  it("the signed PDF staged, then the contract and its engagement in one call: no tax number in it", async () => {
+    const body = { document: row({ id: "c1", requirementType: "contract-of-agreement" }), engagement: { type: "tfn", signed: true } };
+    const api = { createServiceDocumentTicket: vi.fn(async () => ticket), signContract: vi.fn(async () => ({ kind: "ok", body })) } as unknown as WorkerApi;
+    expect(await signContract(pdf("Employment_Agreement_Sam.pdf"), "tfn", { api })).toEqual({ ok: true, contract: body });
+    expect(api.signContract).toHaveBeenCalledWith({ uploadId: ticket.body.uploadId, engagementType: "tfn", fileName: "Employment_Agreement_Sam.pdf" });
+  });
+
+  it("nothing signed when the upload or the call fails: the page shows why", async () => {
+    const away = { createServiceDocumentTicket: vi.fn(async () => ({ kind: "unavailable" })), signContract: vi.fn() } as unknown as WorkerApi;
+    expect(await signContract(pdf(), "abn", { api: away })).toMatchObject({ ok: false, retryable: true });
+    expect(away.signContract).not.toHaveBeenCalled();
+    const refused = { createServiceDocumentTicket: vi.fn(async () => ticket), signContract: vi.fn(async () => ({ kind: "failed", status: 409, fields: { file: ["Your document upload did not finish. Please try again."] } })) } as unknown as WorkerApi;
+    expect(await signContract(pdf(), "abn", { api: refused })).toEqual({ ok: false, message: "Your document upload did not finish. Please try again.", retryable: false });
+  });
+
+  it("the handed tax number: none without browser storage (the worker types it on the contract)", () => {
+    expect(takeHandedTaxId()).toBe("");
   });
 });

@@ -22,7 +22,7 @@
 1	src/app/dashboard/worker/account/setup/page.tsx::TS2741
 1	src/app/dashboard/worker/additional-documents/page.tsx::TS2322
 1	src/app/dashboard/worker/additional-documents/page.tsx::TS2741
-17	src/app/dashboard/worker/requirements/setup/page.tsx::TS2339
+16	src/app/dashboard/worker/requirements/setup/page.tsx::TS2339
 1	src/app/dashboard/worker/requirements/setup/page.tsx::TS2345
 1	src/app/dashboard/worker/requirements/setup/page.tsx::TS2741
 1	src/app/dashboard/worker/services/setup/page.tsx::TS2741

@@ -127,7 +127,7 @@
 1	src/services/user/account.service.ts::@typescript-eslint/no-explicit-any
 13	src/services/worker/additionalInfo.service.ts::@typescript-eslint/no-explicit-any
 4	src/services/worker/availability.service.ts::@typescript-eslint/no-explicit-any
-4	src/services/worker/compliance.service.ts::@typescript-eslint/no-explicit-any
+3	src/services/worker/compliance.service.ts::@typescript-eslint/no-explicit-any
 4	src/services/worker/experience.service.ts::@typescript-eslint/no-explicit-any
 10	src/services/worker/profile.service.ts::@typescript-eslint/no-explicit-any
 15	src/services/worker/profilePreview.service.ts::@typescript-eslint/no-explicit-any

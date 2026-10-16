@@ -2,7 +2,7 @@
 // - the documents: read from the profile's `complianceDocuments`, in the shapes the steps already read;
 // - an upload: staged straight to the private bucket, then confirmed as a compliance document (U4a);
 // - the Right to Work citizenship answer.
-import type { ComplianceDocument, Profile } from "@remonta/api-contract";
+import type { ComplianceDocument, Profile, SignedContract } from "@remonta/api-contract";
 import { workerApi, type WorkerApi } from "./api";
 import { fileNameOf, isTransient, messageOf, stageDocument, type UploadFailure } from "./services";
 
@@ -85,4 +85,49 @@ export async function uploadComplianceDocument(
 export async function saveCitizenship(isCitizen: boolean, api: WorkerApi = workerApi): Promise<{ ok: true } | { ok: false; message: string }> {
   const r = await api.putCitizenship({ isCitizen });
   return r.kind === "ok" ? { ok: true } : { ok: false, message: messageOf(r, "We couldn't save your answer right now. Please try again.") };
+}
+
+/**
+ * U4d: the signed contract PDF, the whole way -- staged straight to the private bucket, then recorded with its
+ * engagement in one call. No tax number is sent: the PDF carries it.
+ */
+export async function signContract(
+  pdf: File,
+  engagementType: "abn" | "tfn",
+  opts: { api?: WorkerApi } = {},
+): Promise<{ ok: true; contract: SignedContract } | UploadFailure> {
+  const api = opts.api ?? workerApi;
+  const staged = await stageDocument(pdf, opts);
+  if (!staged.ok) return staged;
+  const r = await api.signContract({ uploadId: staged.uploadId, engagementType, fileName: fileNameOf(pdf) });
+  return r.kind === "ok" ? { ok: true, contract: r.body } : { ok: false, message: messageOf(r, "We couldn't save your signed contract right now. Please try again."), retryable: isTransient(r) };
+}
+
+/**
+ * C3: the ABN or TFN typed on the setup page reaches the contract tab through the browser's session storage (a tab
+ * opened by window.open starts with a copy of its opener's), never the URL -- browser history, server logs and the
+ * Referer header kept it there. Read once, then removed.
+ */
+const TAX_ID_KEY = "remonta:contract-tax-id";
+
+export function handTaxIdToContractTab(value: string): void {
+  try {
+    sessionStorage.setItem(TAX_ID_KEY, value);
+  } catch {
+    // storage blocked: the worker types it on the contract page
+  }
+}
+
+let handed: string | undefined;
+
+/** Read once per page load (a second render, as React's development mode makes, gets the same value). */
+export function takeHandedTaxId(): string {
+  if (handed !== undefined) return handed;
+  try {
+    handed = sessionStorage.getItem(TAX_ID_KEY) ?? "";
+    sessionStorage.removeItem(TAX_ID_KEY);
+  } catch {
+    handed = "";
+  }
+  return handed;
 }
