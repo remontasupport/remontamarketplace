@@ -92,6 +92,8 @@ export function buildRouteHandler(id: string, entry: EntryDef, handler: Handler<
     let files: Record<string, UploadedFile> | undefined
     if (entry.body?.kind === 'json') body = parse(entry.body.schema, request.body, 'body')
     else if (entry.body?.kind === 'multipart') files = await readFiles(request, entry.body.files)
+    // An entry that declares no body refuses one, as for params and query (2026-10-14: the first body-less write, DELETE).
+    else parse(undefined, request.body ?? {}, 'body')
 
     // 7b. The memo (U2, R8.3): the same valid question within the window is answered
     //     from memory. `Cache-Control: no-cache` on the request bypasses the lookup; the

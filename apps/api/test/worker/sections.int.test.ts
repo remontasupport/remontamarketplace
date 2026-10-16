@@ -123,6 +123,52 @@ describe.skipIf(!local)('the section writes on PostGIS', () => {
     expect((await put('/v1/worker/additional-info/about-me', { uniqueService: ['Fishing trips'], funFact: fact })).statusCode).toBe(404)
   })
 
+  it("deleting an education row removes that row only; another worker's row or a gone one is 404 (2026-10-14)", async () => {
+    const del = (id: string) => h.t.fastify.inject({ method: 'DELETE', url: `/v1/worker/education/${id}`, headers: { 'x-test-principal': `${h.a.userId}:WORKER` } })
+    const course = (qualification: string) => ({ institution: 'TAFE', qualification, startMonth: 'February', startYear: 2018, endMonth: 'November', endYear: 2018, currentlyStudying: false })
+    const mine = (await put('/v1/worker/education', { entries: [course('Cert III'), course('Cert IV'), course('Diploma')] })).json().entries as { id: string }[]
+    const theirs = (await put('/v1/worker/education', { entries: [course('Theirs')] }, () => h.b.userId)).json().entries as { id: string }[]
+    const res = await del(mine[0]!.id)
+    expect(res.statusCode, res.body).toBe(200)
+    expect(res.json().entries.map((e: { qualification: string }) => e.qualification)).toEqual(['Cert IV', 'Diploma'])
+    expect((await del(mine[0]!.id)).statusCode).toBe(404) // already gone
+    expect((await del(theirs[0]!.id)).statusCode).toBe(404) // another worker's row: not revealed, not deleted
+    expect(await h.db.workerEducation.count({ where: { id: theirs[0]!.id } })).toBe(1)
+    expect(await h.db.auditLog.count({ where: { userId: h.a.userId, action: 'PROFILE_UPDATE', metadata: { path: ['section'], equals: 'deleteEducationEntry' } } })).toBeGreaterThan(0)
+    expect((await profile()).sections.education.map((e: { qualification: string }) => e.qualification)).toEqual(['Cert IV', 'Diploma'])
+  })
+
+  it("deleting a work-history row removes that row only; another worker's row or a gone one is 404 (2026-10-14)", async () => {
+    const del = (id: string, user = () => h.a.userId) => h.t.fastify.inject({ method: 'DELETE', url: `/v1/worker/job-history/${id}`, headers: { 'x-test-principal': `${user()}:WORKER` } })
+    const job = (jobTitle: string) => ({ jobTitle, company: 'Co', startMonth: 'January', startYear: 2019, endMonth: 'March', endYear: 2020, currentlyWorking: false })
+    const mine = (await put('/v1/worker/job-history', { entries: [job('First'), job('Second'), job('Third')] })).json().entries as { id: string; jobTitle: string }[]
+    const theirs = (await put('/v1/worker/job-history', { entries: [job('Theirs')] }, () => h.b.userId)).json().entries as { id: string }[]
+    const res = await del(mine[1]!.id)
+    expect(res.statusCode, res.body).toBe(200)
+    expect(res.json().entries.map((e: { jobTitle: string }) => e.jobTitle)).toEqual(['First', 'Third']) // the order kept
+    expect(await h.db.workerJobHistory.count({ where: { id: mine[1]!.id } })).toBe(0)
+    expect((await del(mine[1]!.id)).statusCode).toBe(404) // already gone
+    expect((await del(theirs[0]!.id)).statusCode).toBe(404) // another worker's row: not revealed, not deleted
+    expect(await h.db.workerJobHistory.count({ where: { id: theirs[0]!.id } })).toBe(1)
+    expect(await h.db.auditLog.count({ where: { userId: h.a.userId, action: 'PROFILE_UPDATE', metadata: { path: ['section'], equals: 'deleteJobHistoryEntry' } } })).toBeGreaterThan(0)
+    expect((await profile()).sections.jobHistory.map((e: { jobTitle: string }) => e.jobTitle)).toEqual(['First', 'Third'])
+  })
+
+  it("deleting an experience area removes that row only, the caller's own; a repeat is a 200 (2026-10-14)", async () => {
+    const del = (domain: string, user = () => h.a.userId) => h.t.fastify.inject({ method: 'DELETE', url: `/v1/worker/experience/${domain}`, headers: { 'x-test-principal': `${user()}:WORKER` } })
+    const area = (domain: string) => ({ domain, isProfessional: true, isPersonal: false, specificAreas: [], otherAreas: [], description: null })
+    expect((await put('/v1/worker/experience', { domains: [area('AGED_CARE'), area('DISABILITY')] })).statusCode).toBe(200)
+    expect((await put('/v1/worker/experience', { domains: [area('DISABILITY')] }, () => h.b.userId)).statusCode).toBe(200)
+    const res = await del('DISABILITY')
+    expect(res.statusCode, res.body).toBe(200)
+    expect(res.json()).toEqual({ domains: [area('AGED_CARE')] })
+    expect(await h.db.workerExperience.findMany({ where: { workerProfileId: h.a.profileId }, select: { domain: true } })).toEqual([{ domain: 'AGED_CARE' }])
+    expect(await h.db.workerExperience.count({ where: { workerProfileId: h.b.profileId, domain: 'DISABILITY' } })).toBe(1) // worker B untouched
+    expect((await del('DISABILITY')).json()).toEqual({ domains: [area('AGED_CARE')] }) // already gone: same answer
+    expect(await h.db.auditLog.count({ where: { userId: h.a.userId, action: 'PROFILE_UPDATE', metadata: { path: ['section'], equals: 'deleteExperience.DISABILITY' } } })).toBeGreaterThan(0)
+    expect((await profile()).sections.experience).toEqual([area('AGED_CARE')])
+  })
+
   it('the date of birth, the gender and the vehicle answer save alone, each leaving the other two as they were (2026-10-14: personal-info split in three)', async () => {
     // A worker with none of the three answers can save any one of them first: no page needs the others.
     await h.db.workerProfile.update({ where: { id: h.a.profileId }, data: { dateOfBirth: null, gender: null, hasVehicle: null } })

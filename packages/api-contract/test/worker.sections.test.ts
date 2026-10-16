@@ -60,7 +60,17 @@ const yearsAgo = (n: number) => {
 describe('the entries (E2)', () => {
   it('declares the 18 U2 writes (personal info is three since 2026-10-14) beside the read, every write with an audit action, a body limit and both rate limits', () => {
     const names = Object.keys(workerContract.entries)
-    expect(names).toHaveLength(37) // makeMainPhoto removed, the additional-info entry split in nine (2026-10-14); U3a putServices, putServiceRegistration; U3b four document entries; U4a four more; U4d signContract
+    expect(names).toHaveLength(40) // makeMainPhoto removed, the additional-info entry split in nine, deleteExperience, deleteJobHistoryEntry and deleteEducationEntry added (2026-10-14); U3a putServices, putServiceRegistration; U3b four document entries; U4a four more; U4d signContract
+    expect(workerContract.entries.deleteEducationEntry).toMatchObject({ method: 'DELETE', path: '/v1/worker/education/:entryId' })
+    expect(workerContract.entries.deleteEducationEntry.pathParams.safeParse({ entryId: 'cm12abc_9-Z' }).success).toBe(true)
+    expect(workerContract.entries.deleteEducationEntry.pathParams.safeParse({ entryId: '../x' }).success).toBe(false)
+    expect(workerContract.entries.deleteJobHistoryEntry).toMatchObject({ method: 'DELETE', path: '/v1/worker/job-history/:entryId' })
+    expect(workerContract.entries.deleteJobHistoryEntry.pathParams.safeParse({ entryId: 'cm12abc_9-Z' }).success).toBe(true)
+    expect(workerContract.entries.deleteJobHistoryEntry.pathParams.safeParse({ entryId: "x' OR 1=1" }).success).toBe(false)
+    expect(workerContract.entries.deleteJobHistoryEntry.pathParams.safeParse({ entryId: 'a'.repeat(41) }).success).toBe(false)
+    expect(workerContract.entries.deleteExperience).toMatchObject({ method: 'DELETE', path: '/v1/worker/experience/:domain' })
+    expect(workerContract.entries.deleteExperience.pathParams.safeParse({ domain: 'DISABILITY' }).success).toBe(true)
+    expect(workerContract.entries.deleteExperience.pathParams.safeParse({ domain: 'disability' }).success).toBe(false)
     expect(names).not.toContain('makeMainPhoto')
     for (const [name, e] of Object.entries(workerContract.entries)) {
       if (e.method === 'GET') continue
