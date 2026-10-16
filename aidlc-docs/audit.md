@@ -4418,3 +4418,7 @@ worker with 7 mandatory steps and 4 trainings): the last mandatory step's button
 `GenericComplianceDocument` uploads, headed "First Aid" and "CPR"). The documents, their storage, review and expiry are
 unchanged (no api change). `?step=cpr` redirects to the combined step. Verified locally: sidebar "First Aid & CPR" (no
 separate CPR), two upload buttons on the page, `?step=cpr` -> `?step=first-aid-cpr`. App gate passed.
+
+**Correction:** the entry above says "App gate passed"; it did not. The gate failed on two `no-explicit-any` in the new
+`FirstAidCprStep.tsx`, and `53dcb89` was pushed regardless (the gate's result was not checked before the push).
+`1253532` types the props (`unknown`); the app gate now passes. No behaviour change.
