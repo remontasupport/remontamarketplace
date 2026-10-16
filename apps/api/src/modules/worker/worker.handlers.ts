@@ -25,7 +25,7 @@ import { deleteEducationEntry, deleteExperienceArea, deleteJobHistoryEntry, writ
 import { ownServiceDocument, writeServiceRegistration, writeServices } from './application/sections/services'
 import { complianceAlreadyRecorded, complianceTargetOf, ownComplianceBlobUrl, recordComplianceDocument, removeComplianceDocument, writeCitizenship } from './application/compliance-documents'
 import { alreadyRecorded, confirmTargetOf, createDocumentTicket, deleteDocumentFiles, DOCUMENT_UPLOAD_INCOMPLETE, linkFor, recordDocument, removeDocument, stageDocument, type DocumentFile } from './application/service-documents'
-import { writeAbn, writeBio, writeDateOfBirth, writeGender, writeName, writeVehicle } from './application/sections/profile'
+import { writeAbn, writeSignedEngagement, writeBio, writeDateOfBirth, writeGender, writeName, writeVehicle } from './application/sections/profile'
 
 export interface WorkerModuleDeps {
   db: Db
@@ -202,6 +202,37 @@ export function workerHandlers(deps: WorkerModuleDeps) {
       }
       if (replaced) await deleteDocumentFiles(stores(), [replaced], { userId: ctx.principal!.userId, profileId: target.profileId }, ownComplianceBlobUrl, ctx.log)
       return { status: 201, body: view }
+    },
+    signContract: async (req, ctx) => {
+      // U4d: the contract PDF is a compliance document of type contract-of-agreement; the engagement is written in the
+      // same transaction, so "signed" never stands without the contract (the app used to save it first).
+      const bucket = photoDeps().bucket
+      const doc = { uploadId: req.body.uploadId, requirementType: 'contract-of-agreement', fileName: req.body.fileName, expiryDate: null, acknowledgement: null }
+      const target = await complianceTargetOf(deps.db, ctx.principal!.userId, doc)
+      const engagement = { type: req.body.engagementType, signed: true as const }
+      const staged = await stageDocument(bucket, req.body.uploadId, target.profileId, ctx.log)
+      if (!staged) {
+        const done = await complianceAlreadyRecorded(deps.db, target.profileId, req.body.uploadId)
+        if (done) {
+          ctx.audit.skip('a repeat of a recorded confirm')
+          return { status: 201, body: { document: done, engagement } }
+        }
+        throw new ApiError(409, 'document upload incomplete', { file: [DOCUMENT_UPLOAD_INCOMPLETE] })
+      }
+      let replaced: DocumentFile | null = null
+      let body
+      try {
+        body = await replaceSection(s, ctx, { section: `signContract.${req.body.engagementType}`, completion: true }, async (tx, p) => {
+          const out = await recordComplianceDocument(tx, target, doc, staged, deps.clock())
+          replaced = out.replaced
+          return { document: out.view, engagement: await writeSignedEngagement(tx, p.id, req.body.engagementType) }
+        })
+      } catch (err) {
+        await bucket.delete(staged.key).catch(() => undefined)
+        throw err
+      }
+      if (replaced) await deleteDocumentFiles(stores(), [replaced], { userId: ctx.principal!.userId, profileId: target.profileId }, ownComplianceBlobUrl, ctx.log)
+      return { status: 201, body }
     },
     deleteComplianceDocument: async (req, ctx) => {
       let profileId = ''

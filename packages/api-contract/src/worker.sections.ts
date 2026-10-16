@@ -391,3 +391,21 @@ export const complianceDocumentSchema = z.strictObject({
   isCitizen: z.boolean().nullable(),
 })
 export type ComplianceDocument = z.output<typeof complianceDocumentSchema>
+
+// ---- The signed contract (U4d) -----------------------------------------------------------------
+
+/**
+ * The signed contract of agreement and the engagement it is for, recorded together. No tax file number is sent or
+ * stored (D17): the PDF the worker signed carries it, in the private bucket; the profile keeps the type only.
+ */
+export const signContractSchema = z.strictObject({
+  uploadId: z.uuid(),
+  engagementType: z.enum(['abn', 'tfn']),
+  fileName,
+})
+export type SignContractBody = z.output<typeof signContractSchema>
+export const signedContractSchema = z.strictObject({
+  document: complianceDocumentSchema,
+  engagement: z.strictObject({ type: z.enum(['abn', 'tfn']), signed: z.literal(true) }),
+})
+export type SignedContract = z.output<typeof signedContractSchema>
