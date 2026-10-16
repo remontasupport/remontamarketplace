@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest'
 import type * as z from 'zod'
 import {
   abnBodySchema,
+  signContractSchema,
   additionalInfoBodySchema,
   ageOn,
   availabilitySchema,
@@ -50,7 +51,7 @@ const yearsAgo = (n: number) => {
 describe('the entries (E2)', () => {
   it('declares the 18 U2 writes (personal info is three since 2026-10-14) beside the read, every write with an audit action, a body limit and both rate limits', () => {
     const names = Object.keys(workerContract.entries)
-    expect(names).toHaveLength(28) // makeMainPhoto removed 2026-10-14 (one photo per worker); U3a adds putServices, putServiceRegistration; U3b the four document entries; U4a four more
+    expect(names).toHaveLength(29) // makeMainPhoto removed 2026-10-14 (one photo per worker); U3a adds putServices, putServiceRegistration; U3b the four document entries; U4a four more; U4d signContract
     expect(names).not.toContain('makeMainPhoto')
     for (const [name, e] of Object.entries(workerContract.entries)) {
       if (e.method === 'GET') continue
@@ -61,6 +62,15 @@ describe('the entries (E2)', () => {
     }
     expect(workerContract.entries.createPhotoTicket.meta.rateLimit[0]).toEqual({ per: 'user', limit: 10, window: '1m' })
     expect(workerContract.entries.putAdditionalInfo.path).toBe('/v1/worker/additional-info/:group')
+  })
+})
+
+describe('U4d signContract', () => {
+  it('takes the upload, the engagement and the file name only: never a tax number', () => {
+    ok(signContractSchema, { uploadId: '7d3f1a2b-1c2d-4e5f-8a9b-0c1d2e3f4a5b', engagementType: 'tfn', fileName: 'Contract.pdf' })
+    bad(signContractSchema, { uploadId: '7d3f1a2b-1c2d-4e5f-8a9b-0c1d2e3f4a5b', engagementType: 'acn', fileName: 'Contract.pdf' }, 'engagementType')
+    expect(signContractSchema.safeParse({ uploadId: '7d3f1a2b-1c2d-4e5f-8a9b-0c1d2e3f4a5b', engagementType: 'tfn', fileName: 'Contract.pdf', tfn: '123456782' }).success).toBe(false)
+    expect(workerContract.entries.signContract).toMatchObject({ method: 'POST', path: '/v1/worker/contract' })
   })
 })
 

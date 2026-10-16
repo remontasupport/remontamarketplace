@@ -27,6 +27,8 @@ import {
   citizenshipSchema,
   complianceDocumentSchema,
   confirmComplianceDocumentSchema,
+  signContractSchema,
+  signedContractSchema,
   confirmServiceDocumentSchema,
   confirmPhotoSchema,
   dateOfBirthSchema,
@@ -321,6 +323,7 @@ export const workerContract = defineContract('worker', {
   confirmComplianceDocument: { method: 'POST', path: '/v1/worker/compliance-documents', summary: 'Confirm an uploaded compliance document (identity, a check, a training, the contract, the Code of Conduct): checked, kept privately, recorded for review (it replaces the previous file of that type).', body: json(confirmComplianceDocumentSchema), responses: { 201: complianceDocumentSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 2 }) },
   deleteComplianceDocument: { method: 'DELETE', path: '/v1/worker/compliance-documents/:documentId', summary: "Delete one of the worker's compliance documents and its file; 404 when it is not theirs.", pathParams: serviceDocumentParamsSchema, responses: { 200: serviceDocumentParamsSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1 }) },
   putCitizenship: { method: 'PUT', path: '/v1/worker/compliance/right-to-work/citizenship', summary: 'The Right to Work answer: an Australian citizen needs no document (SUBMITTED); a no takes back a claim with no file.', body: json(citizenshipSchema), responses: { 200: complianceDocumentSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1 }) },
+  signContract: { method: 'POST', path: '/v1/worker/contract', summary: 'Sign the contract of agreement: the signed PDF (uploaded by ticket) kept privately and the engagement (ABN or TFN) marked signed, together. No tax file number is stored.', body: json(signContractSchema), responses: { 201: signedContractSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 2 }) },
   getDocumentLink: { method: 'GET', path: '/v1/worker/documents/:documentId/link', summary: "A five-minute link to view any of the worker's own documents (a legacy row answers its stored URL).", pathParams: serviceDocumentParamsSchema, responses: { 200: documentLinkSchema }, meta: workerRead({ privateCacheSeconds: 30 }) },
   putBankAccount: { method: 'PUT', path: '/v1/worker/bank-account', summary: 'Replace the bank account (all four fields); every read returns it masked.', body: json(bankAccountSchema), responses: { 200: maskedBankAccountSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
 })

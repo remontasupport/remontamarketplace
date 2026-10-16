@@ -104,6 +104,33 @@ describe.skipIf(!local)('U4a compliance documents on PostGIS', () => {
     expect((await send('PUT', '/v1/worker/compliance/right-to-work/citizenship', { isCitizen: false }, () => h.a.userId)).json()).toMatchObject({ status: 'PENDING' })
   })
 
+  it('U4d the contract: the PDF kept privately and the engagement signed, together; a TFN is never stored; an ABN number stays', async () => {
+    const sign = async (engagementType: string, extra: object = {}) => send('POST', '/v1/worker/contract', { uploadId: await upload(), engagementType, fileName: 'Contract.pdf', ...extra })
+    await h.db.workerProfile.update({ where: { id: h.b.profileId }, data: { abn: { workerEngagementType: { type: 'abn', value: '51824753556', signed: false } } } })
+    const abn = await sign('abn')
+    expect(abn.statusCode, abn.body).toBe(201)
+    expect(abn.json()).toMatchObject({ document: { requirementType: 'contract-of-agreement', name: 'Contract of Agreement', status: 'SUBMITTED', fileName: 'Contract.pdf' }, engagement: { type: 'abn', signed: true } })
+    let p = await h.db.workerProfile.findUniqueOrThrow({ where: { id: h.b.profileId }, select: { abn: true } })
+    expect(p.abn).toEqual({ workerEngagementType: { type: 'abn', signed: true, value: '51824753556' } })
+    const row = await h.db.verificationRequirement.findUniqueOrThrow({ where: { id: abn.json().document.id } })
+    const key = (row.metadata as { storageKey: string }).storageKey
+    expect(key).toMatch(new RegExp(`^documents/${h.b.profileId}/`))
+    // Signing again as TFN: the same row, the old file gone, the engagement TFN with no number.
+    const tfn = await sign('tfn')
+    expect(tfn.statusCode, tfn.body).toBe(201)
+    expect(tfn.json().document.id).toBe(row.id)
+    expect(bucket.objects.has(key)).toBe(false)
+    p = await h.db.workerProfile.findUniqueOrThrow({ where: { id: h.b.profileId }, select: { abn: true } })
+    expect(p.abn).toEqual({ workerEngagementType: { type: 'tfn', signed: true } })
+    // Refused before anything is written: a type that is neither, a tax number in the body, nothing uploaded.
+    const before = await h.db.workerProfile.findUniqueOrThrow({ where: { id: h.b.profileId }, select: { abn: true, updatedAt: true } })
+    expect((await sign('acn')).statusCode).toBe(400)
+    expect((await sign('tfn', { tfn: '123456782' })).statusCode).toBe(400)
+    const none = await send('POST', '/v1/worker/contract', { uploadId: '7d3f1a2b-1c2d-4e5f-8a9b-0c1d2e3f4a5b', engagementType: 'abn', fileName: 'Contract.pdf' })
+    expect(none.statusCode).toBe(409)
+    expect(await h.db.workerProfile.findUniqueOrThrow({ where: { id: h.b.profileId }, select: { abn: true, updatedAt: true } })).toEqual(before)
+  })
+
   it('delete: the row and its file; a service document is not this entry', async () => {
     const del = await send('DELETE', `/v1/worker/compliance-documents/${police}`)
     expect(del.statusCode, del.body).toBe(200)
