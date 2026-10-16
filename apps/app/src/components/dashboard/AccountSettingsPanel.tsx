@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo, type ReactNode } from "react";
 import { useSession, signOut } from "next-auth/react";
-import QueryProvider from "@/providers/QueryProvider";
 import { accountApi } from "@/lib/api/account";
 import type { ApiOutcome } from "@/lib/api/outcome";
 import "@/app/styles/account-settings.css";
@@ -362,10 +361,8 @@ function AccountSettingsPanelContent({ extraTabs = [] }: { extraTabs?: readonly 
   );
 }
 
+// The app's one query cache (the root layout's), not one of its own (bug 2026-10-16: a private cache here meant a
+// service added in the Services tab, or the bank account, did not reach the other pages until a hard refresh).
 export default function AccountSettingsPanel({ extraTabs }: { extraTabs?: readonly ExtraTab[] }) {
-  return (
-    <QueryProvider>
-      <AccountSettingsPanelContent extraTabs={extraTabs} />
-    </QueryProvider>
-  );
+  return <AccountSettingsPanelContent extraTabs={extraTabs} />;
 }

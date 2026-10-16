@@ -7,7 +7,6 @@ import { reloadProfileInto } from "@/features/worker/profile";
 import { ArrowLeft } from "lucide-react";
 import { useProfilePreview } from "@/hooks/useProfilePreview";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import QueryProvider from "@/providers/QueryProvider";
 import Loader from "@/components/ui/Loader";
 import ImageCropModal from "@/components/modals/ImageCropModal";
 import { blobUrlToFile } from "@/utils/imageCrop";
@@ -214,8 +213,6 @@ function ProfilePreviewContent() {
 
 export default function ProfilePreviewPage() {
   return (
-    <QueryProvider>
-      <ProfilePreviewContent />
-    </QueryProvider>
+    <ProfilePreviewContent />
   );
 }

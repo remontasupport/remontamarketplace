@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { X } from "lucide-react";
 import { useProfilePreview } from "@/hooks/useProfilePreview";
-import QueryProvider from "@/providers/QueryProvider";
 import WorkerProfileView from "@/components/profile/WorkerProfileView";
 import Loader from "@/components/ui/Loader";
 import "@/app/styles/profile-preview.css";
@@ -359,10 +358,9 @@ function ApplyModalContent({ jobTitle, jobId, jobZohoId, jobService, onClose, on
 
 export default function ApplyModal(props: ApplyModalProps) {
   return (
+    // The app's one query cache: the profile it shows is the one the rest of the dashboard holds (bug 2026-10-16).
     <Suspense>
-      <QueryProvider>
-        <ApplyModalContent {...props} />
-      </QueryProvider>
+      <ApplyModalContent {...props} />
     </Suspense>
   );
 }
