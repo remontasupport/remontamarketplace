@@ -10,12 +10,12 @@ import { Loader2, Upload } from "lucide-react";
 import { SIGNUP_PHOTO_ACCEPT } from "@/components/ui/form-wizard/fields";
 import type { ApiOutcome } from "@/lib/api/outcome";
 import { workerApi, type Photos } from "./api";
-import { photoMessageOf as messageOf, uploadProfilePhoto } from "./photo";
+import { isShownPhoto, photoMessageOf as messageOf, uploadProfilePhoto } from "./photo";
 import { useWorkerProfile } from "./profile";
 import { Notice, SectionSkeleton } from "./SectionPage";
 import { UNAVAILABLE_MESSAGE } from "./useSection";
 
-type Busy = { kind: "idle" } | { kind: "uploading"; percent: number } | { kind: "working" };
+type Busy = { kind: "idle" } | { kind: "uploading"; percent: number } | { kind: "processing" } | { kind: "working" };
 
 export default function PhotoSection() {
   const { profile, isLoading, error: readError, patch, reload } = useWorkerProfile();
@@ -35,9 +35,11 @@ export default function PhotoSection() {
     setMessage(null);
     setBusy({ kind: "uploading", percent: 0 });
     try {
-      const r = await uploadProfilePhoto(file, { onProgress: (percent) => setBusy({ kind: "uploading", percent }) });
-      if (r.ok) applied({ kind: "ok", body: r.photos });
-      else setMessage(r.message);
+      const r = await uploadProfilePhoto(file, { onProgress: (percent) => setBusy({ kind: "uploading", percent }), onProcessing: () => setBusy({ kind: "processing" }) });
+      if (r.ok) {
+        applied({ kind: "ok", body: r.photos });
+        if (r.processing) setMessage("Your photo is uploaded and still being prepared. It will appear in a minute.");
+      } else setMessage(r.message);
     } finally {
       setBusy({ kind: "idle" });
     }
@@ -83,12 +85,12 @@ export default function PhotoSection() {
           <div className="flex items-center gap-5">
             <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-100 border border-gray-200 flex items-center justify-center">
               {/* eslint-disable-next-line @next/next/no-img-element -- a staged photo is on the bucket, outside next/image's domains */}
-              {photos.main ? <img src={photos.main} alt="Your profile photo" className="w-full h-full object-cover" /> : <span className="text-sm text-gray-500 font-poppins">No photo</span>}
+              {photos.main && isShownPhoto(photos.main) ? <img src={photos.main} alt="Your profile photo" className="w-full h-full object-cover" /> : <span className="text-sm text-gray-500 font-poppins text-center px-2">{photos.main ? "Preparing your photo…" : "No photo"}</span>}
             </div>
             <div className="space-y-2">
               <button type="button" disabled={!idle} onClick={pick} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0C1628] text-white font-poppins text-sm disabled:opacity-50">
-                {busy.kind === "uploading" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                {busy.kind === "uploading" ? `Uploading ${busy.percent}%` : photos.main ? "Replace photo" : "Upload a photo"}
+                {busy.kind === "uploading" || busy.kind === "processing" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                {busy.kind === "uploading" ? `Uploading ${busy.percent}%` : busy.kind === "processing" ? "Preparing your photo…" : photos.main ? "Replace photo" : "Upload a photo"}
               </button>
               {photos.main && (
                 <button type="button" disabled={!idle} onClick={() => void act(() => workerApi.removePhoto(photos.main!))} className="block text-sm font-poppins text-red-600 hover:underline disabled:opacity-50">
