@@ -15,7 +15,7 @@
 //   10b private caching (privateCacheSeconds): ETag, 304, and the response memo (U2)
 //   11 error mapping                                            (error handler, app.ts)
 import { createHash } from 'node:crypto'
-import { serializeCanonical, type EntryDef, type RateLimitRule } from '@remonta/api-contract'
+import { friendlyError, serializeCanonical, type EntryDef, type RateLimitRule } from '@remonta/api-contract'
 import type { FastifyReply, FastifyRequest } from 'fastify'
 import type * as z from 'zod'
 import { RequestAudit } from '../audit'
@@ -174,7 +174,8 @@ function parse(schema: z.ZodType | undefined, input: unknown, where: string): un
     if (input && typeof input === 'object' && Object.keys(input).length > 0) throw new ApiError(400, `unexpected ${where}`, { [where]: ['Not accepted here'] })
     return undefined
   }
-  const r = schema.safeParse(input)
+  // Plain-English messages where the schema names none (2026-10-14): the same wording the page shows.
+  const r = schema.safeParse(input, { error: friendlyError })
   if (r.success) return r.data
   const fields: Record<string, string[]> = {}
   for (const issue of r.error.issues) {
