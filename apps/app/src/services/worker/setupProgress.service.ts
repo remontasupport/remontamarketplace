@@ -1336,6 +1336,12 @@ export async function getAllCompletionStatusOptimized(userId: string): Promise<A
   services: boolean;
 }>> {
   try {
+    // Security fix 2026-10-16: an exported "use server" function is an action any browser can call with any user id.
+    // Only the worker themselves (or an admin) may read their completion.
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id || (session.user.id !== userId && session.user.role !== "ADMIN")) {
+      return { success: false, error: "Unauthorized." };
+    }
     const totalStart = Date.now();
    
 
