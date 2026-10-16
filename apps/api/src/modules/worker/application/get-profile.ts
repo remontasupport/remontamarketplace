@@ -2,7 +2,7 @@
 // the contract's Profile (E1). Every field has one source column (R2.2); the bank
 // account is masked here and nowhere later (R2.3, P8); no write (R2.8). The pipeline
 // adds the private-cache headers and the ETag (R2.7).
-import type { Profile } from '@remonta/api-contract'
+import { ageOn, isoDateSchema, type Profile } from '@remonta/api-contract'
 import type { FastifyBaseLogger } from 'fastify'
 import type { Principal } from '../../../platform/auth/authenticator'
 import type { Db } from '../../../platform/persistence/db'
@@ -21,12 +21,19 @@ export interface GetProfileDeps {
   db: Db
   /** Injectable for the unit tests; the real one runs the transaction. */
   read?: (db: Db, userId: string) => Promise<ProfileRows | null>
+  /** The api's clock, for the age (default: now). */
+  now?: () => Date
 }
 
 export async function getProfile(deps: GetProfileDeps, principal: Principal, log: FastifyBaseLogger): Promise<Profile> {
   const rows = await (deps.read ?? readProfileRows)(deps.db, principal.userId)
   if (!rows) throw profileNotFound(principal, log)
-  return shapeProfile(rows)
+  return shapeProfile(rows, (deps.now ?? (() => new Date()))())
+}
+
+/** The age from the date of birth as of `now`; the stored column only when there is no readable date (fix 2026-10-14). */
+export function ageOf(p: { dateOfBirth: string | null; age: number | null }, now: Date): number | null {
+  return p.dateOfBirth && isoDateSchema.safeParse(p.dateOfBirth).success ? ageOn(p.dateOfBirth, now) : p.age
 }
 
 /** E5 from the read's rows. Exported for the backfill (P14), which runs the same computation. */
@@ -49,7 +56,7 @@ export function completionInputOf(rows: ProfileRows): CompletionInput {
 }
 
 /** L2 step 4. */
-export function shapeProfile(rows: ProfileRows): Profile {
+export function shapeProfile(rows: ProfileRows, now: Date = new Date()): Profile {
   const p = rows.profile
   const input = completionInputOf(rows)
   const completion = completionOf(input)
@@ -66,7 +73,7 @@ export function shapeProfile(rows: ProfileRows): Profile {
     bio: p.introduction,
     personalInfo: {
       dateOfBirth: p.dateOfBirth,
-      age: p.age,
+      age: ageOf(p, now),
       gender: p.gender,
       hasVehicle: hasVehicle === 'yes' ? 'Yes' : hasVehicle === 'no' ? 'No' : null,
       languages: p.languages,

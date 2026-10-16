@@ -74,7 +74,7 @@ completion flag recompute and persist it in the same transaction. After a save t
 |---|---|---|
 | `PUT /v1/worker/profile/name` | `{firstName, middleName | null, lastName}` | 1-100 characters, letters of any script, spaces, hyphens, apostrophes |
 | `PUT /v1/worker/profile/bio` | `{bio}` | 1-2,000 characters, plain text (newlines allowed) |
-| `PUT /v1/worker/profile/date-of-birth` | `{dateOfBirth}` | a real `YYYY-MM-DD` date, 16-100 years old on the api's clock. `age` is not written |
+| `PUT /v1/worker/profile/date-of-birth` | `{dateOfBirth}` | a real `YYYY-MM-DD` date, 16-100 years old on the api's clock; `age` is written beside it (fix 2026-10-14) for the old readers of the column, and the profile read computes `personalInfo.age` from the date |
 | `PUT /v1/worker/profile/gender` | `{gender}` | `Male`/`Female` |
 | `PUT /v1/worker/profile/vehicle` | `{hasVehicle}` | `Yes`/`No`; decides whether the licence documents are required. Each of these three writes its own column only (split from one `personal-info` write, 2026-10-14). Languages are the Languages group |
 | `PUT /v1/worker/profile/abn` | `{abn}` | 11 digits (spaces allowed) passing the ATO checksum; stored `{workerEngagementType: {type: 'abn', value, signed}}`, `signed` kept from an ABN record, false after a TFN one (D17) |

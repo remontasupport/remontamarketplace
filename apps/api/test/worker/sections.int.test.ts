@@ -1,6 +1,7 @@
 // The U2 section writes on PostGIS (edit-profile properties P1, P2, P4-P7, P9; rules R1-R7):
 // through the real pipeline and transactions, on the seeded worker harness. Runs only when
 // TEST_DATABASE_URL points at localhost (CI's API Quality job).
+import { ageOn } from '@remonta/api-contract'
 import { CULTURAL_BACKGROUNDS, INTERESTS, LANGUAGES, PERSONALITIES, RELIGIONS, UNIQUE_SERVICES, WORK_PREFERENCES } from '@remonta/schemas/data/profileOptions'
 import { EXAMPLE_ABN } from '@remonta/schemas/validations/abn'
 import pino from 'pino'
@@ -129,6 +130,13 @@ describe.skipIf(!local)('the section writes on PostGIS', () => {
     expect((await put('/v1/worker/profile/vehicle', { hasVehicle: 'Yes' })).json()).toEqual({ hasVehicle: 'Yes' })
     expect((await put('/v1/worker/profile/date-of-birth', { dateOfBirth: '1988-11-30' })).json()).toEqual({ dateOfBirth: '1988-11-30' })
     expect((await profile()).personalInfo).toMatchObject({ dateOfBirth: '1988-11-30', gender: 'Female', hasVehicle: 'Yes' })
+    // Fix 2026-10-14: a new date moves the age, in the read and in the stored column the old readers use.
+    await h.db.workerProfile.update({ where: { id: h.a.profileId }, data: { age: 99 } })
+    await put('/v1/worker/profile/date-of-birth', { dateOfBirth: '1995-01-01' })
+    const expected = ageOn('1995-01-01', new Date())
+    expect((await profile()).personalInfo.age).toBe(expected)
+    expect((await h.db.workerProfile.findUniqueOrThrow({ where: { id: h.a.profileId }, select: { age: true } })).age).toBe(expected)
+    await put('/v1/worker/profile/date-of-birth', { dateOfBirth: '1988-11-30' })
     await put('/v1/worker/profile/vehicle', { hasVehicle: 'No' })
     expect((await profile()).personalInfo).toMatchObject({ dateOfBirth: '1988-11-30', gender: 'Female', hasVehicle: 'No' })
     expect((await put('/v1/worker/profile/gender', { gender: 'Male', hasVehicle: 'Yes' })).statusCode).toBe(400) // one answer per write

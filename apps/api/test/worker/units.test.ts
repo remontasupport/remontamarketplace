@@ -3,7 +3,7 @@
 import { profileSchema } from '@remonta/api-contract'
 import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
-import { shapeProfile } from '../../src/modules/worker/application/get-profile'
+import { ageOf, shapeProfile } from '../../src/modules/worker/application/get-profile'
 import { assertOwned } from '../../src/modules/worker/application/own-profile'
 import { maskBankAccount } from '../../src/modules/worker/domain/bank-account'
 import { DEFAULT_DISPLAY_ROLE, displayRoleOf } from '../../src/modules/worker/domain/display-role'
@@ -101,15 +101,29 @@ export function sampleRows(patch: Partial<ProfileRows['profile']> = {}): Profile
   }
 }
 
+describe('ageOf (fix 2026-10-14: the age follows the date of birth)', () => {
+  const on = new Date('2026-10-14T00:00:00Z')
+  it('computes from the date, the day before and on the birthday; the stored column never wins over a date', () => {
+    expect(ageOf({ dateOfBirth: '1990-10-15', age: 50 }, on)).toBe(35)
+    expect(ageOf({ dateOfBirth: '1990-10-14', age: 50 }, on)).toBe(36)
+    expect(ageOf({ dateOfBirth: '2000-02-29', age: null }, on)).toBe(26)
+  })
+  it('falls back to the stored column only without a readable date', () => {
+    expect(ageOf({ dateOfBirth: null, age: 41 }, on)).toBe(41)
+    expect(ageOf({ dateOfBirth: '14/10/1990', age: 41 }, on)).toBe(41) // a legacy free-text value
+    expect(ageOf({ dateOfBirth: null, age: null }, on)).toBeNull()
+  })
+})
+
 describe('shapeProfile (L2 step 4, E1)', () => {
   it('produces a body the contract accepts, with every field from its column', () => {
-    const body = shapeProfile(sampleRows())
+    const body = shapeProfile(sampleRows(), new Date('2026-10-14T00:00:00Z'))
     expect(profileSchema.safeParse(body).success).toBe(true)
     expect(body).toMatchObject({
       id: 'wp_1',
       names: { firstName: 'Mary', middleName: null, lastName: "O'Connor" },
       photos: { main: 'https://blob.test/main.jpg' },
-      personalInfo: { hasVehicle: 'Yes', dateOfBirth: '1990-01-01', age: null, languages: ['English'] },
+      personalInfo: { hasVehicle: 'Yes', dateOfBirth: '1990-01-01', age: 36, languages: ['English'] }, // computed from the date (the stored column is null)
       abn: { type: 'abn', value: null, signed: true },
       homeAddress: null,
       serviceArea: { localityId: 42, label: 'Parramatta, NSW 2150', travelRadiusKm: 50, precision: 'LOCALITY' },
