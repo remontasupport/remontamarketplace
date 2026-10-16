@@ -96,7 +96,7 @@
 11	src/lib/profileData.ts::@typescript-eslint/no-explicit-any
 1	src/services/user/account.service.ts::@typescript-eslint/no-explicit-any
 10	src/services/worker/profile.service.ts::@typescript-eslint/no-explicit-any
-15	src/services/worker/profilePreview.service.ts::@typescript-eslint/no-explicit-any
+14	src/services/worker/profilePreview.service.ts::@typescript-eslint/no-explicit-any
 20	src/services/worker/setupProgress.service.ts::@typescript-eslint/no-explicit-any
 2	src/store/onboardingStore.ts::@typescript-eslint/no-explicit-any
 1	src/utils/dynamicComplianceSteps.ts::@typescript-eslint/no-explicit-any
