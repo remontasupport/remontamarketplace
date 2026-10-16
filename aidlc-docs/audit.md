@@ -4347,3 +4347,6 @@ Noted: #73 (`feat/services-api-reads` at `d77b29f`) merged into `feat/services-a
 
 **User input**: "all 7 has merged"
 **AI response**: verified main `76568ae` (#82) contains all seven: #77 requirement-details-api, #78 account-api, #79 additional-info-split-api, #64 fix/dob-age, #80 gender, #81 delete-education-api, #82 friendly-validation-messages. Staging deploys: 7bcfcf56, 36f8e018, 20785afe, aa310125 succeeded (aa310125 includes #78 and its migration; #78's own run was cancelled by the newer merge); 0c3d1304 and 76568ae running. main's worker/account contracts and worker.sections.ts are identical to `feat/account-app`'s (the preview).
+
+**User input**: "is the staging deploy done?" / "How about the Additional Credentials, is it included already right?"
+**AI response**: Additional Credentials confirmed in the preview (`feat/account-app`) and on staging (#72). deploy-api for `76568ae` completed success; staging health 200 (a first probe timed out), `PUT /v1/account/password` and `DELETE /v1/worker/education/:id` answer 401 without a token (bound), an unknown route 404. Preview ready for the full worker test.
