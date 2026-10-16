@@ -112,12 +112,12 @@ describe("WORKER_MENU", () => {
 });
 
 describe("the old Edit Profile URLs", () => {
-  it("each redirects to a profile page; the old routes exist until PR 4", () => {
+  it("each redirects to a profile page; the old pages are gone (PR 4, 2026-10-16), so only the redirect answers", () => {
     for (const r of profileRedirects()) {
       const slug = profileSlug(r.destination);
       if (slug) expect(isProfilePage(slug), r.destination).toBe(true);
       else expect(r.destination).toBe("/dashboard/worker/profile");
     }
-    for (const [source] of PROFILE_REDIRECTS) expect(pageExists(source), source).toBe(true);
+    for (const [source] of PROFILE_REDIRECTS) expect(pageExists(source), source).toBe(false);
   });
 });

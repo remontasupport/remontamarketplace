@@ -57,7 +57,7 @@ export const COMPLIANCE_DOCUMENT_MAPPING: Record<string, ComplianceStepMapping> 
   "abn-contractor": {
     documentId: "abn-contractor",
     component: Step6ABN,
-    // Server action is called automatically via useUpdateProfileStep hook
+    // Saved with the signed contract (POST /v1/worker/contract, U4d)
   },
 
   // ========================================

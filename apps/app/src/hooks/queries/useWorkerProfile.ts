@@ -10,16 +10,7 @@
 
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  updateWorkerName,
-  updateWorkerPhoto,
-  updateWorkerAdditionalPhotos,
-  swapMainPhoto,
-  updateWorkerBio,
-  updateWorkerAddress,
-  updateWorkerPersonalInfo,
-} from "@/services/worker/profile.service";
+import { useQuery } from "@tanstack/react-query";
 
 // Query Keys - centralized for consistency
 export const workerProfileKeys = {
@@ -58,12 +49,6 @@ interface WorkerProfile {
   documentsByService?: Record<string, Record<string, string[]>>; // Service documents from VerificationRequirement table
 }
 
-interface UpdateStepData {
-  userId: string;
-  step: number;
-  data: any;
-}
-
 // API Fetchers
 async function fetchWorkerProfile(userId: string): Promise<WorkerProfile> {
   const response = await fetch(`/api/worker/profile/${userId}`);
@@ -75,97 +60,6 @@ async function fetchWorkerProfile(userId: string): Promise<WorkerProfile> {
   const data = await response.json();
 
   return data;
-}
-
-async function updateProfileStep(updateData: UpdateStepData): Promise<void> {
-  const { step, data } = updateData;
-
-  // Route to appropriate server action based on step
-  switch (step) {
-    case 1: // Name
-      const nameResult = await updateWorkerName({
-        firstName: data.firstName,
-        middleName: data.middleName,
-        lastName: data.lastName,
-      });
-      if (!nameResult.success) {
-        throw new Error(nameResult.error || "Failed to update name");
-      }
-      break;
-
-    case 2: // Photo
-      const photoResult = await updateWorkerPhoto({
-        photo: data.photo,
-      });
-      if (!photoResult.success) {
-        throw new Error(photoResult.error || "Failed to update photo");
-      }
-      break;
-
-    case 23: // Swap main photo with an additional photo
-      const swapResult = await swapMainPhoto({
-        newMainUrl: data.newMainUrl,
-        additionalPhotos: data.additionalPhotos,
-      });
-      if (!swapResult.success) {
-        throw new Error(swapResult.error || "Failed to swap main photo");
-      }
-      break;
-
-    case 22: // Additional Photos (step 2 extra slot)
-      const additionalPhotosResult = await updateWorkerAdditionalPhotos({
-        additionalPhotos: data.additionalPhotos,
-      });
-      if (!additionalPhotosResult.success) {
-        throw new Error(additionalPhotosResult.error || "Failed to update additional photos");
-      }
-      break;
-
-    case 3: // Bio
-      const bioResult = await updateWorkerBio({
-        bio: data.bio,
-      });
-      if (!bioResult.success) {
-        throw new Error(bioResult.error || "Failed to update bio");
-      }
-      break;
-
-    case 4: // Address
-      const addressResult = await updateWorkerAddress({
-        streetAddress: data.streetAddress,
-        city: data.city,
-        state: data.state,
-        postalCode: data.postalCode,
-      });
-      if (!addressResult.success) {
-        throw new Error(addressResult.error || "Failed to update address");
-      }
-      break;
-
-    case 5: // Personal Info
-      const personalInfoResult = await updateWorkerPersonalInfo({
-        dateOfBirth: data.dateOfBirth,
-        gender: data.gender,
-        hasVehicle: data.hasVehicle,
-      });
-      if (!personalInfoResult.success) {
-        throw new Error(personalInfoResult.error || "Failed to update personal information");
-      }
-      break;
-
-    default:
-      // For steps not yet refactored (7, 101, 102, etc.), use the old API route
-      const response = await fetch("/api/worker/profile/update-step", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updateData),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update profile step");
-      }
-      break;
-  }
 }
 
 // Hooks
@@ -197,28 +91,3 @@ export function useWorkerProfile(userId: string | undefined, options?: {
     refetchInterval: options?.refetchInterval ?? false, // Optional polling
   });
 }
-
-/**
- * Hook to update worker profile step (OPTIMIZED - no auto-refetch)
- *
- * Features:
- * - Fast mutations without blocking refetch
- * - Manual cache invalidation only when needed (e.g., on last step)
- * - Background sync updates setupProgress in database
- * - Error handling built-in
- *
- * PERFORMANCE: Removed automatic cache invalidation on every save
- * - Old: Save → Invalidate → Refetch (4 completion checks) → 500-1000ms total
- * - New: Save → Return immediately → ~100ms total
- * - Profile refetches automatically on dashboard mount via staleTime: 0
- */
-export function useUpdateProfileStep() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: updateProfileStep,
-    // REMOVED onSuccess invalidation - no auto-refetch on every save
-    // Profile will refetch when user navigates to dashboard (staleTime: 0)
-  });
-}
-

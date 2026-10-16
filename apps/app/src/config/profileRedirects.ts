@@ -1,7 +1,7 @@
 // The old Edit Profile URLs and where they now live (U2 H4). Plain data with no imports:
 // next.config.ts turns it into its redirects, and features/navigation/workerMenu.test.ts
 // proves every destination is a page. The old pages are deleted in PR 4; until then these
-// redirects run first, so nobody reaches them.
+// redirects run first, so nobody reaches them. PR 4 (2026-10-16) deleted the old pages; the redirects stay for old links.
 export const PROFILE_HOME = '/dashboard/worker/profile'
 
 /** [old route, query key, old value, new section slug] */

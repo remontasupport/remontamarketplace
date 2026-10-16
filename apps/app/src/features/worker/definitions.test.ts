@@ -5,11 +5,8 @@
 //   a section and pressing Save).
 // - The section's validation IS the contract's: a body the contract refuses is refused.
 // - packages/schemas' lists equal the arrays the old section components held (deleted in PR 4).
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import { profileSchema, type Profile } from "@remonta/api-contract";
 import { sectionBody, sectionBodySchema, seedSection, validateSection } from "@remonta/form-engine";
-import { CULTURAL_BACKGROUNDS, LANGUAGES, RELIGIONS, WORK_PREFERENCES } from "@remonta/schemas/data/profileOptions";
 import { describe, expect, it } from "vitest";
 import { bankAccountSection, dateOfBirthSection, educationSection, experienceSection, genderSection, vehicleSection, hoursSection, jobHistorySection, nameSection, SECTIONS, sectionBySlug } from "./definitions";
 
@@ -92,22 +89,6 @@ describe("the section definitions", () => {
   it("a TFN record seeds an empty ABN form (D17)", () => {
     const abn = sectionBySlug("abn")!;
     expect(seedSection(abn, { ...profile, abn: { type: "tfn", value: null, signed: true } })).toEqual({ abn: "" });
-  });
-});
-
-describe("the shared option lists equal the old components' arrays (deleted in PR 4)", () => {
-  const read = (file: string) => readFileSync(join(__dirname, "../../components/profile-building/sections", file), "utf8");
-  const arrayIn = (src: string, name: string) => {
-    const m = new RegExp(`const ${name} = \\[([\\s\\S]*?)\\];`).exec(src);
-    return m ? [...m[1]!.matchAll(/"([^"]+)"/g)].map((x) => x[1]) : null;
-  };
-  it.each([
-    ["LanguagesSection.tsx", "LANGUAGES", LANGUAGES.filter((l) => !l.startsWith("Auslan"))],
-    ["CulturalBackgroundSection.tsx", "CULTURAL_BACKGROUNDS", CULTURAL_BACKGROUNDS],
-    ["ReligionSection.tsx", "RELIGIONS", RELIGIONS],
-    ["MyPreferencesSection.tsx", "PREFERENCES", WORK_PREFERENCES],
-  ] as const)("%s", (file, name, list) => {
-    expect(arrayIn(read(file), name)).toEqual([...list]);
   });
 });
 

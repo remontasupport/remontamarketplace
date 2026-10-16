@@ -181,7 +181,7 @@ export default function WorkerProfileView({
         {!isAdminView && !isPublicView && (
           <button
             className="profile-preview-edit-link"
-            onClick={() => router.push('/dashboard/worker/account/setup?step=bio')}
+            onClick={() => router.push('/dashboard/worker/profile/bio')}
           >
             Edit bio
           </button>

@@ -19,7 +19,6 @@
 1	src/app/api/worker/requirements/route.ts::TS2322
 2	src/app/api/worker/requirements/route.ts::TS2339
 3	src/app/api/worker/requirements/route.ts::TS7006
-1	src/app/dashboard/worker/account/setup/page.tsx::TS2741
 1	src/app/dashboard/worker/additional-documents/page.tsx::TS2322
 1	src/app/dashboard/worker/additional-documents/page.tsx::TS2741
 16	src/app/dashboard/worker/requirements/setup/page.tsx::TS2339
@@ -38,7 +37,6 @@
 6	src/components/pdf/WorkerProfilePDF.tsx::TS2304
 12	src/components/pdf/WorkerProfilePDF.tsx::TS2339
 2	src/components/pdf/WorkerProfilePDF.tsx::TS7006
-1	src/components/profile-building/sections/AboutMeSection.tsx::TS2345
 1	src/components/requirements-setup/steps/GenericComplianceDocument.tsx::TS2322
 1	src/components/services-setup/steps/Step1ServicesOffer.tsx::TS2322
 2	src/lib/auth.config.ts::TS2322

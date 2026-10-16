@@ -100,7 +100,7 @@ export default function ProfileCompletionReminder({ initialSetupProgress }: Prof
   const getNextIncompleteStepUrl = useMemo(() => {
     // Priority order: Account Details → Compliance → Trainings → Services
     if (!setupProgress.accountDetails) {
-      return '/dashboard/worker/account/setup?step=name'
+      return '/dashboard/worker/profile'
     }
     if (!setupProgress.compliance) {
       return '/dashboard/worker/requirements/setup'
@@ -112,7 +112,7 @@ export default function ProfileCompletionReminder({ initialSetupProgress }: Prof
       return '/dashboard/worker/services/setup'
     }
     // All complete - fallback to account setup
-    return '/dashboard/worker/account/setup?step=name'
+    return '/dashboard/worker/profile'
   }, [setupProgress])
 
   // Handle resume button click

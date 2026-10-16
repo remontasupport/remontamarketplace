@@ -299,7 +299,7 @@ function ApplyModalContent({ jobTitle, jobId, jobZohoId, jobService, onClose, on
                       if (applyJobId) params.set('applyJobId', applyJobId);
                       params.set('applyJobTitle', encodeURIComponent(jobTitle));
                       sessionStorage.setItem('remonta_apply_context', JSON.stringify({ applyJobId: applyJobId ?? jobId, applyJobTitle: jobTitle }));
-                      router.push(`/dashboard/worker/profile-building?${params.toString()}`);
+                      router.push(`/dashboard/worker/profile?${params.toString()}`);
                     }}
                     className="text-xs underline font-semibold text-amber-700 cursor-pointer mt-0.5"
                   >
@@ -332,7 +332,7 @@ function ApplyModalContent({ jobTitle, jobId, jobZohoId, jobService, onClose, on
                       // stored value is never an empty string.
                       JSON.stringify({ applyJobId: applyJobId ?? jobId, applyJobTitle: jobTitle })
                     );
-                    router.push(`/dashboard/worker/profile-building?${params.toString()}`);
+                    router.push(`/dashboard/worker/profile?${params.toString()}`);
                   }}
                   disabled={isLoading}
                   className="px-5 py-2.5 rounded-2xl border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"

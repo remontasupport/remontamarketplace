@@ -14,7 +14,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import StepContainer from "@/components/account-setup/shared/StepContainer";
-import { useWorkerProfile, useUpdateProfileStep, workerProfileKeys } from "@/hooks/queries/useWorkerProfile";
+import { useWorkerProfile, workerProfileKeys } from "@/hooks/queries/useWorkerProfile";
 import { useWorkerRequirements } from "@/hooks/queries/useWorkerRequirements";
 import { generateTrainingSteps, findStepBySlug, getStepIndex } from "@/utils/dynamicTrainingSteps";
 import { autoUpdateTrainingsCompletion } from "@/services/worker/setupProgress.service";
@@ -62,7 +62,6 @@ function TrainingsSetupContent() {
   // TanStack Query hooks
   const queryClient = useQueryClient();
   const { data: profileData, isLoading: isLoadingProfile } = useWorkerProfile(session?.user?.id);
-  const updateProfileMutation = useUpdateProfileStep();
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [successMessage, setSuccessMessage] = useState("");
