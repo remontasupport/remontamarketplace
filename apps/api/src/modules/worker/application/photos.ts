@@ -43,12 +43,22 @@ export async function claimAsPhoto(tx: Tx, profileId: string, uploadId: string, 
   throw new ApiError(404, 'photo upload expired or already used')
 }
 
-export async function removeOne(tx: Tx, profileId: string, url: string): Promise<Photos> {
+/**
+ * Removes the worker's photo. The page may still hold the address the confirm answered -- the private staging copy --
+ * after the clean copy has replaced it (bug 2026-10-16: "Not your photo"); an upload this profile claimed counts as
+ * naming its photo. Answers the photos left and the address actually removed (its file is deleted after the commit).
+ */
+export async function removeOne(tx: Tx, profileId: string, url: string): Promise<{ photos: Photos; removed: string | null }> {
   const profile = await tx.workerProfile.findUniqueOrThrow({ where: { id: profileId }, select: { photos: true } })
-  const next = withoutPhoto(photosOf(profile), url)
+  const current = photosOf(profile)
+  let next = withoutPhoto(current, url)
+  if ('refused' in next && current.main) {
+    const ownUpload = await tx.registrationPhotoUpload.findFirst({ where: { url, claimedByWorkerProfileId: profileId }, select: { id: true } })
+    if (ownUpload) next = withoutPhoto(current, current.main)
+  }
   if ('refused' in next) throw new ApiError(400, next.refused, { url: [next.refused] })
   await tx.workerProfile.update({ where: { id: profileId }, data: { photos: null }, select: { id: true } })
-  return next
+  return { photos: next, removed: current.main }
 }
 
 /** An https URL on Vercel Blob's public host (`<store>.public.blob.vercel-storage.com`), by its parsed host, never a substring. */

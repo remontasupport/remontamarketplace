@@ -282,6 +282,23 @@ describe.skipIf(!local)('the section writes on PostGIS', () => {
     await h.db.registrationPhotoUpload.delete({ where: { id } })
   })
 
+  it("bug 2026-10-16: after the clean copy replaced the staging address, removing by the staging address the page still holds removes the photo and deletes the clean copy; another worker's staging address is refused", async () => {
+    const id = crypto.randomUUID()
+    const staged = `https://storage.test/staging/${id}`
+    const clean = `https://x.public.blob.vercel-storage.com/workers/${h.a.profileId}/${id}.jpg`
+    await h.db.registrationPhotoUpload.create({ data: { id, blobKey: `staging/${id}`, url: staged, contentType: 'image/jpeg', sizeBytes: 10, ipHash: 'x' } })
+    await writeTransaction(h.db, (tx) => claimAsPhoto(tx, h.a.profileId, id, new Date()))
+    await h.db.workerProfile.update({ where: { id: h.a.profileId }, data: { photos: clean } }) // the outbox handler's repoint
+    expect((await post('/v1/worker/photos/remove', { url: staged }, () => h.b.userId)).statusCode).toBe(400) // B never claimed it
+    blobDeletes.length = 0
+    const res = await post('/v1/worker/photos/remove', { url: staged })
+    expect(res.statusCode, res.body).toBe(200)
+    expect(res.json()).toEqual({ main: null })
+    expect(blobDeletes).toEqual([clean, clean.replace(/\.jpg$/, '-256.jpg')])
+    await h.db.outboxEvent.deleteMany({ where: { type: 'PhotoUploaded', payload: { path: ['photoUploadId'], equals: id } } })
+    await h.db.registrationPhotoUpload.delete({ where: { id } })
+  })
+
   it("F1: removing a photo deletes the file only from the caller's own folder; another worker's URL in their columns is cleared, never deleted", async () => {
     const upload = crypto.randomUUID()
     const blobOf = (profileId: string) => `https://x.public.blob.vercel-storage.com/workers/${profileId}/${upload}.jpg`

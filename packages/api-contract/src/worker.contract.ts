@@ -17,6 +17,9 @@ import { defineContract } from './define'
 import { meta } from './meta'
 import { photoTicketRequestSchema, photoTicketResponseSchema } from './registration.contract'
 import {
+  educationRowParamsSchema,
+  jobHistoryRowParamsSchema,
+  experienceDomainParamsSchema,
   abnBodySchema,
   abnViewSchema,
   availabilitySchema,
@@ -33,9 +36,7 @@ import {
   dateOfBirthSchema,
   documentLinkSchema,
   educationSchema,
-  educationRowParamsSchema,
   educationViewSchema,
-  experienceDomainParamsSchema,
   experienceSchema,
   funFactSchema,
   genderSchema,
@@ -43,7 +44,6 @@ import {
   homeAddressInputSchema,
   interestsSchema,
   jobHistorySchema,
-  jobHistoryRowParamsSchema,
   jobHistoryViewSchema,
   languagesSchema,
   nameSchema,
@@ -53,6 +53,7 @@ import {
   preferencesSchema,
   religionSchema,
   serviceAreaInputSchema,
+  supportActivitiesSchema,
   serviceDocumentParamsSchema,
   serviceDocumentSchema,
   serviceDocumentTicketRequestSchema,
@@ -61,7 +62,6 @@ import {
   serviceRegistrationParamsSchema,
   serviceRegistrationViewSchema,
   servicesBodySchema,
-  supportActivitiesSchema,
   vehicleSchema,
 } from './worker.sections'
 

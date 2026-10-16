@@ -2,11 +2,7 @@
 // edit-profile, U3a services). The pipeline has already verified the token, checked the WORKER role,
 // applied the per-user and per-IP limits and parsed the body strictly; the private-cache
 // headers and the 304 are its job too. Every section write runs through replaceSection
-// (ownership, one transaction, audit). Only the writes that can change a STORED flag recompute
-// completion (name, bio, personal info, ABN, photos, service area): the stored value is the four
-// flags and profileCompleted; the percentage is computed on every read and never stored, so the
-// sections that only move the percentage (hours, experience, history, education, the groups, the
-// bank account) skip the recompute -- half the connection time of a write (the U2 load test). One info line per request with ids and
+// (ownership, one transaction, completion, audit). One info line per request with ids and
 // timing, never a name, a value or a row (U1-SEC-06).
 import { workerContract, type AdditionalInfoBody, type AdditionalInfoGroup } from '@remonta/api-contract'
 import type { Clock } from '../../platform/clock'
@@ -19,9 +15,9 @@ import { writeHomeAddress, writeServiceArea } from './application/addresses'
 import { getProfile, type GetProfileDeps } from './application/get-profile'
 import { claimAsPhoto, deleteStoredPhoto, removeOne } from './application/photos'
 import { replaceSection } from './application/replace-section'
-import { ApiError } from '../../platform/errors'
-import { writeAdditionalInfo, writeBankAccount } from './application/sections/additional-info'
+import { GROUPS_WITH_COMPLETION, writeAdditionalInfo, writeBankAccount } from './application/sections/additional-info'
 import { deleteEducationEntry, deleteExperienceArea, deleteJobHistoryEntry, writeAvailability, writeEducation, writeExperience, writeJobHistory } from './application/sections/lists'
+import { ApiError } from '../../platform/errors'
 import { ownServiceDocument, writeServiceRegistration, writeServices } from './application/sections/services'
 import { complianceAlreadyRecorded, complianceTargetOf, ownComplianceBlobUrl, recordComplianceDocument, removeComplianceDocument, writeCitizenship } from './application/compliance-documents'
 import { alreadyRecorded, confirmTargetOf, createDocumentTicket, deleteDocumentFiles, DOCUMENT_UPLOAD_INCOMPLETE, linkFor, recordDocument, removeDocument, stageDocument, type DocumentFile } from './application/service-documents'
@@ -46,7 +42,7 @@ export function workerHandlers(deps: WorkerModuleDeps) {
   }
   const group = async <G extends AdditionalInfoGroup>(g: G, body: AdditionalInfoBody<G>, ctx: HandlerContext) => ({
     status: 200 as const,
-    body: await replaceSection(s, ctx, { section: `putAdditionalInfo.${g}`, completion: false }, (tx, p) => writeAdditionalInfo(tx, p.id, g, body)),
+    body: await replaceSection(s, ctx, { section: `putAdditionalInfo.${g}`, completion: GROUPS_WITH_COMPLETION.has(g) }, (tx, p) => writeAdditionalInfo(tx, p.id, g, body)),
   })
   return defineHandlers(workerContract, {
     getProfile: async (_req, ctx) => {
@@ -81,22 +77,23 @@ export function workerHandlers(deps: WorkerModuleDeps) {
     },
     removePhoto: async (req, ctx) => {
       let profileId = ''
-      const body = await replaceSection(s, ctx, { section: 'removePhoto', completion: true }, (tx, p) => {
+      const out = await replaceSection(s, ctx, { section: 'removePhoto', completion: true }, (tx, p) => {
         profileId = p.id
         return removeOne(tx, p.id, req.body.url)
       })
-      // Only a file in the caller's own folder is deleted (F1): the URL being in their columns proves nothing.
-      if (deps.photos) await deleteStoredPhoto(deps.photos.blob, req.body.url, profileId, ctx.log)
-      return { status: 200, body }
+      // The address actually removed (the page may name the staging copy). Only a file in the caller's own folder is
+      // deleted (F1): the URL being in their columns proves nothing.
+      if (deps.photos && out.removed) await deleteStoredPhoto(deps.photos.blob, out.removed, profileId, ctx.log)
+      return { status: 200, body: out.photos }
     },
 
-    putAvailability: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putAvailability', completion: false }, (tx, p) => writeAvailability(tx, p.id, req.body)) }),
-    putExperience: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putExperience', completion: false }, (tx, p) => writeExperience(tx, p.id, req.body)) }),
+    putAvailability: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putAvailability', completion: true }, (tx, p) => writeAvailability(tx, p.id, req.body)) }),
+    putExperience: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putExperience', completion: true }, (tx, p) => writeExperience(tx, p.id, req.body)) }),
     // Experience never changes a stored completion flag (the percentage is computed on read).
     deleteExperience: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: `deleteExperience.${req.params.domain}`, completion: false }, (tx, p) => deleteExperienceArea(tx, p.id, req.params.domain)) }),
-    putJobHistory: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putJobHistory', completion: false }, (tx, p) => writeJobHistory(tx, p.id, req.body)) }),
+    putJobHistory: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putJobHistory', completion: true }, (tx, p) => writeJobHistory(tx, p.id, req.body)) }),
     deleteJobHistoryEntry: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'deleteJobHistoryEntry', completion: false }, (tx, p) => deleteJobHistoryEntry(tx, p.id, req.params.entryId)) }),
-    putEducation: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putEducation', completion: false }, (tx, p) => writeEducation(tx, p.id, req.body)) }),
+    putEducation: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putEducation', completion: true }, (tx, p) => writeEducation(tx, p.id, req.body)) }),
     deleteEducationEntry: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'deleteEducationEntry', completion: false }, (tx, p) => deleteEducationEntry(tx, p.id, req.params.entryId)) }),
     // The additional details, one entry per group (2026-10-14); each writes its own columns only.
     putGoodToKnow: (req, ctx) => group('good-to-know', req.body, ctx),

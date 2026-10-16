@@ -1,7 +1,7 @@
 // The worker read on PostGIS (U1 worker-area, C6/C7/C9): the seeded fixture through the
 // real transaction. Runs only when TEST_DATABASE_URL points at localhost (CI's API
 // Quality job); the database-free half is profile.http.test.ts.
-import { profileSchema, type Profile } from '@remonta/api-contract'
+import { ageOn, profileSchema, type Profile } from '@remonta/api-contract'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { persistCompletion } from '../../src/modules/worker/domain/persist-completion'
 import { readProfileRows, readProfileRowsPage, type ProfileRows } from '../../src/modules/worker/persistence/profile-read'
@@ -39,7 +39,8 @@ describe.skipIf(!local)('GET /v1/worker/profile on PostGIS', () => {
       names: { firstName: 'Mary', middleName: null, lastName: "O'Connor" },
       mobile: '0412345678',
       photos: { main: 'https://blob.test/a.jpg' }, // the seeded additionalPhotos are kept in the column, never read (2026-10-14)
-      personalInfo: { dateOfBirth: '1990-01-01', age: null, gender: 'Female', hasVehicle: 'Yes', languages: ['English'] },
+      personalInfo: { dateOfBirth: '1990-01-01', age: ageOn('1990-01-01', new Date()), // #64: the age follows the date of birth
+      gender: 'Female', hasVehicle: 'Yes', languages: ['English'] },
       abn: { type: 'abn', value: null, signed: true },
       homeAddress: null,
       serviceArea: { label: 'Parramatta, NSW 2150', travelRadiusKm: 50, precision: 'LOCALITY' },
