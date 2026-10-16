@@ -9,8 +9,8 @@ import { RequirementDocument } from "@/hooks/queries/useWorkerRequirements";
 import GenericComplianceDocument from "./GenericComplianceDocument";
 
 interface FirstAidCprStepProps {
-  data: any;
-  onChange: (field: string, value: any) => void;
+  data: unknown;
+  onChange: (field: string, value: unknown) => void;
   errors?: Record<string, string>;
   apiEndpoint?: string;
   parts?: RequirementDocument[];
