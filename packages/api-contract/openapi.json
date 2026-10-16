@@ -2760,8 +2760,15 @@
                           "type": "object",
                           "properties": {
                             "streetLine": {
-                              "type": "string",
-                              "maxLength": 200
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "maxLength": 200
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
                             },
                             "localityId": {
                               "type": "integer",
@@ -4819,10 +4826,17 @@
                 "type": "object",
                 "properties": {
                   "streetLine": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 120,
-                    "pattern": "^[^\\p{Cc}]*$|^[^\\p{Cc}\\n]*(\\n[^\\p{Cc}\\n]*)*$"
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 120,
+                        "pattern": "^[^\\p{Cc}]*$|^[^\\p{Cc}\\n]*(\\n[^\\p{Cc}\\n]*)*$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   "localityId": {
                     "type": "integer",
@@ -4848,8 +4862,15 @@
                   "type": "object",
                   "properties": {
                     "streetLine": {
-                      "type": "string",
-                      "maxLength": 200
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 200
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "localityId": {
                       "type": "integer",

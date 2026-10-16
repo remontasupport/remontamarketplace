@@ -120,7 +120,7 @@ export const profileArb: fc.Arbitrary<Profile> = fc.record({
     languages: fc.array(str(40), { maxLength: 50 }),
   }),
   abn: fc.option(fc.record({ type: fc.constantFrom('abn', 'tfn'), value: nstr(20), signed: fc.boolean() }), { nil: null }),
-  homeAddress: fc.option(fc.record({ streetLine: str(200), localityId: fc.integer({ min: 1 }), suburb: str(100), state: str(10), postcode: str(10) }), { nil: null }),
+  homeAddress: fc.option(fc.record({ streetLine: nstr(200), localityId: fc.integer({ min: 1 }), suburb: str(100), state: str(10), postcode: str(10) }), { nil: null }),
   serviceArea: fc.option(fc.record({ localityId: fc.integer({ min: 1 }), label: str(120), travelRadiusKm: fc.integer({ min: 1, max: 500 }), precision: fc.constantFrom('LOCALITY', 'ADDRESS') }), { nil: null }),
   displayRole: str(200),
   verificationStatus: fc.constantFrom(...VERIFICATION_STATUSES),

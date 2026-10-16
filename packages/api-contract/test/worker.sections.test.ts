@@ -152,6 +152,11 @@ describe('R3 the addresses', () => {
     bad(homeAddressInputSchema, { streetLine: '12 Example St\nUnit 1', localityId: 42 }, 'streetLine')
     bad(homeAddressInputSchema, { streetLine: 'x'.repeat(121), localityId: 42 }, 'streetLine')
     bad(homeAddressInputSchema, { streetLine: '12 Example St', localityId: 0 }, 'localityId')
+    // The street line is optional (2026-10-16): blank, null or left out is none; the suburb is still required.
+    expect(homeAddressInputSchema.parse({ streetLine: '   ', localityId: 42 })).toEqual({ streetLine: null, localityId: 42 })
+    expect(homeAddressInputSchema.parse({ streetLine: null, localityId: 42 })).toEqual({ streetLine: null, localityId: 42 })
+    expect(homeAddressInputSchema.parse({ localityId: 42 })).toEqual({ streetLine: null, localityId: 42 })
+    bad(homeAddressInputSchema, { streetLine: '12 Example St' }, 'localityId')
     ok(serviceAreaInputSchema, { localityId: 1, travelRadiusKm: 500 })
     bad(serviceAreaInputSchema, { localityId: 1, travelRadiusKm: 0 }, 'travelRadiusKm')
     bad(serviceAreaInputSchema, { localityId: 1, travelRadiusKm: 501 }, 'travelRadiusKm')

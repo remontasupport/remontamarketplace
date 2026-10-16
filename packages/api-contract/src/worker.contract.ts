@@ -179,7 +179,8 @@ export const serviceAreaSchema = z.strictObject({
 
 /** R2.4: U2's columns; declared now so clients need no change later, null in U1. */
 export const homeAddressSchema = z.strictObject({
-  streetLine: str(200),
+  /** Optional (2026-10-16): null when the worker gave only the suburb. */
+  streetLine: str(200).nullable(),
   localityId: z.number().int(),
   suburb: str(100),
   state: str(10),
