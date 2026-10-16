@@ -17,6 +17,8 @@ import { useWorkerProfile as useApiProfile } from "@/features/worker/profile";
 import { setupProfileOf } from "@/features/worker/compliance";
 import { useWorkerRequirements } from "@/hooks/queries/useWorkerRequirements";
 import { generateComplianceSteps, findStepBySlug, getStepIndex } from "@/utils/dynamicComplianceSteps";
+import { generateTrainingSteps, getTrainingStepUrl } from "@/utils/dynamicTrainingSteps";
+import { startNavigationProgress } from "@/components/ui/NavigationProgress";
 import Loader from "@/components/ui/Loader";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 
@@ -76,6 +78,13 @@ function MandatoryRequirementsSetupContent() {
 
   // Use dynamic steps if available, otherwise fallback to static
   const STEPS = dynamicSteps;
+
+  // The trainings the worker's services need follow the mandatory steps in Compliance: the last mandatory step goes on
+  // to the first of them (user, 2026-10-16), and only a worker with none finishes here.
+  const firstTrainingUrl = useMemo(() => {
+    const first = generateTrainingSteps(requirementsData)[0];
+    return first ? getTrainingStepUrl(first.slug) : null;
+  }, [requirementsData]);
 
   // Determine the default step slug
   const defaultStepSlug = STEPS.length > 0 ? STEPS[0].slug : "worker-screening-check";
@@ -311,7 +320,7 @@ function MandatoryRequirementsSetupContent() {
 
     try {
       // Show appropriate loading state BEFORE any async operations
-      if (isFinalStep) {
+      if (isFinalStep && !firstTrainingUrl) {
         // Use flushSync to force immediate synchronous render
         flushSync(() => {
           setIsFinalSaving(true);
@@ -323,7 +332,12 @@ function MandatoryRequirementsSetupContent() {
       // The engagement is saved when the contract is signed (POST /v1/worker/contract, U4d): nothing to save here.
 
       // Move to next step or finish
-      if (!isFinalStep) {
+      if (isFinalStep && firstTrainingUrl) {
+        // On to the trainings the services need.
+        setIsNavigating(false);
+        startNavigationProgress();
+        router.push(firstTrainingUrl);
+      } else if (!isFinalStep) {
         // Reset loading state before navigation
         setIsNavigating(false);
 
@@ -427,7 +441,7 @@ function MandatoryRequirementsSetupContent() {
           onPrevious={handlePrevious}
           onSkip={handleSkip}
           isNextLoading={false}
-          nextButtonText={currentStep === STEPS.length ? "Save" : "Next"}
+          nextButtonText={currentStep === STEPS.length && !firstTrainingUrl ? "Save" : "Next"}
           showSkip={false}
           showPrevious={!(currentStepData?.documentId === 'code-of-conduct-part1' && conductPart === 1)}
           showNext={!(currentStepData?.documentId === 'code-of-conduct-part1' && conductPart === 1)}
