@@ -6,6 +6,7 @@ import { SessionProvider } from "@/components/providers/SessionProvider";
 import { QueryClientProvider } from "@/components/providers/QueryClientProvider";
 import { ProgressProvider } from "@/contexts/ProgressContext";
 import ProgressBar from "@/components/ui/ProgressBar";
+import NavigationProgress from "@/components/ui/NavigationProgress";
 import ApiInterceptorSetup from "@/components/ApiInterceptorSetup";
 
 const geistSans = Geist({
@@ -78,6 +79,7 @@ export default function RootLayout({
       >
         <ProgressProvider>
           <ProgressBar />
+          <NavigationProgress />
           <ApiInterceptorSetup />
           <SessionProvider>
             <QueryClientProvider>

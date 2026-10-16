@@ -13,6 +13,7 @@ import Loader from "@/components/ui/Loader";
 import { workerApi } from "./api";
 import { useWorkerProfile } from "./profile";
 import { messageOf } from "./services";
+import { startNavigationProgress } from "@/components/ui/NavigationProgress";
 
 function ManageServicesContent() {
   const router = useRouter();
@@ -71,6 +72,7 @@ function ManageServicesContent() {
   const saveAndReturn = async () => {
     if (!returnUrl) return;
     setRedirecting(true);
+    startNavigationProgress();
     await reload();
     router.push(returnUrl);
   };
