@@ -52,6 +52,8 @@ export interface CatalogueDoc {
   category: string
   /** Shown on the Additional Credentials list (U4e); optional for the callers that build rows by hand. */
   description?: string
+  /** The step asks for an expiry date (U5b). */
+  hasExpiration?: boolean
 }
 
 export interface CategoryLink {

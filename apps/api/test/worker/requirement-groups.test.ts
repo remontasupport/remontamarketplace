@@ -83,6 +83,10 @@ describe('P5: requirementGroups', () => {
     const noAbn = requirementGroups({ profile: { abn: null, hasVehicle: null }, services, requirements: [], catalogue: cat(['police-check']) })
     expect(noAbn.mandatory.map((i) => i.id)).toEqual(['police-check', 'code-of-conduct-part1'])
     expect(noAbn.mandatory[1]).toMatchObject({ name: 'Code of Conduct (Part 1)', status: 'approved' })
+    // U5b: the catalogue's description and expiry flag reach the step; part 1 carries its own text.
+    expect(noAbn.mandatory[1]!.description).toMatch(/Part 1 of 2/)
+    const described = { categories: [{ id: 'support-worker', name: 'Support Worker', documents: [{ document: { ...DOCUMENTS.find((d) => d.id === 'police-check')!, description: 'A national check', hasExpiration: true }, documentType: 'REQUIRED', conditionKey: null, requiredIfTrue: null }], subcategories: [] }] }
+    expect(requirementGroups({ profile: { abn: null, hasVehicle: null }, services, requirements: [], catalogue: described }).mandatory[0]).toMatchObject({ id: 'police-check', description: 'A national check', hasExpiration: true })
   })
 
   it('status per item uses the presence aliases (R4.3): identity needs both halves; the ABN itself counts; the orientation alias', () => {

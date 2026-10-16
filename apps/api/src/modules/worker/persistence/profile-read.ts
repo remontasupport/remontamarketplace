@@ -11,7 +11,7 @@ import { Prisma, readTransaction, type Db, type Tx } from '../../../platform/per
 /** R2.1: the statement timeout of the read, a constant (never input). */
 export const PROFILE_READ_STATEMENT_TIMEOUT_MS = 5000
 
-const DOC = { select: { id: true, name: true, category: true, description: true } } as const
+const DOC = { select: { id: true, name: true, category: true, description: true, hasExpiration: true } } as const
 
 const PROFILE_SELECT = {
   id: true,
