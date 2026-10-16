@@ -4302,3 +4302,8 @@ form-engine 73; api-contract 79. PR #57 not merged.
 
 **User input**: "what is the PR preview link to test?"
 **AI response**: verified #72 (`feat/other-documents-api`) merged to main `65d6c0b` (contains `001045b`); deploy-api to staging in progress at 01:37Z. App preview for `feat/services-api-reads` `f6e91f0` built: https://remonta-app-git-feat-services-api-reads-remontas-projects.vercel.app (deployment EYDeDi43XgwTvGFVMj3PavaShT53); test it after the staging deploy finishes.
+
+**User input**: "so all the apis for Services, Compliance and Additional Documents now have been using the new api?"
+**AI response**: checked the code on `feat/services-api-reads`: Services, Additional Credentials and every compliance/training document read/upload/view/delete are on the api. Still legacy: the Compliance/Trainings setup pages' frame (`/api/worker/requirements`, the legacy profile read for the contract/Code of Conduct display, the ABN/TFN choice via update-step, the completion server actions at the end); the contract page (U4d: `updateWorkerABN`, contract upload to public Blob C2, the tax id in the URL C3); the fallback "Other Requirements" step (U4f). Proposed U4d next.
+
+**User input**: "Yes"
