@@ -4408,3 +4408,13 @@ goes to the first training step (`/dashboard/worker/trainings/setup?step=...`) w
 "Save" -> dashboard only when there are none. The last training step keeps "Save" -> dashboard. Verified locally (a
 worker with 7 mandatory steps and 4 trainings): the last mandatory step's button read "Next" and led to
 `trainings/setup?step=ndis-worker-orientation`. App gate passed.
+
+## 2026-10-16 -- First Aid & CPR on one step
+
+**User input (verbatim):** "Now on the First Aid and CPR, can you place the CPR within the First Aid, so it should be 2 uploads button and then rename the First Aid to First Aid & CPR"
+
+**Change (`feat/account-app`):** `generateTrainingSteps` folds `cpr` into the First Aid step (`first-aid-cpr` or
+`first-aid`) when the worker needs both: title "First Aid & CPR", component `FirstAidCprStep` (two
+`GenericComplianceDocument` uploads, headed "First Aid" and "CPR"). The documents, their storage, review and expiry are
+unchanged (no api change). `?step=cpr` redirects to the combined step. Verified locally: sidebar "First Aid & CPR" (no
+separate CPR), two upload buttons on the page, `?step=cpr` -> `?step=first-aid-cpr`. App gate passed.
