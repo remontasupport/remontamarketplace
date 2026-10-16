@@ -145,7 +145,7 @@
 6	src/services/worker/compliance.service.ts::@typescript-eslint/no-explicit-any
 4	src/services/worker/experience.service.ts::@typescript-eslint/no-explicit-any
 10	src/services/worker/profile.service.ts::@typescript-eslint/no-explicit-any
-15	src/services/worker/profilePreview.service.ts::@typescript-eslint/no-explicit-any
+14	src/services/worker/profilePreview.service.ts::@typescript-eslint/no-explicit-any
 6	src/services/worker/serviceDocuments.service.ts::@typescript-eslint/no-explicit-any
 20	src/services/worker/setupProgress.service.ts::@typescript-eslint/no-explicit-any
 11	src/services/worker/workerServices.service.ts::@typescript-eslint/no-explicit-any

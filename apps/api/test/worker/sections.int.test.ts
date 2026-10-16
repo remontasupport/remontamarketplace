@@ -56,6 +56,20 @@ describe.skipIf(!local)('the section writes on PostGIS', () => {
     else expect(read).toEqual(first.json().entries ? { entries: first.json().entries.map(({ id: _id, ...e }: any) => e) } : first.json())
   })
 
+  it('audit P2/P4/P5: a section write is the lookup (with the timeout), the work, the re-read, the audit -- nothing more', async () => {
+    await put('/v1/worker/profile/bio', { bio: 'Warm the catalogue cache.' })
+    h.queries.length = 0
+    const res = await put('/v1/worker/profile/bio', { bio: 'Counting the round trips of one write.' })
+    expect(res.statusCode, res.body).toBe(200)
+    const data = h.queries.filter((q) => !/^(BEGIN|COMMIT|ROLLBACK|DEALLOCATE)/i.test(q.trim()))
+    expect(h.queries.some((q) => /^SET TRANSACTION/i.test(q.trim()))).toBe(false) // P2
+    expect(data.filter((q) => /set_config\('statement_timeout'/.test(q))).toHaveLength(1)
+    expect(data.find((q) => /set_config/.test(q))).toMatch(/FROM worker_profiles/) // P5: one statement with the lookup
+    // lookup, UPDATE, the re-read (catalogue cached), the audit insert; a changed flag would add its UPDATE.
+    expect(data.length).toBeLessThanOrEqual(5)
+    expect(data.filter((q) => /"setupProgress"/.test(q) && /^SELECT/i.test(q.trim()) && !/"firstName"/.test(q))).toHaveLength(0) // P4
+  })
+
   it('the ABN: stored with the value, signed kept as stored; the read shows it', async () => {
     await h.db.workerProfile.update({ where: { id: h.a.profileId }, data: { abn: { workerEngagementType: { type: 'abn', signed: true } } } })
     const res = await put('/v1/worker/profile/abn', { abn: '51 824 753 556' })

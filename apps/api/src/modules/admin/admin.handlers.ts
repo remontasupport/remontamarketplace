@@ -5,12 +5,17 @@ import { adminContract } from '@remonta/api-contract'
 import type { Clock } from '../../platform/clock'
 import { defineHandlers } from '../../platform/contract/handlers'
 import type { Db } from '../../platform/persistence/db'
+import { ApiError } from '../../platform/errors'
+import type { PhotoStore } from '../registration/adapters/photo-store'
+import { linkFor } from '../worker/application/service-documents'
 import { listSuspendedWorkers, listUsers } from './application/lists'
 import { searchWorkers } from './application/search-workers'
 
 export interface AdminModuleDeps {
   db: Db
   clock: Clock
+  /** The private bucket (U3b): service documents are viewed through a signed link. Absent: their links answer 503. */
+  bucket?: PhotoStore
 }
 
 export function adminHandlers(deps: AdminModuleDeps) {
@@ -26,5 +31,13 @@ export function adminHandlers(deps: AdminModuleDeps) {
     listUsers: async (req) => ({ status: 200, body: await listUsers(deps, req.query) }),
 
     listSuspendedWorkers: async (req) => ({ status: 200, body: await listSuspendedWorkers(deps, req.query) }),
+
+    // U3b: any worker's document, for the compliance review (the app route redirects to the link).
+    getDocumentLink: async (req, ctx) => {
+      const row = await deps.db.verificationRequirement.findUnique({ where: { id: req.params.documentId }, select: { workerProfileId: true, documentUrl: true, metadata: true } })
+      if (!row) throw new ApiError(404, 'document not found')
+      ctx.log.info({ entry: 'admin.getDocumentLink', documentId: req.params.documentId, workerProfileId: row.workerProfileId }, 'admin document link')
+      return { status: 200, body: await linkFor(deps.bucket, row, deps.clock()) }
+    },
   })
 }

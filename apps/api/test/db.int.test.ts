@@ -65,6 +65,24 @@ describe.skipIf(!local)('on PostGIS', () => {
       expect((await rl.hit(key, 1, '1m', new Date('2030-01-01T10:01:05Z'))).allowed).toBe(true)
       expect(await rl.purgeExpired(new Date('2030-01-02T00:00:00Z'))).toBeGreaterThanOrEqual(2)
     })
+
+    it('hitMany (audit P1): several rules in one statement, each decided on its own count, the same counters as hit', async () => {
+      const rl = new PostgresRateLimiter(db)
+      const base = `test:${Date.now()}:many`
+      const t0 = new Date('2030-02-01T10:00:30Z')
+      const hits = [
+        { key: `${base}:user`, limit: 2, window: '1m' as const },
+        { key: `${base}:ip`, limit: 3, window: '1h' as const },
+      ]
+      const runs = []
+      for (let i = 0; i < 4; i++) runs.push((await rl.hitMany(hits, t0)).map((d) => d.allowed))
+      expect(runs).toEqual([[true, true], [true, true], [false, true], [false, false]])
+      // hit and hitMany share the buckets: the per-user key is already at 4.
+      expect((await rl.hit(`${base}:user`, 4, '1m', t0)).allowed).toBe(false)
+      expect(await rl.hitMany([], t0)).toEqual([])
+      const many = await Promise.all(Array.from({ length: 20 }, () => rl.hitMany([{ key: `${base}:c`, limit: 5, window: '1h' }], t0)))
+      expect(many.filter((d) => d[0]!.allowed)).toHaveLength(5)
+    })
   })
 
   describe('outbox', () => {

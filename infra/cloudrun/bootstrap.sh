@@ -111,7 +111,7 @@ for STAGE in "${STAGES[@]}"; do
   bash "$here/apply-alerts.sh" "$STAGE" --project "$PROJECT" --email "$EMAIL"
 done
 
-say "11. Photo buckets (U3): regional, uniform access, private (upload-only; the clean copies live in Vercel Blob), staging/ expires after a day"
+say "11. Photo buckets (U3): regional, uniform access, private (photos leave it for Vercel Blob; service documents stay under documents/, U3b), staging/ expires after a day"
 gcloud services enable storage.googleapis.com >/dev/null
 for STAGE in "${STAGES[@]}"; do
   B=$(bucket_for "$STAGE")
