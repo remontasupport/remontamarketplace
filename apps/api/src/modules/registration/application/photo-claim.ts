@@ -27,6 +27,19 @@ export async function claimPhoto(tx: Tx, photoUploadId: string, now: Date): Prom
   return claimed[0] ? { key: claimed[0].blobKey } : null
 }
 
+/**
+ * claimPhoto and attachPhoto in one statement, for a profile that already exists (the worker's own photo, audit P7):
+ * claims the upload for `workerProfileId` and returns its URL, or null when it is unknown, expired or already claimed.
+ */
+export async function claimPhotoFor(tx: Tx, photoUploadId: string, workerProfileId: string, now: Date): Promise<{ url: string } | null> {
+  const since = new Date(now.getTime() - PHOTO_CLAIM_WINDOW_HOURS * 3_600_000)
+  const claimed = await tx.$queryRaw<{ url: string }[]>`
+    UPDATE registration_photo_uploads SET "claimedAt" = ${now}, "claimedByWorkerProfileId" = ${workerProfileId}
+     WHERE id = ${photoUploadId}::uuid AND "claimedAt" IS NULL AND "createdAt" > ${since}
+    RETURNING url`
+  return claimed[0] ?? null
+}
+
 export async function attachPhoto(tx: Tx, photoUploadId: string, workerProfileId: string): Promise<void> {
   await tx.registrationPhotoUpload.update({ where: { id: photoUploadId }, data: { claimedByWorkerProfileId: workerProfileId } })
 }

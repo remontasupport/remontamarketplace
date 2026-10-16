@@ -7,14 +7,14 @@ import { describe, expect, it } from 'vitest'
 import { catalogueFilter, selectCatalogueFor, type CatalogueRecord } from '../../src/modules/worker/persistence/profile-read'
 import { CATEGORIES, serviceRow, SUBCATEGORIES } from './generators'
 
-const doc = (id: string) => ({ document: { id, name: id, category: 'COMPLIANCE' }, documentType: 'REQUIRED', conditionKey: null, requiredIfTrue: null })
+const doc = (id: string) => ({ document: { id, name: id, category: 'COMPLIANCE', description: '' }, documentType: 'REQUIRED', conditionKey: null, requiredIfTrue: null })
 
 /** A whole catalogue: every category with two sub-categories each, every sub-category carrying one document. */
 const catalogue: CatalogueRecord[] = CATEGORIES.slice(0, 6).map((c, i) => ({
   id: c.id,
   name: c.name,
   documents: [doc(`${c.id}-doc`)],
-  subcategories: [SUBCATEGORIES[i % SUBCATEGORIES.length]!, SUBCATEGORIES[(i + 1) % SUBCATEGORIES.length]!].map((s) => ({ id: s.id, name: s.name, additionalDocuments: [{ document: { id: `${s.id}-doc`, name: s.id, category: 'TRAINING' } }] })),
+  subcategories: [SUBCATEGORIES[i % SUBCATEGORIES.length]!, SUBCATEGORIES[(i + 1) % SUBCATEGORIES.length]!].map((s) => ({ id: s.id, name: s.name, additionalDocuments: [{ document: { id: `${s.id}-doc`, name: s.id, category: 'TRAINING', description: '' } }] })),
 }))
 
 /** The query's where clause, applied by hand: the oracle of the selection. */

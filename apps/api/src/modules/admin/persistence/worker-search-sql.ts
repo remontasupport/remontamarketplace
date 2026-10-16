@@ -123,6 +123,6 @@ export async function runSearch(db: Db, q: SearchQuery, localityId: number | und
       }
       return { rows, total, unplacedCount: unplaced?.count ?? 0 }
     },
-    { isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted, timeout: 10_000 },
+    { timeout: 10_000 }, // READ COMMITTED, the default: no SET round trip (audit P2)
   )
 }

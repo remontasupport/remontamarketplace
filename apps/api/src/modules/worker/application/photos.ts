@@ -7,7 +7,7 @@ import type { Photos } from '@remonta/api-contract'
 import { ApiError } from '../../../platform/errors'
 import { enqueue } from '../../../platform/outbox/outbox'
 import type { Tx } from '../../../platform/persistence/db'
-import { attachPhoto, claimPhoto } from '../../registration/application/photo-claim'
+import { claimPhotoFor } from '../../registration/application/photo-claim'
 import { PHOTO_UPLOADED, type PhotoUploadedPayload } from '../../registration/domain/events'
 import { PROCESSED_PREFIX } from '../../registration/domain/photo-upload'
 
@@ -20,22 +20,27 @@ export function withoutPhoto(current: Photos, url: string): Photos | { refused: 
   return current.main === url ? { main: null } : { refused: 'Not your photo' }
 }
 
-/** Claims a confirmed upload for this profile as its photo, replacing the current one (R4.2). Idempotent for the same profile. */
+/**
+ * Claims a confirmed upload for this profile as its photo, replacing the current one (R4.2). Idempotent for the same
+ * profile. The usual path is three statements: the claim (with its owner, returning the URL), the column, the event
+ * (audit P7: it was six); the reads happen only when the claim finds nothing, to say why.
+ */
 export async function claimAsPhoto(tx: Tx, profileId: string, uploadId: string, now: Date): Promise<Photos> {
-  const profile = await tx.workerProfile.findUniqueOrThrow({ where: { id: profileId }, select: { photos: true } })
-  const row = await tx.registrationPhotoUpload.findUnique({ where: { id: uploadId }, select: { url: true, claimedByWorkerProfileId: true } })
-  if (!row) throw new ApiError(404, 'photo upload not found')
-  if (row.claimedByWorkerProfileId) {
-    if (row.claimedByWorkerProfileId !== profileId) throw new ApiError(404, 'photo upload not owned') // never reveal another's
-    return photosOf(profile) // a repeat of this worker's confirm
+  const claimed = await claimPhotoFor(tx, uploadId, profileId, now)
+  if (claimed) {
+    await tx.workerProfile.update({ where: { id: profileId }, data: { photos: claimed.url }, select: { id: true } })
+    const payload: PhotoUploadedPayload = { photoUploadId: uploadId, workerProfileId: profileId }
+    await enqueue(tx, { type: PHOTO_UPLOADED, payload }, now)
+    return { main: claimed.url }
   }
-  const claimed = await claimPhoto(tx, uploadId, now)
-  if (!claimed) throw new ApiError(404, 'photo upload expired or already used')
-  await tx.workerProfile.update({ where: { id: profileId }, data: { photos: row.url }, select: { id: true } })
-  await attachPhoto(tx, uploadId, profileId)
-  const payload: PhotoUploadedPayload = { photoUploadId: uploadId, workerProfileId: profileId }
-  await enqueue(tx, { type: PHOTO_UPLOADED, payload }, now)
-  return { main: row.url }
+  const row = await tx.registrationPhotoUpload.findUnique({ where: { id: uploadId }, select: { claimedByWorkerProfileId: true } })
+  if (!row) throw new ApiError(404, 'photo upload not found')
+  if (row.claimedByWorkerProfileId === profileId) {
+    // A repeat of this worker's confirm: answer what the profile shows now.
+    return photosOf(await tx.workerProfile.findUniqueOrThrow({ where: { id: profileId }, select: { photos: true } }))
+  }
+  if (row.claimedByWorkerProfileId) throw new ApiError(404, 'photo upload not owned') // never reveal another's
+  throw new ApiError(404, 'photo upload expired or already used')
 }
 
 export async function removeOne(tx: Tx, profileId: string, url: string): Promise<Photos> {

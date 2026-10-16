@@ -1,9 +1,10 @@
 // Test doubles for the sign-up photo (U3): an in-memory bucket with failure
 // injection, and a Blob double for the clean copies.
+import type { DocumentType } from '@remonta/schemas/document-type'
 import type { ImageType } from '@remonta/schemas/image-type'
 import { StoreUnavailable, type BlobPhotoStore, type ObjectInfo, type PhotoStore, type UploadTicket } from '../../src/modules/registration/adapters/photo-store'
 
-type Op = 'createUploadTicket' | 'inspect' | 'readPrefix' | 'read' | 'write' | 'delete'
+type Op = 'createUploadTicket' | 'inspect' | 'readPrefix' | 'read' | 'write' | 'delete' | 'copy' | 'sign-read'
 
 export class InMemoryPhotoStore implements PhotoStore {
   readonly objects = new Map<string, { data: Buffer; contentType: string; cacheControl?: string }>()
@@ -36,7 +37,7 @@ export class InMemoryPhotoStore implements PhotoStore {
     }
   }
 
-  async createUploadTicket(key: string, contentType: ImageType, maxBytes: number, expiresAt: Date): Promise<UploadTicket> {
+  async createUploadTicket(key: string, contentType: ImageType | DocumentType, maxBytes: number, expiresAt: Date): Promise<UploadTicket> {
     this.hit('createUploadTicket')
     this.tickets.push({ key, contentType, maxBytes, expiresAt })
     return { url: `${this.publicBaseUrl}/`, fields: { key, 'Content-Type': contentType, policy: 'fake', 'x-goog-signature': 'fake' }, expiresAt }
@@ -51,6 +52,23 @@ export class InMemoryPhotoStore implements PhotoStore {
     const o = this.objects.get(key)
     if (!o) throw Object.assign(new Error('not found'), { code: 404 })
     return new Uint8Array(o.data.subarray(0, bytes))
+  }
+  async copy(fromKey: string, toKey: string): Promise<void> {
+    this.hit('copy')
+    const o = this.objects.get(fromKey)
+    if (!o) throw Object.assign(new Error('not found'), { code: 404 })
+    this.objects.set(toKey, { ...o })
+  }
+  /** A recognisable fake: the key, the expiry and the name, never a working link. */
+  async signedReadUrl(key: string, expiresAt: Date, opts: { fileName: string; contentType: string }): Promise<string> {
+    this.hit('sign-read')
+    return `${this.publicBaseUrl}/${key}?expires=${expiresAt.getTime()}&name=${encodeURIComponent(opts.fileName)}&type=${encodeURIComponent(opts.contentType)}`
+  }
+  /** One call, as the adapter's single ranged read (audit P8); fails and counts as 'inspect'. */
+  async inspectWithPrefix(key: string, bytes: number): Promise<{ info: ObjectInfo; head: Uint8Array } | null> {
+    this.hit('inspect')
+    const o = this.objects.get(key)
+    return o ? { info: { sizeBytes: o.data.byteLength, contentType: o.contentType }, head: new Uint8Array(o.data.subarray(0, bytes)) } : null
   }
   async read(key: string): Promise<Buffer> {
     this.hit('read')

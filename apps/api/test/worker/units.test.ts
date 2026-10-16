@@ -85,8 +85,8 @@ export function sampleRows(patch: Partial<ProfileRows['profile']> = {}): Profile
       verificationStatus: 'Verified',
       isPublished: true,
       updatedAt: new Date('2026-10-01T00:00:00Z'),
-      workerServices: [{ categoryId: 'support-worker', categoryName: 'Support Worker', subcategoryIds: ['personal-care'], subcategoryNames: ['Personal Care'], createdAt: new Date('2026-01-01') }],
-      verificationRequirements: [{ id: 'vr1', requirementType: 'police-check', requirementName: 'Police Check', status: 'APPROVED', documentCategory: null, documentUrl: 'https://blob.test/pc.pdf', expiresAt: null }],
+      workerServices: [{ categoryId: 'support-worker', categoryName: 'Support Worker', subcategoryIds: ['personal-care'], subcategoryNames: ['Personal Care'], metadata: null, createdAt: new Date('2026-01-01') }],
+      verificationRequirements: [{ id: 'vr1', requirementType: 'police-check', requirementName: 'Police Check', status: 'APPROVED', documentCategory: null, documentUrl: 'https://blob.test/pc.pdf', expiresAt: null, documentUploadedAt: null, metadata: null }],
       availability: [{ dayOfWeek: 'MONDAY', startMinute: 540, endMinute: 1020 }],
       careExperience: [{ domain: 'AGED_CARE', isProfessional: true, isPersonal: false, specificAreas: ['Dementia'], otherAreas: [], description: null }],
       jobHistoryEntries: [{ id: 'j1', jobTitle: 'Carer', company: 'Co', startMonth: 'January', startYear: 2020, endMonth: null, endYear: null, currentlyWorking: true }],
@@ -97,7 +97,7 @@ export function sampleRows(patch: Partial<ProfileRows['profile']> = {}): Profile
       locations: [{ localityId: 42, travelRadiusKm: 50, precision: 'LOCALITY', locality: { suburb: 'Parramatta', state: 'NSW', postcode: '2150' } }],
       ...patch,
     },
-    catalogue: [{ id: 'support-worker', name: 'Support Worker', documents: [{ documentType: 'REQUIRED', conditionKey: null, requiredIfTrue: null, document: { id: 'police-check', name: 'Police Check', category: 'COMPLIANCE' } }], subcategories: [] }],
+    catalogue: [{ id: 'support-worker', name: 'Support Worker', documents: [{ documentType: 'REQUIRED', conditionKey: null, requiredIfTrue: null, document: { id: 'police-check', name: 'Police Check', category: 'COMPLIANCE', description: '' } }], subcategories: [] }],
   }
 }
 

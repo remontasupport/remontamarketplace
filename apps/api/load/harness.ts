@@ -40,7 +40,7 @@ const app = await createApp({
   handlerSets: sets,
   publicEndpoints: ['GET /v1/health', 'POST /v1/load/signup'].map((route): PublicEndpoint => ({ route, reason: 'local load harness' })),
   deps: {
-    rateLimiter: { hit: async () => ({ allowed: true, retryAfter: 1 }) },
+    rateLimiter: { hit: async () => ({ allowed: true, retryAfter: 1 }), hitMany: async (hits) => hits.map(() => ({ allowed: true, retryAfter: 1 })) },
     captcha: { verify: async () => ({ ok: true, score: 1 }) },
     authenticator: { authenticate: async () => null },
   },
