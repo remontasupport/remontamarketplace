@@ -95,6 +95,39 @@ describe.skipIf(!local)('U3b service documents on PostGIS', () => {
     expect(await h.db.verificationRequirement.count({ where: { workerProfileId: h.b.profileId } })).toBe(before)
   })
 
+  it('U4e Other Documents: an insurance or transport document of the catalogue, recorded as the app always has; anything else 400', async () => {
+    const made: string[] = []
+    for (const d of [{ id: 'public-liability-10m', name: 'Public Liability Insurance (min $10M)', category: 'INSURANCE' }, { id: 'police-check', name: 'National Police Check', category: 'COMPLIANCE' }]) {
+      if (!(await h.db.document.findUnique({ where: { id: d.id }, select: { id: true } }))) {
+        await h.db.document.create({ data: { ...d, description: 'x' } })
+        made.push(d.id)
+      }
+    }
+    try {
+      const res = await confirm(await upload(), { categoryId: 'other-documents', requirementType: 'public-liability-10m', fileName: 'PL.pdf' })
+      expect(res.statusCode, res.body).toBe(201)
+      expect(res.json()).toMatchObject({ serviceName: 'Other Documents', requirementType: 'public-liability-10m', name: 'Public Liability Insurance (min $10M)', status: 'SUBMITTED' })
+      const row = await h.db.verificationRequirement.findUniqueOrThrow({ where: { id: res.json().id } })
+      expect(row).toMatchObject({ requirementType: 'Other Documents:public-liability-10m', documentCategory: 'SERVICE_QUALIFICATION', isRequired: false })
+      expect(row.metadata).toMatchObject({ serviceTitle: 'Other Documents', category: 'QUALIFICATION', storageKey: expect.stringMatching(new RegExp(`^documents/${h.b.profileId}/`)) })
+      // Not an insurance or transport document, or not in the catalogue: refused before the bucket.
+      const before = await h.db.verificationRequirement.count({ where: { workerProfileId: h.b.profileId } })
+      for (const requirementType of ['police-check', 'made-up-document']) {
+        const r = await confirm(await upload(), { categoryId: 'other-documents', requirementType })
+        expect(r.statusCode, r.body).toBe(400)
+        expect(r.json().error.fields).toHaveProperty('requirementType')
+      }
+      expect(await h.db.verificationRequirement.count({ where: { workerProfileId: h.b.profileId } })).toBe(before)
+      // Another worker cannot reach it; the owner deletes it with its file.
+      expect((await send('DELETE', `/v1/worker/service-documents/${row.id}`, undefined, () => h.a.userId)).statusCode).toBe(404)
+      const key = (row.metadata as { storageKey: string }).storageKey
+      expect((await send('DELETE', `/v1/worker/service-documents/${row.id}`)).statusCode).toBe(200)
+      expect(bucket.objects.has(key)).toBe(false)
+    } finally {
+      if (made.length) await h.db.document.deleteMany({ where: { id: { in: made } } })
+    }
+  })
+
   it('delete: the row and its file', async () => {
     const res = await send('DELETE', `/v1/worker/service-documents/${first}`)
     expect(res.statusCode, res.body).toBe(200)

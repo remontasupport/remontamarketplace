@@ -17,6 +17,7 @@ import type { Prisma, Tx } from '../../../platform/persistence/db'
 import { StoreUnavailable, type PhotoStore } from '../../registration/adapters/photo-store'
 import { stagingKey, TICKET_TTL_MS } from '../../registration/domain/photo-upload'
 import { uploadableDocuments } from '../domain/service-requirements'
+import { ADDITIONAL_CATEGORIES, OTHER_DOCUMENTS_NAME } from '../domain/requirement-groups'
 
 export const DOCUMENT_LINK_TTL_MS = 5 * 60_000
 export const DOCUMENTS_PREFIX = 'documents/'
@@ -73,7 +74,25 @@ export interface ConfirmTarget {
   required: boolean
 }
 
+/**
+ * "Other Documents" (U4e): insurance and transport are not a service. The fixed target `other-documents` takes any
+ * catalogue document of those categories, and records it as the app always has: `Other Documents:<id>`,
+ * SERVICE_QUALIFICATION, metadata category QUALIFICATION (as the 467 rows on the copy of production carry).
+ */
+export const OTHER_DOCUMENTS_ID = 'other-documents'
+
+async function otherDocumentsTarget(db: Tx | Prisma.TransactionClient, userId: string, body: ConfirmServiceDocumentBody): Promise<ConfirmTarget> {
+  const profile = await db.workerProfile.findUnique({ where: { userId }, select: { id: true } })
+  if (!profile) throw new ApiError(404, 'worker profile not found')
+  const doc = await db.document.findUnique({ where: { id: body.requirementType }, select: { name: true, category: true } })
+  if (!doc || !ADDITIONAL_CATEGORIES.has(doc.category)) {
+    throw new ApiError(400, `document type ${body.requirementType} not an additional credential`, { requirementType: ['We do not ask for that document here'] })
+  }
+  return { profileId: profile.id, categoryName: OTHER_DOCUMENTS_NAME, name: doc.name, kind: 'QUALIFICATION', required: false }
+}
+
 export async function confirmTargetOf(db: Tx | Prisma.TransactionClient, userId: string, body: ConfirmServiceDocumentBody): Promise<ConfirmTarget> {
+  if (body.categoryId === OTHER_DOCUMENTS_ID) return otherDocumentsTarget(db, userId, body)
   const profile = await db.workerProfile.findUnique({
     where: { userId },
     select: { id: true, workerServices: { where: { categoryId: body.categoryId }, select: { categoryName: true, subcategoryIds: true } } },

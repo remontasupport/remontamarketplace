@@ -2974,11 +2974,87 @@
                             ],
                             "additionalProperties": false
                           }
+                        },
+                        "additional": {
+                          "default": [],
+                          "maxItems": 50,
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "maxLength": 80
+                              },
+                              "name": {
+                                "type": "string",
+                                "maxLength": 120
+                              },
+                              "category": {
+                                "type": "string",
+                                "enum": [
+                                  "INSURANCE",
+                                  "TRANSPORT"
+                                ]
+                              },
+                              "description": {
+                                "type": "string",
+                                "maxLength": 1000
+                              },
+                              "documentType": {
+                                "type": "string",
+                                "enum": [
+                                  "REQUIRED",
+                                  "OPTIONAL",
+                                  "CONDITIONAL"
+                                ]
+                              },
+                              "conditionKey": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "maxLength": 80
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "requiredIfTrue": {
+                                "type": [
+                                  "boolean",
+                                  "null"
+                                ]
+                              },
+                              "status": {
+                                "type": "string",
+                                "enum": [
+                                  "missing",
+                                  "submitted",
+                                  "approved",
+                                  "rejected",
+                                  "expired"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "category",
+                              "description",
+                              "documentType",
+                              "conditionKey",
+                              "requiredIfTrue",
+                              "status"
+                            ],
+                            "additionalProperties": false
+                          }
                         }
                       },
                       "required": [
                         "mandatory",
-                        "trainings"
+                        "trainings",
+                        "additional"
                       ],
                       "additionalProperties": false
                     },
@@ -8163,7 +8239,7 @@
     "/v1/worker/service-documents": {
       "post": {
         "operationId": "worker.confirmServiceDocument",
-        "summary": "Confirm an uploaded document as one the chosen service calls for: checked, kept privately, recorded (it replaces the previous file of that type).",
+        "summary": "Confirm an uploaded document as one the chosen service calls for -- or, with categoryId other-documents, an insurance or transport document: checked, kept privately, recorded (it replaces the previous file of that type).",
         "requestBody": {
           "required": true,
           "content": {
