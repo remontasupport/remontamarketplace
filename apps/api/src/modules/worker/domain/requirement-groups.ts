@@ -88,6 +88,8 @@ interface Doc {
   name: string
   category: string
   documentType: 'REQUIRED' | 'OPTIONAL'
+  description?: string
+  hasExpiration?: boolean
 }
 
 /** The catalogue documents linked to the worker's services, deduplicated by id, catalogue order (L5 step 1, R4.4). */
@@ -133,11 +135,11 @@ export function requirementGroups(input: RequirementGroupsInput): RequirementGro
     return statusOfRows(matching)
   }
 
-  const item = (d: Doc): RequirementItem => ({ id: d.id, name: d.name, requirementType: d.id, documentType: d.documentType, status: statusOf(d.id) })
+  const item = (d: Doc): RequirementItem => ({ id: d.id, name: d.name, requirementType: d.id, documentType: d.documentType, status: statusOf(d.id), description: (d.description ?? '').slice(0, 1000), hasExpiration: d.hasExpiration === true })
 
   // R4.1: the base-compliance documents, part 1 spliced after abn-contractor (else appended), part 2 omitted.
   const mandatoryDocs = docs.filter((d) => BASE_COMPLIANCE_CATEGORIES.has(d.category) && d.id !== CODE_OF_CONDUCT_PART1 && d.id !== CODE_OF_CONDUCT_PART2)
-  const part1: Doc = { id: CODE_OF_CONDUCT_PART1, name: CODE_OF_CONDUCT_PART1_NAME, category: 'COMPLIANCE', documentType: 'REQUIRED' }
+  const part1: Doc = { id: CODE_OF_CONDUCT_PART1, name: CODE_OF_CONDUCT_PART1_NAME, category: 'COMPLIANCE', documentType: 'REQUIRED', description: 'Read and understand the Remonta Code of Conduct - Part 1 of 2' }
   const abnIndex = mandatoryDocs.findIndex((d) => d.id === 'abn-contractor')
   if (abnIndex === -1) mandatoryDocs.push(part1)
   else mandatoryDocs.splice(abnIndex + 1, 0, part1)

@@ -129,6 +129,9 @@ export const requirementItemSchema = z.strictObject({
   requirementType: str(80),
   documentType: z.enum(['REQUIRED', 'OPTIONAL']),
   status: z.enum(REQUIREMENT_ITEM_STATUSES),
+  /** U5b: what the setup step shows; absent from an older api, so they default. */
+  description: z.string().max(1000).default(''),
+  hasExpiration: z.boolean().default(false),
 })
 export type RequirementItem = z.output<typeof requirementItemSchema>
 
