@@ -78,19 +78,26 @@
   dashboard-home <- account-app. Left on old routes in the worker area: the jobs (excluded), `/api/geocode` (job search),
   the coordinator profile route (coordinator area).
 
-  **Resume here (2026-10-16 end of day, in this order):**
-  1. `git ls-remote origin main feat/account-app feat/edit-profile-app`; ask what was merged since.
-  2. **The user's next feature** (named at the next session): build it on `feat/account-app` (app) and, if it needs
-     the api, on its own branch from `main` (merge -> staging) -- the rules of [[pr57-carries-local-changes]] still
-     hold. Test locally, then on the preview.
+  **2026-10-19 -- the feature: a State filter on the admin dashboard** (audit 2026-10-19, rule R3.12). Built: api
+  `feat/admin-state-filter-api` `a9b2ec2` (from `main`, **PR not yet opened**); app `feat/admin-state-filter` `4d62630`,
+  fast-forwarded into `feat/account-app` (now `4d62630`, which also carries `667dbe6`: the api on that line compiles
+  again). Gates passed locally; the database tests run in CI only.
+
+  **Resume here (2026-10-19, in this order):**
+  1. `git ls-remote origin main feat/account-app feat/admin-state-filter-api`; ask what was merged since.
+  2. **The State filter's api PR**: `feat/admin-state-filter-api` -> `main` (CI green incl. API Quality's database
+     tests) -> merge -> staging deploys it. Then on the `feat/account-app` preview (staging api): pick a state, apply;
+     the list and the "no mapped suburb" count narrow; "list them" keeps the state; Clear Filters resets it; a reload
+     of the URL restores it. If `main` moved since, merge it into `feat/account-app` and run the api gate there too
+     (the 2026-10-19 break came from a merge).
   3. **Release, in this order, only when the user says** (CLAUDE.md "Preview before production"):
      a. Preview checklist against staging on the `feat/account-app` preview: sign in (staging-only worker) and open the
         dashboard · api health 200 · suburb search · a photo upload · a document upload (compliance + a service
         document) · a full sign-up with an internal email · duplicate-email notice · production domain unchanged.
         Record it in the construction notes.
      b. **Promote the api first**: Actions -> deploy-api -> Run workflow -> `stage=prod`, `imageTag=` the FULL
-        40-character sha that passed (a) (today `4b41ba18ced9375f2c303c7f00f5058f8fbe093b`; a newer one if the
-        feature changed the api). The workflow applies the pending migrations to production first
+        40-character sha that passed (a): the `main` merge commit of the State filter's api PR (it changes the
+        api, so `4b41ba18ced9375f2c303c7f00f5058f8fbe093b` is no longer the one to promote). The workflow applies the pending migrations to production first
         (`users.passwordChangedAt`, #78). Re-record the rollback rows (CLAUDE.md) before it.
      c. Production api checks: `/v1/health` 200, the logs clean.
      d. **Then the app**: one PR `feat/account-app` -> `main` (contains PR #57; close #57 as superseded), or PR #57
