@@ -62,6 +62,13 @@ describe('each filter contributes its fragment with bound parameters', () => {
     expect(one.split('"specificAreas" &&').length - 1).toBe(1)
   })
 
+  it("state: the HOME suburb's, else the legacy column as a code or the full name, upper-cased (R3.12)", () => {
+    expect(text(whereOf(q({ state: 'VIC' })))).toContain('COALESCE(al.state, UPPER(TRIM(p.state))) IN (<"VIC">, <"VICTORIA">)')
+    expect(text(whereOf(q({ state: 'ACT' })))).toContain('IN (<"ACT">, <"AUSTRALIAN CAPITAL TERRITORY">)')
+    expect(() => q({ state: 'OT' })).toThrow()
+    expect(() => q({ state: 'nsw' })).toThrow()
+  })
+
   it('always the active condition, alone when nothing else applies (R3.10)', () => {
     expect(text(whereOf(q({})))).toBe(`u.status = 'ACTIVE'`)
   })
@@ -71,6 +78,7 @@ describe('G4: composition', () => {
   const arb = fc.record(
     {
       search: fc.constantFrom('a', 'b c'),
+      state: fc.constantFrom('NSW', 'QLD'),
       typeOfSupport: fc.constant('support-worker'),
       therapeuticSubcategories: fc.constant('x'),
       gender: fc.constantFrom('Male', 'Female'),
@@ -128,6 +136,13 @@ describe('the statement', () => {
     expect(none).toContain('NULL::double precision AS distance_m')
     expect(text(searchStatement(q({ unplaced: 'true' }), undefined))).toContain('AND wl.id IS NULL')
     expect(text(unplacedCountStatement(q({ gender: 'Male' })))).toContain('AND wl.id IS NULL')
+  })
+  it('the state combines with the suburb and with the unmapped list and its count (R3.12)', () => {
+    const near = text(searchStatement(q({ localityId: '42', state: 'NSW' }), 42))
+    expect(near).toContain('IN (<"NSW">, <"NEW SOUTH WALES">)')
+    expect(near).toContain('AND wl.point IS NOT NULL')
+    expect(text(searchStatement(q({ unplaced: 'true', state: 'WA' }), undefined))).toMatch(/IN \(<"WA">, <"WESTERN AUSTRALIA">\)\)\s+AND wl\.id IS NULL/)
+    expect(text(unplacedCountStatement(q({ state: 'WA' })))).toContain('IN (<"WA">, <"WESTERN AUSTRALIA">)')
   })
   it('city and state sort from the HOME locality with the legacy fallback (R5.1)', () => {
     expect(text(searchStatement(q({ sortBy: 'city', sortOrder: 'asc' }), undefined))).toMatch(/ORDER BY COALESCE\(al\.suburb, p\.city\) ASC, p\.id ASC/)

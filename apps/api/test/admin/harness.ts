@@ -28,7 +28,12 @@ export interface SeededWorker {
   specificAreas: Record<string, string[]>
   status: 'ACTIVE' | 'SUSPENDED'
   home: { localityId: number; latitude: number; longitude: number } | null
+  /** worker_profiles.state as seeded: the HOME suburb's code, else one of the legacy spellings (R3.12). */
+  legacyState: string
 }
+
+/** What an unplaced worker's legacy state column holds, by index: a code, a lower-case code, a full name, junk. */
+const LEGACY_STATES = ['VIC', 'nsw', 'Victoria', 'XX'] as const
 
 export interface Locality {
   id: number
@@ -129,6 +134,7 @@ export async function adminHarness(domain: string, opts: { workers?: number; see
     const status: 'ACTIVE' | 'SUSPENDED' = rand() < 0.1 ? 'SUSPENDED' : 'ACTIVE'
     const placed = rand() < 0.7
     const loc = placed ? localities[Math.floor(rand() * localities.length)]! : null
+    const legacyState = loc?.state ?? LEGACY_STATES[i % LEGACY_STATES.length]!
     const email = `w${i}@${domain}`
     const user = await db.user.create({
       data: {
@@ -149,7 +155,7 @@ export async function adminHarness(domain: string, opts: { workers?: number; see
             languages,
             abn: { workerEngagementType: { type: workerType, signed: true } },
             city: loc?.suburb ?? 'Nowhere',
-            state: loc?.state ?? 'XX',
+            state: legacyState,
             postalCode: loc?.postcode ?? '0000',
             updatedAt: new Date(Date.now() - i * 1000),
             createdAt: new Date(Date.now() - i * 60_000),
@@ -167,7 +173,7 @@ export async function adminHarness(domain: string, opts: { workers?: number; see
       },
       select: { id: true, workerProfile: { select: { id: true } } },
     })
-    workers.push({ id: user.workerProfile!.id, userId: user.id, firstName, lastName, gender, hasVehicle, workerType, dateOfBirth, age, languages, infoLanguages, serviceIds, therapeuticSubcategoryIds, domains, specificAreas, status, home: loc ? { localityId: loc.id, latitude: loc.latitude, longitude: loc.longitude } : null })
+    workers.push({ id: user.workerProfile!.id, userId: user.id, firstName, lastName, gender, hasVehicle, workerType, dateOfBirth, age, languages, infoLanguages, serviceIds, therapeuticSubcategoryIds, domains, specificAreas, status, home: loc ? { localityId: loc.id, latitude: loc.latitude, longitude: loc.longitude } : null, legacyState })
   }
 
   const t = await testApp({ contracts: [(await import('@remonta/api-contract')).adminContract], handlerSets: [adminHandlers({ db, clock: () => new Date() })] })

@@ -2,7 +2,7 @@
 // the contract's parsed query normalised into what the filters and the statement
 // read. Pure; the invariants that the contract cannot express are checked here and
 // answer 400 with the field named.
-import type { AppliedFilters, WorkerSearchQueryParsed } from '@remonta/api-contract'
+import type { AppliedFilters, AuState, WorkerSearchQueryParsed } from '@remonta/api-contract'
 import { splitExperienceAreaPair } from '@remonta/schemas/data/experienceAreas'
 import { ApiError } from '../../../platform/errors'
 
@@ -31,6 +31,7 @@ export interface SearchQuery {
   localityId?: number
   withinKm?: number
   unplaced: boolean
+  state?: AuState
   typeOfSupport?: string
   gender?: 'Male' | 'Female'
   hasVehicle?: 'Yes' | 'No'
@@ -93,6 +94,7 @@ export function normaliseQuery(raw: WorkerSearchQueryParsed, now: Date): SearchQ
     ...(localityId !== undefined ? { localityId } : {}),
     ...(withinKm !== undefined ? { withinKm } : {}),
     unplaced,
+    ...(raw.state !== undefined ? { state: raw.state } : {}),
     ...(raw.typeOfSupport !== undefined ? { typeOfSupport: raw.typeOfSupport } : {}),
     ...(raw.gender !== undefined ? { gender: raw.gender } : {}),
     ...(raw.hasVehicle !== undefined ? { hasVehicle: raw.hasVehicle } : {}),
@@ -144,6 +146,7 @@ export function appliedFiltersOf(q: SearchQuery, locality?: LocalityRef): Applie
     ...(locality ? { locality } : {}),
     ...(q.withinKm !== undefined ? { withinKm: q.withinKm } : {}),
     ...(q.unplaced ? { unplaced: true as const } : {}),
+    ...(q.state !== undefined ? { state: q.state } : {}),
     ...(q.search !== undefined ? { search: q.search } : {}),
     ...(q.typeOfSupport !== undefined ? { typeOfSupport: q.typeOfSupport } : {}),
     ...(q.gender !== undefined ? { gender: q.gender } : {}),

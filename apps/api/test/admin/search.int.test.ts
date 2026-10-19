@@ -102,6 +102,20 @@ describe.skipIf(!local)('admin worker search on PostGIS', () => {
   })
 
   describe('each filter alone matches the fixture', () => {
+    it("state: the HOME suburb's, else the legacy column in any case or as the full name (R3.12)", async () => {
+      const homeState = new Map(h.localities.map((l) => [l.id, l.state]))
+      const LEGACY: Record<string, string> = { VIC: 'VIC', nsw: 'NSW', Victoria: 'VIC' }
+      const stateOf = (w: SeededWorker) => (w.home ? homeState.get(w.home.localityId) : LEGACY[w.legacyState])
+      for (const state of ['VIC', 'NSW']) {
+        const expected = mineActive().filter((w) => stateOf(w) === state)
+        expect(expected.some((w) => !w.home), `the fixture has unplaced ${state} workers`).toBe(true)
+        const { rows, unplacedCount } = await allPages({ ...mine, state })
+        expect(new Set(rows.map((r) => r.id))).toEqual(new Set(expected.map((w) => w.id)))
+        expect(unplacedCount).toBe(expected.filter((w) => !w.home).length)
+        const unmapped = await allPages({ ...mine, state, unplaced: 'true' })
+        expect(new Set(unmapped.rows.map((r) => r.id))).toEqual(new Set(expected.filter((w) => !w.home).map((w) => w.id)))
+      }
+    })
     it('gender, vehicle, worker type', async () => {
       for (const [param, value, pick] of [
         ['gender', 'Female', (w: SeededWorker) => w.gender === 'Female'],
