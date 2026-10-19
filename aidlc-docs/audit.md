@@ -4436,3 +4436,30 @@ production api (`182f94f`) must be promoted (`4b41ba1`, with the migrations) bef
 
 **Record:** `aidlc-state.md` Current Stage rewritten (2026-10-16 end of day) and "Resume here" set to: the next feature
 -> preview checklist -> promote the api -> production api checks -> merge the app -> production checks.
+
+## 2026-10-19 -- Admin dashboard: a State filter under the Suburb field
+
+**User input (verbatim):** "Hey Claude, I have a pending ai dlc however I want to add some filter to the admin dashboard, can you create another branch with this, and then update the pending branch in ai dlc? The feature I want to add is to add a State filter under the Suburb field"
+
+**Position at start:** `main` `4b41ba1` (#84 merged since 2026-10-16); `feat/account-app` `1253532`.
+
+**Data checked (read-only, the developer's Neon copy):** 1,782 placed active-or-not workers carry an `au_localities`
+state code; 68 unplaced ones fall back to `worker_profiles.state`: codes in the main, plus `Victoria`, `Qld`,
+`Australian Capital Territory`, `TA`, `Bay`, and 6 empty.
+
+**Change (rule R3.12):**
+- api `feat/admin-state-filter-api` `a9b2ec2` (from `main`): `state` on `GET /v1/admin/workers` (`ACT NSW NT QLD SA TAS
+  VIC WA`, `AU_STATES` + `AU_STATE_NAMES` in the contract); one filter-registry row:
+  `COALESCE(al.state, UPPER(TRIM(p.state))) IN (code, FULL NAME)`; combines with the suburb, the radius, the unmapped
+  list and `unplacedCount`; echoed in `appliedFilters`. Unit tests, a database test (the harness now seeds legacy
+  spellings for unplaced workers), `openapi.json`, `docs/admin/README.md`. Contract gate 99 tests; api gate 775 (DB
+  tests skipped locally: Docker; CI proves them).
+- app `feat/admin-state-filter` `4d62630` (from `feat/account-app`, the api branch merged in): a "State" select under
+  the Suburb field ("All states" or "Name (CODE)"), part of the panel's pending filters, kept in the unmapped list,
+  restored from the URL. App gate: 73 type / 289 lint known, 244 tests.
+- `feat/account-app` fast-forwarded to `4d62630` and pushed.
+
+**Found and fixed on the way:** the api on `feat/account-app` did not compile: `5fff3f16` (U2 PR 3) removed
+`GROUPS_WITH_COMPLETION` from `additional-info.ts`, and the merge of `main` (`21cca373`) brought back handlers that
+import it. `667dbe6` restores the file to `main`'s version; without it, merging `feat/account-app` into `main` would
+have broken the api build on `main`.
