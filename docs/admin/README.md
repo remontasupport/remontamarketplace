@@ -81,6 +81,7 @@ parameters are refused (400). Limits: 120 per minute per admin, 300 per minute p
 | `localityId` | an `au_localities` id (from the suburb autocomplete) | the suburb to measure from; unknown id = 400 `fields.localityId` |
 | `withinKm` | 1..500, only with `localityId` | workers whose home suburb centre is within this distance (PostGIS `ST_DWithin` on geography); without it, every placed worker, nearest first |
 | `unplaced` | `true` | list active workers with **no** mapped suburb instead (ignores `localityId`/`withinKm`) |
+| `state` | `ACT`, `NSW`, `NT`, `QLD`, `SA`, `TAS`, `VIC`, `WA` | the home suburb's state; a worker with no mapped suburb by the legacy `worker_profiles.state`, read as the code in any case or the full name (`Victoria`). Combines with `localityId` and with `unplaced` (the unmapped list and its count narrow to the state) |
 | `typeOfSupport` | a category id (`support-worker`, `therapeutic-supports`, ...) | has that service |
 | `therapeuticSubcategories` | comma-separated sub-category ids | any of, under therapeutic supports |
 | `gender` | `Male`, `Female` | |
