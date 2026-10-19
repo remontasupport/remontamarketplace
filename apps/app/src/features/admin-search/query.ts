@@ -3,12 +3,16 @@
 // <-> the state (`urlFromFilters`, `filtersFromURL`) through the contract's own
 // canonical serialisation, so the URL, the browser's cache key and the api's memo
 // key are the same string for the same filters. No React here; tested in node.
-import { AGE_RANGES, CARE_DOMAINS, SORT_FIELDS, adminContract, canonicalQueryOf, workerSearchQuerySchema, type WorkerSearchQuery } from '@remonta/api-contract'
+import { AGE_RANGES, AU_STATES, AU_STATE_NAMES, CARE_DOMAINS, SORT_FIELDS, adminContract, canonicalQueryOf, workerSearchQuerySchema, type WorkerSearchQuery } from '@remonta/api-contract'
 import { EXPERIENCE_AREA_SEPARATOR, experienceAreasOf, splitExperienceAreaPair } from '@remonta/schemas/data/experienceAreas'
 
 export type AgeRange = (typeof AGE_RANGES)[number]
 export type SortField = (typeof SORT_FIELDS)[number]
 export type CareDomain = (typeof CARE_DOMAINS)[number]
+export type AuState = (typeof AU_STATES)[number]
+
+/** The State dropdown: code and name, in the contract's order (R3.12). */
+export const STATE_OPTIONS: ReadonlyArray<{ code: AuState; name: string }> = AU_STATES.map((code) => ({ code, name: AU_STATE_NAMES[code] }))
 
 /** E7: what the page holds. Display values where the UI has them; canonical where it already does. */
 export interface AdminFilters {
@@ -23,6 +27,8 @@ export interface AdminFilters {
   withinKm?: number
   /** The unmapped list instead of a search (R11.4). */
   unplaced: boolean
+  /** The home state; combines with the suburb and with the unmapped list (R3.12). */
+  state: 'all' | AuState
   /** A category id, or undefined for all. */
   typeOfSupport?: string
   gender: 'all' | 'male' | 'female'
@@ -60,6 +66,7 @@ export const DEFAULT_FILTERS: AdminFilters = {
   pageSize: PAGE_SIZE,
   search: '',
   unplaced: false,
+  state: 'all',
   gender: 'all',
   hasVehicle: 'all',
   workerType: 'all',
@@ -88,6 +95,7 @@ export function toQuery(f: AdminFilters): WorkerSearchQuery {
     q.localityId = f.locality.id
     if (f.withinKm !== undefined) q.withinKm = f.withinKm
   }
+  if (f.state !== 'all') q.state = f.state
   if (f.sortBy && (f.sortBy !== 'distance' || (f.locality && !f.unplaced))) q.sortBy = f.sortBy
   if (f.sortOrder) q.sortOrder = f.sortOrder
   const search = f.search.trim().slice(0, 100)
@@ -154,6 +162,7 @@ export function filtersFromURL(params: URLSearchParams): AdminFilters {
     f.locality = { id: q.localityId, label: label ?? `Suburb #${q.localityId}` }
     if (q.withinKm !== undefined) f.withinKm = q.withinKm
   }
+  if (q.state) f.state = q.state
   if (q.typeOfSupport) f.typeOfSupport = q.typeOfSupport
   if (q.gender === 'Male') f.gender = 'male'
   else if (q.gender === 'Female') f.gender = 'female'
