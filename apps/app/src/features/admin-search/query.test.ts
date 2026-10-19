@@ -21,12 +21,14 @@ describe('toQuery (R11.1)', () => {
       search: '  Test Terson  ',
       locality: { id: 5410, label: 'Parramatta NSW 2150' },
       withinKm: 10,
+      state: 'NSW',
     })
     expect(q).toEqual({
       page: 1,
       pageSize: 6,
       localityId: 5410,
       withinKm: 10,
+      state: 'NSW',
       search: 'Test Terson',
       typeOfSupport: 'support-worker',
       gender: 'Female',
@@ -50,6 +52,12 @@ describe('toQuery (R11.1)', () => {
     expect(back.experienceAreas).toEqual({ AGED_CARE: ['Dementia', 'Stroke Recovery'] })
     // A URL with an area but not its domain is what the contract would refuse: the state drops the area.
     expect(filtersFromURL(new URLSearchParams('experienceAreas=AGED_CARE%3ADementia')).experienceAreas).toEqual({})
+  })
+
+  it('state: sent as its code, kept with the unmapped list, restored from the URL (R3.12)', () => {
+    expect(toQuery({ ...DEFAULT_FILTERS, unplaced: true, state: 'VIC' })).toEqual({ page: 1, pageSize: 6, unplaced: true, state: 'VIC' })
+    expect(filtersFromURL(new URLSearchParams('state=QLD')).state).toBe('QLD')
+    expect(filtersFromURL(new URLSearchParams('state=XX')).state).toBe('all') // the contract refuses it: defaults
   })
 
   it('unplaced drops the locality and the radius (R1.4); a distance sort needs a locality (R11.3)', () => {
@@ -88,6 +96,7 @@ describe('the URL state (R11.2)', () => {
       locality: fc.option(fc.record({ id: fc.integer({ min: 1, max: 20000 }), label: fc.stringMatching(/^[A-Za-z ]{1,20} [A-Z]{2,3} [0-9]{4}$/) }), { nil: undefined }),
       withinKm: fc.option(fc.constantFrom(5, 10, 20, 50), { nil: undefined }),
       unplaced: fc.boolean(),
+      state: fc.constantFrom('all' as const, 'NSW' as const, 'VIC' as const, 'WA' as const),
       typeOfSupport: fc.option(fc.constantFrom('support-worker', 'therapeutic-supports', 'nursing-services'), { nil: undefined }),
       gender: fc.constantFrom('all' as const, 'male' as const, 'female' as const),
       hasVehicle: fc.constantFrom('all' as const, 'Yes' as const, 'No' as const),

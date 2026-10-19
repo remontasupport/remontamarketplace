@@ -19,6 +19,7 @@ import { adminApi, type ApiOutcome } from '@/lib/api/admin'
 import {
   DEFAULT_FILTERS,
   EXPERIENCE_OPTIONS,
+  STATE_OPTIONS,
   THERAPEUTIC_CATEGORY_ID,
   WITHIN_OPTIONS_KM,
   canonicalOf,
@@ -48,12 +49,13 @@ interface SuburbMatch {
 /** The panel's draft until "Apply Filters" (E7 pendingFilters). */
 type PendingFilters = Pick<
   AdminFilters,
-  'locality' | 'withinKm' | 'typeOfSupport' | 'gender' | 'hasVehicle' | 'workerType' | 'languages' | 'age' | 'therapeuticSubcategories' | 'experienceWith' | 'experienceAreas'
+  'locality' | 'withinKm' | 'state' | 'typeOfSupport' | 'gender' | 'hasVehicle' | 'workerType' | 'languages' | 'age' | 'therapeuticSubcategories' | 'experienceWith' | 'experienceAreas'
 >
 
 const pendingOf = (f: AdminFilters): PendingFilters => ({
   locality: f.locality,
   withinKm: f.withinKm,
+  state: f.state,
   typeOfSupport: f.typeOfSupport,
   gender: f.gender,
   hasVehicle: f.hasVehicle,
@@ -570,6 +572,25 @@ export default function AdminDashboard() {
               {pendingFilters.locality && (
                 <p className="mt-1 text-xs text-gray-500">Measuring from the centre of {pendingFilters.locality.label}.</p>
               )}
+            </div>
+
+            {/* State (R3.12): the home suburb's, else the legacy column; stays on in the unmapped list */}
+            <div className="mb-4">
+              <label htmlFor="admin-search-state" className="text-sm font-medium text-gray-700 mb-1 block">
+                State
+              </label>
+              <select
+                id="admin-search-state"
+                value={pendingFilters.state}
+                onChange={(e) => setPendingFilters(prev => ({ ...prev, state: e.target.value as PendingFilters['state'] }))}
+                data-testid="admin-search-state-select"
+                className="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+              >
+                <option value="all">All states</option>
+                {STATE_OPTIONS.map((s) => (
+                  <option key={s.code} value={s.code}>{s.name} ({s.code})</option>
+                ))}
+              </select>
             </div>
 
             {/* Within (Distance): only with a suburb (R11.3) */}
