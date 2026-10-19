@@ -1319,6 +1319,24 @@
             }
           },
           {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACT",
+                "NSW",
+                "NT",
+                "QLD",
+                "SA",
+                "TAS",
+                "VIC",
+                "WA"
+              ]
+            }
+          },
+          {
             "name": "typeOfSupport",
             "in": "query",
             "required": false,
@@ -1738,6 +1756,9 @@
                         "unplaced": {
                           "type": "boolean",
                           "const": true
+                        },
+                        "state": {
+                          "type": "string"
                         },
                         "search": {
                           "type": "string"

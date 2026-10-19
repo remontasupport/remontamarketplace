@@ -6,6 +6,7 @@
 // Aliases the statement guarantees: p = worker_profiles, u = users,
 // wai = worker_additional_info (LEFT JOIN), wl = worker_locations HOME (LEFT JOIN),
 // al = au_localities of that HOME (LEFT JOIN).
+import { AU_STATE_NAMES } from '@remonta/api-contract'
 import { Prisma } from '../../../platform/persistence/db'
 import { escapeLike, type SearchQuery } from '../domain/search-query'
 
@@ -38,6 +39,13 @@ export const FILTERS: readonly FilterSpec[] = [
       }
       return Prisma.sql`(${Prisma.join(parts, ' OR ')})`
     },
+  },
+  {
+    // R3.12 (2026-10-19): the HOME suburb's state; a worker with no HOME row is read
+    // from the legacy column, which holds the code in any case or, rarely, the full name.
+    name: 'state',
+    applies: (q) => q.state !== undefined,
+    sql: (q) => Prisma.sql`COALESCE(al.state, UPPER(TRIM(p.state))) IN (${q.state}, ${AU_STATE_NAMES[q.state!].toUpperCase()})`,
   },
   {
     // R3.2: by category id (the indexed, stable key).

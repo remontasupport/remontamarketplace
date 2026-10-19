@@ -94,6 +94,7 @@ describe('normaliseQuery', () => {
         experienceWith: fc.constantFrom('AGED_CARE', 'AGED_CARE,DISABILITY'),
         experienceAreas: fc.constantFrom('AGED_CARE:Dementia', 'AGED_CARE:Stroke Recovery,AGED_CARE:Dementia'),
         unplaced: fc.constantFrom('true', 'false'),
+        state: fc.constantFrom('NSW', 'VIC', 'TAS'),
       },
       { requiredKeys: [] },
     )
@@ -111,6 +112,7 @@ describe('normaliseQuery', () => {
           else expect(applied[k]).toBeUndefined()
         }
         expect(applied.unplaced).toBe(q.unplaced ? true : undefined)
+        expect(applied.state).toBe(input.state)
         expect(applied.locality !== undefined).toBe(q.localityId !== undefined)
         expect(applied.withinKm).toBe(q.withinKm)
         expect(applied.age).toBe(q.age?.range)

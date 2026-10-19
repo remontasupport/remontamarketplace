@@ -17,6 +17,19 @@ export const SORT_FIELDS = ['createdAt', 'firstName', 'lastName', 'city', 'state
 export const AGE_RANGES = ['20-30', '31-45', '46-60', '60+'] as const
 /** packages/db's CareDomain enum, spelled out (this package never imports Prisma, P-6). */
 export const CARE_DOMAINS = ['DISABILITY', 'AGED_CARE', 'WORKING_WITH_CHILDREN', 'MENTAL_HEALTH', 'CHRONIC_MEDICAL'] as const
+/** The eight states and territories, as au_localities.state spells them (OT, the other territories, is not offered). */
+export const AU_STATES = ['ACT', 'NSW', 'NT', 'QLD', 'SA', 'TAS', 'VIC', 'WA'] as const
+export type AuState = (typeof AU_STATES)[number]
+export const AU_STATE_NAMES: Record<AuState, string> = {
+  ACT: 'Australian Capital Territory',
+  NSW: 'New South Wales',
+  NT: 'Northern Territory',
+  QLD: 'Queensland',
+  SA: 'South Australia',
+  TAS: 'Tasmania',
+  VIC: 'Victoria',
+  WA: 'Western Australia',
+}
 export const WORKER_SEARCH_LIMITS = { user: 120, ip: 300 } as const
 export const ADMIN_LIST_LIMITS = { user: 60, ip: 120 } as const
 
@@ -48,6 +61,8 @@ export const workerSearchQuerySchema = z.strictObject({
   withinKm: positiveInt.max(WITHIN_KM_MAX).optional(),
   /** List the workers with no mapped suburb instead; ignores localityId/withinKm (R1.4). */
   unplaced: flag.optional(),
+  /** The home state: the HOME suburb's, else the legacy column; combines with the suburb and the unmapped list (R3.12). */
+  state: z.enum(AU_STATES).optional(),
   /** A category id (`support-worker`, `therapeutic-supports`, ...). */
   typeOfSupport: z.string().trim().min(1).max(60).optional(),
   gender: z.enum(['Male', 'Female']).optional(),
@@ -121,6 +136,7 @@ export const appliedFiltersSchema = z.strictObject({
   locality: z.strictObject({ id: z.number().int(), label: z.string() }).optional(),
   withinKm: z.number().int().optional(),
   unplaced: z.literal(true).optional(),
+  state: z.string().optional(),
   search: z.string().optional(),
   typeOfSupport: z.string().optional(),
   gender: z.string().optional(),
