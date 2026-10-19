@@ -83,6 +83,11 @@
   fast-forwarded into `feat/account-app` (now `4d62630`, which also carries `667dbe6`: the api on that line compiles
   again). Gates passed locally; the database tests run in CI only.
 
+  **2026-10-19 later -- the user releases the State filter alone** (audit): api PR `feat/admin-state-filter-api` ->
+  main; app PR `feat/admin-state-filter-ui` `6e6e316` -> main (only the dropdown); promote the api's merge sha (it
+  carries #61-#84 too), then merge the UI PR. `feat/account-app` stays held; merge `main` into it afterwards (the
+  cherry-picked commit merges cleanly) and run the api gate there.
+
   **Resume here (2026-10-19, in this order):**
   1. `git ls-remote origin main feat/account-app feat/admin-state-filter-api`; ask what was merged since.
   2. **The State filter's api PR**: `feat/admin-state-filter-api` -> `main` (CI green incl. API Quality's database

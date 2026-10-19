@@ -4463,3 +4463,16 @@ state code; 68 unplaced ones fall back to `worker_profiles.state`: codes in the 
 `GROUPS_WITH_COMPLETION` from `additional-info.ts`, and the merge of `main` (`21cca373`) brought back handlers that
 import it. `667dbe6` restores the file to `main`'s version; without it, merging `feat/account-app` into `main` would
 have broken the api build on `main`.
+
+## 2026-10-19 -- Release the State filter alone
+
+**User input (verbatim):** "I want to release the State filter only to the production"
+
+**Plan:** the dropdown goes to `main` without the rest of `feat/account-app`: `feat/admin-state-filter-ui` `6e6e316`
+(from `feat/admin-state-filter-api`, the app commit cherry-picked; app gate on the `main` base: 142 type / 470 lint
+known, 127 tests). Order: api PR -> merge -> staging; UI PR preview against staging; promote the api (the full sha of
+that merge) -> production api checks; merge the UI PR -> production checks. `feat/account-app` stays held.
+
+**Stated to the user:** images are built only from `main`, so the api promotion also carries the 20 api PRs merged
+since production's `182f94f` (#61-#84) and the migration `u5d_users_password_changed_at` (expand-only); the
+State filter's api change cannot ship alone.
