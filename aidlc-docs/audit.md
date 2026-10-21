@@ -5055,3 +5055,14 @@ short cards centred, long forms top-aligned and scrollable). Lint clean; pushed;
 production builds succeeded (remonta-app, remontamarketplace). Live: app /login, /dashboard/worker, /registration/worker
 200; marketing / and /provide-support 200; the removed routes /api/admin/reports/daily, /api/zoho/leads,
 /api/admin/fix-qualifications 404. Open: close #57; rotate the old Zoho secret; C2.
+
+## 2026-10-21 -- Admin reports broken by #95; restored
+
+**User input (verbatim):** "before closing, the admin dashboard cannot generate reports, can you fix it"
+
+**Cause (Claude's mistake):** #95 deleted `/api/admin/reports/{daily,weekly,worker-statistics}` as "no caller in the
+code"; the dashboard builds the URL at run time (`/api/admin/reports/${reportType}`), which the literal-URL search missed.
+**Fixed:** `fix/restore-admin-reports` `4494940` from `main`: the three routes and `lib/reports.ts` restored from
+`cf43d23`; `new NextResponse(new Uint8Array(buffer))` in daily and weekly (the two type findings the tightened baseline
+no longer allowed). App gate exit 0 (56 / 279 known, 286 tests); the app build lists the four report routes. Re-check of
+all 40 run-time-built api URLs: no other deleted route reachable. The user's PR.

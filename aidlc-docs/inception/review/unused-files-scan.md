@@ -144,3 +144,14 @@ app 56 type / 279 lint known and 286 tests, web 70 lint known, `turbo run build`
 **Flagged:** `.brd/phase-0-orient.md` records that the deleted `apps/app/docs/Zoho_Jobs_To_DB.md` contained a live Zoho
 OAuth client secret; deleting the file does not remove it from git history (the repository is public): rotate it in
 Zoho if not already done (state follow-up 4).
+
+## Correction (2026-10-21): the reports were in use
+
+The user reported that the admin dashboard could not generate reports. `app/admin/manage/ReportsContent.tsx` calls
+``fetch(`/api/admin/reports/${reportType}`)`` with `daily`, `weekly` and `worker-statistics`: a URL built at run time,
+which step 3's caller check (a search for each literal URL) could not match. Group E's "no caller in the code" was
+wrong for those three, and the user's "Delete all six" rested on it. **Restored** on `fix/restore-admin-reports`
+`4494940` (the three routes and `lib/reports.ts` from `cf43d23`; the PDF bytes passed as a `Uint8Array` so they add no
+baseline finding). **Re-checked:** every run-time-built `/api/` URL in `apps/app` and `apps/web` (40) against every
+deleted route: only this one reached a deleted route; `chat`, `verification`, `zoho/leads` and `fix-qualifications`
+have no static or run-time caller. Lesson for the next scan: match route prefixes against template URLs too.
