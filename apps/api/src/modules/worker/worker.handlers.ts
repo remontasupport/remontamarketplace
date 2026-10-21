@@ -23,18 +23,21 @@ import { complianceAlreadyRecorded, complianceTargetOf, ownComplianceBlobUrl, re
 import { alreadyRecorded, confirmTargetOf, createDocumentTicket, deleteDocumentFiles, DOCUMENT_UPLOAD_INCOMPLETE, linkFor, recordDocument, removeDocument, stageDocument, type DocumentFile } from './application/service-documents'
 import { writeAbn, writeSignedEngagement, writeBio, writeDateOfBirth, writeGender, writeName, writeVehicle } from './application/sections/profile'
 import { assertNotImpersonating, markTourSeen, readTour } from './application/sections/tour'
+import { getCompletion, type CompletionModel } from './application/completion-items'
 
 export interface WorkerModuleDeps {
   db: Db
   clock: Clock
   /** Test seam: the read used instead of the transaction. */
   read?: GetProfileDeps['read']
+  /** onboarding-tour C1 (E6): the stored completion flags' meaning (config COMPLETION_MODEL); `legacy` when absent. */
+  completionModel?: CompletionModel
   /** The sign-up photo bucket and its settings (U2 photos reuse the direct upload). Absent: the photo entries answer 503. */
   photos?: { bucket: PhotoStore; publicBaseUrl: string; ipHashSecret: string; blob: { delete(urlOrKey: string): Promise<void> } }
 }
 
 export function workerHandlers(deps: WorkerModuleDeps) {
-  const s = { db: deps.db, clock: deps.clock }
+  const s = { db: deps.db, clock: deps.clock, completionModel: deps.completionModel }
   // The bucket (documents, U3b) and the Blob store (legacy files): absent in a test or a local run without them.
   const stores = () => ({ bucket: deps.photos?.bucket, blob: deps.photos?.blob })
   const photoDeps = () => {
@@ -253,6 +256,14 @@ export function workerHandlers(deps: WorkerModuleDeps) {
     },
 
     putBankAccount: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putBankAccount', completion: false }, (tx, p) => writeBankAccount(tx, p.id, req.body)) }),
+
+    // onboarding-tour C1: completion declared once (CR-9); the pipeline sets the private cache and the ETag.
+    getCompletion: async (_req, ctx) => {
+      const started = Date.now()
+      const body = await getCompletion({ db: deps.db, read: deps.read }, ctx.principal!, ctx.log)
+      ctx.log.info({ entry: 'worker.getCompletion', durationMs: Date.now() - started, userId: ctx.principal!.userId, percent: body.percent }, 'worker completion read')
+      return { status: 200, body }
+    },
 
     // onboarding-tour U1: the tour's "seen" time (BR-1..BR-10). The read is never cached (the contract sets no private cache).
     getTour: async (_req, ctx) => {

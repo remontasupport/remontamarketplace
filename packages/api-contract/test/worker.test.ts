@@ -11,6 +11,8 @@ import {
   REQUIREMENT_ITEM_STATUSES,
   toOpenApi,
   tourViewSchema,
+  completionViewSchema,
+  MY_PROFILE_PAGES,
   VERIFICATION_STATUSES,
   workerContract,
   workerRead,
@@ -299,5 +301,34 @@ describe('the tour entries (onboarding-tour U1)', () => {
     expect(tourViewSchema.safeParse({ seenAt: null, extra: 1 }).success).toBe(false)
     expect(tourViewSchema.safeParse({}).success).toBe(false)
     expect(tourViewSchema.safeParse({ seenAt: 'yesterday' }).success).toBe(false)
+  })
+})
+
+describe('the completion entry (onboarding-tour C1)', () => {
+  const e = (workerContract.entries as Record<string, EntryDef>).getCompletion!
+
+  it('getCompletion: a WORKER-only GET with the read limits, privately cacheable for a minute (CR-9)', () => {
+    expect([e.method, e.path]).toEqual(['GET', '/v1/worker/completion'])
+    expect(e.meta.access).toEqual({ roles: ['WORKER'] })
+    expect(e.meta.privateCacheSeconds).toBe(60)
+    expect(e.responses[200]).toBe(completionViewSchema)
+  })
+
+  it('the My Profile pages: 18 slugs, unique, 10 required (CD3; Language optional)', () => {
+    expect(MY_PROFILE_PAGES).toHaveLength(18)
+    expect(new Set(MY_PROFILE_PAGES.map((p) => p.slug)).size).toBe(18)
+    expect(MY_PROFILE_PAGES.filter((p) => p.required)).toHaveLength(10)
+  })
+
+  it('the view is strict: three groups, bounded lists, no extra field', () => {
+    const ok = { percent: 91, profileCompleted: false, groups: ['my-profile', 'services', 'compliance'].map((id) => ({ id, complete: false, done: 0, total: 1, firstUnfinished: 'name' })), items: [], serviceDocuments: [] }
+    expect(completionViewSchema.safeParse(ok).success).toBe(true)
+    expect(completionViewSchema.safeParse({ ...ok, extra: 1 }).success).toBe(false)
+    expect(completionViewSchema.safeParse({ ...ok, groups: ok.groups.slice(0, 2) }).success).toBe(false)
+    expect(completionViewSchema.safeParse({ ...ok, percent: 101 }).success).toBe(false)
+  })
+
+  it('the profile read is unchanged by it (NFR-C1)', () => {
+    expect(Object.keys(profileSchema.shape)).not.toContain('items')
   })
 })

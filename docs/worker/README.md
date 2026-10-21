@@ -79,7 +79,7 @@ completion flag recompute and persist it in the same transaction. After a save t
 | `PUT /v1/worker/profile/vehicle` | `{hasVehicle}` | `Yes`/`No`; decides whether the licence documents are required. Each of these three writes its own column only (split from one `personal-info` write, 2026-10-14). Languages are the Languages group |
 | `PUT /v1/worker/profile/abn` | `{abn}` | 11 digits (spaces allowed) passing the ATO checksum; stored `{workerEngagementType: {type: 'abn', value, signed}}`, `signed` kept from an ABN record, false after a TFN one (D17) |
 | `PUT /v1/worker/profile/home-address` | `{streetLine, localityId}` | one line of 1-120 characters; a current suburb of ours. Writes `homeStreetLine`/`homeLocalityId` only: never the legacy location columns, never `worker_locations`; never in a client-facing response |
-| `PUT /v1/worker/profile/service-area` | `{localityId, travelRadiusKm}` | a current suburb; 1-500 km. Upserts the HOME `worker_locations` row (`source ONBOARDING`) and writes the legacy columns as the sign-up does, so the admin and client searches follow; an unplaced worker becomes placed |
+| `PUT /v1/worker/profile/service-area` | `{localityId, travelRadiusKm?}` | a current suburb; the distance optional, 1-500 km (2026-10-21: the page no longer asks; without it the stored distance is kept, 50 km for a first placement; no search reads it). Upserts the HOME `worker_locations` row (`source ONBOARDING`) and writes the legacy columns as the sign-up does, so the admin and client searches follow; an unplaced worker becomes placed |
 | `POST /v1/worker/photos/tickets` | `{contentType, sizeBytes}` | the sign-up's ticket (JPEG/PNG/WebP, 5 MB) |
 | `POST /v1/worker/photos` | `{uploadId}` | the sign-up's confirm (the object inspected), then the upload claimed by this profile as its photo, replacing the current one; `PhotoUploaded` makes the clean copy and repoints the column. 201 with `{main}` |
 | `POST /v1/worker/photos/remove` | `{url}` | the photo, when the URL is the worker's own (else 400); the processed Blob copy and its thumbnail are deleted after the commit, only when the file is in the caller's own folder (`workers/<their profile id>/<upload id>.<ext>`); any other URL is cleared from the column and the file left |
@@ -208,6 +208,44 @@ two agree everywhere except where the rules below say **[fix]**.
 values, and moves `verificationStatus` from `NOT_STARTED` to `IN_PROGRESS` when any flag becomes true. The read
 never calls it; every write that can change a flag (U2-U4) does. U1 ships the backfill (§7).
 
+### The groups model and `GET /v1/worker/completion` (onboarding-tour C1)
+
+"Complete" is declared once in `apps/api/src/modules/worker/application/completion-items.ts`; every measure below
+comes from its items. Design: `aidlc-docs/construction/completion-api/` (record branch `aidlc/onboarding-tour`).
+
+- **My Profile**: the 18 pages by the sidebar's slugs (`MY_PROFILE_PAGES` in the contract, in its order). Required
+  (10): name, photo, bio of 50+ characters, date of birth (or a stored age), gender, an experience row, a job, an
+  education entry, an availability slot, the vehicle answered. Optional (8, ticked when filled, never holding
+  anything back): address, language (the additional-info list, else the legacy column; optional since 2026-10-21:
+  1,202 of 1,790 pre-S1 workers never answered it), cultural background, religion, interests, support & activities,
+  preferences, personality. **No suburb is required.**
+- **Percent** = round(100 × required pages done / 10).
+- **Services** = a service chosen, each chosen service's documents (the rule above, per service; a service with only
+  optional documents needs one), and a Service Area.
+- **Compliance** = `compliance && trainings` (unchanged); its items are the requirement groups' mandatory steps and
+  trainings, each done when submitted or approved.
+- **Profile complete** = the three groups. A group's **first unfinished** item is the first required item not done,
+  in menu order (Compliance without a service: `services-chosen`).
+
+`GET /v1/worker/completion` answers `{percent, profileCompleted, groups[3]{id, complete, done, total,
+firstUnfinished}, items[]{id, group, required, done}, serviceDocuments[]{categoryId, documents[]{type, name, kind,
+required, uploaded}}}`: WORKER, own data (404 without a profile row), the read limits, privately cacheable 60 s +
+ETag. The profile read's `completion` is unchanged (today's rules) until the app moves (C2).
+
+**The stored flags' meaning** is the stage's `COMPLETION_MODEL` (`infra/lib/stages.ts`, the api refuses any other
+value; empty = `legacy`): `legacy` = today's four flags exactly; `groups` = `accountDetails` My Profile complete,
+`services` the Services group, `compliance`/`trainings` as today, `profileCompleted` the three groups. Every write,
+the job and the backfill use it. **Switching a stage** (at C2's release): a one-line PR setting it in the stages
+table, the render, merge, then the promotion; `backfill:completion -- --model=groups --report=<file>` (dry run),
+review, then `-- --model=groups --apply --dry-run-report=<file>`. Back: the same with `legacy`.
+
+**`completion-sync`** (`modules/worker/completion-sync.job.ts`), every `COMPLETION_SYNC_INTERVAL_MS` (5 minutes):
+the workers whose documents were submitted, reviewed, updated or expired since its watermark (an admin's review in
+the app's own routes included), recomputed and written when different; plus a full pass of every worker once a day
+(the first run after 03:00 Australia/Sydney), a page of 200 at a time, resuming across runs with the cursor kept in
+`scheduled_jobs.lastResult`. A failed run logs `alert: "completion-sync-failed"`; three in 15 minutes raise the
+`completion-sync-failing` alert (production).
+
 ## 5. The requirement groups
 
 `requirements.mandatory` = the IDENTITY/BUSINESS/COMPLIANCE documents linked to the worker's services,
@@ -269,7 +307,9 @@ The 5xx-ratio alert counts 503s: a burst that sheds shows there first, which is 
   `DIRECT_DATABASE_URL="$(gcloud secrets versions access latest --secret=remonta-api-AUTH_DATABASE_URL)"`).
   Any run on a production host, dry or not, needs `--allow-production`. Run on staging before a promotion and
   on prod right after, as checklist lines; the 2026-10-12 runs (1,790 and 1,843 profiles, 414 and 422 changed,
-  a second apply changing nothing on both) are in the cycle's construction notes.
+  a second apply changing nothing on both) are in the cycle's construction notes. **`--model=legacy|groups`**
+  (onboarding-tour C1; default the stage's `COMPLETION_MODEL`): the meaning computed (§4). **`--apply` needs
+  `--dry-run-report=<file>`**: the same model's dry run (written with `--report=<file>`) of the last hour.
 - **The checklist runner** (`pnpm --filter @remonta/api check:worker [-- --stage=prod]`): the 14 api checks of
   PR 1's verification against staging (default) or production -- health, a worker's read in the contract shape,
   masked bank data, the cache headers and 304, 401/403/404/400, the admin search, the other stage's health --

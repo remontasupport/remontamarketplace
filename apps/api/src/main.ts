@@ -28,6 +28,7 @@ import { registrationHandlers } from './modules/registration/registration.handle
 import { WorkerPoolHasher } from './platform/security/password-hasher'
 import { notificationHandlers } from './modules/notifications/notification.handlers'
 import { onboardingReconcilerJob } from './modules/onboarding/reconciler'
+import { completionSyncJob } from './modules/worker/completion-sync.job'
 import { purgeUnclaimedPhotosJob } from './modules/registration/jobs/purge-photos'
 import { LogMailer, ResendMailer, type Mailer } from './platform/email/mailer'
 import { Scheduler, type Job } from './platform/jobs/scheduler'
@@ -53,7 +54,7 @@ async function main() {
     // The admin lists (U2): behind the api token; the search is memoised per instance.
     adminHandlers({ db, clock: systemClock, bucket }),
     // The worker's own profile (worker-profile-api U1): per-user bodies, never memoised.
-    workerHandlers({ db, clock: systemClock, photos: { bucket, publicBaseUrl: config.PHOTO_PUBLIC_BASE_URL, ipHashSecret: config.IP_HASH_SECRET, blob: blobStore } }),
+    workerHandlers({ db, clock: systemClock, completionModel: config.COMPLETION_MODEL, photos: { bucket, publicBaseUrl: config.PHOTO_PUBLIC_BASE_URL, ipHashSecret: config.IP_HASH_SECRET, blob: blobStore } }),
     // The signed-in user's own sign-in details (api-review U5d): email and password.
     accountHandlers({ db, clock: systemClock, hasher, breaches }),
     registrationHandlers({
@@ -106,6 +107,8 @@ async function main() {
   dispatcher.start(config.OUTBOX_POLL_MS)
   const jobs: Job[] = [
     onboardingReconcilerJob(db, log, { everyMs: config.RECONCILER_INTERVAL_MS }),
+    // onboarding-tour C1: the stored completion flags kept true after admin reviews, expiries and catalogue changes.
+    completionSyncJob({ db, log, model: config.COMPLETION_MODEL, everyMs: config.COMPLETION_SYNC_INTERVAL_MS }),
     purgeUnclaimedPhotosJob(db, { gcs: bucket }),
     outboxRetentionJob(db),
     {

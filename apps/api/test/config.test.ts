@@ -112,3 +112,17 @@ describe('RATE_LIMIT_EXEMPT_IPS (U1 worker-area, staging drills only)', () => {
     expect(problems({ ...complete, EMAIL_MODE: 'smtp' })[0]).toMatch(/^EMAIL_MODE:/)
   })
 })
+
+describe('COMPLETION_MODEL (onboarding-tour C1, CP1, CT5)', () => {
+  it('defaults to legacy; accepts legacy and groups', () => {
+    expect(loadConfig({ ...complete, COMPLETION_MODEL: undefined }).COMPLETION_MODEL).toBe('legacy')
+    expect(loadConfig({ ...complete, COMPLETION_MODEL: 'groups' }).COMPLETION_MODEL).toBe('groups')
+    expect(loadConfig(complete).COMPLETION_SYNC_INTERVAL_MS).toBe(300_000)
+  })
+  it('refuses anything else, so a misspelt switch stops the service from booting', () => {
+    for (const v of ['Groups', 'v2', 'new']) expect(() => loadConfig({ ...complete, COMPLETION_MODEL: v }), v).toThrow(ConfigError)
+    // An empty value is unset for every setting here: legacy, the safe meaning.
+    expect(loadConfig({ ...complete, COMPLETION_MODEL: '' }).COMPLETION_MODEL).toBe('legacy')
+    expect(() => loadConfig({ ...complete, COMPLETION_SYNC_INTERVAL_MS: '1000' })).toThrow(ConfigError)
+  })
+})

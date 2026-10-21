@@ -94,6 +94,22 @@ describe('the stage table in cloudrun/lib.sh', () => {
   })
 })
 
+describe('completion-sync-failing (onboarding-tour C1, CP7)', () => {
+  const p = policy('completion-sync-failing')
+  const [c] = p.conditions
+  const { alerts } = shellTables()
+  it('counts the failed-run log metric of the job over 15 minutes and fires on the third, on production only', () => {
+    expect(c!.conditionThreshold.filter).toContain('logging.googleapis.com/user/remonta-api-completion-sync-failed')
+    expect(c!.conditionThreshold.aggregations[0]).toMatchObject({ alignmentPeriod: '900s', perSeriesAligner: 'ALIGN_SUM' })
+    expect([c!.conditionThreshold.comparison, c!.conditionThreshold.thresholdValue]).toEqual(['COMPARISON_GT', 2])
+    expect(alerts.prod).toContain('completion-sync-failing')
+    expect(alerts.staging).not.toContain('completion-sync-failing')
+  })
+  it('has its metric defined in the bootstrap, on the alert tag of the job', () => {
+    expect(readFileSync(join(here, '..', 'cloudrun', 'bootstrap.sh'), 'utf8')).toContain('metric remonta-api-completion-sync-failed')
+  })
+})
+
 describe('auth-failed (U1 api-identity)', () => {
   const p = policy('auth-failed')
   const [c] = p.conditions

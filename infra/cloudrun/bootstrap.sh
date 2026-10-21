@@ -99,6 +99,7 @@ gcloud iam service-accounts add-iam-policy-binding "$DEPLOY_SA" --role=roles/iam
 say "7. Log-based metrics (the service's pino JSON lands in jsonPayload)"
 metric() { exists gcloud logging metrics describe "$1" || gcloud logging metrics create "$1" --description="$2" --log-filter="$3"; }
 metric remonta-api-outbox-dead-letter "an outbox event exhausted its retries" 'resource.type="cloud_run_revision" AND jsonPayload.alert="outbox-dead-letter"'
+metric remonta-api-completion-sync-failed "a completion-sync run failed (onboarding-tour C1)" 'resource.type="cloud_run_revision" AND jsonPayload.alert="completion-sync-failed"'
 metric remonta-api-request-failed "a 500 from apps/api" 'resource.type="cloud_run_revision" AND jsonPayload.msg="request failed"'
 metric remonta-api-will-not-start "apps/api refused to start (configuration or contract problem)" 'resource.type="cloud_run_revision" AND "apps/api will not start"'
 metric remonta-api-auth-failed "an api token was rejected (U1: missing, malformed, bad-signature, expired, ...)" 'resource.type="cloud_run_revision" AND jsonPayload.auth="rejected" AND jsonPayload.reason:*'

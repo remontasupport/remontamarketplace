@@ -60,7 +60,7 @@ const yearsAgo = (n: number) => {
 describe('the entries (E2)', () => {
   it('declares the 18 U2 writes (personal info is three since 2026-10-14) beside the read, every write with an audit action, a body limit and both rate limits', () => {
     const names = Object.keys(workerContract.entries)
-    expect(names).toHaveLength(42) // makeMainPhoto removed, the additional-info entry split in nine, deleteExperience, deleteJobHistoryEntry and deleteEducationEntry added (2026-10-14); U3a putServices, putServiceRegistration; U3b four document entries; U4a four more; U4d signContract; onboarding-tour getTour, putTourSeen
+    expect(names).toHaveLength(43) // makeMainPhoto removed, the additional-info entry split in nine, deleteExperience, deleteJobHistoryEntry and deleteEducationEntry added (2026-10-14); U3a putServices, putServiceRegistration; U3b four document entries; U4a four more; U4d signContract; onboarding-tour getTour, putTourSeen, getCompletion
     expect(workerContract.entries.deleteEducationEntry).toMatchObject({ method: 'DELETE', path: '/v1/worker/education/:entryId' })
     expect(workerContract.entries.deleteEducationEntry.pathParams.safeParse({ entryId: 'cm12abc_9-Z' }).success).toBe(true)
     expect(workerContract.entries.deleteEducationEntry.pathParams.safeParse({ entryId: '../x' }).success).toBe(false)
@@ -158,6 +158,7 @@ describe('R3 the addresses', () => {
     expect(homeAddressInputSchema.parse({ localityId: 42 })).toEqual({ streetLine: null, localityId: 42 })
     bad(homeAddressInputSchema, { streetLine: '12 Example St' }, 'localityId')
     ok(serviceAreaInputSchema, { localityId: 1, travelRadiusKm: 500 })
+    ok(serviceAreaInputSchema, { localityId: 1 }) // the distance is optional (2026-10-21): the stored one is kept
     bad(serviceAreaInputSchema, { localityId: 1, travelRadiusKm: 0 }, 'travelRadiusKm')
     bad(serviceAreaInputSchema, { localityId: 1, travelRadiusKm: 501 }, 'travelRadiusKm')
     bad(serviceAreaInputSchema, { localityId: 1, travelRadiusKm: 12.5 }, 'travelRadiusKm')

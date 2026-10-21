@@ -240,6 +240,15 @@ describe.skipIf(!local)('the section writes on PostGIS', () => {
     expect(await h.db.workerLocation.count({ where: { workerProfileId: h.b.profileId, kind: 'HOME' } })).toBe(1)
   })
 
+  it('a service-area save without a distance keeps the stored one (2026-10-21: the page no longer asks)', async () => {
+    const north = await h.db.auLocality.findFirstOrThrow({ where: { searchName: 'north sydney', retiredAt: null }, select: { id: true } })
+    expect((await put('/v1/worker/profile/service-area', { localityId: north.id, travelRadiusKm: 35 }, () => h.b.userId)).statusCode).toBe(200)
+    const res = await put('/v1/worker/profile/service-area', { localityId: north.id }, () => h.b.userId)
+    expect(res.statusCode, res.body).toBe(200)
+    expect(res.json()).toMatchObject({ localityId: north.id, travelRadiusKm: 35 })
+    expect(await h.db.workerLocation.findFirstOrThrow({ where: { workerProfileId: h.b.profileId, kind: 'HOME' } })).toMatchObject({ travelRadiusKm: 35 })
+  })
+
   it('completion is persisted by the writes that can change it, and the read\'s ETag moves', async () => {
     const etag = (await h.get(h.b.userId)).headers['etag']
     await put('/v1/worker/profile/name', { firstName: 'Benjamin', middleName: null, lastName: 'Nguyen' }, () => h.b.userId) // a real change (the harness seeds Ben)

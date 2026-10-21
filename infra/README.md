@@ -49,6 +49,12 @@ Staging and prod rotate independently. A mismatch between a Vercel scope and its
 `bad-signature` rejections (`jsonPayload.auth="rejected" AND jsonPayload.reason="bad-signature"`) and, on prod, the
 `auth-failed` alert (`cloudrun/monitoring/auth-failed.json`).
 
+**`completion-sync-failing`** (production, onboarding-tour C1): the api's `completion-sync` job logs
+`alert: "completion-sync-failed"` on a failed run (metric `remonta-api-completion-sync-failed`, created by the bootstrap);
+three in 15 minutes (it runs every 5) email support@. The workers' screens stay right; the stored flags the admin
+screens read stop following reviews until it is fixed. New on an existing project: run the bootstrap's metric line
+once (or the bootstrap, idempotent), then `bash infra/cloudrun/apply-alerts.sh prod`.
+
 ## Why Cloud Run, and how it is configured
 
 The api runs an outbox dispatcher and a scheduler between requests, so it needs a process that is always

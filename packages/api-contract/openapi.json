@@ -5041,8 +5041,7 @@
                   }
                 },
                 "required": [
-                  "localityId",
-                  "travelRadiusKm"
+                  "localityId"
                 ],
                 "additionalProperties": false
               }
@@ -11443,6 +11442,259 @@
           ],
           "maxBodyKb": 4,
           "audit": "PROFILE_UPDATE"
+        }
+      }
+    },
+    "/v1/worker/completion": {
+      "get": {
+        "operationId": "worker.getCompletion",
+        "summary": "How complete the worker is: every My Profile page, the three checklist groups (My Profile, Services, Compliance) with their next step, the percent over the 10 required pages, and each service’s documents. Privately cacheable for a minute with ETag/304.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "percent": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 100
+                    },
+                    "profileCompleted": {
+                      "type": "boolean"
+                    },
+                    "groups": {
+                      "minItems": 3,
+                      "maxItems": 3,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "enum": [
+                              "my-profile",
+                              "services",
+                              "compliance"
+                            ]
+                          },
+                          "complete": {
+                            "type": "boolean"
+                          },
+                          "done": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "total": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "firstUnfinished": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "maxLength": 120
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "complete",
+                          "done",
+                          "total",
+                          "firstUnfinished"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "items": {
+                      "maxItems": 200,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "maxLength": 120
+                          },
+                          "group": {
+                            "type": "string",
+                            "enum": [
+                              "my-profile",
+                              "services",
+                              "compliance"
+                            ]
+                          },
+                          "required": {
+                            "type": "boolean"
+                          },
+                          "done": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "group",
+                          "required",
+                          "done"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "serviceDocuments": {
+                      "maxItems": 50,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "categoryId": {
+                            "type": "string",
+                            "maxLength": 80
+                          },
+                          "documents": {
+                            "maxItems": 50,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "maxLength": 80
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "maxLength": 160
+                                },
+                                "kind": {
+                                  "type": "string",
+                                  "enum": [
+                                    "QUALIFICATION",
+                                    "TRAINING",
+                                    "REGISTRATION",
+                                    "INSURANCE"
+                                  ]
+                                },
+                                "required": {
+                                  "type": "boolean"
+                                },
+                                "uploaded": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "name",
+                                "kind",
+                                "required",
+                                "uploaded"
+                              ],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "categoryId",
+                          "documents"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "percent",
+                    "profileCompleted",
+                    "groups",
+                    "items",
+                    "serviceDocuments"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not Modified: the If-None-Match header matched the current ETag; no body."
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 120,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 300,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 1,
+          "privateCacheSeconds": 60
         }
       }
     },
