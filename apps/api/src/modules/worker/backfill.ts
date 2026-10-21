@@ -4,14 +4,16 @@
 // own short transaction, so a failure skips one worker, never the batch.
 import type { Db } from '../../platform/persistence/db'
 import { unitOfWork } from '../../platform/persistence/db'
-import { completionInputOf } from './application/get-profile'
-import { completionOf, flagsOf, type CompletionFlags } from './domain/completion'
+import { storedCompletion, type CompletionModel } from './application/completion-items'
+import { flagsOf, type CompletionFlags } from './domain/completion'
 import { parseStoredFlags, persistCompletion, sameFlags } from './domain/persist-completion'
 import { readProfileRowsPage } from './persistence/profile-read'
 
 export interface CompletionBackfillReport {
   apply: boolean
   now: Date
+  /** onboarding-tour C1 (E6): the meaning the flags were computed under. */
+  model: CompletionModel
   examined: number
   /** Profiles whose stored flags or profileCompleted differ from the computed value (written under --apply). */
   changed: number
@@ -27,6 +29,8 @@ export interface CompletionBackfillReport {
 
 export interface CompletionBackfillOptions {
   apply: boolean
+  /** onboarding-tour C1: `legacy` (today's flags, the default) or `groups`. */
+  model?: CompletionModel
   now?: Date
   batch?: number
   onProgress?: (done: number) => void
@@ -38,6 +42,7 @@ export async function backfillCompletion(db: Db, opts: CompletionBackfillOptions
   const report: CompletionBackfillReport = {
     apply: opts.apply,
     now: opts.now ?? new Date(),
+    model: opts.model ?? 'legacy',
     examined: 0,
     changed: 0,
     unchanged: 0,
@@ -56,7 +61,7 @@ export async function backfillCompletion(db: Db, opts: CompletionBackfillOptions
       const p = rows.profile
       report.examined++
       try {
-        const completion = completionOf(completionInputOf(rows))
+        const completion = storedCompletion(rows, opts.model ?? 'legacy')
         const from = parseStoredFlags(p.setupProgress)
         const to = flagsOf(completion)
         const differs = !sameFlags(from, to) || completion.profileCompleted !== p.profileCompleted
@@ -94,4 +99,18 @@ export function formatCompletionReport(r: CompletionBackfillReport): string {
   if (r.sample.length) lines.push('  sample:', ...r.sample.map((s) => `    ${s.workerProfileId}: ${JSON.stringify(s.from)} -> ${JSON.stringify(s.to)} profileCompleted=${s.profileCompleted}`))
   if (r.failed.length) lines.push('  failed:', ...r.failed.slice(0, 10).map((f) => `    ${f.workerProfileId}: ${f.error}`))
   return lines.join('\n')
+}
+
+/**
+ * CP5 (onboarding-tour C1): `--apply` needs the dry run it repeats -- a report of the same model, not applied, at most an
+ * hour old. A problem string, or null when the apply may proceed.
+ */
+export function applyGuard(report: unknown, model: CompletionModel, now: Date): string | null {
+  const r = report as { apply?: unknown; model?: unknown; now?: unknown } | null
+  if (!r || typeof r !== 'object') return 'no dry-run report: run without --apply and with --report=<file> first, then pass --dry-run-report=<file>'
+  if (r.apply !== false) return 'the report given is not a dry run'
+  if ((r.model ?? 'legacy') !== model) return `the dry run was for --model=${String(r.model ?? 'legacy')}, not ${model}`
+  const at = typeof r.now === 'string' ? Date.parse(r.now) : NaN
+  if (!Number.isFinite(at) || now.getTime() - at > 60 * 60_000 || at > now.getTime() + 60_000) return 'the dry run is older than an hour (or undated): run it again'
+  return null
 }

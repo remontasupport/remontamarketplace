@@ -5,8 +5,10 @@
 // uses. Dry run by default; `--apply` writes; idempotent. Reads STAGING_AUTH_DATABASE_URL
 // when set (the staging run of the runbook), else apps/api/.env's DIRECT_DATABASE_URL /
 // AUTH_DATABASE_URL. A production host is refused unless `--allow-production` is given.
-import { backfillCompletion, formatCompletionReport } from '../src/modules/worker/backfill'
-import { runBackfill } from './backfill-cli'
+import { readFileSync } from 'node:fs'
+import { COMPLETION_MODELS, type CompletionModel } from '../src/modules/worker/application/completion-items'
+import { applyGuard, backfillCompletion, formatCompletionReport } from '../src/modules/worker/backfill'
+import { flag, runBackfill } from './backfill-cli'
 
 /** The production Neon hosts (scripts/local/dev-env.sh, CLAUDE.md). */
 export const PRODUCTION_HOST_PATTERNS = [/ep-delicate-recipe/, /ep-polished-thunder/]
@@ -37,5 +39,26 @@ if (/backfill-completion\.ts$/.test(entry)) {
     console.error(`backfill-completion: ${problem}`)
     process.exit(2)
   }
-  await runBackfill('backfill-completion', (db, opts) => backfillCompletion(db, { apply: opts.apply, batch: opts.batch, onProgress: opts.onProgress }), formatCompletionReport)
+  // onboarding-tour C1: --model=legacy|groups (default: the stage's COMPLETION_MODEL, else legacy); --apply needs
+  // --dry-run-report=<file>, the same model's dry run of the last hour (CP5).
+  const model = (flag('model') ?? process.env.COMPLETION_MODEL ?? 'legacy') as CompletionModel
+  if (!COMPLETION_MODELS.includes(model)) {
+    console.error(`backfill-completion: --model must be one of ${COMPLETION_MODELS.join(', ')}`)
+    process.exit(2)
+  }
+  if (process.argv.includes('--apply')) {
+    const file = flag('dry-run-report')
+    let report: unknown = null
+    try {
+      report = file ? JSON.parse(readFileSync(file, 'utf8')) : null
+    } catch {
+      report = null
+    }
+    const refused = applyGuard(report, model, new Date())
+    if (refused) {
+      console.error(`backfill-completion: ${refused}`)
+      process.exit(2)
+    }
+  }
+  await runBackfill('backfill-completion', (db, opts) => backfillCompletion(db, { apply: opts.apply, model, batch: opts.batch, onProgress: opts.onProgress }), formatCompletionReport)
 }
