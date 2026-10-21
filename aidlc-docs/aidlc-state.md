@@ -37,7 +37,9 @@
   (audit). Open: the signed-in production checks (user); close #57; the rollback-row PR
   `docs/rollback-rows-2026-10-21-release`; next C2.** **Live 2026-10-21 (`main` `5089344`):** #95 the clean-up
   (98 unused files), #96 the rollback rows, #97 the centred step card on phones. Open: close #57; rotate the old Zoho
-  secret (in git history); C2. Earlier: **Release check done (2026-10-21, audit):** `feat/account-app` `5049ae0` = main + 113, all gates green, deletions
+  secret (in git history); C2. **Security (2026-10-21):** H2 (`fix/h2-setup-password-takeover-v2`) and H1
+  (`fix/h1-bank-details-v2`) pushed for the user's PRs, H2 first; H3 held (1 of 1,765 workers published: a product
+  decision). 105 merged remote branches deleted (list in `inception/review/deleted-branches-2026-10-21.md`). Earlier: **Release check done (2026-10-21, audit):** `feat/account-app` `5049ae0` = main + 113, all gates green, deletions
   safe. **The release, on the user's word:** promote `9fdcf6df31b24226a4a24d7ff44b563139abb0e9` -> production api
   checks -> the preview checks on `5049ae0` -> PR `feat/account-app` -> main ("Merge pull request"), close #57 ->
   production checks -> re-record the Vercel rollback rows. 

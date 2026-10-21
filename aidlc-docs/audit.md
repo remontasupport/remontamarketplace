@@ -5084,3 +5084,28 @@ with the main column's padding). Lint and types clean; pushed; the user's PR.
 **Done:** `fix/profile-steps-top` from `main`: one rule for every `ProfileShell` step at 768 px and below
 (`.profile-step { margin-top: 2.5rem }`), replacing #97's centring and #99's Service Area exception. Lint and types
 clean; pushed; the user's PR.
+
+## 2026-10-21 -- Closing PRs; security fixes H1-H3; merged branches deleted
+
+**User input (verbatim):** "perfect, continue the closing of PRs now"
+**Found:** #100 (the profile steps near the top) in `main`; #57 the only open PR (its content all in `main`; no `gh` or
+token on this machine: the user closes it). 137 remote branches: 105 fully merged (excluding `aidlc/*`, `app/*`).
+**Found, unmerged since 2026-09-25:** `fix/h1-bank-details-exposure`, `fix/h2-setup-password-takeover`,
+`fix/h3-published-workers-only`; on `main`: H2 open (email + new password set any ACTIVE worker's password while still
+on the default `WelcomeRemonta`); H3 open (no `isPublished` filter in `/api/public/workers`, `/api/client/workers`);
+H1 open on the share link (`fetchProfileByUserId` selects `workerAdditionalInfo.bankAccount` and
+`/api/share/profile` returns it).
+
+**User input (verbatim):** "yes" (start with H2, then H3 and H1; delete the merged branches)
+**Done:**
+- **H2** `fix/h2-setup-password-takeover-v2`: the 2026-09-25 commit cherry-picked unchanged (`3852f7c`; the files had
+  not moved): the endpoint takes an email only and sends the existing single-use 1-hour reset link
+  (`resetPasswordToken`/`Expires`, the fields `/api/auth/reset-password` checks); same answer whatever the email;
+  rate-limited; audit row. App gate exit 0; lint baseline tightened (`17c8908`). Pushed; the user's PR.
+- **H1** `fix/h1-bank-details-v2` `3f229fc`: `bankAccount` no longer selected in `lib/profileData.ts`. App gate exit 0.
+  Pushed; the user's PR.
+- **H3 held, not pushed** (`fix/h3-published-workers-only-v2`, local): on the staging copy **1 of 1,765** listed
+  workers is published; merged as-is the public and client searches would show about one worker. A decision for the
+  user.
+- **Branches:** the list with commits recorded (`inception/review/deleted-branches-2026-10-21.md`), then 105 merged
+  remote branches deleted (0 failed); 35 remain.
