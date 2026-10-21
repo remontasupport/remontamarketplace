@@ -5026,3 +5026,15 @@ the deleted `/api/worker/requirements` and `/api/upload/vehicle-photo` answer 40
 production builds; api `00014-wdv`, previous `00013-rl7`); the user's PR.
 **Open:** the signed-in production checks (the user, with an internal worker: dashboard, My Profile, a save, the tour
 card, the ? hidden on a phone); PR #57 to close as superseded; C2 (completion screens) is now unblocked.
+
+## 2026-10-21 -- Unused files scanned and removed
+
+**User input (verbatim):** "it works now in the production, now let us identify the files that needs to be deleted so we can clear the space of the codebase, scan the files during the ai dlc and delete the unuse including the test scripts and docs"
+
+**Done:** the production release confirmed by the user. The scan (`inception/review/unused-files-scan.md`): an import
+graph from every entry of `apps/app`, `apps/web`, `apps/api`; every candidate cross-checked repo-wide; routes checked for
+callers; scripts and docs for references. Groups A 40, B 22, C 7, D 21, E 6.
+**Asked; user's choices:** delete A, B, C, D; E "Delete all six".
+**Done:** `chore/remove-unused-files` `e4bb098`: 98 files deleted (2 more orphaned by the routes), baselines tightened,
+CLAUDE.md gate numbers; all gates green; pushed; the PR is the user's. Flagged: rotate the Zoho secret once committed in
+the deleted `Zoho_Jobs_To_DB.md` (in git history).
