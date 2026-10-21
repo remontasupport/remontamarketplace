@@ -4,9 +4,6 @@
 1	../../packages/schemas/src/schema/registrationSchema.ts::TS7006
 2	src/app/api/admin/contractors/[id]/pdf/route.ts::TS2339
 1	src/app/api/admin/contractors/[id]/status/route.ts::TS2339
-1	src/app/api/admin/reports/daily/route.ts::TS2345
-1	src/app/api/admin/reports/weekly/route.ts::TS2345
-5	src/app/api/admin/verification/route.ts::TS2339
 1	src/app/api/client/participants/[id]/route.ts::TS2322
 1	src/app/api/client/participants/[id]/route.ts::TS2339
 1	src/app/api/client/participants/route.ts::TS2322
@@ -22,7 +19,6 @@
 1	src/components/dashboard/client/request-service/sections/DiagnosesSection.tsx::TS2339
 2	src/components/dashboard/client/request-service/sections/DiagnosesSection.tsx::TS2345
 1	src/components/dashboard/client/request-service/sections/DiagnosesSection.tsx::TS7006
-1	src/components/dashboard/JobsSection.tsx::TS2741
 1	src/components/dashboard/NewsSlider.tsx::TS2345
 6	src/components/pdf/WorkerProfilePDF.tsx::TS2304
 12	src/components/pdf/WorkerProfilePDF.tsx::TS2339
@@ -30,10 +26,5 @@
 1	src/components/requirements-setup/steps/GenericComplianceDocument.tsx::TS2322
 1	src/components/services-setup/steps/Step1ServicesOffer.tsx::TS2322
 1	src/lib/auth.config.ts::TS2322
-3	src/lib/feature-access.ts::TS2339
-1	src/lib/feature-access.ts::TS2551
-1	src/lib/feature-access.ts::TS2561
 2	src/lib/profileData.ts::TS2322
-3	src/lib/verification.ts::TS2353
-1	src/lib/verification.ts::TS2561
 2	src/services/worker/profilePreview.service.ts::TS2322
