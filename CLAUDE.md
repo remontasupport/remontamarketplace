@@ -26,8 +26,8 @@ git checkout -b <type>/<short-name>      # fix/… feat/… u9/…
 ### 2. Verify locally, before pushing
 
 ```bash
-pnpm --filter @remonta/app run quality     # 142 type · 471 lint known · 122 tests (2026-10-12)
-pnpm --filter @remonta/web run quality     # 76 lint · strict tsc
+pnpm --filter @remonta/app run quality     # 56 type · 279 lint known · 286 tests (2026-10-21)
+pnpm --filter @remonta/web run quality     # 70 lint · strict tsc
 pnpm --filter @remonta/schemas run quality # P-1..P-5 boundaries
 pnpm --filter @remonta/api-contract run quality  # contract checks, openapi.json drift
 pnpm --filter @remonta/form-engine run quality   # form logic, P-7 boundary
