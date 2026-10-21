@@ -19,6 +19,15 @@
 | No token / expired | 401 | No card; nothing shown |
 | Not a worker | 403 | No card (the tour's code is not loaded for other roles: U2) |
 | Worker without a profile row | 404 `WORKER_PROFILE_NOT_FOUND` | No card |
-| Over a rate limit | 429 + `Retry-After` | Read: no card. Save: the tour still closes; not retried |
-| Api down, timeout, 5xx | -- | Read: no card. Save: the tour still closes; the card may come back next visit |
+| Over a rate limit | 429 + `Retry-After` | Read: no card. Save: the tour still closes; one background retry after `Retry-After` (NFR Design P1) |
+| Api down, timeout, 5xx | -- | Read: no card (3 s deadline). Save: the tour still closes; one background retry; then the card may come back next visit |
 | Response not matching the contract | (client throws) | Treated as the api down |
+| An admin impersonating the worker | Save: 403 `NOT_WHILE_IMPERSONATING` (BR-10) | No card, no save (the app checks first) |
+
+## Amendment 2026-10-21 (NFR Design Q1 A, Q3 A)
+
+| ID | Rule | From |
+|---|---|---|
+| BR-10 | **Not while impersonating.** `putTourSeen` with a principal carrying `impersonatorId` answers **403** with `NOT_WHILE_IMPERSONATING` and writes nothing, as the account entries do (`account.handlers.ts` `notImpersonating`). `getTour` is unaffected | NFR Design Q3 A; P2 |
+
+The error table's save rows changed from "not retried" to one background retry (NFR Design Q1 A, P1).

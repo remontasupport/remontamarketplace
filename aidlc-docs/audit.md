@@ -4621,3 +4621,19 @@ Found: `workerRead()` always sets a 60 s private cache, so the read needs an opt
 long the home waits for the read, Q3 admin impersonation sessions (impersonation exists in the app:
 `AdminDashboardClient.tsx`, `AccountSettingsPanel.tsx`; the api carries `impersonatorId`), Q4 a load test before the
 promotion). Artifacts will go to `construction/shared/nfr-design/`. Waiting for the answers.
+
+## 2026-10-21 -- NFR design written (both units)
+
+**User input (verbatim):** "answered"
+
+**Answers in `construction/plans/onboarding-tour-nfr-design-plan.md`:** Q1 a (one background retry honouring
+`Retry-After`) · Q2 a (3 s deadline on the read) · Q3 a (no card and no save while an admin impersonates; replay
+still works) · Q4 a (no dedicated load test).
+
+**Written:** `construction/shared/nfr-design/nfr-design-patterns.md` (P1-P8: fail silent with a read deadline and one
+retry, impersonation, access, load, backward compatibility, observability, resiliency scenarios R1-R7, property tests)
+and `logical-components.md` (no new infrastructure). **U1 amended:** BR-10 (`putTourSeen` answers 403
+`NOT_WHILE_IMPERSONATING` while impersonating, as `account.handlers.ts` does; the app reads
+`session.user.impersonatedBy`), and the error table's save rows now say one background retry.
+
+**Approval prompt (2026-10-21):** NFR design presented; next Functional Design of U2 `tour-app`.

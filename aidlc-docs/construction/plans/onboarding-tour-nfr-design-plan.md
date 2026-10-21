@@ -6,14 +6,14 @@ Inputs: `inception/requirements/requirements.md` NFR-01..10 and §5 (NFR Require
 
 ## Plan
 
-- [ ] 1. Resilience patterns: what the app does when the read or the save fails (NFR-01) -- Q1, Q2
-- [ ] 2. Security patterns: access, impersonation, input, abuse (NFR-03..05) -- Q3
-- [ ] 3. Scalability and performance: the release-day load, no extra request off the home (NFR-07) -- Q4
-- [ ] 4. Logical components: where the "seen" state lives in the app; the api pieces (no queue, cache or new infra)
-- [ ] 5. Resiliency testing scenarios (RESILIENCY-14, deferred here)
-- [ ] 6. The property tests to write (PBT-01, deferred here), U1 and U2
-- [ ] 7. Observability: the log lines; no new alert (SECURITY-14 N/A)
-- [ ] 8. Artifacts: `construction/shared/nfr-design/{nfr-design-patterns,logical-components}.md`
+- [x] 1. Resilience patterns: what the app does when the read or the save fails (NFR-01) -- Q1, Q2
+- [x] 2. Security patterns: access, impersonation, input, abuse (NFR-03..05) -- Q3
+- [x] 3. Scalability and performance: the release-day load, no extra request off the home (NFR-07) -- Q4
+- [x] 4. Logical components: where the "seen" state lives in the app; the api pieces (no queue, cache or new infra)
+- [x] 5. Resiliency testing scenarios (RESILIENCY-14, deferred here)
+- [x] 6. The property tests to write (PBT-01, deferred here), U1 and U2
+- [x] 7. Observability: the log lines; no new alert (SECURITY-14 N/A)
+- [x] 8. Artifacts: `construction/shared/nfr-design/{nfr-design-patterns,logical-components}.md`
 
 **Categories with no question, and why:**
 - **Scalability mechanisms:** unchanged. The read is one lookup by a unique key, and the existing limits and Cloud Run
@@ -37,7 +37,7 @@ B) Never: one try only
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 2
 How long should the dashboard home wait for the "seen" read before giving up on the card for this visit?
@@ -49,7 +49,7 @@ B) No limit: show the card whenever the answer arrives
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 3
 An admin can sign in as a worker ("impersonation") to help them. During such a session:
@@ -61,7 +61,7 @@ B) Treat it like the worker's own visit (the card shows; Not now or Finish saves
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 4
 On release day every worker who opens the dashboard home makes one tiny read (one row by a unique key). Should we run
@@ -74,4 +74,4 @@ B) Yes, a short load test on staging at the worker area's capacity target before
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
