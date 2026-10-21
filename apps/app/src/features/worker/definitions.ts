@@ -109,16 +109,14 @@ export const serviceAreaSection = defineSection({
   ...READ,
   name: "service-area",
   title: "Service area",
-  description: "The suburb clients find you at, and how far you travel from it.",
+  description: "The suburb clients find you at.",
   pick: "serviceArea",
   writeEntry: "putServiceArea",
-  fields: [
-    { name: "localityId", kind: "locality", label: "Suburb you work around", placeholder: "Start typing a suburb" },
-    { name: "travelRadiusKm", kind: "number", label: "How far you travel", min: 1, max: 500, unit: "km" },
-  ],
+  // No "How far you travel" (user, 2026-10-21): no search reads it; the api keeps the stored distance when none is sent.
+  fields: [{ name: "localityId", kind: "locality", label: "Suburb you work around", placeholder: "Start typing a suburb" }],
   seed: (p) => {
-    const s = p as { localityId: number; label: string; travelRadiusKm: number } | null;
-    return s ? { localityId: localityFromLabel(s.label, s.localityId), travelRadiusKm: s.travelRadiusKm } : { travelRadiusKm: 50 };
+    const s = p as { localityId: number; label: string } | null;
+    return s ? { localityId: localityFromLabel(s.label, s.localityId) } : {};
   },
 });
 
