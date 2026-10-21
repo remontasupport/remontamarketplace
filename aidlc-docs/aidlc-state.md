@@ -8,8 +8,8 @@
   "Basically just a tour how to complete the profile". Record branch `aidlc/onboarding-tour` (from `aidlc/api-review`
   `d9289f3`). The previous cycle, api-review, is **parked**: `aidlc-docs/archive/api-review/PARKED.md`
   (`feat/account-app` held, not released).
-- **Current Stage**: INCEPTION -- Requirements Analysis. The 16 answers are in (audit 2026-10-21); **waiting for the two
-  follow-ups** in `aidlc-docs/inception/requirements/requirement-clarification-questions.md` (F1, F2).
+- **Current Stage**: INCEPTION -- Requirements Analysis, `aidlc-docs/inception/requirements/requirements.md` written;
+  **waiting for the user's approval** (User Stories proposed as skipped; next: Workflow Planning).
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory
   `aidlc-docs/inception/inventory/onboarding-tour-inventory.md` (on `feat/account-app` `4d62630`).
@@ -20,15 +20,15 @@
 
   **Resume here (2026-10-21):**
   1. `git ls-remote origin main feat/account-app`; ask what was merged since.
-  2. Read F1 and F2; then `requirements.md`, the extension table below, then workflow planning. Decided so far:
-     released together with `feat/account-app` (Q12 b), so that release waits for the tour.
+  2. On approval: Workflow Planning (`plans/execution-plan.md`). Decided: released together with `feat/account-app`
+     (D12), the api part first from `main`; NFR-02 (the promotion must not break today's production app) drives OI-1.
 
 ## Stage Progress
 ### INCEPTION PHASE
 - [x] Workspace Detection
 - [x] Reverse Engineering (targeted inventory)
-- [ ] Requirements Analysis (16 answered; follow-ups F1, F2 out)
-- [ ] User Stories
+- [ ] Requirements Analysis (`requirements.md` written; awaiting approval)
+- [ ] User Stories (proposed: skip)
 - [ ] Workflow Planning
 - [ ] Application Design
 - [ ] Units Generation
@@ -163,9 +163,9 @@
 - **Documentation**: aidlc-docs/ only
 - **Structure patterns**: CLAUDE.md "Dynamic by default" (contract entries + handlers; form definitions)
 
-## Extension Configuration (decided per cycle; below: the last decided values, worker-profile-api 2026-10-09 -- re-asked for onboarding-tour in the requirements questions)
+## Extension Configuration (onboarding-tour)
 | Extension | Enabled | Decided At |
 |---|---|---|
-| Security Baseline | Yes, blocking | worker-profile-api cycle, Requirements Analysis 2026-10-09 (Q15 a) |
-| Resiliency Baseline | Yes, blocking; SLA 99.9 %, RTO ≤ 30 min, RPO ≤ 5 min, single region; capacity gate 10,000 active workers/hour | worker-profile-api cycle, 2026-10-09 (Q16 a, Q6 A) |
-| Property-Based Testing | Yes, full | worker-profile-api cycle, 2026-10-09 (Q17 a) |
+| Security Baseline | Yes, blocking | onboarding-tour, Requirements Analysis 2026-10-21 (Security A) |
+| Resiliency Baseline | Yes; SLA 99.9 %, RTO ≤ 30 min, RPO ≤ 5 min, single region; plus "the tour never gets in the way of the dashboard" | onboarding-tour, 2026-10-21 (Resiliency A, F2 A) |
+| Property-Based Testing | Yes, full | onboarding-tour, 2026-10-21 (PBT A) |

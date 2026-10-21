@@ -14,7 +14,7 @@ B) The tour starts on the current page and leaves out the checklist step
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question F2
 You chose the resiliency baseline (A). Last cycle's targets were: 99.9 % availability, recovery within 30 minutes,
@@ -28,4 +28,4 @@ B) Different targets for this cycle (please describe)
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a

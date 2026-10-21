@@ -4548,3 +4548,18 @@ coordinator dashboards, so the help button must show for workers only. The compl
 home, so its step is always available there. Releasing together means `feat/account-app` waits for the tour.
 
 **Follow-ups:** `requirement-clarification-questions.md` F1 (help button on another page) and F2 (resiliency targets).
+
+## 2026-10-21 -- Follow-ups answered; requirements written (onboarding-tour)
+
+**User input (verbatim):** "answered"
+
+**Answers in `requirement-clarification-questions.md`:** F1 a (the help button goes to the dashboard home and runs the
+whole tour) · F2 a (last cycle's resiliency targets, plus "the tour never gets in the way of the dashboard").
+
+**Written:** `inception/requirements/requirements.md` -- D1-D14, FR-TOUR-01..09, FR-REPLAY-01..03, FR-SEEN-01..03,
+NFR-01..10, the extension tables, out of scope, OI-1..OI-7. **Found and stated as NFR-02:** the api is promoted
+before the app while production runs today's app, whose contract client refuses unexpected response shapes, so the
+"seen" value must not change a response today's app reads without proof (OI-1).
+
+**Approval prompt (2026-10-21):** requirements presented for review; User Stories proposed as skipped (one persona,
+one flow); next stage Workflow Planning.
