@@ -4563,3 +4563,22 @@ before the app while production runs today's app, whose contract client refuses 
 
 **Approval prompt (2026-10-21):** requirements presented for review; User Stories proposed as skipped (one persona,
 one flow); next stage Workflow Planning.
+
+## 2026-10-21 -- Requirements approved; workflow planned (onboarding-tour)
+
+**User input (verbatim):** "approved"
+
+**Status:** Requirements Analysis approved; User Stories skipped (as proposed).
+
+**OI-1 resolved while planning:** `profileSchema` in `packages/api-contract/src/worker.contract.ts` is a
+`z.strictObject` and `createClient` throws on a response that does not match, so a field added to
+`GET /v1/worker/profile` would break today's production app at the api promotion. The profile read stays unchanged;
+"seen" gets its own read and save entries, called only on the dashboard home.
+
+**Written:** `inception/plans/execution-plan.md` -- risk Low; execute Functional Design (per unit), NFR Design (one
+document), Code Generation and Build and Test (per unit); skip Application Design, Units Generation, NFR Requirements,
+Infrastructure Design. Units: U1 `tour-seen-api` (`feat/tour-seen-api` from `main`), U2 `tour-app`
+(`feat/onboarding-tour` from `feat/account-app`). Release on the user's word: promote U1, then `feat/account-app` with
+the tour.
+
+**Approval prompt (2026-10-21):** execution plan presented; next stage Functional Design (U1).

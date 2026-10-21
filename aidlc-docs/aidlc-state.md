@@ -8,8 +8,8 @@
   "Basically just a tour how to complete the profile". Record branch `aidlc/onboarding-tour` (from `aidlc/api-review`
   `d9289f3`). The previous cycle, api-review, is **parked**: `aidlc-docs/archive/api-review/PARKED.md`
   (`feat/account-app` held, not released).
-- **Current Stage**: INCEPTION -- Requirements Analysis, `aidlc-docs/inception/requirements/requirements.md` written;
-  **waiting for the user's approval** (User Stories proposed as skipped; next: Workflow Planning).
+- **Current Stage**: INCEPTION -- Workflow Planning, `aidlc-docs/inception/plans/execution-plan.md` written; **waiting
+  for the user's approval** (next: Functional Design of U1 `tour-seen-api`). Requirements approved 2026-10-21.
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory
   `aidlc-docs/inception/inventory/onboarding-tour-inventory.md` (on `feat/account-app` `4d62630`).
@@ -20,18 +20,27 @@
 
   **Resume here (2026-10-21):**
   1. `git ls-remote origin main feat/account-app`; ask what was merged since.
-  2. On approval: Workflow Planning (`plans/execution-plan.md`). Decided: released together with `feat/account-app`
-     (D12), the api part first from `main`; NFR-02 (the promotion must not break today's production app) drives OI-1.
+  2. On approval: Functional Design U1 (`construction/tour-seen-api/functional-design/`), NFR Design (both units),
+     Functional Design U2 with the five step texts for the user's review. OI-1 is settled: "seen" has its own read and
+     save (the profile read's schema is strict; changing it would break today's production app).
 
 ## Stage Progress
 ### INCEPTION PHASE
 - [x] Workspace Detection
 - [x] Reverse Engineering (targeted inventory)
-- [ ] Requirements Analysis (`requirements.md` written; awaiting approval)
-- [ ] User Stories (proposed: skip)
-- [ ] Workflow Planning
-- [ ] Application Design
-- [ ] Units Generation
+- [x] Requirements Analysis (approved 2026-10-21)
+- [x] User Stories -- SKIP
+- [ ] Workflow Planning (`plans/execution-plan.md`; awaiting approval)
+- [ ] Application Design -- SKIP
+- [ ] Units Generation -- SKIP (U1 `tour-seen-api`, U2 `tour-app` fixed in the plan)
+
+### CONSTRUCTION PHASE
+- [ ] Functional Design -- EXECUTE (U1, U2)
+- [ ] NFR Requirements -- SKIP (NFR-01..10 in the requirements)
+- [ ] NFR Design -- EXECUTE (one document)
+- [ ] Infrastructure Design -- SKIP
+- [ ] Code Generation -- EXECUTE (U1, U2)
+- [ ] Build and Test -- EXECUTE (U1, U2)
 
 ## Previous cycles (archived, read-only)
 
