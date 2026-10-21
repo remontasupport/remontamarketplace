@@ -38,7 +38,6 @@ export type ProfilePreviewData = {
     religion: any;
     interests: any;
     workPreferences: any;
-    bankAccount: any;
     jobHistory: any;
     education: any;
     lgbtqiaSupport: boolean | null;
@@ -81,7 +80,6 @@ export async function fetchProfileByUserId(userId: string): Promise<ProfilePrevi
             religion: true,
             interests: true,
             workPreferences: true,
-            bankAccount: true,
             lgbtqiaSupport: true,
             uniqueService: true,
             funFact: true,
@@ -152,7 +150,8 @@ export async function fetchProfileByUserId(userId: string): Promise<ProfilePrevi
       services: servicesGrouped,
       qualifications: workerProfile.verificationRequirements || [],
       // W1 P5 — the four promoted fields come from their tables; everything
-      // else on the row passes through untouched.
+      // else on the row passes through untouched. The bank account is never selected: this feeds the public share
+      // link (security fix H1, 2026-10-21).
       additionalInfo: workerProfile.workerAdditionalInfo
         ? {
             ...workerProfile.workerAdditionalInfo,
