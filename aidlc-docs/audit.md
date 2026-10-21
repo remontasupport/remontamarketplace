@@ -4493,3 +4493,33 @@ State filter's api change cannot ship alone.
 The order held (api -> staging -> prod promotion -> app). Not recorded at the time: the preview checklist run, and the
 rollback rows in CLAUDE.md before the promotion (re-recorded now, api row; the Vercel rows need the new deployment ids).
 `feat/account-app` stays held.
+
+## 2026-10-21 -- Rollback-row branch; merge question
+
+**User input (verbatim):** "If I merge it now, will the new sidebar navigation will be deploy also?"
+
+**Answered:** no. `docs/rollback-rows-2026-10-21` differs from `main` by one commit (one line of CLAUDE.md). The new
+sidebar is on `feat/account-app` (held), not in `main`. A merge still triggers Vercel production builds of the same code.
+
+## 2026-10-21 -- api-review parked; cycle onboarding-tour started
+
+**User input (verbatim):** "I am going to start a new AI DLC as I am going to create a new feature, what do you recommend? update the current ai dlc? or create a new one?"
+**User input (verbatim):** "This feature is a quick tour for the app, for example if the worker is first time signed in to the account, the My profile will be highlighted, then user presses Next, then highlighted the Services, then user presses Next then highlighted the Compliance and so on. Basically just a tour how to complete the profile"
+**User input (verbatim):** "Yes agree"
+
+**Recommended and agreed:** a new cycle; api-review parked like worker-profile-api was. The tour points at the new
+worker menu (`WORKER_MENU`), which exists only on `feat/account-app`, so its code branches from there and ships with
+or after it.
+
+**Done:**
+- `aidlc/api-review` `d9289f3`: `inception/review/` moved to `archive/api-review/inception/review/`; `PARKED.md`
+  (released: api #61-#85 on prod `b8fe2eb`, the State filter #86; open: `feat/account-app` and its release steps).
+- `aidlc/onboarding-tour` (from `d9289f3`): `aidlc-state.md` points at the new cycle; the cycle table lists api-review
+  as parked; worker-profile-api's stale Stage Progress and Execution Plan Summary moved from the state file to its
+  `PARKED.md`.
+- Workspace detection: brownfield, layout unchanged.
+- Targeted inventory: `inception/inventory/onboarding-tour-inventory.md` (the menu declaration, the sidebar and the
+  mobile drawer, the landing page and its completion reminder, no "seen" flag or tour library today, release coupling).
+- Requirements Analysis: depth standard (new feature, one component plus perhaps one api field; simple to moderate).
+  `inception/requirements/requirement-verification-questions.md`: 13 questions plus the three extension opt-ins.
+  Waiting for the answers.
