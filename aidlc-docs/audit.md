@@ -5038,3 +5038,11 @@ callers; scripts and docs for references. Groups A 40, B 22, C 7, D 21, E 6.
 **Done:** `chore/remove-unused-files` `e4bb098`: 98 files deleted (2 more orphaned by the routes), baselines tightened,
 CLAUDE.md gate numbers; all gates green; pushed; the PR is the user's. Flagged: rotate the Zoho secret once committed in
 the deleted `Zoho_Jobs_To_DB.md` (in git history).
+
+## 2026-10-21 -- Mobile: the My Profile step card centred
+
+**User input (verbatim):** "Hey a quick fix on the mobile view, can you make sure the cards on every steps are at the centered, currently it is on top nearly on the nav headers, fix it"
+**Asked (which cards); user's choice:** "My Profile page cards".
+**Done:** `fix/profile-card-centered-mobile` from `main`: `.profile-step { margin-top: auto; margin-bottom: auto }` in the
+768 px media query of `dashboard.css`, the class on `ProfileShell`'s wrapper (auto margins in the scrolling flex column:
+short cards centred, long forms top-aligned and scrollable). Lint clean; pushed; the user's PR.
