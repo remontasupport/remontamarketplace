@@ -25,15 +25,15 @@ Read on `feat/account-app` for this plan:
 
 ## Plan
 
-- [ ] 1. Component tree and where each piece lives (glue in `features/onboarding-tour/`, presentational parts in
+- [x] 1. Component tree and where each piece lives (glue in `features/onboarding-tour/`, presentational parts in
   `components/ui/tour/`, the step list next to `WORKER_MENU`)
-- [ ] 2. The state machine: states, events, the save rule (P8)
-- [ ] 3. The read with the 3 s deadline and the save with one retry (P1), the impersonation rule (P2)
-- [ ] 4. The welcome card and the step card: layout, position, focus, keyboard -- Q2, Q4
-- [ ] 5. The help button -- Q3
-- [ ] 6. Phone behaviour: the drawer, the card's position
-- [ ] 7. The step texts -- Q1
-- [ ] 8. Artifacts: `construction/tour-app/functional-design/{business-logic-model,business-rules,domain-entities,frontend-components}.md`
+- [x] 2. The state machine: states, events, the save rule (P8)
+- [x] 3. The read with the 3 s deadline and the save with one retry (P1), the impersonation rule (P2)
+- [x] 4. The welcome card and the step card: layout, position, focus, keyboard -- Q2, Q4
+- [x] 5. The help button -- Q3
+- [x] 6. Phone behaviour: the drawer, the card's position
+- [x] 7. The step texts -- Q1
+- [x] 8. Artifacts: `construction/tour-app/functional-design/{business-logic-model,business-rules,domain-entities,frontend-components}.md`
 
 ## Questions
 
@@ -72,7 +72,7 @@ B) Use them with the changes I write below
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 2
 What should the welcome card look like?
@@ -83,7 +83,7 @@ B) A small card in the bottom-right corner; the dashboard stays undimmed until S
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 3
 The help button in the header, to the left of the phone number:
@@ -97,7 +97,7 @@ C) **?** and "Take the tour" on a computer, the **?** alone on a phone
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 4
 Where the step card sits next to the highlighted item:
@@ -109,4 +109,4 @@ B) Always at the bottom of the screen, on a computer too
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a

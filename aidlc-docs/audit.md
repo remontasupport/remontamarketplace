@@ -4652,3 +4652,21 @@ Log Out; the checklist is `ul.completion-checklist`; `workerApi`'s `rateLimited`
 anchors from the menu ids), OI-5 (the tour inside `DashboardLayout`), OI-6 (mounted for WORKER only, a lazy chunk),
 replay via `/dashboard/worker?tour=start`; 8 steps; Q1 the draft step texts (D10), Q2 the welcome card, Q3 the help
 button, Q4 the step card's position. Waiting for the answers.
+
+## 2026-10-21 -- U2 tour-app functional design written
+
+**User input (verbatim):** "answered"
+
+**Answers in `construction/plans/tour-app-functional-design-plan.md`:** Q1 a (the step texts as drafted) · Q2 a (the
+welcome card centred over the dimmed dashboard) · Q3 a (a round ? icon, "Take the tour" on hover and for screen
+readers) · Q4 a (the step card right of the item on a computer, at the bottom of the screen on a phone). The proposed
+design (OI-4..OI-6, replay via `?tour=start`) stands: no objection.
+
+**Found:** the sidebar's phone breakpoint is 768 px, and the drawer sits at z-index 1000 (`app/styles/dashboard.css`).
+
+**Written:** `construction/tour-app/functional-design/` -- `domain-entities.md` (E1 the step declaration with the
+approved texts, E2 the state, E3 the seen value, E4 the anchors), `business-logic-model.md` (L1 the reducer table,
+L2 the read, L3 the save with its retry, L4 start/replay, L5 showing a step), `business-rules.md` (TR-1..TR-14),
+`frontend-components.md` (hierarchy, new and changed files, flows, tests).
+
+**Approval prompt (2026-10-21):** U2 functional design presented; next Code Generation of U1 `tour-seen-api`.
