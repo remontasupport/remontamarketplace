@@ -59,3 +59,28 @@ Staging deploys on the merge (`deploy-api`). With a staging worker's token (`doc
 6. Reset the staging worker (`UPDATE worker_profiles SET "tourSeenAt" = NULL ...`) for U2's preview.
 
 Then the promotion (later, on the user's word): deploy-api, stage=prod, imageTag = the full sha of this PR's merge.
+
+## Merged and on staging (2026-10-21)
+
+- **PR #88** merged by the user: `main` `f00a3cb85ba22939f9d6cebcf4e36509d4cb28d9`. CI on `d25c9ce`: all 13 checks
+  green (API Quality Node 20 and 22, App, Web, Supply chain, CodeQL, Semgrep, Vercel).
+- **Staging:** revision `remonta-api-staging-00054-f7t` = image `api:f00a3cb...`, 100 % traffic (02:13Z).
+- **Checklist (§6.2), 02:14Z**, tokens minted with the staging secret (never printed), the staging worker
+  `cmm7aoivq002sjo04iwn6d8km` named by the user:
+
+| # | Check | Result |
+|---|---|---|
+| 1 | `/v1/health` | 200 |
+| 2 | `GET /v1/worker/tour` without a token | 401 |
+| 3 | read / save with an admin token | 403 / 403 |
+| 4 | read for a worker id with no profile | 404 (the new column is readable) |
+| 5 | read for the staging worker | 200 `{"seenAt":null}`, `cache-control: no-store` |
+| 6 | save while impersonating | 403 with the tour's reason; nothing written |
+| 7 | first save, second save 1.5 s later | 200 `2026-10-21T02:14:05.972Z`, then the same time |
+| 8 | read after | the first time, `no-store` |
+| 9 | `audit_logs` | two `PROFILE_UPDATE` rows, section `putTourSeen` (02:14:05Z, 02:14:07Z); none for the refused one. The script's first query missed them: `createdAt` has no time zone and was compared with this machine's UTC+8 clock; re-read with the database's clock |
+| 10 | reset | `tourSeenAt` null again for the U2 preview |
+
+- **Not run by Claude:** today's production app against staging in a browser (NFR-02): the user, on any open PR
+  preview (they use staging): a worker's dashboard and a profile page load.
+- **Promotion to production:** not done; later, on the user's word, with the full sha `f00a3cb85ba22939f9d6cebcf4e36509d4cb28d9`.

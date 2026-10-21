@@ -4699,3 +4699,16 @@ staging checklist: `construction/tour-seen-api/code/U1-summary.md`.
 
 **Next, by the user:** open the PR (compare `main...feat%2Ftour-seen-api`), CI green (API Quality runs the PostGIS
 tests), merge ("Merge pull request"); then the staging checklist.
+
+## 2026-10-21 -- U1 merged; staging checklist
+
+**User input (verbatim):** "merged"
+**User input (verbatim):** "cmm7aoivq002sjo04iwn6d8km" (the staging worker for the checklist)
+
+**Found:** PR #88 merged, `main` `f00a3cb`; CI 13/13 green; staging revision `remonta-api-staging-00054-f7t` on image
+`f00a3cb...`. A read-only lookup of internal-email workers on `rehearse-w1` was refused by the permission layer (it
+reads people's emails); not worked around; the user named a staging worker instead.
+
+**Staging checklist:** 13/13 (one re-read of the audit rows with the database's clock; details in
+`construction/tour-seen-api/code/U1-summary.md`). The worker reset to null. Open: the browser check of today's
+production app against staging (the user). The production promotion waits for the user.
