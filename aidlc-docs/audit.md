@@ -4670,3 +4670,18 @@ L2 the read, L3 the save with its retry, L4 start/replay, L5 showing a step), `b
 `frontend-components.md` (hierarchy, new and changed files, flows, tests).
 
 **Approval prompt (2026-10-21):** U2 functional design presented; next Code Generation of U1 `tour-seen-api`.
+
+## 2026-10-21 -- U2 functional design approved; U1 code generation plan
+
+**User input (verbatim):** "continue to Next Stage"
+
+**Status:** U2 `tour-app` functional design approved. Functional Design complete for both units.
+
+**Found:** `main` is now `b4d48c1` (#87, the CLAUDE.md rollback row, merged by the user).
+
+**Written:** `construction/plans/tour-seen-api-code-generation-plan.md` (11 steps: branch from `b4d48c1`; the
+migration with a `down.sql` tested on the developer's Neon branch; the contract entries and a no-cache read option;
+contract tests; `sections/tour.ts` and two handlers with the impersonation refusal; unit, HTTP and PostGIS tests with
+the P8 properties; the docs; the gates; push for a PR the user opens; construction notes).
+
+**Approval prompt (2026-10-21):** U1 code generation plan presented for approval.
