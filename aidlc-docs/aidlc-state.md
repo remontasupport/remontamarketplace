@@ -29,7 +29,10 @@
   policy, 2026-10-21). **C1 complete.** Open: the rollback-row PR `docs/rollback-rows-2026-10-21-completion`;
   then `feat/account-app`'s release, then C2 (Functional Design first). **Before the release (user, 2026-10-21):
   small UI changes on `feat/account-app`**, one at a time: 1) the tour's ? hidden on phones (`c9da208`);
-  2) no Preview profile on the steps, no role under the first name. The dev branch has the tour migration now. 
+  2) no Preview profile on the steps, no role under the first name. The dev branch has the tour migration now.
+  3) "How far you travel" removed: **api PR `feat/service-area-radius-optional` (`b7b5b4b`) first** -> merge -> staging
+  -> promote, then the app (`feat/account-app` `b6cb225`, which has main + the api change merged in). Until the api PR
+  is on staging, the preview's Service Area save answers 400. 
   C2 waits for the `feat/account-app` release (CD8).
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory

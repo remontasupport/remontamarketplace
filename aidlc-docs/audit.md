@@ -4978,3 +4978,17 @@ started on the dev branch.
 **Done (read as "no need to run local"):** `ProfileShell.tsx` loses "Preview profile" (the step header only for Review
 application during a job application); `Sidebar.tsx` loses the role line under the first name. App gate exit 0 (73 / 289
 known, 286 tests). `feat/account-app`, pushed.
+
+## 2026-10-21 -- "How far you travel" removed
+
+**User input (verbatim):** "One last thing before we release everything, on ther Services section, there is a field, How far you travel, can you explain to me what is the purpose of that field? will that affect the searching to the admin dashboard?"
+**Answered (from the code):** stored on the HOME `worker_locations` row (`travelRadiusKm`, default 50); no search reads it
+(the admin's "Within N km" is the admin's own distance from the chosen suburb, `ST_DWithin`; the client search uses the
+legacy columns); the admin api returns it but the dashboard does not show it; completion counts the suburb only.
+**User input (verbatim):** "remove it"
+**Asked (the api's save requires a distance). User's choice:** "Api first, keep values (Recommended)".
+**Done:** `feat/service-area-radius-optional` `b7b5b4b` from `main` (`travelRadiusKm` optional in `serviceAreaInputSchema`;
+`writeServiceArea` keeps the stored distance, 50 km for a first placement; a PostGIS test; docs; gates 108 / 878 green).
+Merged into `feat/account-app` (`ca55155`, which also brings main's C1 commits) and the Service Area definition loses
+the field (`b6cb225`); gates on `feat/account-app`: contract 109, api 879, app 73 / 289 known and 286 tests. **Order:**
+the api PR merged (staging) before the preview's Service Area works; promoted before the `feat/account-app` release.
