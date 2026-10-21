@@ -158,6 +158,7 @@ describe('R3 the addresses', () => {
     expect(homeAddressInputSchema.parse({ localityId: 42 })).toEqual({ streetLine: null, localityId: 42 })
     bad(homeAddressInputSchema, { streetLine: '12 Example St' }, 'localityId')
     ok(serviceAreaInputSchema, { localityId: 1, travelRadiusKm: 500 })
+    ok(serviceAreaInputSchema, { localityId: 1 }) // the distance is optional (2026-10-21): the stored one is kept
     bad(serviceAreaInputSchema, { localityId: 1, travelRadiusKm: 0 }, 'travelRadiusKm')
     bad(serviceAreaInputSchema, { localityId: 1, travelRadiusKm: 501 }, 'travelRadiusKm')
     bad(serviceAreaInputSchema, { localityId: 1, travelRadiusKm: 12.5 }, 'travelRadiusKm')
