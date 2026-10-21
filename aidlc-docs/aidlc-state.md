@@ -20,8 +20,9 @@
 
   **New area in this cycle (user, 2026-10-21): profile completion.** Audit written
   (`inception/review/profile-completion-audit.md`, F1-F9, I1-I6); answered; requirements written
-  (`inception/requirements/completion-requirements.md`; units C1 `completion-api`, C2 `completion-app`): **waiting
-  for the user's approval**. C2 waits for the `feat/account-app` release (CD8).
+  (`inception/requirements/completion-requirements.md`, approved 2026-10-21); execution plan
+  (`inception/plans/completion-execution-plan.md`) **waiting for the user's approval**; next C1 Functional Design.
+  C2 waits for the `feat/account-app` release (CD8).
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory
   `aidlc-docs/inception/inventory/onboarding-tour-inventory.md` (on `feat/account-app` `4d62630`).

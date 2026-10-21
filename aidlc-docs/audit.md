@@ -4803,3 +4803,18 @@ Profile" (the Address page optional; the Service Area counts under Services).
 **Written:** `inception/requirements/completion-requirements.md` (CD1-CD8; FR-CMP-01..07, FR-SCR-01..05,
 FR-STO-01..05; NFR-C1..C5; units C1 `completion-api`, C2 `completion-app`; OC-1..OC-4). **Approval prompt
 (2026-10-21):** presented for review.
+
+## 2026-10-21 -- Profile completion: requirements approved; workflow planned
+
+**User input (verbatim):** "approved and continue"
+
+**Status:** completion requirements approved; User Stories skipped.
+
+**Found while planning:** `platform/jobs/scheduler.ts` (leased jobs with a watermark) and `onboarding-reconciler`
+(every 5 min over changed rows, `verification_requirements.reviewedAt` included) -- the pattern for recomputing the
+stored flags after admin document actions without changing the Next.js routes (OC-1, to confirm in design).
+
+**Written:** `inception/plans/completion-execution-plan.md` (risk Medium; execute Functional Design C1/C2, NFR Design
+C1, Code Generation and Build and Test; skip the rest; C1 `feat/completion-api` from `main`, C2 `feat/completion-app`
+after the `feat/account-app` release; the stored flags' meaning switched by a setting at C2's release).
+**Approval prompt (2026-10-21):** presented.
