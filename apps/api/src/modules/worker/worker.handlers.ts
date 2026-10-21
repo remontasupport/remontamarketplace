@@ -22,6 +22,7 @@ import { ownServiceDocument, writeServiceRegistration, writeServices } from './a
 import { complianceAlreadyRecorded, complianceTargetOf, ownComplianceBlobUrl, recordComplianceDocument, removeComplianceDocument, writeCitizenship } from './application/compliance-documents'
 import { alreadyRecorded, confirmTargetOf, createDocumentTicket, deleteDocumentFiles, DOCUMENT_UPLOAD_INCOMPLETE, linkFor, recordDocument, removeDocument, stageDocument, type DocumentFile } from './application/service-documents'
 import { writeAbn, writeSignedEngagement, writeBio, writeDateOfBirth, writeGender, writeName, writeVehicle } from './application/sections/profile'
+import { assertNotImpersonating, markTourSeen, readTour } from './application/sections/tour'
 
 export interface WorkerModuleDeps {
   db: Db
@@ -252,5 +253,17 @@ export function workerHandlers(deps: WorkerModuleDeps) {
     },
 
     putBankAccount: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putBankAccount', completion: false }, (tx, p) => writeBankAccount(tx, p.id, req.body)) }),
+
+    // onboarding-tour U1: the tour's "seen" time (BR-1..BR-10). The read is never cached (the contract sets no private cache).
+    getTour: async (_req, ctx) => {
+      const started = Date.now()
+      const body = await readTour(deps.db, ctx.principal!, ctx.log)
+      ctx.log.info({ entry: 'worker.getTour', durationMs: Date.now() - started, userId: ctx.principal!.userId, seen: body.seenAt !== null }, 'worker tour read')
+      return { status: 200, body }
+    },
+    putTourSeen: async (_req, ctx) => {
+      assertNotImpersonating(ctx.principal!)
+      return { status: 200, body: await replaceSection(s, ctx, { section: 'putTourSeen', completion: false }, (tx, p) => markTourSeen(tx, p.id, deps.clock())) }
+    },
   })
 }

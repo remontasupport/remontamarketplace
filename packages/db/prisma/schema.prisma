@@ -281,6 +281,10 @@ model WorkerProfile {
   consentWordingVersion String?
   zohoLeadId            String?
 
+  // onboarding-tour U1 (E1) — when the worker first ended the dashboard tour or chose "Not now".
+  // Null: not seen yet (every worker before the tour). Written only by PUT /v1/worker/tour/seen.
+  tourSeenAt DateTime?
+
   // worker-profile-api U2 (D8, FR-PI-04) — the private home address: a street line and a
   // suburb of ours. Never a client-facing column; never geocoded; never written to the
   // legacy location columns above (those stay the service area's).
