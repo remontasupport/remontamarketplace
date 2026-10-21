@@ -4749,3 +4749,16 @@ app against staging (U1, NFR-02). The preview URL answers 302 (Vercel's login fo
 **Files Generated:** `construction/build-and-test/`: build-instructions.md, unit-test-instructions.md,
 integration-test-instructions.md, performance-test-instructions.md (not run, by decision), e2e-test-instructions.md,
 build-and-test-summary.md.
+
+## 2026-10-21 -- U2 preview checks (1-7) and the merge into feat/account-app
+
+**User input (verbatim):** "I didn't see the preview link"
+**Answered:** the deployment URL (`remonta-drrvbdypu-remontas-projects.vercel.app`), the branch alias, the Vercel page;
+both answer Vercel's SSO first (protected previews); no PR, so no Vercel comment.
+
+**User input (verbatim):** "great. It works now, let us continue"
+**Asked (which checks ran; what next). User's answers:** checks "1-4 card, steps, saves", "5 Replay with ?", "6-7 Phone
+and keyboard"; next "Merge into account-app (Recommended)".
+
+**Done:** `feat/account-app` fast-forwarded to `ffad332` and pushed. Open: checks 8-10, carried to `feat/account-app`'s
+preview checklist; the NFR-02 browser check.

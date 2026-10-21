@@ -53,3 +53,12 @@ worker `cmm7aoivq002sjo04iwn6d8km` (its `tourSeenAt` reset to null on 2026-10-21
 10. With the api blocked (DevTools → Network → block the staging api's domain), the home loads and works, no card.
 
 Then the user's go to merge `feat/onboarding-tour` into `feat/account-app`.
+
+## Preview checks and the merge (2026-10-21)
+
+- **Run by the user on the `ffad332` preview** (`remonta-drrvbdypu-remontas-projects.vercel.app`, staging): checks
+  1-4 (the card, the five steps, the saves), 5 (replay with ?), 6-7 (phone width, keyboard) -- working.
+- **Not yet run:** 8 (no ? for a client or coordinator), 9 (an impersonating admin), 10 (the api blocked). Carried to
+  `feat/account-app`'s preview checklist.
+- **Merged:** `feat/onboarding-tour` fast-forwarded into `feat/account-app` at the user's word: `feat/account-app` =
+  `ffad332`, pushed. `../remonta-pr57` back on `feat/account-app`.
