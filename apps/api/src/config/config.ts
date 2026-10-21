@@ -48,6 +48,13 @@ const envSchema = z.object({
   /** apps/app's origin, for the links in emails (/login, /forgot-password). */
   APP_BASE_URL: z.string().refine(isExactOrigin, 'must be an origin like https://app.example.com (http only for localhost), no path, no wildcard'),
   RECONCILER_INTERVAL_MS: z.coerce.number().int().min(10_000).max(3_600_000).default(300_000),
+  /**
+   * onboarding-tour C1 (E6, CP1): the meaning of the stored completion flags. `legacy` = today's four flags; `groups` =
+   * the three checklist groups. Switched on a stage by a reviewed one-line change of infra/lib/stages.ts, never by hand.
+   */
+  COMPLETION_MODEL: z.enum(['legacy', 'groups']).default('legacy'),
+  /** The completion-sync job's period (CR-11, Q2 A): five minutes. */
+  COMPLETION_SYNC_INTERVAL_MS: z.coerce.number().int().min(60_000).max(3_600_000).default(300_000),
   /** The CRM notification's webhook (deferred, user 2026-10-01): optional until that outbox handler exists. */
   N8N_REGISTRATION_WEBHOOK_URL: httpsUrl.optional(),
 

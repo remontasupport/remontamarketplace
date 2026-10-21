@@ -75,6 +75,9 @@ const common = {
   DB_POOL_TIMEOUT_S: '5',
   OUTBOX_POLL_MS: '2000',
   RECONCILER_INTERVAL_MS: '300000',
+  // onboarding-tour C1: the stored completion flags keep today's meaning until C2's release switches prod to 'groups'.
+  COMPLETION_MODEL: 'legacy',
+  COMPLETION_SYNC_INTERVAL_MS: '300000',
   MAX_EVENT_LOOP_DELAY_MS: '200',
 } as const
 
