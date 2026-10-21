@@ -4610,3 +4610,14 @@ E2 `TourView`, E3 the audit row), `business-rules.md` (BR-1..BR-9 and the error 
 Found: `workerRead()` always sets a 60 s private cache, so the read needs an option without it (code generation).
 
 **Approval prompt (2026-10-21):** U1 functional design presented; next NFR Design (both units).
+
+## 2026-10-21 -- U1 functional design approved; NFR design plan (both units)
+
+**User input (verbatim):** "approved"
+
+**Status:** U1 `tour-seen-api` functional design approved.
+
+**Written:** `construction/plans/onboarding-tour-nfr-design-plan.md` (8 steps; Q1 a retry of a failed save, Q2 how
+long the home waits for the read, Q3 admin impersonation sessions (impersonation exists in the app:
+`AdminDashboardClient.tsx`, `AccountSettingsPanel.tsx`; the api carries `impersonatorId`), Q4 a load test before the
+promotion). Artifacts will go to `construction/shared/nfr-design/`. Waiting for the answers.
