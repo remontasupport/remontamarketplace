@@ -16,10 +16,10 @@ const item = (rows: ProfileRows, id: string) => completionItems(rows).find((i) =
 const group = (rows: ProfileRows, id: string) => completionView(rows).groups.find((g) => g.id === id)!
 
 describe('the My Profile table (E2)', () => {
-  it('is the sidebar\'s 18 slugs in its order, 11 required', () => {
+  it('is the sidebar\'s 18 slugs in its order, 10 required (Language optional, user 2026-10-21)', () => {
     expect(MY_PROFILE_PAGES.map((p) => p.slug)).toEqual(['name', 'photo', 'bio', 'address', 'date-of-birth', 'gender', 'languages', 'experience', 'work-history', 'education', 'preferred-hours', 'vehicle', 'cultural-background', 'religion', 'interests', 'about-me', 'preferences', 'personality'])
-    expect(MY_PROFILE_PAGES.filter((p) => !p.required).map((p) => p.slug)).toEqual(['address', 'cultural-background', 'religion', 'interests', 'about-me', 'preferences', 'personality'])
-    expect(REQUIRED_MY_PROFILE_PAGES).toBe(11)
+    expect(MY_PROFILE_PAGES.filter((p) => !p.required).map((p) => p.slug)).toEqual(['address', 'languages', 'cultural-background', 'religion', 'interests', 'about-me', 'preferences', 'personality'])
+    expect(REQUIRED_MY_PROFILE_PAGES).toBe(10)
   })
   const cases: [string, Partial<P>, boolean][] = [
     ['name', { lastName: '  ' }, false],
@@ -49,10 +49,10 @@ describe('the My Profile table (E2)', () => {
 })
 
 describe('the groups (E3, E4, CR-2..CR-7)', () => {
-  it('the sample: education missing -> 10 of 11, 91 %, My Profile incomplete with education next', () => {
+  it('the sample: education missing -> 9 of 10, 90 %, My Profile incomplete with education next', () => {
     const v = completionView(sampleRows())
-    expect(v.percent).toBe(91)
-    expect(v.groups[0]).toEqual({ id: 'my-profile', complete: false, done: 10, total: 11, firstUnfinished: 'education' })
+    expect(v.percent).toBe(90)
+    expect(v.groups[0]).toEqual({ id: 'my-profile', complete: false, done: 9, total: 10, firstUnfinished: 'education' })
   })
   it('optional pages never hold My Profile back; a filled education completes it', () => {
     const rows = sampleRows({ educationEntries: [{ id: 'e1', qualification: 'Cert III', institution: 'TAFE', startMonth: 'January', startYear: 2019, endMonth: 'December', endYear: 2019, currentlyStudying: false } as never], workerAdditionalInfo: info({ religion: [], culturalBackground: [], interests: [], workPreferences: [], uniqueService: [], personality: null }) })
@@ -98,9 +98,9 @@ describe('the on-purpose differences from today (business-rules.md)', () => {
     const rows = sampleRows({ introduction: 'Short bio.' })
     expect(item(rows, 'bio').done).toBe(false)
   })
-  it('the percent is over the 11 pages, not today\'s 13 sections', () => {
+  it('the percent is over the 10 required pages, not today\'s 13 sections', () => {
     expect(completionOf(completionInputOf(sampleRows())).percent).toBe(92)
-    expect(completionView(sampleRows()).percent).toBe(91)
+    expect(completionView(sampleRows()).percent).toBe(90)
   })
 })
 
@@ -138,12 +138,12 @@ const rowsArb = fc
   })
 
 describe('properties', () => {
-  it('the percent = the done required My Profile pages / 11; My Profile complete <=> 100; profile complete <=> the three groups', () => {
+  it('the percent = the done required My Profile pages / 10; My Profile complete <=> 100; profile complete <=> the three groups', () => {
     fc.assert(
       fc.property(rowsArb, (rows) => {
         const v = completionView(rows)
         const doneRequired = v.items.filter((i) => i.group === 'my-profile' && i.required && i.done).length
-        expect(v.percent).toBe(Math.round((100 * doneRequired) / 11))
+        expect(v.percent).toBe(Math.round((100 * doneRequired) / 10))
         expect(v.groups[0]!.complete).toBe(v.percent === 100)
         expect(v.profileCompleted).toBe(v.groups.every((g) => g.complete))
         for (const g of v.groups) expect(g.firstUnfinished === null).toBe(g.complete)
