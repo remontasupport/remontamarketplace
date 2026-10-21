@@ -4945,3 +4945,25 @@ first run: full pass 1,878 checked, 8 changed (stale stored flags corrected), 0 
 **Done:** the log metric `remonta-api-completion-sync-failed` created (the bootstrap's definition); `apply-alerts.sh prod
 --dry-run` showed 1 to create, 7 unchanged; `--only completion-sync-failing` created policy
 `17950320262560625485`, enabled, notifying support@. C1 complete on production.
+
+## 2026-10-21 -- Before the release: database question; mobile changes start
+
+**User input (verbatim):** "is the profile completion tracking done?"
+**Answered:** no; C1 (backend) is live, C2 (the screens, the switch to groups, the backfill) not started, waiting for
+the `feat/account-app` release.
+
+**User input (verbatim):** "what will change if we release it?"
+**Answered (from `git log/diff origin/main..origin/feat/account-app`):** 69 commits, 190 files, app only (the api's
+runtime is already on production; `packages/api-contract/messages.ts` wording only; no `packages/db` change): the new
+sidebar and My Profile on the api, Services/Compliance/Account on the api (a password change signs out other
+sessions), the dashboard home, the tour, the old setup pages retired.
+
+**User input (verbatim):** "I think I am ready to release now, but I noticed that we use another database connection during the test, how can we make sure that the changes will apply to the production which is authentication, or should we migrate to the dev connection? and rename it"
+**Answered:** keep production on its own database; tests run on copies on purpose; code moves by merge (app) and
+promotion (api), schema by the promotion's migrations; this release has no database change. Offered: a read-only check
+of production's `_prisma_migrations` against the repository; an optional rename of the local variables. No answer yet.
+
+**User input (verbatim):** "Ok, before we release all of these. I want to make a small changes to the front-end particularly to the mobile views, let us start with the nav bar, can you hide the question mark on the web view"
+**Asked (which screen size). User's choice:** "Hide on phones".
+**Done:** `.tour-help-button { display: none }` inside the 768 px media query of `dashboard.css` (unlayered, so it
+beats the Tailwind `flex` utility); `feat/account-app` `c9da208`, pushed.
