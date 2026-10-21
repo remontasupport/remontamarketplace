@@ -49,24 +49,20 @@ export default function ProfileShell({ slug, children }: { slug?: string; childr
             Applying for: <strong>{apply.applyJobTitle}</strong>. Update your profile, review it and press Apply Now when ready.
           </div>
         )}
-        <div className="flex flex-wrap items-center justify-end gap-3 mb-4">
-          <div className="flex items-center gap-2">
-            {apply && (
-              <button
-                type="button"
-                disabled={!canApply}
-                title={canApply ? undefined : `Still to complete: ${missing.join(", ")}`}
-                onClick={() => router.push(`/dashboard/worker?apply=${apply.applyJobId}`)}
-                className="px-4 py-2 rounded-lg text-sm font-poppins font-medium bg-[#0C1628] hover:bg-[#1a2740] text-white disabled:bg-gray-100 disabled:text-gray-400"
-              >
-                Review application
-              </button>
-            )}
-            <button type="button" onClick={() => router.push("/dashboard/worker/profile-preview")} className="px-4 py-2 rounded-lg text-sm font-poppins font-medium border border-gray-300 bg-white hover:bg-gray-50">
-              Preview profile
+        {/* No "Preview profile" on the steps (user, 2026-10-21); the dashboard home keeps its View Profile link. */}
+        {apply && (
+          <div className="flex flex-wrap items-center justify-end gap-3 mb-4">
+            <button
+              type="button"
+              disabled={!canApply}
+              title={canApply ? undefined : `Still to complete: ${missing.join(", ")}`}
+              onClick={() => router.push(`/dashboard/worker?apply=${apply.applyJobId}`)}
+              className="px-4 py-2 rounded-lg text-sm font-poppins font-medium bg-[#0C1628] hover:bg-[#1a2740] text-white disabled:bg-gray-100 disabled:text-gray-400"
+            >
+              Review application
             </button>
           </div>
-        </div>
+        )}
         {apply && !canApply && <p className="mb-3 text-xs font-poppins text-amber-700">To apply, complete: {missing.join(", ")}.</p>}
         <div className="rounded-xl border border-gray-200 bg-white p-5 sm:p-6">{children}</div>
         {(prev || next) && (

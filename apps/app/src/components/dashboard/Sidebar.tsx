@@ -145,7 +145,6 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData }: 
   const close = () => onClose?.()
   const photoUrl = profile?.photos.main || profileData?.photo || '/images/profilePlaceHolder.png'
   const displayName = profile?.names.firstName || profileData?.firstName || session?.user?.email?.split('@')[0] || 'Worker'
-  const displayRole = profile?.displayRole || profileData?.role || 'Support Worker'
 
   return (
     <aside className={`dashboard-sidebar ${isMobileOpen ? 'mobile-open' : ''}`}>
@@ -161,8 +160,8 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData }: 
           <Image src={photoUrl} alt={displayName} width={64} height={64} className="sidebar-profile-img" unoptimized={!photoUrl.startsWith('/')} />
         </div>
         <div className="sidebar-profile-info">
+          {/* The first name only: no role line under it (user, 2026-10-21). */}
           <h4 className="sidebar-profile-name">{displayName}</h4>
-          <p className="sidebar-profile-role">{displayRole}</p>
         </div>
       </div>
 
