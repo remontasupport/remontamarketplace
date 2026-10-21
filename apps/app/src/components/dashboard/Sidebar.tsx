@@ -38,6 +38,7 @@ import {
   type MenuLink,
 } from '@/features/navigation/workerMenu'
 import { useWorkerProfile } from '@/features/worker/profile'
+import { tourAnchor } from '@/features/navigation/tourSteps'
 
 const ICONS: Record<MenuIcon, React.ComponentType<{ className?: string }>> = {
   dashboard: HomeIcon,
@@ -176,6 +177,7 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData }: 
                   <li>
                     <Link
                       href={item.href}
+                      {...tourAnchor(item.id)}
                       className={`nav-item ${active ? 'active' : ''}`}
                       onClick={() => {
                         if (item.id === 'dashboard' && pathname !== '/dashboard/worker') setToDashboard(true)
@@ -196,7 +198,7 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData }: 
           const isEditProfile = item.children === 'editProfile'
           return (
             <div key={item.id} className="nav-section">
-              <button type="button" onClick={() => toggle(item.id)} className={`nav-dropdown-header ${active ? 'active' : ''}`} aria-expanded={isOpen}>
+              <button type="button" onClick={() => toggle(item.id)} {...tourAnchor(item.id)} className={`nav-dropdown-header ${active ? 'active' : ''}`} aria-expanded={isOpen}>
                 <div className="nav-dropdown-title">
                   <Icon className="nav-dropdown-badge-icon" />
                   <span>{item.label}</span>

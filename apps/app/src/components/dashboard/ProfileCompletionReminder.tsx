@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { useMemo, useState, useEffect } from 'react'
 import type { SetupProgress } from '@/types/setupProgress'
 import { BRAND_COLORS } from '@/constants'
+import { tourAnchor } from '@/features/navigation/tourSteps'
 
 interface ChecklistItem {
   id: string
@@ -399,7 +400,7 @@ export default function ProfileCompletionReminder({ initialSetupProgress }: Prof
         </div>
       </div>
 
-      <ul className="completion-checklist">
+      <ul className="completion-checklist" {...tourAnchor('checklist')}>
         {checklistItems.map((item) => (
           <li key={item.id} className="checklist-item">
             <div className="checklist-icon">

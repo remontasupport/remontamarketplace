@@ -6,12 +6,15 @@ import Image from 'next/image'
 import { signOut, useSession } from 'next-auth/react'
 import { PhoneIcon, Bars3Icon } from '@heroicons/react/24/outline'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
+import HelpButton from '@/components/ui/tour/HelpButton'
 
 interface SimpleDashboardHeaderProps {
   onMenuToggle?: () => void
+  /** onboarding-tour: given for workers only; shows the ? that replays the tour (FR-REPLAY-01). */
+  onTakeTour?: () => void
 }
 
-export default function SimpleDashboardHeader({ onMenuToggle }: SimpleDashboardHeaderProps) {
+export default function SimpleDashboardHeader({ onMenuToggle, onTakeTour }: SimpleDashboardHeaderProps) {
   const { data: session } = useSession()
   const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
 
@@ -72,6 +75,7 @@ export default function SimpleDashboardHeader({ onMenuToggle }: SimpleDashboardH
 
         {/* Right Side Actions */}
         <div className="simple-header-actions">
+          {onTakeTour && <HelpButton onClick={onTakeTour} />}
           <a href="tel:1300134153" className="phone-number-link">
             <PhoneIcon className="phone-icon" />
             <span>1300 134 153</span>
