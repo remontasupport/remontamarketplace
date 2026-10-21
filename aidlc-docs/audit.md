@@ -4818,3 +4818,17 @@ stored flags after admin document actions without changing the Next.js routes (O
 C1, Code Generation and Build and Test; skip the rest; C1 `feat/completion-api` from `main`, C2 `feat/completion-app`
 after the `feat/account-app` release; the stored flags' meaning switched by a setting at C2's release).
 **Approval prompt (2026-10-21):** presented.
+
+## 2026-10-21 -- Completion execution plan approved; C1 functional design plan
+
+**User input (verbatim):** "approved and continue"
+
+**Status:** completion execution plan approved (incl. the stored flags' meaning switched by a setting at C2).
+
+**Found:** `uploadableDocuments(service, subcategories)` in `domain/service-requirements.ts` (every document a service
+takes, used only to check a confirm) -- OC-2's answer: exposed by the new entry.
+
+**Written:** `construction/plans/completion-api-functional-design-plan.md` (the proposed design: the item
+declaration, the entry's shape and caching, `COMPLETION_MODEL = legacy | groups`, the `completion-sync` job, the
+backfill, the old function as oracle; 8 steps; Q1 the bio length, Q2 how soon the stored flags follow an admin's
+review, Q3 a service with only optional documents). Waiting for the answers.

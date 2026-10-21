@@ -21,7 +21,8 @@
   **New area in this cycle (user, 2026-10-21): profile completion.** Audit written
   (`inception/review/profile-completion-audit.md`, F1-F9, I1-I6); answered; requirements written
   (`inception/requirements/completion-requirements.md`, approved 2026-10-21); execution plan
-  (`inception/plans/completion-execution-plan.md`) **waiting for the user's approval**; next C1 Functional Design.
+  (`inception/plans/completion-execution-plan.md`, approved); C1 Functional Design plan **waiting for the answers**
+  (`construction/plans/completion-api-functional-design-plan.md`, Q1-Q3).
   C2 waits for the `feat/account-app` release (CD8).
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory
