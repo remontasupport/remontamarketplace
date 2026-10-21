@@ -263,6 +263,11 @@ export function fixCasesOf(input: CompletionInput): FixCase[] {
   for (const r of input.requirements) {
     const base = baseType(r.requirementType)
     const ok = COUNTING_STATUSES.has(r.status)
+    // R3.6: today every row whose base type is a training -- a PENDING duplicate, and a SERVICE_QUALIFICATION row
+    // keyed `<Service>:<training id>` too (today's filter is by base type, not category) -- must carry a url, and a
+    // row counts by url not status; the fix counts training rows by status alone, so any such row that is not
+    // (counting with a url) may differ. Checked before the SERVICE_QUALIFICATION branch below, which skips the rest.
+    if (trainingTypes.has(base) && (!ok || !r.documentUrl)) hits.add('trainings-status')
     if (r.documentCategory === 'SERVICE_QUALIFICATION') {
       if (ok !== !!r.documentUrl) hits.add('service-status')
       const title = r.requirementType.split(':')[0]!
@@ -272,9 +277,6 @@ export function fixCasesOf(input: CompletionInput): FixCase[] {
     // R3.5: a row today never checked (composite, contract, code of conduct) is checked now: it can fail the check, or be the one row that makes the check non-empty.
     const newlyChecked = r.requirementType.includes(':') || base === 'contract-of-agreement' || base === 'code-of-conduct'
     if (newlyChecked && (!ok || !oracleChecksSomething)) hits.add('status-compliance')
-    // R3.6: today every training row -- a PENDING duplicate included -- must carry a url, and a row counts by
-    // url not status; the fix counts by status alone, so any training row that is not (counting with a url) may differ.
-    if (trainingTypes.has(base) && (!ok || !r.documentUrl)) hits.add('trainings-status')
   }
   if (input.services.some((s) => s.subcategoryNames.length === 0)) hits.add('no-offerings')
   return [...hits]

@@ -21,8 +21,9 @@ import {
   useComplianceDocuments,
   useUploadComplianceDocument,
   useDeleteComplianceDocument,
-  complianceDocumentsKeys,
 } from "@/hooks/queries/useComplianceDocuments";
+import { saveCitizenship } from "@/features/worker/compliance";
+import { reloadProfileInto } from "@/features/worker/profile";
 import "@/app/styles/requirements-setup.css";
 
 interface StepRightToWorkProps {
@@ -135,25 +136,14 @@ export default function StepRightToWork({
 
     setIsSaving(true);
     try {
-      const response = await fetch("/api/worker/compliance-documents", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          documentType: "right-to-work",
-          metadata: { isCitizen },
-        }),
-      });
+      // PUT /v1/worker/compliance/right-to-work/citizenship (U4a): a citizen needs no document.
+      const result = await saveCitizenship(isCitizen);
 
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(result.error || "Failed to save citizenship status");
+      if (!result.ok) {
+        throw new Error(result.message);
       }
 
-      // Invalidate and refetch to update UI
-      queryClient.invalidateQueries({
-        queryKey: complianceDocumentsKeys.byType("right-to-work"),
-      });
+      await reloadProfileInto(queryClient);
     } catch (error: any) {
       showErrorModal(error.message || "Failed to save. Please try again.", "Save Failed");
     } finally {

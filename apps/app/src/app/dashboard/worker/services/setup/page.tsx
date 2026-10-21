@@ -12,9 +12,12 @@ import { useState, useEffect, useLayoutEffect, useMemo, useRef, Suspense } from 
 import { flushSync } from "react-dom";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
+import { manageServicesHref } from "@/features/worker/manageServicesLink";
 import StepContainer from "@/components/account-setup/shared/StepContainer";
-import { useWorkerProfile, useUpdateProfileStep } from "@/hooks/queries/useWorkerProfile";
+import { useWorkerProfile as useApiProfile } from "@/features/worker/profile";
+import { formOf, saveRegistration } from "@/features/worker/services";
 import { generateServicesSetupSteps, SERVICES_SETUP_STEPS } from "@/config/servicesSetupSteps";
 import { serviceHasQualifications } from "@/config/serviceQualificationRequirements";
 import { getServiceDocumentRequirements } from "@/config/serviceDocumentRequirements";
@@ -23,7 +26,8 @@ import Loader from "@/components/ui/Loader";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 import { useWorkerServices } from "@/hooks/queries/useServiceSubcategories";
 import { useServiceDocuments } from "@/hooks/queries/useServiceDocuments";
-import { saveNursingRegistration, getNursingRegistration, saveTherapeuticRegistration, getTherapeuticRegistration } from "@/services/worker/workerServices.service";
+import { startNavigationProgress } from "@/components/ui/NavigationProgress";
+import { SERVICE_AREA_LINK } from "@/features/navigation/workerMenu";
 
 // Form data interface
 interface FormData {
@@ -60,9 +64,10 @@ function ServicesSetupContent() {
   const stepSlug = searchParams.get("step") || "";
   const viewParam = searchParams.get("view") || ""; // URL-based view state
 
-  // Fetch profile data
-  const { data: profileData, isLoading: isLoadingProfile } = useWorkerProfile(session?.user?.id);
-  const updateProfileMutation = useUpdateProfileStep();
+  // The api's profile read (U3c; the only profile read of this page since api-review): the services, the
+  // registrations and the documents.
+  const { profile: apiProfile, isLoading: isLoadingProfile } = useApiProfile();
+  const serviceNames = useMemo(() => apiProfile?.services.map((s) => s.categoryName) ?? [], [apiProfile]);
 
   // Fetch worker's selected services with SUSPENSE MODE
   // This throws a promise until data loads, preventing component render
@@ -95,8 +100,8 @@ function ServicesSetupContent() {
   const [isFinalSaving, setIsFinalSaving] = useState(false);
 
   // Generate dynamic steps based on selected services
-  const STEPS = profileData?.services && profileData.services.length > 0
-    ? generateServicesSetupSteps(profileData.services)
+  const STEPS = serviceNames.length > 0
+    ? generateServicesSetupSteps(serviceNames)
     : SERVICES_SETUP_STEPS;
 
   // Find current step by slug
@@ -137,62 +142,38 @@ function ServicesSetupContent() {
 
   // Populate form data ONLY on initial load
   useEffect(() => {
-    if (profileData && !hasInitializedFormData.current) {
-      setFormData({
-        qualificationsByService: profileData.qualificationsByService || {},
+    if (apiProfile && !hasInitializedFormData.current) {
+      // The documents' URLs by service and type, from the api's service documents; the registrations are filled by
+      // the effect below.
+      const documentsByService: Record<string, Record<string, string[]>> = {};
+      for (const d of apiProfile.serviceDocuments) {
+        if (!d.url || !d.serviceName) continue;
+        ((documentsByService[d.serviceName] ??= {})[d.requirementType] ??= []).push(d.url);
+      }
+      setFormData((prev) => ({
+        ...prev,
+        qualificationsByService: {},
         offeringsByService: {}, // No longer used - offerings are managed via TanStack Query
-        documentsByService: profileData.documentsByService || {},
-        nursingRegistration: profileData.nursingRegistration || undefined,
-        therapeuticRegistration: undefined,
+        documentsByService,
         selectedQualifications: [],
-      });
+      }));
       hasInitializedFormData.current = true;
     }
-  }, [profileData]);
+  }, [apiProfile]);
 
-  // Load nursing registration data when entering registration view
+  // The registrations come with the profile read (U3c): filled in once, when the profile arrives.
+  const registrationsLoaded = useRef(false);
   useEffect(() => {
-    const loadNursingRegistration = async () => {
-      if (currentView.view === 'registration' && session?.user?.id) {
-       
-        const result = await getNursingRegistration();
-
-        if (result.success && result.data) {
-        
-          setFormData(prev => ({
-            ...prev,
-            nursingRegistration: result.data!,
-          }));
-        } else {
-         
-        }
-      }
-    };
-
-    loadNursingRegistration();
-  }, [currentView.view, session?.user?.id]);
-
-  // Load therapeutic registration data when entering offerings view for therapeutic supports
-  useEffect(() => {
-    const loadTherapeuticRegistration = async () => {
-      if (currentView.view === 'offerings' && currentView.serviceTitle === 'Therapeutic Supports' && session?.user?.id) {
-       
-        const result = await getTherapeuticRegistration();
-
-        if (result.success && result.data) {
-       
-          setFormData(prev => ({
-            ...prev,
-            therapeuticRegistration: result.data!,
-          }));
-        } else {
-         
-        }
-      }
-    };
-
-    loadTherapeuticRegistration();
-  }, [currentView.view, currentView.serviceTitle, session?.user?.id]);
+    if (!apiProfile || registrationsLoaded.current) return;
+    registrationsLoaded.current = true;
+    const nursing = formOf(apiProfile.serviceRegistrations.find((r) => r.categoryId === "nursing-services"));
+    const therapeutic = formOf(apiProfile.serviceRegistrations.find((r) => r.categoryId === "therapeutic-supports"));
+    setFormData((prev) => ({
+      ...prev,
+      ...(nursing ? { nursingRegistration: nursing } : {}),
+      ...(therapeutic ? { therapeuticRegistration: { registrationNumber: therapeutic.registrationNumber, expiryDay: therapeutic.expiryDay, expiryMonth: therapeutic.expiryMonth, expiryYear: therapeutic.expiryYear } } : {}),
+    }));
+  }, [apiProfile]);
 
   // Handle field change
   const handleFieldChange = (field: string, value: any) => {
@@ -257,19 +238,17 @@ function ServicesSetupContent() {
         : documentRequirements.length > 0 ? 'documents'
         : 'qualifications';
 
-      // Navigate immediately for instant UX, save in background
-      router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=${nextView}`);
-
+      // Saved before moving on (U3c): the api checks the number and the expiry, and its message is shown here.
       if (formData.nursingRegistration) {
-        saveNursingRegistration({
-          nursingType: formData.nursingRegistration.nursingType || 'registered',
-          hasExperience: formData.nursingRegistration.hasExperience || false,
-          registrationNumber: formData.nursingRegistration.registrationNumber || '',
-          expiryDay: formData.nursingRegistration.expiryDay || '',
-          expiryMonth: formData.nursingRegistration.expiryMonth || '',
-          expiryYear: formData.nursingRegistration.expiryYear || '',
-        }).catch(err => console.error('[Nursing] Background save failed:', err));
+        setIsNavigating(true);
+        const saved = await saveRegistration("nursing-services", formData.nursingRegistration);
+        setIsNavigating(false);
+        if (!saved.ok) {
+          setErrors(saved.errors);
+          return;
+        }
       }
+      router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=${nextView}`);
       return;
     }
 
@@ -308,22 +287,19 @@ function ServicesSetupContent() {
           return;
         }
 
-        if (hasDocuments) {
-          // Navigate immediately, save in background
-          router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=documents`);
-          if (formData.therapeuticRegistration) {
-            saveTherapeuticRegistration({
-              registrationNumber: formData.therapeuticRegistration.registrationNumber || '',
-              expiryDay: formData.therapeuticRegistration.expiryDay || '',
-              expiryMonth: formData.therapeuticRegistration.expiryMonth || '',
-              expiryYear: formData.therapeuticRegistration.expiryYear || '',
-            }).catch(err => console.error('[Therapeutic] Background save failed:', err));
-          }
+        // Saved before moving on (U3c), its message shown here.
+        setIsNavigating(true);
+        const saved = await saveRegistration("therapeutic-supports", formData.therapeuticRegistration ?? {});
+        setIsNavigating(false);
+        if (!saved.ok) {
+          setErrors(saved.errors);
           return;
         }
-
-        // No documents — save therapeutic + step data in parallel, then navigate
-        // (fall through to the save-and-navigate section below)
+        if (hasDocuments) {
+          router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=documents`);
+          return;
+        }
+        // No documents: on to the next step below.
       } else if (hasDocuments) {
         router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=documents`);
         return;
@@ -342,27 +318,13 @@ function ServicesSetupContent() {
         setIsNavigating(true);
       }
 
-      const dataToSend = stepSlug === 'other-documents'
-        ? { selectedQualifications: formData.selectedQualifications }
-        : { qualificationsByService: formData.qualificationsByService, nursingRegistration: formData.nursingRegistration };
-
-      // Run therapeutic save + step save in parallel if needed
-      const saveTherapeutic = view === 'offerings' && serviceNameToSlug(serviceTitle) === 'therapeutic-supports' && formData.therapeuticRegistration
-        ? saveTherapeuticRegistration({
-            registrationNumber: formData.therapeuticRegistration.registrationNumber || '',
-            expiryDay: formData.therapeuticRegistration.expiryDay || '',
-            expiryMonth: formData.therapeuticRegistration.expiryMonth || '',
-            expiryYear: formData.therapeuticRegistration.expiryYear || '',
-          })
-        : Promise.resolve(null);
-
-      await Promise.all([
-        saveTherapeutic,
-        updateProfileMutation.mutateAsync({ userId: session.user.id, step: 100 + currentStep, data: dataToSend }),
-      ]);
-
+      // Nothing to save here (S9): every answer of these pages is saved where it is given -- the registrations
+      // above, each document as it uploads. The step save this replaced matched no case and stored nothing.
       if (isFinalStep) {
-        router.push("/dashboard/worker/additional-documents");
+        // The last service is done: on to Service Area, whose Save goes to the dashboard (user, 2026-10-16; was
+        // Additional Credentials).
+        startNavigationProgress();
+        router.push(SERVICE_AREA_LINK.href);
       } else {
         setIsNavigating(false);
         router.push(`/dashboard/worker/services/setup?step=${STEPS[currentStep].slug}`);
@@ -468,8 +430,11 @@ function ServicesSetupContent() {
     }
   };
 
-  // Redirect to first step if no step specified or invalid slug
+  // Redirect to first step if no step specified or invalid slug -- only once the profile has said which services
+  // there are: before it answers STEPS is the empty default, and a page opened directly (a refresh, a link) was sent
+  // to Edit Services every time (U3c, seen 2026-10-15).
   useEffect(() => {
+    if (isLoadingProfile || !apiProfile) return;
     if (!stepSlug && STEPS.length > 0) {
       // No step specified - redirect to first step
       router.push(`/dashboard/worker/services/setup?step=${STEPS[0].slug}`);
@@ -478,9 +443,9 @@ function ServicesSetupContent() {
       router.push(`/dashboard/worker/services/setup?step=${STEPS[0].slug}`);
     } else if (STEPS.length === 0) {
       // No services selected - redirect to Edit Services page
-      router.push("/dashboard/worker/services/manage");
+      router.push("/dashboard/worker/account?tab=services");
     }
-  }, [currentStepIndex, router, stepSlug, STEPS]);
+  }, [currentStepIndex, router, stepSlug, STEPS, isLoadingProfile, apiProfile]);
 
   // AUTO-REDIRECT: Set initial view parameter when missing
   // With Suspense mode, component won't render until workerServices exists
@@ -709,6 +674,13 @@ function ServicesSetupContent() {
               {errors.general}
             </div>
           )}
+
+          {/* Adding or removing services is in Account (user, 2026-10-16): from every service, a link there and back. */}
+          <p className="mb-4 text-sm font-poppins">
+            <Link href={manageServicesHref(`/dashboard/worker/services/setup?step=${stepSlug}`)} className="text-teal-600 hover:text-teal-700 underline font-medium">
+              Modify your Service
+            </Link>
+          </p>
 
           {/* Render current step */}
           <CurrentStepComponent {...stepProps} />

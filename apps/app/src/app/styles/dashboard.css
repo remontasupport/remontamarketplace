@@ -549,6 +549,29 @@
   padding: 2.5rem 1rem 3rem 0.5rem;
 }
 
+/* A page arriving fades in (user, 2026-10-16: a visible change between pages, with the top progress bar). Each page
+   renders its own DashboardLayout, so this runs on every navigation; reduced motion turns it off. */
+.dashboard-main > * {
+  animation: dashboard-page-in 220ms ease-out;
+}
+
+@keyframes dashboard-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-main > * {
+    animation: none;
+  }
+}
+
 @media (max-width: 768px) {
   .dashboard-main {
     padding: 1.5rem 0 2rem 0 !important;
@@ -643,6 +666,10 @@
 @media (max-width: 768px) {
   .burger-menu-button {
     display: flex;
+  }
+  /* The tour's ? stays off the phone header (user, 2026-10-21); the tour still starts by itself on a first visit. */
+  .tour-help-button {
+    display: none;
   }
 }
 

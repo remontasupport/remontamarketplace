@@ -24,7 +24,7 @@ describe('guardTargets (R7.1)', () => {
 
 describe('parseArgs (R7.3)', () => {
   it('reads the flags in both spellings with the documented defaults and bounds', () => {
-    expect(parseArgs(['--base-url', 'https://x/', '--rate=50', '--minutes', '2', '--burst=5', '--workers', '10', '--report', 'out.json'])).toEqual({ baseUrl: 'https://x', workers: 10, rate: 50, minutes: 2, burst: 5, warmupSeconds: 60, report: 'out.json' })
+    expect(parseArgs(['--base-url', 'https://x/', '--rate=50', '--minutes', '2', '--burst=5', '--workers', '10', '--report', 'out.json'])).toEqual({ baseUrl: 'https://x', workers: 10, rate: 50, minutes: 2, burst: 5, warmupSeconds: 60, report: 'out.json', readsOnly: false })
     expect(parseArgs(['--base-url=https://x'])).toMatchObject({ workers: 100, rate: 25, minutes: 10, burst: 1 })
     expect(() => parseArgs([])).toThrow(/--base-url/)
     expect(() => parseArgs(['--base-url=https://x', '--rate=0'])).toThrow(/--rate/)

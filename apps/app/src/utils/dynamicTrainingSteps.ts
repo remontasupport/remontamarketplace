@@ -14,6 +14,7 @@ import {
   hasCustomComponent,
 } from "@/config/complianceDocumentMapping";
 import GenericComplianceDocument from "@/components/requirements-setup/steps/GenericComplianceDocument";
+import FirstAidCprStep from "@/components/requirements-setup/steps/FirstAidCprStep";
 
 export interface DynamicTrainingStep {
   id: number;
@@ -23,7 +24,13 @@ export interface DynamicTrainingStep {
   documentId: string;
   requirement: RequirementDocument;
   apiEndpoint?: string;
+  /** The documents of a combined step, each with its own upload (First Aid & CPR). */
+  parts?: RequirementDocument[];
 }
+
+/** First Aid (either id) and CPR are one step with two uploads, "First Aid & CPR" (user, 2026-10-16). */
+const FIRST_AID_IDS = ["first-aid-cpr", "first-aid"];
+const CPR_ID = "cpr";
 
 /**
  * NDIS trainings that are combined into a single page
@@ -82,8 +89,10 @@ export function generateTrainingSteps(
   const { trainings } = requirements.requirements;
 
   // Filter out trainings that are combined into the ndis-worker-orientation page
+  const firstAid = trainings.find((req) => FIRST_AID_IDS.includes(req.id));
+  const cpr = trainings.find((req) => req.id === CPR_ID);
   const filteredTrainings = trainings.filter(
-    (req) => !COMBINED_NDIS_TRAININGS.includes(req.id)
+    (req) => !COMBINED_NDIS_TRAININGS.includes(req.id) && !(firstAid && cpr && req === cpr)
   );
 
   // Apply the explicit display order (Array.prototype.sort is stable, so
@@ -103,6 +112,10 @@ export function generateTrainingSteps(
 
     // Generate slug from document ID
     const slug = req.id;
+
+    if (firstAid && cpr && req === firstAid) {
+      return { id: index + 1, slug, title: "First Aid & CPR", component: FirstAidCprStep, documentId: req.id, requirement: req, apiEndpoint, parts: [firstAid, cpr] };
+    }
 
     return {
       id: index + 1,

@@ -43,12 +43,12 @@ describe('P2: completionOf against today\'s function (R3.12)', () => {
         }
         expect(got.profileCompleted).toBe(got.accountDetails && got.compliance && got.trainings && got.services)
       }),
-      { numRuns: 600 },
+      { numRuns: Number(process.env.FC_RUNS ?? 600) },
     )
     // Both partitions are exercised on every run; how large they are is measured on the fixed seed below.
     expect(seen.plain).toBeGreaterThan(0)
     expect(seen.fixed).toBeGreaterThan(0)
-  })
+  }, 30_000)
 
   // The partitions' sizes depend on the random draw (49 of 600 on one CI run, 2026-10-15), so they are measured on a
   // fixed-seed sample of the same size: deterministic, and the same generator.
@@ -64,11 +64,49 @@ describe('P2: completionOf against today\'s function (R3.12)', () => {
   // enough for the rarest kind, so it is deterministic; the equality above stays random on every run.
   it('the generator exercises every [fix] kind (fixed seed, 5,000 inputs)', () => {
     const counts = new Map<FixCase, number>()
-    for (const input of fc.sample(completionInput, { numRuns: 5000, seed: 20261012 })) for (const k of fixCasesOf(input)) counts.set(k, (counts.get(k) ?? 0) + 1)
+    let plain = 0
+    for (const input of fc.sample(completionInput, { numRuns: 5000, seed: 20261012 })) {
+      const fixes = fixCasesOf(input)
+      if (fixes.length === 0) plain++
+      for (const k of fixes) counts.set(k, (counts.get(k) ?? 0) + 1)
+    }
+    // Both partitions are large: the equality is tested on many plain inputs, the fixes on many fixed ones.
+    // 494 plain on this sample since the R3.6 detector also sees SERVICE_QUALIFICATION rows named after a training (2026-10-12).
+    expect(plain).toBeGreaterThan(400)
+    expect(5000 - plain).toBeGreaterThan(500)
     for (const k of ['whitespace', 'link-optional-or-conditional', 'abn-counts', 'status-compliance', 'trainings-status', 'no-offerings', 'service-title-case', 'service-status'] as FixCase[]) {
       expect(counts.get(k) ?? 0, k).toBeGreaterThan(5)
     }
   })
+})
+
+// CI 2026-10-12 (seed -647976850): a SERVICE_QUALIFICATION row keyed `<Service>:<training id>`, PENDING with no file,
+// beside a SUBMITTED training row. Today's function counts it as a training row and needs its url (false); the fix
+// counts the submitted training (true). The partition must call this an R3.6 case, not a plain one.
+it('R3.6 regression: a pending service-qualification row named after a training is a [fix] case, and the training counts', () => {
+  const input = fc.sample(completionInput, { numRuns: 1, seed: 1 })[0]!
+  const training = 'medication-training'
+  const shaped: CompletionInput = {
+    ...input,
+    services: [{ categoryId: 'cleaning-services', categoryName: 'Cleaning Services', subcategoryIds: ['dietitian'], subcategoryNames: ['Dietitian'] }],
+    requirements: [
+      { requirementType: training, status: 'SUBMITTED', documentCategory: null, documentUrl: 'https://blob.test/d.pdf' },
+      { requirementType: `Personal Trainer:${training}`, status: 'PENDING', documentCategory: 'SERVICE_QUALIFICATION', documentUrl: null },
+    ],
+    catalogue: {
+      categories: [
+        {
+          id: 'cleaning-services',
+          name: 'Cleaning Services',
+          documents: [{ document: { id: training, name: 'Medication Training', category: 'TRAINING' }, documentType: 'REQUIRED', conditionKey: null, requiredIfTrue: null }],
+          subcategories: [{ id: 'dietitian', name: 'Dietitian', additionalDocuments: [] }],
+        },
+      ],
+    },
+  } as CompletionInput
+  expect(fixCasesOf(shaped)).toContain('trainings-status')
+  expect(trainingsOf(shaped)).toBe(true)
+  expect((completionOracle(shaped) as { trainings: boolean }).trainings).toBe(false)
 })
 
 describe('P3: the percentage (R3.10)', () => {
@@ -83,9 +121,9 @@ describe('P3: the percentage (R3.10)', () => {
         expect(percentOf(filled)).toBeGreaterThanOrEqual(before)
         expect(percentOf(fullyFilledInput(input))).toBe(100)
       }),
-      { numRuns: 300 },
+      { numRuns: Number(process.env.FC_RUNS ?? 300) },
     )
-  })
+  }, 30_000)
 
   it('is the sidebar formula: round(100 × filled / 13)', () => {
     const empty: CompletionInput = { profile: { firstName: '', lastName: '', photos: null, introduction: null, city: null, state: null, postalCode: null, age: null, dateOfBirth: null, gender: null, hasVehicle: null, languages: [], abn: null }, services: [], requirements: [], catalogue: { categories: [] }, hasHome: false, availabilityCount: 0, experienceCount: 0, jobHistoryCount: 0, educationCount: 0, additionalInfo: null }

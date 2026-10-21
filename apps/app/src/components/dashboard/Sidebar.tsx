@@ -1,65 +1,95 @@
 'use client'
 
-import { useState, useMemo, useEffect, useRef } from 'react'
+// The worker sidebar (U2 H5, R8.5): renders WORKER_MENU (features/navigation/workerMenu.ts)
+// on the desktop and in the mobile drawer, and holds no item of its own. Everything it shows
+// comes from the one profile read (features/worker/profile.ts): the name and photo, the Edit
+// Profile children with their done state, the badge, and the requirement and service groups.
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import {
-  HomeIcon,
+  BriefcaseIcon,
+  CheckCircleIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-  UserCircleIcon,
-  HandRaisedIcon,
   ClipboardDocumentCheckIcon,
-  AcademicCapIcon,
-  PencilIcon,
   Cog6ToothIcon,
   DocumentTextIcon,
-  WrenchScrewdriverIcon,
-  BriefcaseIcon,
+  HandRaisedIcon,
+  HomeIcon,
+  PencilIcon,
 } from '@heroicons/react/24/outline'
-import { ACCOUNT_SETUP_STEPS, getStepUrl } from '@/config/accountSetupSteps'
-import { SERVICES_SETUP_STEPS, getServicesStepUrl, generateServicesSetupSteps, ADDITIONAL_DOCUMENTS_STEP } from '@/config/servicesSetupSteps'
-import { useWorkerRequirements } from '@/hooks/queries/useWorkerRequirements'
-import { useWorkerProfile } from '@/hooks/queries/useWorkerProfile'
-import { useProfilePreview } from '@/hooks/useProfilePreview'
-import { useSession } from 'next-auth/react'
-import { parseSetupProgress } from '@/types/setupProgress'
+import { generateServicesSetupSteps, getServicesStepUrl } from '@/config/servicesSetupSteps'
 import { generateComplianceSteps, getComplianceStepUrl } from '@/utils/dynamicComplianceSteps'
 import { generateTrainingSteps, getTrainingStepUrl } from '@/utils/dynamicTrainingSteps'
+import type { WorkerRequirements } from '@/hooks/queries/useWorkerRequirements'
+import {
+  editProfileBadge,
+  editProfileChildren,
+  groupOfPath,
+  requirementsForSteps,
+  serviceNamesOf,
+  servicesChildren,
+  WORKER_MENU,
+  type ChildrenSource,
+  type MenuIcon,
+  type MenuLink,
+} from '@/features/navigation/workerMenu'
+import { useWorkerProfile } from '@/features/worker/profile'
+import { tourAnchor } from '@/features/navigation/tourSteps'
 
-// Route-to-section mapping
-const PATH_TO_SECTION: Array<[string, string]> = [
-  ['/account/', 'account-details'],
-  ['/requirements/', 'requirements'],
-  ['/trainings/', 'trainings'],
-  ['/services/', 'services'],
-  ['/additional-documents', 'additional-credentials'],
-]
-const getSectionFromPath = (path: string) =>
-  PATH_TO_SECTION.find(([seg]) => path.includes(seg))?.[1] ?? null
-
-interface SubMenuItem {
-  name: string
-  href: string
+const ICONS: Record<MenuIcon, React.ComponentType<{ className?: string }>> = {
+  dashboard: HomeIcon,
+  editProfile: PencilIcon,
+  compliance: ClipboardDocumentCheckIcon,
+  myServices: HandRaisedIcon,
+  credentials: DocumentTextIcon,
+  jobs: BriefcaseIcon,
+  account: Cog6ToothIcon,
 }
 
-interface MenuSection {
-  id: string
-  name: string
-  icon: React.ComponentType<{ className?: string }>
-  items: SubMenuItem[] | null  // null = loading (renders skeleton)
+function ChildLink({ link, active, onNavigate }: { link: MenuLink; active: boolean; onNavigate: () => void }) {
+  return (
+    <Link href={link.href} className={`nav-dropdown-item ${active ? 'active' : ''}`} onClick={onNavigate}>
+      {link.done ? <CheckCircleIcon className="w-3.5 h-3.5 text-green-600 shrink-0" aria-label="Done" /> : <span className="nav-dropdown-bullet" />}
+      <span>{link.label}</span>
+    </Link>
+  )
 }
 
-// Dynamically generate account details items from centralized config
-const accountDetailsItems = ACCOUNT_SETUP_STEPS.map(step => ({
-  name: step.title,
-  href: getStepUrl(step.slug)
-}))
+/** A sub-group inside a group (My Profile's three, Services' Modify Services): open while one of its pages is showing (a service step's `?step=` aside). */
+function SubGroup({ link, pathname, onNavigate }: { link: MenuLink; pathname: string; onNavigate: () => void }) {
+  const inside = link.children!.some((c) => c.href.split('?')[0] === pathname)
+  const [open, setOpen] = useState(inside)
+  useEffect(() => {
+    if (inside) setOpen(true)
+  }, [inside])
+  return (
+    <li>
+      <button type="button" onClick={() => setOpen((o) => !o)} className={`nav-dropdown-item w-full ${inside ? 'active' : ''}`} aria-expanded={open}>
+        {link.done ? <CheckCircleIcon className="w-3.5 h-3.5 text-green-600 shrink-0" aria-label="Done" /> : <span className="nav-dropdown-bullet" />}
+        <span className="flex-1 text-left">{link.label}</span>
+        {open ? <ChevronUpIcon className="w-3.5 h-3.5" /> : <ChevronDownIcon className="w-3.5 h-3.5" />}
+      </button>
+      {open && (
+        <ul className="pl-4">
+          {link.children!.map((c) => (
+            <li key={c.href}>
+              <ChildLink link={c} active={pathname === c.href} onNavigate={onNavigate} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </li>
+  )
+}
 
 interface SidebarProps {
   isMobileOpen?: boolean
   onClose?: () => void
+  /** A page's own name and photo, shown until the profile read answers. */
   profileData?: {
     firstName: string
     photo: string | null
@@ -67,339 +97,139 @@ interface SidebarProps {
   }
 }
 
-export default function Sidebar({ isMobileOpen = false, onClose, profileData: profileDataProp }: SidebarProps = {}) {
-  // Get pathname first (needed for other hooks)
+export default function Sidebar({ isMobileOpen = false, onClose, profileData }: SidebarProps = {}) {
   const pathname = usePathname()
-
-  // Get session and profile data for setup progress
   const { data: session } = useSession()
-  const { data: profileDataFromHook, refetch, isRefetching, isLoading: isLoadingProfile } = useWorkerProfile(session?.user?.id)
+  const { profile, isLoading } = useWorkerProfile()
 
-  // Background check: fetch profile-preview data to determine profile completion
-  const { data: previewData } = useProfilePreview()
-
-  const profileCompletionPct = useMemo(() => {
-    if (!previewData) return null
-    const { profile, services, additionalInfo } = previewData as any
-    const fields = [
-      !!profile?.photos,
-      !!(profile?.introduction && profile.introduction.length >= 50),
-      !!(profile?.city || profile?.location),
-      Array.isArray(services) && services.length > 0,
-      additionalInfo?.languages?.length > 0,
-      !!additionalInfo?.availability,
-      !!additionalInfo?.experience,
-      additionalInfo?.jobHistory?.length > 0,
-      additionalInfo?.education?.length > 0,
-      additionalInfo?.personality?.length > 0,
-    ]
-    const completed = fields.filter(Boolean).length
-    return Math.round((completed / fields.length) * 100)
-  }, [previewData])
-
-  const showEditProfileHighlight = profileCompletionPct !== null && profileCompletionPct < 80
-
-  // CRITICAL: Aggressively refetch when on dashboard to ensure checkmarks appear
-  useEffect(() => {
-    if (pathname === '/dashboard/worker' && session?.user?.id) {
-      // Force refetch immediately when dashboard mounts
-      // This bypasses React Query cache and gets fresh setupProgress from API
-      refetch()
-    }
-  }, [pathname, session?.user?.id, refetch])
-
-  // CRITICAL FIX: Always use hook data for setupProgress (real-time calculated from API)
-  // profileDataProp is from server component and doesn't include setupProgress
-  // profileDataFromHook is from client-side API call with real-time progress calculation
-  const profileData = profileDataProp || profileDataFromHook
-
-  const setupProgress = useMemo(() => parseSetupProgress(profileDataFromHook?.setupProgress), [profileDataFromHook])
-
-  const { data: requirementsData, isLoading: isLoadingRequirements } = useWorkerRequirements()
-
-  // null while loading → triggers skeleton in JSX
-  const requirementsItems = useMemo<SubMenuItem[] | null>(() => {
-    if (isLoadingRequirements) return null
-    return generateComplianceSteps(requirementsData).map(s => ({ name: s.title, href: getComplianceStepUrl(s.slug) }))
-  }, [requirementsData, isLoadingRequirements])
-
-  const trainingsItems = useMemo<SubMenuItem[] | null>(() =>
-    isLoadingRequirements ? null : generateTrainingSteps(requirementsData).map(s => ({ name: s.title, href: getTrainingStepUrl(s.slug) })),
-    [requirementsData, isLoadingRequirements])
-
-  const servicesItems = useMemo<SubMenuItem[] | null>(() => {
-    if (isLoadingProfile) return null
-    const services = profileDataFromHook?.services ?? []
-    const steps = services.length > 0 ? generateServicesSetupSteps(services) : SERVICES_SETUP_STEPS
-    return steps.map(s => ({ name: s.title, href: getServicesStepUrl(s.slug) }))
-  }, [profileDataFromHook?.services, isLoadingProfile])
-
-  const additionalCredentialsItems: SubMenuItem[] = [{ name: ADDITIONAL_DOCUMENTS_STEP.title, href: '/dashboard/worker/additional-documents' }]
-
-  const SECTION_PROGRESS_MAP: Record<string, keyof ReturnType<typeof parseSetupProgress>> = {
-    'account-details': 'accountDetails',
-    'requirements': 'compliance',
-    'trainings': 'trainings',
-    'services': 'services',
-    'additional-credentials': 'additionalCredentials',
-  }
-  const isSectionCompleted = (sectionId: string) => setupProgress[SECTION_PROGRESS_MAP[sectionId]] ?? false
-
-  const menuSections: MenuSection[] = [
-    {
-      id: 'account-details',
-      name: 'Personal Info',
-      icon: UserCircleIcon,
-      items: accountDetailsItems
-    },
-    {
-      id: 'requirements',
-      name: 'Mandatory',
-      icon: ClipboardDocumentCheckIcon,
-      items: requirementsItems
-    },
-    {
-      id: 'trainings',
-      name: 'Trainings',
-      icon: AcademicCapIcon,
-      items: trainingsItems
-    },
-    {
-      id: 'services',
-      name: 'My Services',
-      icon: HandRaisedIcon,
-      items: servicesItems
-    },
-    {
-      id: 'additional-credentials',
-      name: 'Additional Credentials',
-      icon: DocumentTextIcon,
-      items: additionalCredentialsItems
-    }
-  ]
-  // pathname already declared at top of component
-  const previousSectionRef = useRef<string | null>(getSectionFromPath(pathname));
-  const [shouldTransition, setShouldTransition] = useState(false);
-  const [isNavigatingToDashboard, setIsNavigatingToDashboard] = useState(false);
-
-  // State: Only current section open based on route
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
-    const currentSection = getSectionFromPath(pathname);
+  // R8.2-R8.4: every group's children from the one read; null while it loads (a skeleton).
+  const children = useMemo<Record<ChildrenSource, MenuLink[] | null>>(() => {
+    if (isLoading && !profile) return { editProfile: editProfileChildren(undefined), services: servicesChildren([]), compliance: null }
+    const reqs = requirementsForSteps(profile) as unknown as WorkerRequirements | undefined
+    const names = serviceNamesOf(profile)
     return {
-      'account-details': currentSection === 'account-details',
-      'requirements': currentSection === 'requirements',
-      'trainings': currentSection === 'trainings',
-      'services': currentSection === 'services',
-      'additional-credentials': currentSection === 'additional-credentials',
-    };
-  });
+      editProfile: editProfileChildren(profile),
+      compliance: [
+        ...generateComplianceSteps(reqs).map((s) => ({ id: s.slug, label: s.title, href: getComplianceStepUrl(s.slug) })),
+        ...generateTrainingSteps(reqs).map((s) => ({ id: s.slug, label: s.title, href: getTrainingStepUrl(s.slug) })),
+      ],
+      services: servicesChildren((names.length ? generateServicesSetupSteps(names) : []).map((s) => ({ id: s.slug, label: s.title, href: getServicesStepUrl(s.slug) })), profile),
+    }
+  }, [profile, isLoading])
+  const badge = editProfileBadge(profile)
 
-  // Auto-expand current section and collapse others on route change
+  // Only the current route's group is open; a route change opens its own group.
+  const [open, setOpen] = useState<Record<string, boolean>>(() => {
+    const g = groupOfPath(pathname)
+    return g ? { [g]: true } : {}
+  })
+  const [animate, setAnimate] = useState(false)
   useEffect(() => {
-    const currentSection = getSectionFromPath(pathname);
-    if (currentSection) {
-      // Check if section actually changed
-      const sectionChanged = previousSectionRef.current !== currentSection;
-
-      if (sectionChanged) {
-        // Enable transitions only when section changes
-        setShouldTransition(true);
-        previousSectionRef.current = currentSection;
-
-        // Close all sections, open only current
-        setOpenSections({
-          'account-details': currentSection === 'account-details',
-          'requirements': currentSection === 'requirements',
-          'trainings': currentSection === 'trainings',
-          'services': currentSection === 'services',
-          'additional-credentials': currentSection === 'additional-credentials',
-        });
-
-        // Disable transitions after animation completes
-        setTimeout(() => setShouldTransition(false), 500);
-      }
-    }
-  }, [pathname]);
-
-  // Manual toggle (no persistence - navigation controls state)
-  const toggleSection = (sectionId: string) => {
-    setShouldTransition(true);
-    setOpenSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
-    setTimeout(() => setShouldTransition(false), 500);
-  };
-
-  // Handle link click on mobile - close menu
-  const handleLinkClick = () => {
-    if (onClose) {
-      onClose()
-    }
+    const g = groupOfPath(pathname)
+    if (g) setOpen({ [g]: true })
+  }, [pathname])
+  const toggle = (id: string) => {
+    setAnimate(true)
+    setOpen((o) => ({ ...o, [id]: !o[id] }))
+    setTimeout(() => setAnimate(false), 500)
   }
 
-  // Handle dashboard navigation with loading state
-  const handleDashboardClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    // Only show loading if we're NOT already on the dashboard
-    if (pathname !== '/dashboard/worker') {
-      setIsNavigatingToDashboard(true)
-    }
-    handleLinkClick()
-  }
-
-  // Clear loading state when we arrive at dashboard
+  const [toDashboard, setToDashboard] = useState(false)
   useEffect(() => {
-    if (pathname === '/dashboard/worker' && isNavigatingToDashboard) {
-      // Small delay to ensure smooth transition
-      setTimeout(() => {
-        setIsNavigatingToDashboard(false)
-      }, 300)
+    if (pathname === '/dashboard/worker' && toDashboard) {
+      const t = setTimeout(() => setToDashboard(false), 300)
+      return () => clearTimeout(t)
     }
-  }, [pathname, isNavigatingToDashboard])
+  }, [pathname, toDashboard])
 
-  // Get profile photo URL from database or use placeholder
-  // Handle both prop type (photo) and WorkerProfile type (photos)
-  const photoUrl = (profileData && 'photo' in profileData ? profileData.photo : profileData?.photos) || '/images/profilePlaceHolder.png'
-  const displayName = profileData?.firstName || session?.user?.email?.split('@')[0] || 'Worker'
-  // Get role from API's displayRole field (handles Therapeutic Supports subcategory names)
-  const displayRole = profileDataFromHook?.displayRole || profileData?.role || 'Support Worker'
+  const close = () => onClose?.()
+  const photoUrl = profile?.photos.main || profileData?.photo || '/images/profilePlaceHolder.png'
+  const displayName = profile?.names.firstName || profileData?.firstName || session?.user?.email?.split('@')[0] || 'Worker'
 
   return (
     <aside className={`dashboard-sidebar ${isMobileOpen ? 'mobile-open' : ''}`}>
-      {/* Logo - Only visible on mobile */}
       <div className="sidebar-logo-mobile">
-        <Link href="/dashboard/worker" onClick={handleLinkClick}>
-          <Image
-            src="/logo/logo.svg"
-            alt="Remonta"
-            width={140}
-            height={40}
-            priority
-            className="sidebar-logo-img"
-          />
+        <Link href="/dashboard/worker" onClick={close}>
+          <Image src="/logo/logo.svg" alt="Remonta" width={140} height={40} priority className="sidebar-logo-img" />
         </Link>
       </div>
 
-      {/* Profile Section */}
       <div className="sidebar-profile-section">
         <div className="sidebar-profile-avatar">
-          <Image
-            src={photoUrl}
-            alt={displayName}
-            width={64}
-            height={64}
-            className="sidebar-profile-img"
-            unoptimized={photoUrl?.includes('blob.vercel-storage.com')}
-          />
+          {/* A staged photo sits on the bucket, outside next/image's domains: remote photos are not optimised. */}
+          <Image src={photoUrl} alt={displayName} width={64} height={64} className="sidebar-profile-img" unoptimized={!photoUrl.startsWith('/')} />
         </div>
         <div className="sidebar-profile-info">
+          {/* The first name only: no role line under it (user, 2026-10-21). */}
           <h4 className="sidebar-profile-name">{displayName}</h4>
-          <p className="sidebar-profile-role">{displayRole}</p>
         </div>
       </div>
 
-      {/* Edit Profile Link - Separate Section */}
-      <div className="sidebar-edit-profile-section">
-        <Link
-          href="/dashboard/worker/profile-building"
-          className={`sidebar-edit-profile${showEditProfileHighlight ? ' sidebar-edit-profile--highlight' : ''}`}
-          onClick={handleLinkClick}
-        >
-          <PencilIcon className="sidebar-edit-icon" />
-          <span>Edit profile</span>
-          {showEditProfileHighlight && (
-            <span className="sidebar-edit-profile__badge">{profileCompletionPct}%</span>
-          )}
-        </Link>
-        <Link href="/dashboard/worker/services/manage" className="sidebar-edit-profile" onClick={handleLinkClick} style={{ marginTop: '0.75rem' }}>
-          <WrenchScrewdriverIcon className="sidebar-edit-icon" />
-          <span>Edit services</span>
-        </Link>
-      </div>
-
-      {/* Navigation */}
       <nav className="sidebar-nav">
-        {/* Overview Section */}
-        <div className="nav-section">
-          <ul className="nav-list">
-            <li>
-              <Link
-                href="/dashboard/worker"
-                className={`nav-item ${pathname === '/dashboard/worker' ? 'active' : ''}`}
-                onClick={handleDashboardClick}
-              >
-                <HomeIcon className="nav-icon" />
-                <span>Dashboard</span>
-              </Link>
-            </li>
-          </ul>
-        </div>
-
-        {/* Dropdown Sections */}
-        {menuSections.map((section) => {
-          const isOpen = openSections[section.id]
-          const isSectionActive = section.items?.some(item => pathname === item.href) ?? false
-          const SectionIcon = section.icon
-
+        {WORKER_MENU.map((item) => {
+          const Icon = ICONS[item.icon]
+          if (item.href) {
+            const active = pathname === item.href
+            return (
+              <div key={item.id} className="nav-section">
+                <ul className="nav-list">
+                  <li>
+                    <Link
+                      href={item.href}
+                      {...tourAnchor(item.id)}
+                      className={`nav-item ${active ? 'active' : ''}`}
+                      onClick={() => {
+                        if (item.id === 'dashboard' && pathname !== '/dashboard/worker') setToDashboard(true)
+                        close()
+                      }}
+                    >
+                      <Icon className="nav-icon" />
+                      <span>{item.label}</span>
+                    </Link>
+                  </li>
+                </ul>
+              </div>
+            )
+          }
+          const links = item.children ? children[item.children] : []
+          const isOpen = !!open[item.id]
+          const active = links?.some((l) => pathname === l.href || !!l.children?.some((c) => pathname === c.href)) ?? false
+          const isEditProfile = item.children === 'editProfile'
           return (
-            <div key={section.id} className="nav-section">
-              <button
-                onClick={() => toggleSection(section.id)}
-                className={`nav-dropdown-header ${isSectionActive ? 'active' : ''}`}
-              >
+            <div key={item.id} className="nav-section">
+              <button type="button" onClick={() => toggle(item.id)} {...tourAnchor(item.id)} className={`nav-dropdown-header ${active ? 'active' : ''}`} aria-expanded={isOpen}>
                 <div className="nav-dropdown-title">
-                  <SectionIcon className="nav-dropdown-badge-icon" />
-                  <span>{section.name}</span>
+                  <Icon className="nav-dropdown-badge-icon" />
+                  <span>{item.label}</span>
+                  {isEditProfile && badge.percent !== null && <span className="sidebar-edit-profile__badge">{badge.percent}%</span>}
+                  {item.children === 'services' && badge.unplaced && <span className="ml-1 inline-block w-2 h-2 rounded-full bg-orange-500" title="Set your service area so clients can find you" aria-label="Service area not set" />}
                 </div>
-                {isOpen ? (
-                  <ChevronUpIcon className="nav-dropdown-icon" />
-                ) : (
-                  <ChevronDownIcon className="nav-dropdown-icon" />
-                )}
+                {isOpen ? <ChevronUpIcon className="nav-dropdown-icon" /> : <ChevronDownIcon className="nav-dropdown-icon" />}
               </button>
-
-              <ul className={`nav-dropdown-list ${isOpen ? 'open' : 'closed'} ${!shouldTransition ? 'no-transition' : ''}`}>
-                {section.items === null
+              <ul className={`nav-dropdown-list ${isOpen ? 'open' : 'closed'} ${animate ? '' : 'no-transition'}`}>
+                {links === null
                   ? Array.from({ length: 6 }, (_, i) => (
                       <li key={i} className="nav-dropdown-item pointer-events-none">
                         <span className="nav-dropdown-bullet opacity-30" />
                         <div className="h-3 bg-gray-200 rounded animate-pulse w-3/4" />
                       </li>
                     ))
-                  : section.items.map((item) => (
-                      <li key={item.href}>
-                        <Link
-                          href={item.href}
-                          className={`nav-dropdown-item ${pathname === item.href ? 'active' : ''}`}
-                          onClick={handleLinkClick}
-                        >
-                          <span className="nav-dropdown-bullet" />
-                          <span>{item.name}</span>
-                        </Link>
-                      </li>
-                    ))
-                }
+                  : links.map((l) =>
+                      l.children ? (
+                        <SubGroup key={l.id} link={l} pathname={pathname} onNavigate={close} />
+                      ) : (
+                        <li key={l.href}>
+                          <ChildLink link={l} active={pathname === l.href} onNavigate={close} />
+                        </li>
+                      ),
+                    )}
               </ul>
             </div>
           )
         })}
-
-        {/* My Jobs + Account */}
-        <div className="sidebar-account-section">
-          <Link
-            href="/dashboard/worker/my-jobs"
-            className={`sidebar-account-button ${pathname === '/dashboard/worker/my-jobs' ? 'active' : ''}`}
-            onClick={handleLinkClick}
-          >
-            <BriefcaseIcon className="sidebar-account-icon" />
-            <span>My Jobs</span>
-          </Link>
-          <Link href="/dashboard/worker/account" className="sidebar-account-button" onClick={handleLinkClick}>
-            <Cog6ToothIcon className="sidebar-account-icon" />
-            <span>Account</span>
-          </Link>
-        </div>
       </nav>
 
-      {/* Loading Overlay */}
-      {isNavigatingToDashboard && (
+      {toDashboard && (
         <div className="dashboard-loading-overlay">
           <div className="dashboard-loading-spinner">
             <div className="spinner"></div>
@@ -408,26 +238,20 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
           <style jsx>{`
             .dashboard-loading-overlay {
               position: fixed;
-              top: 0;
-              left: 0;
-              right: 0;
-              bottom: 0;
+              inset: 0;
               background: rgba(0, 0, 0, 0.7);
               backdrop-filter: blur(4px);
               display: flex;
               align-items: center;
               justify-content: center;
               z-index: 9999;
-              animation: fadeIn 0.2s ease-in-out;
             }
-
             .dashboard-loading-spinner {
               display: flex;
               flex-direction: column;
               align-items: center;
               gap: 1rem;
             }
-
             .spinner {
               width: 48px;
               height: 48px;
@@ -436,7 +260,6 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
               border-radius: 50%;
               animation: spin 0.8s linear infinite;
             }
-
             .loading-text {
               color: white;
               font-family: 'Poppins', sans-serif;
@@ -444,19 +267,9 @@ export default function Sidebar({ isMobileOpen = false, onClose, profileData: pr
               font-weight: 500;
               margin: 0;
             }
-
             @keyframes spin {
               to {
                 transform: rotate(360deg);
-              }
-            }
-
-            @keyframes fadeIn {
-              from {
-                opacity: 0;
-              }
-              to {
-                opacity: 1;
               }
             }
           `}</style>

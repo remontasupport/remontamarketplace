@@ -1,24 +1,17 @@
 /**
- * Worker Requirements Query Hook
+ * Worker requirements (api-review U5b): the Compliance and Trainings steps of the worker's services, selected from the
+ * api's profile read (`requirements.mandatory` / `requirements.trainings`, already ordered and folded as the sidebar
+ * shows them) in the shape the step generators read. Was GET /api/worker/requirements.
  *
- * Fetches required documents based on worker's services from the database
- * Implements smart caching with TanStack Query
+ * With no services chosen the api lists nothing ("choose your services first", R4.1); the old route listed every
+ * category's documents.
  */
 
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import type { Profile } from "@remonta/api-contract";
+import { useProfileSelect } from "./useComplianceDocuments";
 
-// Query Keys - centralized for consistency
-export const workerRequirementsKeys = {
-  all: ["worker-requirements"] as const,
-  byServices: (services?: string[]) =>
-    [...workerRequirementsKeys.all, { services }] as const,
-  byServiceName: (serviceName?: string) =>
-    [...workerRequirementsKeys.all, { serviceName }] as const,
-};
-
-// Types
 export interface RequirementDocument {
   id: string;
   name: string;
@@ -35,81 +28,36 @@ export interface RequirementDocument {
 export interface WorkerRequirements {
   success: boolean;
   services: string[];
-  workerServices?: string[];
   requirements: {
     baseCompliance: RequirementDocument[];
     trainings: RequirementDocument[];
-    qualifications: RequirementDocument[];
-    insurance: RequirementDocument[];
-    transport: RequirementDocument[];
   };
 }
 
-// API Fetcher
-async function fetchWorkerRequirements(
-  services?: string[]
-): Promise<WorkerRequirements> {
-  const url = services && services.length > 0
-    ? `/api/worker/requirements?services=${services.join(',')}`
-    : '/api/worker/requirements';
+type Item = Profile["requirements"]["mandatory"][number];
 
-  const response = await fetch(url);
+const docOf = (category: string) => (r: Item): RequirementDocument => ({
+  id: r.id,
+  name: r.name,
+  category,
+  description: r.description || null,
+  hasExpiration: r.hasExpiration,
+  documentType: r.documentType,
+  serviceCategory: "",
+});
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch worker requirements");
-  }
-
-  return response.json();
-}
-
-/**
- * Hook to fetch worker requirements with smart caching
- *
- * Features:
- * - Caches data for 5 minutes (staleTime)
- * - Keeps cached data for 30 minutes (gcTime)
- * - Automatic background refetching when stale
- * - Deduplicates simultaneous requests
- * - Optional services parameter to override worker's saved services
- *
- * @param services - Optional array of services to fetch requirements for
- */
-export function useWorkerRequirements(services?: string[]) {
-  return useQuery({
-    queryKey: workerRequirementsKeys.byServices(services),
-    queryFn: () => fetchWorkerRequirements(services),
-    staleTime: 5 * 60 * 1000, // 5 minutes - requirements rarely change during a session
-    gcTime: 30 * 60 * 1000, // 30 minutes - keep in cache
-    retry: 1, // Retry once on failure
-    refetchOnWindowFocus: false, // Don't refetch when user returns to tab
-  });
-}
-
-/**
- * Hook to fetch worker requirements for a specific service
- * OPTIMIZED: Prevents UI flash by using React Query instead of manual fetch
- *
- * @param serviceName - The name of the service to fetch requirements for
- */
-export function useWorkerRequirementsByService(serviceName?: string) {
-  return useQuery({
-    queryKey: workerRequirementsKeys.byServiceName(serviceName),
-    queryFn: async () => {
-      if (!serviceName) {
-        throw new Error("Service name is required");
-      }
-      const response = await fetch(
-        `/api/worker/requirements?serviceName=${encodeURIComponent(serviceName)}`
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch requirements");
-      }
-      return response.json() as Promise<WorkerRequirements>;
+export function requirementsOf(profile: Profile): WorkerRequirements {
+  return {
+    success: true,
+    services: profile.services.map((s) => s.categoryName),
+    requirements: {
+      baseCompliance: profile.requirements.mandatory.map(docOf("COMPLIANCE")),
+      trainings: profile.requirements.trainings.map(docOf("TRAINING")),
     },
-    enabled: !!serviceName, // Only fetch when serviceName is provided
-    staleTime: 5 * 60 * 1000, // 5 minutes - requirements rarely change
-    gcTime: 30 * 60 * 1000, // 30 minutes
-    retry: 1,
-    refetchOnWindowFocus: false, // Don't refetch when user returns to tab
-  });
+  };
+}
+
+/** The steps of the worker's own services, from the profile read. */
+export function useWorkerRequirements() {
+  return useProfileSelect(requirementsOf);
 }

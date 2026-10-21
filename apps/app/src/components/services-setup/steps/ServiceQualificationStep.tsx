@@ -699,6 +699,12 @@ export default function ServiceQualificationStep({
                   </Select>
                 </div>
               </div>
+              {errors.expiryDate && (
+                <div className="mt-2 flex items-center gap-2">
+                  <InformationCircleIcon className="w-4 h-4 text-red-600 flex-shrink-0" />
+                  <p className="text-sm text-red-600 font-poppins">{errors.expiryDate}</p>
+                </div>
+              )}
             </div>
             )}
           </div>
@@ -930,7 +936,7 @@ export default function ServiceQualificationStep({
               <div className="text-center py-6">
                 <p className="text-sm text-gray-500 mb-4">No service offerings selected for this Service.</p>
                 <Link
-                  href={`/dashboard/worker/services/manage?returnUrl=${encodeURIComponent(returnUrl)}`}
+                  href={`/dashboard/worker/account?tab=services&returnUrl=${encodeURIComponent(returnUrl)}`}
                   className="text-sm text-teal-600 hover:text-teal-700 underline font-poppins font-medium"
                 >
                   Edit/Add more services here

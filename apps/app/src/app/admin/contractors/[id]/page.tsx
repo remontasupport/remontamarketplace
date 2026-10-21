@@ -10,6 +10,7 @@ import QuoteSelectionModal from '@/components/modals/QuoteSelectionModal'
 import { EXPERIENCE_OPTIONS, HOBBIES_OPTIONS, UNIQUE_SERVICE_OPTIONS, WHY_ENJOY_OPTIONS } from '@/constants/profileAnswers'
 import NextImage from 'next/image'
 import { useState, useCallback, useEffect } from 'react'
+import type { MaskedBankAccount } from '@/lib/bankAccount'
 import './contractor-profile.css'
 
 interface WorkerProfile {
@@ -27,6 +28,26 @@ interface WorkerProfile {
   hobbies?: string | null
   uniqueService?: string | null
   qualifications?: string | null
+  /** U2: the private home address (never on the card). */
+  homeAddress?: { streetLine: string | null; suburb: string; state: string; postcode: string } | null
+  /** U2: masked by the route; the full numbers never reach the browser. */
+  bankAccount?: MaskedBankAccount | null
+}
+
+/** The home address and bank account, for Remonta's own use: shown above the card, never in it. */
+function PrivateDetails({ homeAddress, bankAccount }: { homeAddress: WorkerProfile['homeAddress'] | null; bankAccount: MaskedBankAccount | null }) {
+  return (
+    <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm grid gap-3 sm:grid-cols-2" data-private="true">
+      <div>
+        <p className="font-semibold text-amber-900">Home address (private)</p>
+        <p className="text-amber-900">{homeAddress ? `${homeAddress.streetLine ? `${homeAddress.streetLine}, ` : ''}${homeAddress.suburb} ${homeAddress.state} ${homeAddress.postcode}` : 'Not provided'}</p>
+      </div>
+      <div>
+        <p className="font-semibold text-amber-900">Bank account</p>
+        <p className="text-amber-900">{bankAccount ? `${bankAccount.accountName}, ${bankAccount.bankName}, BSB •••${bankAccount.bsbLast3}, account •••${bankAccount.accountNumberLast3}` : 'Not provided'}</p>
+      </div>
+    </div>
+  )
 }
 
 interface ApiResponse {
@@ -389,6 +410,10 @@ export default function WorkerDetailPage() {
             </button>
           </div>
         </div>
+
+        {/* U2 (C21): private, for Remonta only. Outside .profile-card on purpose: the JPEG
+            download captures only the card, which is sent to clients. */}
+        <PrivateDetails homeAddress={worker.homeAddress ?? null} bankAccount={worker.bankAccount ?? null} />
 
         {/* CANVA-STYLE PROFILE CARD */}
         <div className="profile-card">

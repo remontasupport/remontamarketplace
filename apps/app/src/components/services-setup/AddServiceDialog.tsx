@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { useCategories } from "@/hooks/queries/useCategories";
+import { useCatalogue } from "@/features/forms/adapters/useServiceCategories";
 
 interface AddServiceDialogProps {
   open: boolean;
@@ -29,7 +29,7 @@ export function AddServiceDialog({
   const [tempSelected, setTempSelected] = useState<string[]>([]);
 
   // Fetch categories from database
-  const { data: categories, isLoading } = useCategories();
+  const { data: categories, isLoading } = useCatalogue();
 
   // Transform categories to service options with priority ordering
   const serviceOptions = useMemo(() => {

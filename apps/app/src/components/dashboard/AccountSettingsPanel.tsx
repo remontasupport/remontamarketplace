@@ -1,16 +1,37 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense, type ReactNode } from "react";
+import { useSearchParams } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import QueryProvider from "@/providers/QueryProvider";
-import { updateUserEmail, updateUserPassword } from "@/services/user/account.service";
+import { accountApi } from "@/lib/api/account";
+import type { ApiOutcome } from "@/lib/api/outcome";
 import "@/app/styles/account-settings.css";
 
-type Tab = "username" | "personal";
+type Tab = string;
 
-function AccountSettingsPanelContent() {
+/** A tab a page adds after Username & password (the worker's Bank Account, user 2026-10-13); `?tab=<id>` opens it. */
+export interface ExtraTab {
+  id: string;
+  label: string;
+  content: ReactNode;
+}
+
+/** The words for a refused or failed account change (the api's field messages are shown beside their fields). */
+function accountMessageOf(r: Exclude<ApiOutcome<unknown>, { kind: "ok" }>, fallback: string): string {
+  if (r.kind === "rateLimited") return "Too many changes at once. Please wait a moment and try again.";
+  if (r.kind === "unauthenticated") return "Your session has ended. Please sign in again.";
+  if (r.kind === "forbidden") return "Sign-in details can only be changed by the account's owner, not while impersonating.";
+  if (r.kind === "failed" && r.fields) return Object.values(r.fields)[0]?.[0] ?? fallback;
+  return fallback;
+}
+
+function AccountSettingsPanelContent({ extraTabs = [] }: { extraTabs?: readonly ExtraTab[] }) {
   const { data: session, update } = useSession();
-  const [activeTab, setActiveTab] = useState<Tab>("username");
+  // A link straight to an added tab (?tab=services, ?tab=bank-account) opens on it from the first render: choosing it in
+  // an effect after the first paint showed Username & password for a moment (user, 2026-10-16: "the screen flicks").
+  const requestedTab = useSearchParams().get("tab");
+  const wantedTab = requestedTab && extraTabs.some((t) => t.id === requestedTab) ? requestedTab : null;
+  const [activeTab, setActiveTab] = useState<Tab>(wantedTab ?? "username");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -36,10 +57,15 @@ function AccountSettingsPanelContent() {
     if (session?.user?.email) {
       setEmail(session.user.email);
     }
-    if (session?.user?.role === "COORDINATOR") {
+    if (session?.user?.role === "COORDINATOR" && !wantedTab) {
       setActiveTab("personal");
     }
-  }, [session]);
+  }, [session, wantedTab]);
+
+  // A later change of ?tab= on the same page (a link from one tab to another) follows it.
+  useEffect(() => {
+    if (wantedTab) setActiveTab(wantedTab);
+  }, [wantedTab]);
 
   // Fetch coordinator profile on mount
   useEffect(() => {
@@ -76,6 +102,7 @@ function AccountSettingsPanelContent() {
   const tabs = [
     ...(isCoordinator ? [{ id: "personal" as Tab, label: "Personal Details" }] : []),
     { id: "username" as Tab, label: "Username & password" },
+    ...extraTabs.map((t) => ({ id: t.id, label: t.label })),
   ];
 
   const handlePersonalSave = async () => {
@@ -114,29 +141,42 @@ function AccountSettingsPanelContent() {
     setErrorMessage("");
     setFieldErrors({});
 
+    // U5d: on apps/api. An impersonating admin cannot change sign-in details (the api refuses it too).
+    if (session?.user?.impersonatedBy) {
+      setErrorMessage("Sign-in details can only be changed by the account's owner, not while impersonating.");
+      setIsLoading(false);
+      return;
+    }
+
     try {
       let passwordChanged = false;
 
-      const emailResult = await updateUserEmail({ email });
-      if (!emailResult.success) {
-        if (emailResult.fieldErrors) setFieldErrors(emailResult.fieldErrors);
-        setErrorMessage(emailResult.error || "Failed to update email");
-        setIsLoading(false);
-        return;
+      if (email.trim().toLowerCase() !== (session?.user?.email ?? "").toLowerCase()) {
+        const emailResult = await accountApi.putEmail({ email });
+        if (emailResult.kind !== "ok") {
+          if (emailResult.kind === "failed" && emailResult.fields) setFieldErrors(emailResult.fields);
+          setErrorMessage(accountMessageOf(emailResult, "Failed to update email"));
+          return;
+        }
       }
 
-      if (password && confirmPassword) {
-        const passwordResult = await updateUserPassword({ password, confirmPassword });
-        if (!passwordResult.success) {
-          if (passwordResult.fieldErrors) setFieldErrors(passwordResult.fieldErrors);
-          setErrorMessage(passwordResult.error || "Failed to update password");
-          setIsLoading(false);
+      if (password || confirmPassword) {
+        if (password !== confirmPassword) {
+          setFieldErrors({ confirmPassword: ["Passwords do not match"] });
+          setErrorMessage("Passwords do not match");
+          return;
+        }
+        const passwordResult = await accountApi.putPassword({ password });
+        if (passwordResult.kind !== "ok") {
+          if (passwordResult.kind === "failed" && passwordResult.fields) setFieldErrors(passwordResult.fields);
+          setErrorMessage(accountMessageOf(passwordResult, "Failed to update password"));
           return;
         }
         passwordChanged = true;
       }
 
       if (passwordChanged) {
+        // Every session from before the change is now refused, this one included: sign in again with the new password.
         setSuccessMessage("Password updated successfully! You will be logged out in 3 seconds...");
         setTimeout(async () => {
           await signOut({ callbackUrl: "/login?message=password-changed" });
@@ -313,15 +353,25 @@ function AccountSettingsPanelContent() {
           </div>
         )}
 
+        {extraTabs.map((t) =>
+          activeTab === t.id ? (
+            <div key={t.id} className="tab-panel">
+              {t.content}
+            </div>
+          ) : null,
+        )}
       </div>
     </div>
   );
 }
 
-export default function AccountSettingsPanel() {
+// The app's one query cache (the root layout's), not one of its own (bug 2026-10-16: a private cache here meant a
+// service added in the Services tab, or the bank account, did not reach the other pages until a hard refresh).
+export default function AccountSettingsPanel({ extraTabs }: { extraTabs?: readonly ExtraTab[] }) {
+  // Next asks for a Suspense boundary around useSearchParams (a server render shows the fallback; a navigation never does).
   return (
-    <QueryProvider>
-      <AccountSettingsPanelContent />
-    </QueryProvider>
+    <Suspense fallback={null}>
+      <AccountSettingsPanelContent extraTabs={extraTabs} />
+    </Suspense>
   );
 }

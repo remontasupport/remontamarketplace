@@ -42,8 +42,11 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useIdentityDocuments, useDriverLicense, identityDocumentsKeys } from "@/hooks/queries/useIdentityDocuments";
-import { uploadComplianceDocument } from "@/services/worker/compliance.service";
+import { useIdentityDocuments, useDriverLicense } from "@/hooks/queries/useIdentityDocuments";
+import { workerApi } from "@/features/worker/api";
+import { uploadComplianceDocument } from "@/features/worker/compliance";
+import { reloadProfileInto } from "@/features/worker/profile";
+import { messageOf } from "@/features/worker/services";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import ConfirmDialog from "@/components/ui/ConfirmDialog";
@@ -331,21 +334,15 @@ export default function Step1ProofOfIdentity({
     setUploadingFiles((prev) => new Set(prev).add(documentType));
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("documentType", documentType);
+      // Straight to the private bucket, then recorded by apps/api (U4b).
+      const result = await uploadComplianceDocument(file, { requirementType: documentType });
 
-      // Use server action instead of API endpoint
-      const result = await uploadComplianceDocument(formData);
-
-      if (!result.success) {
-        throw new Error(result.error || "Upload failed");
+      if (!result.ok) {
+        throw new Error(result.message);
       }
 
       // Invalidate cache to update all steps automatically
-      await queryClient.invalidateQueries({
-        queryKey: identityDocumentsKeys.all,
-      });
+      await reloadProfileInto(queryClient);
 
       // Exit edit mode after successful upload
       const isPrimary = PRIMARY_DOCUMENTS.some(d => d.type === documentType);
@@ -388,12 +385,10 @@ export default function Step1ProofOfIdentity({
       }
 
       if (doc?.id) {
-        const response = await fetch(`/api/worker/identity-documents?id=${doc.id}`, {
-          method: "DELETE",
-        });
+        const response = await workerApi.deleteComplianceDocument(doc.id);
 
-        if (!response.ok) {
-          throw new Error("Failed to delete document");
+        if (response.kind !== "ok") {
+          throw new Error(messageOf(response, "Failed to delete document"));
         }
       }
 
@@ -412,9 +407,7 @@ export default function Step1ProofOfIdentity({
       }
 
       // Invalidate cache to update all steps automatically
-      await queryClient.invalidateQueries({
-        queryKey: identityDocumentsKeys.all,
-      });
+      await reloadProfileInto(queryClient);
     } catch (error: any) {
       showErrorModal(
         error.message || "Unknown error occurred",

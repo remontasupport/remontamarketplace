@@ -6,6 +6,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { TextField } from "@/components/forms/fields";
 import StepContentWrapper from "../shared/StepContentWrapper";
+import { handTaxIdToContractTab } from "@/features/worker/compliance";
 
 type EngagementType = "abn" | "tfn" | null;
 
@@ -64,12 +65,11 @@ export default function Step6ABN({ data, onChange, errors }: Step6ABNProps) {
     return digits.length === requiredDigits;
   })();
 
-  // Open contract page in new tab
+  // Open contract page in new tab. C3: the number goes through session storage, never the URL (history, logs, Referer).
   const handleViewContract = useCallback(() => {
     if (selectedType) {
-      const taxIdValue = selectedType === "abn" ? abnValue : tfnValue;
-      const contractUrl = `/dashboard/worker/contract/${selectedType}?taxId=${encodeURIComponent(taxIdValue)}`;
-      window.open(contractUrl, "_blank");
+      handTaxIdToContractTab(selectedType === "abn" ? abnValue : tfnValue);
+      window.open(`/dashboard/worker/contract/${selectedType}`, "_blank");
     }
   }, [selectedType, abnValue, tfnValue]);
 

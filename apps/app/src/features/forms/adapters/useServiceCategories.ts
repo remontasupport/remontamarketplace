@@ -31,3 +31,11 @@ export function useServiceCategories(backend: Backend) {
     refetchOnReconnect: false,
   });
 }
+
+/**
+ * The same catalogue for the signed-in Services pages (api-review): the public, rate-limited, cached api entry, so
+ * those pages no longer read the Next.js `/api/categories` route. They use the ids, names and sub-categories only.
+ */
+export function useCatalogue() {
+  return useServiceCategories({ apiBaseUrl: process.env.NEXT_PUBLIC_API_URL ?? "", recaptchaSiteKey: "" });
+}

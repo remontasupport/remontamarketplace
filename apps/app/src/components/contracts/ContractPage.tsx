@@ -12,7 +12,7 @@ import { drawSectionExtras } from "@/lib/contractPdf";
 import ContractViewer from "./ContractViewer";
 import SignaturePad from "./SignaturePad";
 import Image from "next/image";
-import { updateWorkerABN, uploadComplianceDocument } from "@/services/worker/compliance.service";
+import { signContract } from "@/features/worker/compliance";
 
 interface ContractPageProps {
   contractType: "abn" | "tfn";
@@ -39,9 +39,6 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Non-blocking warning shown on success screen when auto-upload fails.
-  // signed:true is already in DB so the worker can still proceed.
-  const [uploadWarning, setUploadWarning] = useState<string | null>(null);
 
   // Preamble fields
   const [agreementDate, setAgreementDate] = useState<string>(
@@ -220,90 +217,44 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
 
     setIsSubmitting(true);
     setError(null);
-    setUploadWarning(null);
 
-    // ── Step 1: Save signed status (CRITICAL — must succeed before anything else) ──
-    let signResult;
-    try {
-      signResult = await updateWorkerABN({
-        abn: {
-          workerEngagementType: {
-            type: contractType,
-            signed: true,
-          },
-        },
-      });
-    } catch {
-      setError("Unable to reach the server. Please check your connection and try again.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    if (!signResult.success) {
-      setError(
-        signResult.error === "Unauthorized. Please log in."
-          ? "Your session has expired. Please refresh the page and log in again."
-          : signResult.error || "Failed to save your contract. Please try again."
-      );
-      setIsSubmitting(false);
-      return;
-    }
-
-    // ── Step 2: Generate PDF (non-critical — signed status already saved) ──
-    let doc: import("jspdf").jsPDF | null = null;
-    let fileName = "";
+    // ── Step 1: Generate the PDF (the signed contract is what proves the engagement) ──
+    let doc: import("jspdf").jsPDF;
+    let fileName: string;
     try {
       const result = generatePdfDocument();
       doc = result.doc;
       fileName = result.fileName;
     } catch (pdfErr) {
       console.error("[Contract] PDF generation failed:", pdfErr);
-      // Worker can still proceed — signed:true is in DB
+      setError("We couldn't prepare your contract. Please try again.");
+      setIsSubmitting(false);
+      return;
     }
 
-    // ── Step 3: Auto-upload to database (non-critical) ──
-    if (doc) {
-      try {
-        const pdfBlob = doc.output("blob");
-        const uploadFormData = new FormData();
-        uploadFormData.append("file", new File([pdfBlob], fileName, { type: "application/pdf" }));
-        uploadFormData.append("documentType", "contract-of-agreement");
-        uploadFormData.append("documentName", "Contract of Agreement");
-
-        const uploadResult = await uploadComplianceDocument(uploadFormData);
-        if (!uploadResult.success) {
-          console.error("[Contract] Auto-upload failed:", uploadResult.error);
-          setUploadWarning(
-            "Your contract was signed, but we couldn't save a copy to your account. " +
-            "Please keep the downloaded PDF for your records. You can still proceed with your registration."
-          );
-        }
-      } catch (uploadErr) {
-        console.error("[Contract] Auto-upload threw:", uploadErr);
-        setUploadWarning(
-          "Your contract was signed, but we couldn't upload it due to a connection issue. " +
-          "Please keep the downloaded PDF for your records. You can still proceed with your registration."
-        );
-      }
-    } else {
-      // PDF generation failed — warn but don't block
-      setUploadWarning(
-        "Your contract was signed, but we couldn't generate the PDF copy. " +
-        "You can still proceed with your registration."
-      );
+    // ── Step 2: Sign on apps/api (U4d): the PDF straight to the private bucket, then the contract and the engagement
+    // recorded together. No tax number is sent; the PDF carries it. Nothing is marked signed unless this succeeds. ──
+    let signed;
+    try {
+      signed = await signContract(new File([doc.output("blob")], fileName, { type: "application/pdf" }), contractType);
+    } catch {
+      signed = { ok: false as const, message: "Unable to reach the server. Please check your connection and try again.", retryable: true };
+    }
+    if (!signed.ok) {
+      setError(signed.message);
+      setIsSubmitting(false);
+      return;
     }
 
-    // ── Step 4: Download PDF for worker's records (non-critical) ──
-    if (doc) {
-      try {
-        doc.save(fileName);
-      } catch (downloadErr) {
-        console.error("[Contract] PDF download failed:", downloadErr);
-        // Browser may have blocked it — not actionable, silently ignore
-      }
+    // ── Step 3: Download PDF for worker's records (non-critical) ──
+    try {
+      doc.save(fileName);
+    } catch (downloadErr) {
+      console.error("[Contract] PDF download failed:", downloadErr);
+      // Browser may have blocked it — not actionable, silently ignore
     }
 
-    // ── Step 5: Notify setup tab (best-effort) ──
+    // ── Step 4: Notify setup tab (best-effort) ──
     try {
       const bc = new BroadcastChannel("remonta-worker-compliance");
       bc.postMessage({ type: "contract-signed", contractType });
@@ -361,22 +312,6 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
               recorded. You can now close this tab and continue with your
               registration.
             </p>
-
-            {/* Non-blocking warning if auto-upload failed — worker can still proceed */}
-            {uploadWarning && (
-              <div style={{
-                marginTop: "1rem",
-                padding: "0.875rem 1rem",
-                backgroundColor: "#fffbeb",
-                border: "1px solid #f59e0b",
-                borderRadius: "8px",
-                textAlign: "left",
-              }}>
-                <p style={{ margin: 0, fontSize: "0.875rem", color: "#92400e" }}>
-                  <strong>Note:</strong> {uploadWarning}
-                </p>
-              </div>
-            )}
 
             <button
               type="button"

@@ -40,6 +40,8 @@ declare module "next-auth" {
       name?: string | null;
       image?: string | null;
       impersonatedBy?: string; // ID of admin who is impersonating this user
+      /** U5d: when this session signed in (seconds); api tokens are refused if the password changed after it. */
+      authAt?: number;
     };
   }
 
@@ -59,5 +61,9 @@ declare module "next-auth/jwt" {
     id: string;
     role: UserRole;
     impersonatedBy?: string; // ID of admin who is impersonating this user
+    /** U5d: sign-in time (seconds); the last check against users.passwordChangedAt; set once the session is refused. */
+    authAt?: number;
+    checkedAt?: number;
+    revoked?: boolean;
   }
 }

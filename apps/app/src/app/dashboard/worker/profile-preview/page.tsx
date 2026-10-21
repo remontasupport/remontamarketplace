@@ -2,22 +2,22 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useQueryClient } from "@tanstack/react-query";
+import { reloadProfileInto } from "@/features/worker/profile";
 import { ArrowLeft } from "lucide-react";
 import { useProfilePreview } from "@/hooks/useProfilePreview";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import QueryProvider from "@/providers/QueryProvider";
 import Loader from "@/components/ui/Loader";
 import ImageCropModal from "@/components/modals/ImageCropModal";
 import { blobUrlToFile } from "@/utils/imageCrop";
-import { updateWorkerPhoto } from "@/services/worker/profile.service";
+import { uploadProfilePhoto } from "@/features/worker/photo";
 import WorkerProfileView from "@/components/profile/WorkerProfileView";
 import "@/app/styles/profile-preview.css";
 
 function ProfilePreviewContent() {
   const router = useRouter();
-  const { data: session } = useSession();
-  const { data: profileData, isLoading, error, refetch } = useProfilePreview();
+  const queryClient = useQueryClient();
+  const { data: profileData, isLoading, error } = useProfilePreview();
 
   // Photo upload state
   const [showCropModal, setShowCropModal] = useState(false);
@@ -66,37 +66,11 @@ function ProfilePreviewContent() {
       setIsUploading(true);
       const croppedFile = await blobUrlToFile(croppedImageUrl, selectedFile?.name || 'cropped-photo.jpg');
 
-      // Upload to API
-      const formData = new FormData();
-      formData.append("photo", croppedFile);
-      formData.append("email", session?.user?.email || "user");
-
-      const response = await fetch("/api/upload/worker-photo", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to upload photo");
-      }
-
-      const data = await response.json();
-
-      if (data.url) {
-        // Save photo URL to database using server action
-        const result = await updateWorkerPhoto({ photo: data.url });
-
-        if (!result.success) {
-          throw new Error(result.error || "Failed to save photo to database");
-        }
-
-        // Refetch profile data to update the photo
-        window.location.reload();
-      } else {
-        throw new Error("No URL returned from upload");
-      }
+      // U5c: the My Profile photo flow (apps/api): shrink -> ticket -> straight to the bucket -> confirm.
+      const result = await uploadProfilePhoto(croppedFile);
+      if (!result.ok) throw new Error(result.message);
+      await reloadProfileInto(queryClient); // the new photo, past the private cache
     } catch (error: any) {
-     
       alert(`Failed to upload photo: ${error.message}`);
     } finally {
       setIsUploading(false);
@@ -239,8 +213,6 @@ function ProfilePreviewContent() {
 
 export default function ProfilePreviewPage() {
   return (
-    <QueryProvider>
-      <ProfilePreviewContent />
-    </QueryProvider>
+    <ProfilePreviewContent />
   );
 }

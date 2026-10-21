@@ -7,7 +7,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   clearDraft,
   defaultsOf,
@@ -36,6 +35,7 @@ import { shrinkImage } from "./adapters/shrinkImage";
 import { xhrUploader } from "./adapters/xhrUploader";
 import { previewKeyOf, thumbnailDataUrl } from "./photoPreview";
 import { useOnlineStatus } from "./adapters/useOnlineStatus";
+import { wizardResolver } from "./resolver";
 import { useRecaptcha } from "./adapters/useRecaptcha";
 
 type Values = Record<string, unknown>;
@@ -49,7 +49,8 @@ export function useFormWizard(def: FormDefinition, backend: Backend) {
   const schema = useMemo(() => formSchemaFor(def), [def]);
 
   const form = useForm<Values>({
-    resolver: zodResolver(schema) as never,
+    // Plain-English messages where the contract names none (2026-10-14), the same wording as My Profile and the api.
+    resolver: wizardResolver(schema) as never,
     mode: "all",
     reValidateMode: "onChange",
     criteriaMode: "all",

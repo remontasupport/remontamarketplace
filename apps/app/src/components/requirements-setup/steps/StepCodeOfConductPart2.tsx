@@ -8,10 +8,12 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
+import { useQueryClient } from "@tanstack/react-query";
 import { pdf } from "@react-pdf/renderer";
 import StepContentWrapper from "@/components/account-setup/shared/StepContentWrapper";
 import { CODE_OF_CONDUCT_PART2, CODE_OF_CONDUCT_ACKNOWLEDGMENT } from "@/config/codeOfConductContent";
-import { uploadComplianceDocument } from "@/services/worker/compliance.service";
+import { uploadComplianceDocument } from "@/features/worker/compliance";
+import { reloadProfileInto } from "@/features/worker/profile";
 import CodeOfConductPDF from "@/components/pdf/CodeOfConductPDF";
 import "@/app/styles/requirements-setup.css";
 
@@ -35,6 +37,7 @@ export default function StepCodeOfConductPart2({
   errors = {},
 }: StepCodeOfConductPart2Props) {
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
   const content = CODE_OF_CONDUCT_PART2;
 
   // Canvas refs and state
@@ -209,32 +212,25 @@ export default function StepCodeOfConductPart2({
         type: "application/pdf",
       });
 
-      // Create FormData for upload
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("documentType", "code-of-conduct");
-      formData.append("documentName", "Code of Conduct Acknowledgment");
-      formData.append("metadata", JSON.stringify({
-        signatureDate: signatureDate,
-        acknowledgedAt: new Date().toISOString(),
-        workerName: workerName,
-      }));
+      // Straight to the private bucket, then recorded by apps/api with the acknowledgement (U4b); the api stamps the
+      // time it was acknowledged.
+      const result = await uploadComplianceDocument(file, {
+        requirementType: "code-of-conduct",
+        acknowledgement: { workerName, signatureDate },
+      });
 
-      // Upload using server action
-      const result = await uploadComplianceDocument(formData);
-
-      if (!result.success) {
-        throw new Error(result.error || "Failed to save document");
+      if (!result.ok) {
+        throw new Error(result.message);
       }
 
       // Update parent component with the uploaded document
       onChange("codeOfConductDocument", {
-        id: result.data?.id,
-        documentUrl: result.data?.documentUrl,
-        uploadedAt: result.data?.uploadedAt,
+        id: result.document.id,
+        documentUrl: result.document.url,
+        uploadedAt: result.document.uploadedAt,
       });
-
-      console.log("Code of Conduct PDF saved successfully:", result.data);
+      // The sidebar's tick and the setup page's legacy read catch up.
+      void reloadProfileInto(queryClient);
     } catch (err: any) {
       console.error("Failed to save Code of Conduct:", err);
       setSaveError(err.message || "Failed to save document. Please try again.");

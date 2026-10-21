@@ -23,6 +23,14 @@
   padding-right: 3rem !important;
 }
 
+/* A step with several uploads (First Aid & CPR): the step keeps the height, not each upload */
+.combined-step {
+  min-height: 50vh;
+}
+.combined-step .account-step-container {
+  min-height: 0;
+}
+
 /* Align header elements with the adjusted container */
 .form-page-container:has(.account-step-container) .form-page-header {
   margin-left: -1rem !important;

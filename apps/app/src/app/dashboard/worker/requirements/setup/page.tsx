@@ -11,14 +11,14 @@ import { useState, useEffect, useRef, useMemo, Suspense } from "react";
 import { flushSync } from "react-dom";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import StepContainer from "@/components/account-setup/shared/StepContainer";
-import { useWorkerProfile, useUpdateProfileStep, workerProfileKeys } from "@/hooks/queries/useWorkerProfile";
+import { useWorkerProfile as useApiProfile } from "@/features/worker/profile";
+import { setupProfileOf } from "@/features/worker/compliance";
 import { useWorkerRequirements } from "@/hooks/queries/useWorkerRequirements";
 import { generateComplianceSteps, findStepBySlug, getStepIndex } from "@/utils/dynamicComplianceSteps";
-import { MANDATORY_REQUIREMENTS_SETUP_STEPS } from "@/config/mandatoryRequirementsSetupSteps";
-import { autoUpdateComplianceCompletion } from "@/services/worker/setupProgress.service";
+import { generateTrainingSteps, getTrainingStepUrl } from "@/utils/dynamicTrainingSteps";
+import { startNavigationProgress } from "@/components/ui/NavigationProgress";
 import Loader from "@/components/ui/Loader";
 import LoadingOverlay from "@/components/ui/LoadingOverlay";
 
@@ -77,7 +77,14 @@ function MandatoryRequirementsSetupContent() {
   }, [requirementsData]);
 
   // Use dynamic steps if available, otherwise fallback to static
-  const STEPS = dynamicSteps.length > 0 ? dynamicSteps : MANDATORY_REQUIREMENTS_SETUP_STEPS;
+  const STEPS = dynamicSteps;
+
+  // The trainings the worker's services need follow the mandatory steps in Compliance: the last mandatory step goes on
+  // to the first of them (user, 2026-10-16), and only a worker with none finishes here.
+  const firstTrainingUrl = useMemo(() => {
+    const first = generateTrainingSteps(requirementsData)[0];
+    return first ? getTrainingStepUrl(first.slug) : null;
+  }, [requirementsData]);
 
   // Determine the default step slug
   const defaultStepSlug = STEPS.length > 0 ? STEPS[0].slug : "worker-screening-check";
@@ -89,9 +96,9 @@ function MandatoryRequirementsSetupContent() {
   const currentStepData = STEPS[currentStep - 1];
 
   // TanStack Query hooks
-  const queryClient = useQueryClient();
-  const { data: profileData, isLoading: isLoadingProfile, refetch: refetchProfile } = useWorkerProfile(session?.user?.id);
-  const updateProfileMutation = useUpdateProfileStep();
+  // The api's profile read (U5b): the engagement, the contract and the Code of Conduct, in the shape this page reads.
+  const { profile: apiProfile, isLoading: isLoadingProfile, reload: refetchProfile } = useApiProfile();
+  const profileData = useMemo(() => (apiProfile ? setupProfileOf(apiProfile) : undefined), [apiProfile]);
 
   // Two-layer instant update strategy — both call refetch() directly (not just invalidate):
   //
@@ -101,7 +108,9 @@ function MandatoryRequirementsSetupContent() {
   // Layer 2 — visibilitychange: fires the moment the worker switches back to this tab,
   //   100% reliable regardless of BroadcastChannel support or timing.
   useEffect(() => {
-    const refetch = () => { refetchProfile(); };
+    const refetch = () => {
+      void refetchProfile(); // the api's profile, past its private cache (the sidebar's ticks follow)
+    };
 
     // Layer 1: BroadcastChannel (instant, while contract tab is still open)
     let bc: BroadcastChannel | undefined;
@@ -233,23 +242,6 @@ function MandatoryRequirementsSetupContent() {
         return newErrors;
       });
     }
-
-    // Auto-save workerEngagementType when contract is uploaded so a page refresh
-    // doesn't lose the ABN/TFN selection (which is only normally saved on Next click)
-    if (field === "contractDocument" && value && formData.workerEngagementType && session?.user?.id) {
-      updateProfileMutation.mutate({
-        userId: session.user.id,
-        step: currentStep,
-        data: {
-          abn: {
-            workerEngagementType: {
-              type: formData.workerEngagementType.type,
-              signed: true,
-            },
-          },
-        },
-      });
-    }
   };
 
   // Validate current step
@@ -328,7 +320,7 @@ function MandatoryRequirementsSetupContent() {
 
     try {
       // Show appropriate loading state BEFORE any async operations
-      if (isFinalStep) {
+      if (isFinalStep && !firstTrainingUrl) {
         // Use flushSync to force immediate synchronous render
         flushSync(() => {
           setIsFinalSaving(true);
@@ -337,28 +329,15 @@ function MandatoryRequirementsSetupContent() {
         setIsNavigating(true);
       }
 
-      // Determine if this step needs to save data to the database
-      const needsSaving = currentStepData?.documentId === "abn-contractor";
-
-      // Save worker engagement type if needed (await it to ensure it completes before navigation)
-      // Only save the type and signed status, not the actual ABN/TFN value
-      if (needsSaving && formData.workerEngagementType) {
-        await updateProfileMutation.mutateAsync({
-          userId: session.user.id,
-          step: currentStep,
-          data: {
-            abn: {
-              workerEngagementType: {
-                type: formData.workerEngagementType.type,
-                signed: true,
-              },
-            },
-          },
-        });
-      }
+      // The engagement is saved when the contract is signed (POST /v1/worker/contract, U4d): nothing to save here.
 
       // Move to next step or finish
-      if (!isFinalStep) {
+      if (isFinalStep && firstTrainingUrl) {
+        // On to the trainings the services need.
+        setIsNavigating(false);
+        startNavigationProgress();
+        router.push(firstTrainingUrl);
+      } else if (!isFinalStep) {
         // Reset loading state before navigation
         setIsNavigating(false);
 
@@ -366,22 +345,9 @@ function MandatoryRequirementsSetupContent() {
         const nextStepSlug = STEPS[currentStep].slug;
         router.push(`/dashboard/worker/requirements/setup?step=${nextStepSlug}`);
       } else {
-        // LAST STEP COMPLETED - Wait for update with timeout (max 3 seconds)
-        try {
-          // Race between update and timeout - whichever finishes first
-          await Promise.race([
-            autoUpdateComplianceCompletion(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
-          ]);
-        } catch (err) {
-          // If timeout or error, continue anyway (dashboard will poll)
-        
-        }
-
-        // Invalidate cache to refresh data
-        queryClient.invalidateQueries({
-          queryKey: workerProfileKeys.all,
-        });
+        // LAST STEP COMPLETED: apps/api recomputed and stored completion with every upload (U5b: the
+        // autoUpdateComplianceCompletion action is gone); the dashboard reads it fresh.
+        await refetchProfile();
 
         // Force Next.js to invalidate server cache and refetch on next navigation
         router.refresh();
@@ -439,6 +405,23 @@ function MandatoryRequirementsSetupContent() {
     );
   }
 
+
+  // No services chosen: the api lists no steps (R4.1, U5b) -- the services come first.
+  if (STEPS.length === 0) {
+    return (
+      <DashboardLayout showProfileCard={false}>
+        <div className="form-page-container">
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-8 text-center font-poppins">
+            <p className="text-gray-700">Choose the services you offer first: your compliance documents depend on them.</p>
+            <a href="/dashboard/worker/account?tab=services" className="mt-4 inline-block font-semibold underline" style={{ color: "#0C1628" }}>
+              Choose your services
+            </a>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   // Get current step component
   const CurrentStepComponent = currentStepData?.component;
 
@@ -458,7 +441,7 @@ function MandatoryRequirementsSetupContent() {
           onPrevious={handlePrevious}
           onSkip={handleSkip}
           isNextLoading={false}
-          nextButtonText={currentStep === STEPS.length ? "Save" : "Next"}
+          nextButtonText={currentStep === STEPS.length && !firstTrainingUrl ? "Save" : "Next"}
           showSkip={false}
           showPrevious={!(currentStepData?.documentId === 'code-of-conduct-part1' && conductPart === 1)}
           showNext={!(currentStepData?.documentId === 'code-of-conduct-part1' && conductPart === 1)}

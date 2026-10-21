@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { authPrisma as prisma } from '@/lib/auth-prisma'
 import { requireRole } from '@/lib/auth'
 import { UserRole } from '@/types/auth'
+import { maskBankAccount } from '@/lib/bankAccount'
 
 /**
  * GET /api/admin/contractors/:id
@@ -41,6 +42,10 @@ export async function GET(
         hobbies: true,
         uniqueService: true,
         qualifications: true,
+        // U2 (C21): the private home address, for Remonta only; never a client-facing route.
+        homeStreetLine: true,
+        homeLocality: { select: { suburb: true, state: true, postcode: true } },
+        workerAdditionalInfo: { select: { bankAccount: true } },
         workerServices: {
           select: {
             categoryName: true,
@@ -80,6 +85,10 @@ export async function GET(
         uniqueService: worker.uniqueService,
         qualifications: worker.qualifications,
         services,
+        // The street line is optional (2026-10-16): a suburb alone is an address.
+        homeAddress: worker.homeLocality ? { streetLine: worker.homeStreetLine || null, ...worker.homeLocality } : null,
+        // Masked here, so the stored BSB and account number never reach the browser.
+        bankAccount: maskBankAccount(worker.workerAdditionalInfo?.bankAccount ?? null),
       }
     })
 

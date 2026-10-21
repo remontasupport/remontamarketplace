@@ -10,7 +10,6 @@ import {
   adminContract,
   createClient,
   serializeCanonical,
-  type ErrorResponse,
   type SuspendedListQuery,
   type SuspendedListResponse,
   type UserListResponse,
@@ -18,15 +17,10 @@ import {
   type WorkerSearchQuery,
   type WorkerSearchResponse,
 } from '@remonta/api-contract'
+import { failure, type ApiOutcome } from './outcome'
 import { createTokenSource, Unauthenticated, type TokenSource } from './token'
 
-export type ApiOutcome<T> =
-  | { kind: 'ok'; body: T }
-  | { kind: 'unauthenticated' }
-  | { kind: 'forbidden' }
-  | { kind: 'rateLimited'; retryAfterSeconds: number }
-  | { kind: 'unavailable' }
-  | { kind: 'failed'; status: number; requestId?: string; fields?: Record<string, string[]> }
+export type { ApiOutcome } from './outcome'
 
 export interface CallOptions {
   /** `reload` skips the browser cache and the api's memo (the refresh button, after an admin action). */
@@ -117,14 +111,6 @@ export function createAdminApi(deps: AdminApiDeps): AdminApi {
       return 'fields' in q && typeof q.fields === 'object' ? '' : new URLSearchParams(q as Record<string, string>).toString()
     },
   }
-}
-
-function failure<T>(status: number, body: ErrorResponse | null, retryAfterSeconds?: number): ApiOutcome<T> {
-  if (status === 401) return { kind: 'unauthenticated' }
-  if (status === 403) return { kind: 'forbidden' }
-  if (status === 429) return { kind: 'rateLimited', retryAfterSeconds: retryAfterSeconds ?? 5 }
-  if (status === 503) return { kind: 'unavailable' }
-  return { kind: 'failed', status, requestId: body?.error.requestId, fields: body?.error.fields }
 }
 
 /** The page's token source: one per page load (R5.2). */
