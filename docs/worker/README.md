@@ -208,6 +208,43 @@ two agree everywhere except where the rules below say **[fix]**.
 values, and moves `verificationStatus` from `NOT_STARTED` to `IN_PROGRESS` when any flag becomes true. The read
 never calls it; every write that can change a flag (U2-U4) does. U1 ships the backfill (§7).
 
+### The groups model and `GET /v1/worker/completion` (onboarding-tour C1)
+
+"Complete" is declared once in `apps/api/src/modules/worker/application/completion-items.ts`; every measure below
+comes from its items. Design: `aidlc-docs/construction/completion-api/` (record branch `aidlc/onboarding-tour`).
+
+- **My Profile**: the 18 pages by the sidebar's slugs (`MY_PROFILE_PAGES` in the contract, in its order). Required
+  (11): name, photo, bio of 50+ characters, date of birth (or a stored age), gender, a language (the additional-info
+  list, else the legacy column), an experience row, a job, an education entry, an availability slot, the vehicle
+  answered. Optional (7, ticked when filled, never holding anything back): address, cultural background, religion,
+  interests, support & activities, preferences, personality. **No suburb is required.**
+- **Percent** = round(100 × required pages done / 11).
+- **Services** = a service chosen, each chosen service's documents (the rule above, per service; a service with only
+  optional documents needs one), and a Service Area.
+- **Compliance** = `compliance && trainings` (unchanged); its items are the requirement groups' mandatory steps and
+  trainings, each done when submitted or approved.
+- **Profile complete** = the three groups. A group's **first unfinished** item is the first required item not done,
+  in menu order (Compliance without a service: `services-chosen`).
+
+`GET /v1/worker/completion` answers `{percent, profileCompleted, groups[3]{id, complete, done, total,
+firstUnfinished}, items[]{id, group, required, done}, serviceDocuments[]{categoryId, documents[]{type, name, kind,
+required, uploaded}}}`: WORKER, own data (404 without a profile row), the read limits, privately cacheable 60 s +
+ETag. The profile read's `completion` is unchanged (today's rules) until the app moves (C2).
+
+**The stored flags' meaning** is the stage's `COMPLETION_MODEL` (`infra/lib/stages.ts`, the api refuses any other
+value; empty = `legacy`): `legacy` = today's four flags exactly; `groups` = `accountDetails` My Profile complete,
+`services` the Services group, `compliance`/`trainings` as today, `profileCompleted` the three groups. Every write,
+the job and the backfill use it. **Switching a stage** (at C2's release): a one-line PR setting it in the stages
+table, the render, merge, then the promotion; `backfill:completion -- --model=groups --report=<file>` (dry run),
+review, then `-- --model=groups --apply --dry-run-report=<file>`. Back: the same with `legacy`.
+
+**`completion-sync`** (`modules/worker/completion-sync.job.ts`), every `COMPLETION_SYNC_INTERVAL_MS` (5 minutes):
+the workers whose documents were submitted, reviewed, updated or expired since its watermark (an admin's review in
+the app's own routes included), recomputed and written when different; plus a full pass of every worker once a day
+(the first run after 03:00 Australia/Sydney), a page of 200 at a time, resuming across runs with the cursor kept in
+`scheduled_jobs.lastResult`. A failed run logs `alert: "completion-sync-failed"`; three in 15 minutes raise the
+`completion-sync-failing` alert (production).
+
 ## 5. The requirement groups
 
 `requirements.mandatory` = the IDENTITY/BUSINESS/COMPLIANCE documents linked to the worker's services,
@@ -269,7 +306,9 @@ The 5xx-ratio alert counts 503s: a burst that sheds shows there first, which is 
   `DIRECT_DATABASE_URL="$(gcloud secrets versions access latest --secret=remonta-api-AUTH_DATABASE_URL)"`).
   Any run on a production host, dry or not, needs `--allow-production`. Run on staging before a promotion and
   on prod right after, as checklist lines; the 2026-10-12 runs (1,790 and 1,843 profiles, 414 and 422 changed,
-  a second apply changing nothing on both) are in the cycle's construction notes.
+  a second apply changing nothing on both) are in the cycle's construction notes. **`--model=legacy|groups`**
+  (onboarding-tour C1; default the stage's `COMPLETION_MODEL`): the meaning computed (§4). **`--apply` needs
+  `--dry-run-report=<file>`**: the same model's dry run (written with `--report=<file>`) of the last hour.
 - **The checklist runner** (`pnpm --filter @remonta/api check:worker [-- --stage=prod]`): the 14 api checks of
   PR 1's verification against staging (default) or production -- health, a worker's read in the contract shape,
   masked bank data, the cache headers and 304, 401/403/404/400, the admin search, the other stage's health --
