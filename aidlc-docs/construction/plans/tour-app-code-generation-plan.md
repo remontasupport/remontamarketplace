@@ -23,54 +23,54 @@ callbacks out) and are checked by hand on the preview (Step 12). No new dependen
 - [x] **Step 1 -- Branch.** `feat/account-app` with `main` merged (gates green there first), pushed; then
   `git checkout -b feat/onboarding-tour`.
 
-- [ ] **Step 2 -- The api client** (`src/features/worker/api.ts`): `getTour(opts?: { signal })` and `putTourSeen()` on
+- [x] **Step 2 -- The api client** (`src/features/worker/api.ts`): `getTour(opts?: { signal })` and `putTourSeen()` on
   `WorkerApi`, through the existing `call` (token, one 401 retry, `ApiOutcome`). Test `src/features/worker/tour.api.test.ts`
   with a fake fetch: the paths and methods, a bearer token, `seenAt` passed through, 429 → `rateLimited` with
   `Retry-After`.
 
-- [ ] **Step 3 -- The step declaration** (`src/features/navigation/tourSteps.ts`, E1): `TOUR_STEPS` (the approved texts),
+- [x] **Step 3 -- The step declaration** (`src/features/navigation/tourSteps.ts`, E1): `TOUR_STEPS` (the approved texts),
   `TOUR_WELCOME`, `welcomeTitle(firstName)`, `TourTarget`. Test `tourSteps.test.ts`: five steps in order; **property**
   (P8): every target is a `WORKER_MENU` id or `checklist`; non-empty plain texts; the welcome title falls back without
   a name.
 
-- [ ] **Step 4 -- The state machine** (`src/features/onboarding-tour/machine.ts`, L1): `reduce(state, event, ctx)`.
+- [x] **Step 4 -- The state machine** (`src/features/onboarding-tour/machine.ts`, L1): `reduce(state, event, ctx)`.
   Test `machine.test.ts`: every row of the L1 table; **stateful property** (PBT-06, P8): for any sequence of events the
   step stays in range, Back never below the first step, Finish only on the last, and saves = 1 for a first run that
   ended, 0 for a replay or while impersonating.
 
-- [ ] **Step 5 -- The read and the save** (`src/features/onboarding-tour/tourApi.ts`, L2, L3): `readTourSeen(api,
+- [x] **Step 5 -- The read and the save** (`src/features/onboarding-tour/tourApi.ts`, L2, L3): `readTourSeen(api,
   deadlineMs)` → `'unseen' | 'seen' | 'unknown'`; `markTourSeen(api, timers)` with one retry; `retryDelay(seconds)`.
   Test `tourApi.test.ts` with a fake api and fake timers: R1 (500, network error, a 3 s timeout → unknown), R2 (an
   answer after the deadline is dropped), R3, R4 (at most two calls), R5 (`Retry-After: 7` → 7 s), no retry on
   401/403/404; **property** (P8): `retryDelay` is within 0..30 s and 5 s for absent or malformed values.
 
-- [ ] **Step 6 -- The rules as pure functions** (`src/features/onboarding-tour/rules.ts`): `tourEnabled(role)` (TR-8);
+- [x] **Step 6 -- The rules as pure functions** (`src/features/onboarding-tour/rules.ts`): `tourEnabled(role)` (TR-8);
   `shouldRead({ pathname, impersonating })` (TR-1, P2); `nextShowable(from, direction, has)` (TR-12);
   `cardPlacement(target, viewport, phone)` (Q4 A: right of the item with the arrow at its middle, kept on screen; the
   bottom of the screen on a phone); `PHONE_QUERY = '(max-width: 768px)'`; `replayRequested(searchParams)`.
   Test `rules.test.ts`: each rule, R6 (no read while impersonating), and a **property** that the card is always
   inside the viewport.
 
-- [ ] **Step 7 -- Presentational components** (`src/components/ui/tour/`): `WelcomeCard.tsx` (Radix Dialog, centred,
+- [x] **Step 7 -- Presentational components** (`src/components/ui/tour/`): `WelcomeCard.tsx` (Radix Dialog, centred,
   dimmed; Q2 A), `TourSpotlight.tsx` (the fixed layer: dimming with the target's rectangle cut out, the navy ring,
   takes every click; z-index above the drawer's 1000), `StepCard.tsx` (a labelled dialog: "Step n of 5", title, text,
   Back / Next or Finish, Skip tour; focus kept inside and returned; Esc), `HelpButton.tsx` (a round ? with
   "Take the tour"; Q3 A). Values in, callbacks out; no fetching; `prefers-reduced-motion` respected.
 
-- [ ] **Step 8 -- The glue** (`src/features/onboarding-tour/`): `useOnboardingTour.ts` (the reducer in React; the read
+- [x] **Step 8 -- The glue** (`src/features/onboarding-tour/`): `useOnboardingTour.ts` (the reducer in React; the read
   on the home; `?tour=start`; the save in the background; the drawer calls; cancels a pending retry on unmount) and
   `OnboardingTour.tsx` (finds and measures the target, L5; renders the cards; an error boundary that renders nothing).
 
-- [ ] **Step 9 -- The changed files:** `DashboardLayout.tsx` (for WORKER only: `next/dynamic` import of `OnboardingTour`
+- [x] **Step 9 -- The changed files:** `DashboardLayout.tsx` (for WORKER only: `next/dynamic` import of `OnboardingTour`
   with `ssr: false`, `openDrawer` / `closeDrawer`, the replay action to the header); `SimpleDashboardHeader.tsx`
   (optional `onTakeTour`, renders `HelpButton` left of the phone number); `Sidebar.tsx` (`data-tour={item.id}` on each
   heading); `ProfileCompletionReminder.tsx` (`data-tour="checklist"`).
 
-- [ ] **Step 10 -- Gates** in `../remonta-pr57`: `pnpm --filter @remonta/app run quality` (type and lint baselines may
+- [x] **Step 10 -- Gates** in `../remonta-pr57`: `pnpm --filter @remonta/app run quality` (type and lint baselines may
   not grow; the new files add no finding), `npx turbo run build`. Exit codes checked. Regenerated Prisma clients
   restored, not committed.
 
-- [ ] **Step 11 -- Commit and push** `feat/onboarding-tour` (one commit per layer: client; logic and tests; components;
+- [x] **Step 11 -- Commit and push** `feat/onboarding-tour` (one commit per layer: client; logic and tests; components;
   wiring). Vercel builds a preview of the branch, pointed at staging.
 
 - [ ] **Step 12 -- Preview checks** (requirements §6.4; the user, with Claude's list), on the branch preview with the

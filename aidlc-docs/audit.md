@@ -4727,3 +4727,14 @@ regenerate it. Regenerated locally, not committed. `feat/onboarding-tour` create
 **Written:** `construction/plans/tour-app-code-generation-plan.md` (12 steps). It decides to test U2's rules as pure
 functions in Node (the app has no DOM test setup) instead of the two component tests the functional design listed;
 the components are checked on the preview. **Approval prompt (2026-10-21):** U2 code generation plan presented.
+
+## 2026-10-21 -- U2 tour-app code generated and pushed
+
+**User input (verbatim):** "yes continue"
+
+**Done (plan Steps 2-11):** the client, the declaration, the reducer, the read/save, the rules (42 tests, five
+properties), the four presentational components, the hook and the tour, the wiring for workers only. Gates: app exit 0
+(73 / 289 known, 286 tests), the app build compiled. Pushed `feat/onboarding-tour` `ffad332` (4 commits, 20 files).
+Found and fixed: two off-screen placements (the property), the double-effect read, the save keyed on the transition.
+Deviations (3) and the preview checklist: `construction/tour-app/code/U2-summary.md`. Next: Step 12, the preview checks
+by the user.
