@@ -671,16 +671,10 @@
   .tour-help-button {
     display: none;
   }
-  /* A My Profile step's card sits in the middle of the space under the header on a phone (user, 2026-10-21). Auto
-     margins in the scrolling flex column centre a short card and leave a long form top-aligned and scrollable. */
+  /* Every step on ProfileShell (My Profile, Service Area) sits a little below the header on a phone, not centred and
+     not against the header (user, 2026-10-21). */
   .profile-step {
-    margin-top: auto;
-    margin-bottom: auto;
-  }
-  /* Service Area (the Services group): a little below the header rather than centred (user, 2026-10-21). */
-  .profile-step.profile-step--top {
     margin-top: 2.5rem;
-    margin-bottom: 0;
   }
 }
 
