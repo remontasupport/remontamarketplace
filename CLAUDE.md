@@ -179,9 +179,9 @@ Promote the last known-good deployment in Vercel. Seconds, no rebuild.
 
 | Project | Deployment |
 |---|---|
-| `remonta-app` | `2ewmXaYfTHuo6fBcNpNoKS13yBhY` — https://vercel.com/remontas-projects/remonta-app/2ewmXaYfTHuo6fBcNpNoKS13yBhY (the `main` `48a8a7e` build, verified live 2026-10-09) |
-| `remontamarketplace` | `5y5Ffr8mtJgmE2pg12GviLo4Rz72` — https://vercel.com/remontas-projects/remontamarketplace/5y5Ffr8mtJgmE2pg12GviLo4Rz72 (the same merge, 2026-10-09) |
-| `remonta-api` (Cloud Run) | revision `remonta-api-00013-rl7` = image `0fbd3d443da54a29b24a88aeaf9abacfc652312e` (#89 + #91, completion declared once and completion-sync, `COMPLETION_MODEL=legacy`; promoted 2026-10-21); the previous known-good is `remonta-api-00012-gts` = `f00a3cb85ba22939f9d6cebcf4e36509d4cb28d9` (2026-10-21). The migrations `u5d_users_password_changed_at` and `tour_worker_profiles_tour_seen_at` (expand-only) stay on a rollback. Roll back with the deploy-api dispatch naming that full sha, or Cloud Run → Revisions → route traffic. |
+| `remonta-app` | the `main` `9fdcf6d` production build, https://remonta-3o8rll8x5-remontas-projects.vercel.app (the last before the worker-dashboard release #94 `cf43d23`, 2026-10-21; find it in Vercel → remonta-app → Deployments and Promote) |
+| `remontamarketplace` | the `main` `9fdcf6d` production build, https://remontamarketplace-mk9jhsh75-remontas-projects.vercel.app (the same point, 2026-10-21) |
+| `remonta-api` (Cloud Run) | revision `remonta-api-00014-wdv` = image `9fdcf6df31b24226a4a24d7ff44b563139abb0e9` (#93, the service area's distance optional, promoted 2026-10-21 before the release #94); the previous known-good is `remonta-api-00013-rl7` = `0fbd3d443da54a29b24a88aeaf9abacfc652312e` (2026-10-21). The migrations `u5d_users_password_changed_at` and `tour_worker_profiles_tour_seen_at` (expand-only) stay on a rollback. Roll back with the deploy-api dispatch naming that full sha, or Cloud Run → Revisions → route traffic. |
 
 Re-record these before any unit that changes deployment settings. **Promote a
 deployment; do not redeploy a commit** — a rebuild can fail, an existing build cannot.
