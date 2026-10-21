@@ -5046,3 +5046,12 @@ the deleted `Zoho_Jobs_To_DB.md` (in git history).
 **Done:** `fix/profile-card-centered-mobile` from `main`: `.profile-step { margin-top: auto; margin-bottom: auto }` in the
 768 px media query of `dashboard.css`, the class on `ProfileShell`'s wrapper (auto margins in the scrolling flex column:
 short cards centred, long forms top-aligned and scrollable). Lint clean; pushed; the user's PR.
+
+## 2026-10-21 -- #95, #96, #97 live
+
+**User input (verbatim):** "merged"
+
+**Verified:** `main` `5089344` holds #95 (the clean-up), #96 (the rollback rows), #97 (the centred step card). Vercel
+production builds succeeded (remonta-app, remontamarketplace). Live: app /login, /dashboard/worker, /registration/worker
+200; marketing / and /provide-support 200; the removed routes /api/admin/reports/daily, /api/zoho/leads,
+/api/admin/fix-qualifications 404. Open: close #57; rotate the old Zoho secret; C2.
