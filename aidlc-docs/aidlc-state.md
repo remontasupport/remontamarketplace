@@ -24,9 +24,9 @@
   (`inception/plans/completion-execution-plan.md`, approved); C1 Functional Design approved; C1 NFR Design approved; C1 merged (#89, `main` `1eda05a`) and on staging
   (`00055-j29`), checks 10/10; **not promoted** (safe any time: invisible under `legacy`; promote with the full sha
   `1eda05ac2c6682b9fe34d2f09dcb06ca78962a06`, then the alert's metric + `apply-alerts.sh prod`). Decided 2026-10-21: **Language
-  optional** (10 required pages): PR branch `feat/completion-language-optional` `4056bbe` (pushed, the user's PR); promote its
-  merge sha instead of `1eda05a`. Open: the rollback-row PR
-  (`docs/rollback-rows-2026-10-21-tour`, not merged).
+  optional** (10 required pages): merged (#91, `main` `0fbd3d4`), staging `00056-rgt` checks 10/10. **Promote
+  `0fbd3d443da54a29b24a88aeaf9abacfc652312e`** (the user), then the alert's metric + `apply-alerts.sh prod`, then
+  re-record the api rollback row (CLAUDE.md now names `00012-gts`, #90). 
   C2 waits for the `feat/account-app` release (CD8).
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory

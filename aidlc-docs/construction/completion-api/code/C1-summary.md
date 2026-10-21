@@ -94,3 +94,11 @@ Read-only aggregates on the staging copy (`rehearse-w1`, 1,790 workers):
 
 **Conclusion: not a data gap.** The rule already reads both places; the 62 never answered the question. Nothing to
 migrate. The choice for C2 remains: keep Language required (they see one short page to do), or make it optional.
+
+## Language optional: merged and on staging (2026-10-21)
+
+- **PR #91** merged by the user: `main` `0fbd3d443da54a29b24a88aeaf9abacfc652312e` (CI 13/13 green); the stray
+  script is not in `main`. **PR #90** (the rollback rows, `00012-gts`) merged too.
+- **Staging:** revision `remonta-api-staging-00056-rgt`, 100 % traffic (04:45Z). Checks 10/10 again: 18 My Profile
+  items, **10 required**; the staging worker My Profile 10/10.
+- **The image to promote is `0fbd3d443da54a29b24a88aeaf9abacfc652312e`** (not `1eda05a`).

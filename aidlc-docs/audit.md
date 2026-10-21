@@ -4922,3 +4922,10 @@ pushed. Checked: no secrets (it reads them through gcloud at run time), no perso
 api's. No PR existed; the commit was amended without the file and the branch updated with `--force-with-lease`:
 `feat/completion-language-optional` = `4056bbe` (7 files). The local file is intact and untracked. `f162793` may stay
 reachable on GitHub by its sha. From now on, commits name their paths, never `-A` on a directory.
+
+## 2026-10-21 -- Language optional merged; staging rechecked
+
+**User input (verbatim):** "MERGED"
+
+**Found:** #91 merged (`main` `0fbd3d4`), CI 13/13; #90 merged as well; staging `00056-rgt`; checks 10/10 with 10
+required pages. The promotion image is `0fbd3d443da54a29b24a88aeaf9abacfc652312e`.
