@@ -4886,3 +4886,14 @@ no services had no next step (the property). Proved: the resumability property f
 
 **Also corrected to the user:** the rollback-row branch `docs/rollback-rows-2026-10-21-tour` is not merged (Claude had
 said it was, reading its own branch's CLAUDE.md).
+
+## 2026-10-21 -- C1 merged; staging checks; the switch's forecast
+
+**User input (verbatim):** "merged"
+**User input (verbatim):** "continue"
+
+**Found:** PR #89 merged (`main` `1eda05a`), CI 14/14; staging `remonta-api-staging-00055-j29`. Checks 10/10.
+completion-sync's first full pass: 1,790 checked, 0 changed under legacy. The groups dry run (no writes):
+accountDetails off 942, services off 4, profileCompleted off 83; of 1,790 workers 205 complete My Profile, 65
+profile complete; the 83 miss Language 62, Education 58, Experience 52, Work History 51, Preferred Hours 49. Nothing
+gates on profileCompleted (display only). Details: `construction/completion-api/code/C1-summary.md`.

@@ -50,3 +50,25 @@ from `main` `f00a3cb`, pushed `c4e4505` (7 commits, 29 files, +1,243 −26).
 5. Today's production app against staging unchanged.
 6. At the promotion: the metric (`bootstrap.sh` line, or the whole idempotent bootstrap) and
    `bash infra/cloudrun/apply-alerts.sh prod` (the user, with gcloud).
+
+## Merged and on staging (2026-10-21)
+
+- **PR #89** merged by the user: `main` `1eda05ac2c6682b9fe34d2f09dcb06ca78962a06`; CI on `c4e4505` 14/14 green (API
+  Quality Node 20 and 22 with the PostGIS tests, Infra Quality, App, Web, CodeQL, Semgrep, Supply chain, Vercel).
+- **Staging:** revision `remonta-api-staging-00055-j29` = image `1eda05a...`, 100 % traffic (04:18Z).
+- **Checks 10/10** (tokens from the staging secret, never printed; the staging worker `cmm7aoivq002sjo04iwn6d8km`):
+  health 200; the entry 401 / 403 (admin) / 404 (no profile) / 200 with `private, max-age=60` and an ETag, 304 on
+  the same ETag; 18 My Profile items (11 required); the groups in menu order; `serviceDocuments` per service. The
+  worker: percent 100, My Profile 11/11, Services 3/4 (next `service-documents:support-worker`), Compliance 10/11
+  (next `compliance:identity-points-100`).
+- **completion-sync's first run** did the day's full pass: **1,790 checked, 0 changed** under `legacy` (no stale
+  stored flags on the staging copy); `failed 0`.
+- **The forecast of C2's switch** (`backfill:completion -- --model=groups`, dry run on the staging copy, nothing
+  written): `accountDetails` off for **942**, `services` off for 4, `profileCompleted` off for **83**. Totals only
+  (read-only script): of 1,790 workers, **205** complete My Profile under the 11 required pages, **65** are profile
+  complete under the groups; the 83 who are complete today but not under the groups miss: Language 62, Education 58,
+  Experience 52, Work History 51, Preferred Hours 49.
+- **Nothing gates on `profileCompleted`** (no reader outside the completion code); the stored flags are shown on the
+  admin's contractor profile and the share page only. A decision for C2: accept these numbers, or change which pages
+  are required.
+- **Not run by Claude:** today's production app against staging in a browser (NFR-C1).

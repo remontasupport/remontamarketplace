@@ -21,9 +21,11 @@
   **New area in this cycle (user, 2026-10-21): profile completion.** Audit written
   (`inception/review/profile-completion-audit.md`, F1-F9, I1-I6); answered; requirements written
   (`inception/requirements/completion-requirements.md`, approved 2026-10-21); execution plan
-  (`inception/plans/completion-execution-plan.md`, approved); C1 Functional Design approved; C1 NFR Design approved; C1 code generated and pushed
-  (`feat/completion-api` `c4e4505`, gates green); **waiting for the user to open and merge the PR**, then the staging
-  checks of `construction/completion-api/code/C1-summary.md`. Open: the rollback-row PR
+  (`inception/plans/completion-execution-plan.md`, approved); C1 Functional Design approved; C1 NFR Design approved; C1 merged (#89, `main` `1eda05a`) and on staging
+  (`00055-j29`), checks 10/10; **not promoted** (safe any time: invisible under `legacy`; promote with the full sha
+  `1eda05ac2c6682b9fe34d2f09dcb06ca78962a06`, then the alert's metric + `apply-alerts.sh prod`). **A decision before C2**:
+  under `groups` 83 workers stop being "complete" and 942 lose accountDetails (C1-summary.md); accept, or change the
+  required pages. Open: the rollback-row PR
   (`docs/rollback-rows-2026-10-21-tour`, not merged).
   C2 waits for the `feat/account-app` release (CD8).
 
