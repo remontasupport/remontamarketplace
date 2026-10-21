@@ -6,7 +6,7 @@
 import type { HomeAddress, HomeAddressInput, ServiceAreaInput } from '@remonta/api-contract'
 import { ApiError } from '../../../platform/errors'
 import type { Tx } from '../../../platform/persistence/db'
-import { localityLabel, placeHome } from '../../locations/domain/home'
+import { DEFAULT_TRAVEL_RADIUS_KM, localityLabel, placeHome } from '../../locations/domain/home'
 
 const UNKNOWN_SUBURB = { localityId: ['Unknown suburb'] }
 
@@ -27,11 +27,12 @@ export interface ServiceAreaView {
 export async function writeServiceArea(tx: Tx, profileId: string, body: ServiceAreaInput): Promise<ServiceAreaView> {
   const locality = await tx.auLocality.findUnique({ where: { id: body.localityId }, select: { id: true, suburb: true, state: true, postcode: true, latitude: true, longitude: true, retiredAt: true } })
   if (!locality) throw new ApiError(400, 'unknown locality', UNKNOWN_SUBURB)
-  const placed = placeHome(locality, 'ONBOARDING', body.travelRadiusKm)
+  // One HOME row per worker (the partial unique index): update it in place, or create the first.
+  const existing = await tx.workerLocation.findFirst({ where: { workerProfileId: profileId, kind: 'HOME' }, select: { id: true, travelRadiusKm: true } })
+  // The page no longer asks for the distance (user, 2026-10-21): a save without one keeps the stored value.
+  const placed = placeHome(locality, 'ONBOARDING', body.travelRadiusKm ?? existing?.travelRadiusKm ?? DEFAULT_TRAVEL_RADIUS_KM)
   if (!placed.ok) throw new ApiError(400, 'retired locality', UNKNOWN_SUBURB)
   const { home, legacy } = placed
-  // One HOME row per worker (the partial unique index): update it in place, or create the first.
-  const existing = await tx.workerLocation.findFirst({ where: { workerProfileId: profileId, kind: 'HOME' }, select: { id: true } })
   const data = { localityId: home.localityId, latitude: home.latitude, longitude: home.longitude, travelRadiusKm: home.travelRadiusKm, precision: home.precision, source: home.source }
   if (existing) await tx.workerLocation.update({ where: { id: existing.id }, data, select: { id: true } })
   else await tx.workerLocation.create({ data: { workerProfileId: profileId, kind: 'HOME', ...data }, select: { id: true } })

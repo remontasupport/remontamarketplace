@@ -109,7 +109,8 @@ export type HomeAddressInput = z.output<typeof homeAddressInputSchema>
 // The stored shape (`homeAddressSchema`, with suburb/state/postcode) lives in worker.contract.ts beside the read.
 
 export const TRAVEL_RADIUS_MAX_KM = 500
-export const serviceAreaInputSchema = z.strictObject({ localityId: positiveInt, travelRadiusKm: z.number().int().min(1).max(TRAVEL_RADIUS_MAX_KM) })
+/** `travelRadiusKm` is optional (user, 2026-10-21: the page no longer asks): without it the stored distance is kept (50 km for a first placement). */
+export const serviceAreaInputSchema = z.strictObject({ localityId: positiveInt, travelRadiusKm: z.number().int().min(1).max(TRAVEL_RADIUS_MAX_KM).optional() })
 export type ServiceAreaInput = z.output<typeof serviceAreaInputSchema>
 
 // ---- Photos (R4) -------------------------------------------------------------------------------

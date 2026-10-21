@@ -5041,8 +5041,7 @@
                   }
                 },
                 "required": [
-                  "localityId",
-                  "travelRadiusKm"
+                  "localityId"
                 ],
                 "additionalProperties": false
               }
