@@ -4738,3 +4738,14 @@ properties), the four presentational components, the hook and the tour, the wiri
 Found and fixed: two off-screen placements (the property), the double-effect read, the save keyed on the transition.
 Deviations (3) and the preview checklist: `construction/tour-app/code/U2-summary.md`. Next: Step 12, the preview checks
 by the user.
+
+## Build and Test Stage (onboarding-tour, 2026-10-21)
+
+**User input (verbatim):** "continue to next stage"
+**Build Status:** Success (U1: turbo 3/3, staging image `f00a3cb`; U2: app build compiled, Vercel preview of `ffad332` success).
+**Test Status:** every automated test passes (U1: api-contract 104, api 796 + PostGIS 5 in CI, staging 13/13; U2: app
+286, none new in the baselines). **Not yet verified by a person:** the ten preview checks (U2) and today's production
+app against staging (U1, NFR-02). The preview URL answers 302 (Vercel's login for protected previews).
+**Files Generated:** `construction/build-and-test/`: build-instructions.md, unit-test-instructions.md,
+integration-test-instructions.md, performance-test-instructions.md (not run, by decision), e2e-test-instructions.md,
+build-and-test-summary.md.

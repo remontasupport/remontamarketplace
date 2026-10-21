@@ -11,8 +11,9 @@
 - **Current Stage**: CONSTRUCTION -- U1 `tour-seen-api` merged (#88, `main` `f00a3cb`) and on staging
   (`remonta-api-staging-00054-f7t`); staging checklist 13/13. **Not promoted to production** (later, on the user's
   word: imageTag `f00a3cb85ba22939f9d6cebcf4e36509d4cb28d9`). `main` merged into `feat/account-app` (`dda4f61`, gates
-  green). **U2 generated and pushed** (`feat/onboarding-tour` `ffad332`, gates green); **waiting for the user's
-  preview checks** (Step 12, `construction/tour-app/code/U2-summary.md`), then the go to merge it into `feat/account-app`. NFR design approved 2026-10-21. U1 functional design approved 2026-10-21. Requirements and the execution plan
+  green). **U2 generated and pushed** (`feat/onboarding-tour` `ffad332`, gates green, preview built). **Build and Test
+  written** (`construction/build-and-test/`): automated tests all pass; **waiting for the user's preview checks** (the
+  ten of U2-summary.md) and the NFR-02 browser check, then the release order in `build-and-test-summary.md`. NFR design approved 2026-10-21. U1 functional design approved 2026-10-21. Requirements and the execution plan
   approved 2026-10-21.
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory
@@ -45,7 +46,7 @@
 - [x] NFR Design -- approved 2026-10-21 (U1 amended with BR-10)
 - [ ] Infrastructure Design -- SKIP
 - [ ] Code Generation -- EXECUTE (U1 done, merged #88, staging 13/13; U2 pushed `ffad332`, preview checks next)
-- [ ] Build and Test -- EXECUTE (U1, U2)
+- [ ] Build and Test -- written 2026-10-21; the person-run checks open
 
 ## Previous cycles (archived, read-only)
 
