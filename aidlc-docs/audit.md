@@ -4897,3 +4897,12 @@ completion-sync's first full pass: 1,790 checked, 0 changed under legacy. The gr
 accountDetails off 942, services off 4, profileCompleted off 83; of 1,790 workers 205 complete My Profile, 65
 profile complete; the 83 miss Language 62, Education 58, Experience 52, Work History 51, Preferred Hours 49. Nothing
 gates on profileCompleted (display only). Details: `construction/completion-api/code/C1-summary.md`.
+
+## 2026-10-21 -- The language data checked
+
+**User input (verbatim):** "c, check the language data first"
+
+**Found (read-only aggregates, staging copy):** 1,202 of 1,790 workers have no language anywhere, all signed up before
+S1; the sign-up never asks for languages; no blank-only values; the rule already falls back to the legacy column (283
+counted that way); of the 148 complete today, 62 have none. Not a data gap: unanswered. Details:
+`construction/completion-api/code/C1-summary.md`. The C2 choice (accept, or make pages optional) put back to the user.

@@ -72,3 +72,25 @@ from `main` `f00a3cb`, pushed `c4e4505` (7 commits, 29 files, +1,243 −26).
   admin's contractor profile and the share page only. A decision for C2: accept these numbers, or change which pages
   are required.
 - **Not run by Claude:** today's production app against staging in a browser (NFR-C1).
+
+## The language data (user: "c, check the language data first", 2026-10-21)
+
+Read-only aggregates on the staging copy (`rehearse-w1`, 1,790 workers):
+
+| Where a worker's languages are | Workers |
+|---|---|
+| nowhere, and no additional-info row at all | 1,096 |
+| only the legacy `worker_profiles.languages` (the rule falls back to it: counts as done) | 283 |
+| only the additional-info list | 245 |
+| an additional-info row, its list empty, no legacy value | 106 |
+| both | 38 |
+| legacy value, additional-info row with an empty list (counts as done) | 22 |
+
+- **No language anywhere: 1,202, all signed up before S1** (2026-10-02). The sign-up has never asked for languages
+  (it writes `[]`); only the profile pages do (the legacy column on the old pages, the additional-info list on the new).
+- **No blank-only values** in either list (0): nothing is stored in a shape the rule misses.
+- **Of the 148 workers "complete" today, 62 have no language anywhere**: today's rules never asked for one.
+- For comparison, of the 411 additional-info rows: interests 318, cultural background 308, personality 315.
+
+**Conclusion: not a data gap.** The rule already reads both places; the 62 never answered the question. Nothing to
+migrate. The choice for C2 remains: keep Language required (they see one short page to do), or make it optional.
