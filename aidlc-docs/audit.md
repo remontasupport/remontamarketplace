@@ -4476,3 +4476,20 @@ that merge) -> production api checks; merge the UI PR -> production checks. `fea
 **Stated to the user:** images are built only from `main`, so the api promotion also carries the 20 api PRs merged
 since production's `182f94f` (#61-#84) and the migration `u5d_users_password_changed_at` (expand-only); the
 State filter's api change cannot ship alone.
+
+## 2026-10-21 -- The State filter released (recorded after the fact)
+
+**User input (verbatim):** "Hey claude, where are we at on the ai dlc?"
+**User input (verbatim):** "1. Yes the production has already the State filter 2. what is the command in gcloud for you to login? i remember, it starts with !"
+
+**Found (git, the Actions run list, `gcloud run services describe`), 2026-10-19 UTC:**
+- 01:20Z PR #85 `feat/admin-state-filter-api` merged: `main` `b8fe2eb8c64697e8eb295f93cb5d2c90814bc2ac`; staging deployed it.
+- 01:34Z deploy-api `workflow_dispatch` of `b8fe2eb...`, success. Production `remonta-api` now serves revision
+  `remonta-api-00011-99p` = image `api:b8fe2eb8c64697e8eb295f93cb5d2c90814bc2ac`, 100% of traffic (carries #61-#85 and
+  the migration `u5d_users_password_changed_at`). Previous: `remonta-api-00010-8vk` = `182f94f757551997d5c75843e01524b221db5281` (2026-10-14).
+- 01:44Z PR #86 `feat/admin-state-filter-ui` merged: `main` `e2d85556e432084bd06c45abe4800cd48be1acae`.
+- 2026-10-21: production `/v1/health` 200. The user confirms the State filter works on production.
+
+The order held (api -> staging -> prod promotion -> app). Not recorded at the time: the preview checklist run, and the
+rollback rows in CLAUDE.md before the promotion (re-recorded now, api row; the Vercel rows need the new deployment ids).
+`feat/account-app` stays held.

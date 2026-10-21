@@ -15,7 +15,8 @@
   **Where things are:**
   - `main` `4b41ba1` (#84). Every api change is merged (#72, #74, #76-#84); staging runs image
     `4b41ba18ced9375f2c303c7f00f5058f8fbe093b` (= `main`), healthy.
-  - **Production api: `182f94f`** (#60, 2026-10-14), 59 commits behind `main`. Not promoted.
+  - **Production api: `b8fe2eb`** (#85, promoted 2026-10-19 01:34Z, revision `remonta-api-00011-99p`; previous
+    `remonta-api-00010-8vk` = `182f94f`). It carries every api change of this cycle (#61-#85).
   - **App: all of it on `feat/account-app` `1253532`** (worktree `../remonta-pr57`, where the local servers run).
     It contains PR #57 (`feat/edit-profile-app` `6b4a9bd`) and the whole stack: services-app (#68, #71, #73, #75) <-
     U5a `feat/retire-old-profile-pages` <- U5b `feat/compliance-frame` <- U5c `feat/dashboard-home` <- U5d + the
@@ -88,14 +89,17 @@
   carries #61-#84 too), then merge the UI PR. `feat/account-app` stays held; merge `main` into it afterwards (the
   cherry-picked commit merges cleanly) and run the api gate there.
 
-  **Resume here (2026-10-19, in this order):**
-  1. `git ls-remote origin main feat/account-app feat/admin-state-filter-api`; ask what was merged since.
-  2. **The State filter's api PR**: `feat/admin-state-filter-api` -> `main` (CI green incl. API Quality's database
-     tests) -> merge -> staging deploys it. Then on the `feat/account-app` preview (staging api): pick a state, apply;
-     the list and the "no mapped suburb" count narrow; "list them" keeps the state; Clear Filters resets it; a reload
-     of the URL restores it. If `main` moved since, merge it into `feat/account-app` and run the api gate there too
-     (the 2026-10-19 break came from a merge).
-  3. **Release, in this order, only when the user says** (CLAUDE.md "Preview before production"):
+  **Released 2026-10-19 (recorded 2026-10-21, audit):** PR #85 (api) and PR #86 (the dropdown) merged; `main`
+  `e2d8555`; production api promoted to `b8fe2eb` between them. The user confirms the State filter on production.
+
+  **Resume here (2026-10-21, in this order):**
+  1. `git ls-remote origin main feat/account-app`; ask what was merged since.
+  2. **Bring `feat/account-app` up to `main`** (`e2d8555`: #85, #86): merge `main` in (the cherry-picked dropdown
+     commit should merge cleanly), run the app gate AND the api gate there (the 2026-10-19 break came from a merge),
+     push.
+  3. **Release, in this order, only when the user says** (CLAUDE.md "Preview before production"). The api step is
+     smaller now: production already runs every api change of the cycle, so (b) is needed only if `main` gains api
+     commits after `b8fe2eb`:
      a. Preview checklist against staging on the `feat/account-app` preview: sign in (staging-only worker) and open the
         dashboard · api health 200 · suburb search · a photo upload · a document upload (compliance + a service
         document) · a full sign-up with an internal email · duplicate-email notice · production domain unchanged.
