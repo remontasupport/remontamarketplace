@@ -671,6 +671,12 @@
   .tour-help-button {
     display: none;
   }
+  /* A My Profile step's card sits in the middle of the space under the header on a phone (user, 2026-10-21). Auto
+     margins in the scrolling flex column centre a short card and leave a long form top-aligned and scrollable. */
+  .profile-step {
+    margin-top: auto;
+    margin-bottom: auto;
+  }
 }
 
 .header-logo-img {

@@ -43,7 +43,7 @@ export default function ProfileShell({ slug, children }: { slug?: string; childr
 
   return (
     <DashboardLayout profileData={profile ? { firstName: profile.names.firstName, photo: profile.photos.main, role: profile.displayRole } : undefined}>
-      <div className="max-w-3xl mx-auto w-full px-1 sm:px-0">
+      <div className="profile-step max-w-3xl mx-auto w-full px-1 sm:px-0">
         {apply && (
           <div className="mb-3 rounded-xl border border-green-200 bg-green-50 px-4 py-2.5 text-sm font-poppins text-green-800">
             Applying for: <strong>{apply.applyJobTitle}</strong>. Update your profile, review it and press Apply Now when ready.
