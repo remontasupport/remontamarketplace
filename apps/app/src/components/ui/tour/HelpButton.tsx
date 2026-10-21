@@ -9,7 +9,7 @@ export default function HelpButton({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       aria-label="Take the tour"
       title="Take the tour"
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-300 text-base font-semibold text-[#0C1628] hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0C1628]"
+      className="tour-help-button flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-300 text-base font-semibold text-[#0C1628] hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0C1628]"
     >
       ?
     </button>

@@ -667,6 +667,10 @@
   .burger-menu-button {
     display: flex;
   }
+  /* The tour's ? stays off the phone header (user, 2026-10-21); the tour still starts by itself on a first visit. */
+  .tour-help-button {
+    display: none;
+  }
 }
 
 .header-logo-img {
