@@ -10,6 +10,8 @@ import type { Db, Prisma } from '../persistence/db'
 export interface JobContext {
   /** The previous run's watermark (reconciler), or null on the first run. */
   watermark: Date | null
+  /** The previous run's summary (a job may keep a cursor in it: completion-sync's daily pass), or null. */
+  lastResult?: unknown
   now: Date
   signal: AbortSignal
 }
@@ -67,17 +69,17 @@ export class Scheduler {
     await this.db.$executeRaw`INSERT INTO scheduled_jobs (name) VALUES (${job.name}) ON CONFLICT (name) DO NOTHING`
     const dueBefore = new Date(now.getTime() - job.everyMs)
     const lease = new Date(now.getTime() + job.timeoutMs)
-    const won = await this.db.$queryRaw<{ watermark: Date | null }[]>`
+    const won = await this.db.$queryRaw<{ watermark: Date | null; lastResult: unknown }[]>`
       UPDATE scheduled_jobs SET "lockedUntil" = ${lease}, "lastStartedAt" = ${now}
        WHERE name = ${job.name}
          AND ("lockedUntil" IS NULL OR "lockedUntil" < ${now})
          AND ("lastStartedAt" IS NULL OR "lastStartedAt" <= ${dueBefore})
-      RETURNING watermark`
+      RETURNING watermark, "lastResult"`
     if (won.length === 0) return false
 
     const signal = AbortSignal.timeout(job.timeoutMs)
     try {
-      const result = await job.run({ watermark: won[0]!.watermark, now, signal })
+      const result = await job.run({ watermark: won[0]!.watermark, lastResult: won[0]!.lastResult ?? null, now, signal })
       await this.db.scheduledJob.update({
         where: { name: job.name },
         data: { lockedUntil: null, lastFinishedAt: this.clock(), lastResult: result.summary, ...(result.watermark ? { watermark: result.watermark } : {}) },

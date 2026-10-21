@@ -277,17 +277,20 @@ export function serviceUploadsOf(rows: RequirementRow[]): Map<string, Set<string
   return uploads
 }
 
+/** R3.7 for one service: the table's spec for its sub-categories against its counting uploads (also one completion item, onboarding-tour C1 E3). */
+export function serviceDocumentsDone(s: ServiceRow, uploads: ReadonlyMap<string, ReadonlySet<string>>): boolean {
+  const spec = requirementsFor(s.categoryName, s.subcategoryIds)
+  const uploaded = uploads.get(s.categoryName.toLowerCase()) ?? new Set<string>()
+  if (spec.required.size > 0) return [...spec.required].every((t) => uploaded.has(t))
+  if (spec.optional.size > 0) return uploaded.size > 0
+  return true
+}
+
 /** R3.7: per service, the table's spec for its sub-categories against its counting uploads. */
 export function servicesOf(input: Pick<CompletionInput, 'services' | 'requirements'>): boolean {
   if (input.services.length === 0) return false
   const uploads = serviceUploadsOf(input.requirements)
-  return input.services.every((s) => {
-    const spec = requirementsFor(s.categoryName, s.subcategoryIds)
-    const uploaded = uploads.get(s.categoryName.toLowerCase()) ?? new Set<string>()
-    if (spec.required.size > 0) return [...spec.required].every((t) => uploaded.has(t))
-    if (spec.optional.size > 0) return uploaded.size > 0
-    return true
-  })
+  return input.services.every((s) => serviceDocumentsDone(s, uploads))
 }
 
 /** R3.10: the 13 sections of the sidebar's percentage. */

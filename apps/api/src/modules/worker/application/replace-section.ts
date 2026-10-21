@@ -7,15 +7,16 @@ import { PROFILE_UPDATE } from '@remonta/api-contract'
 import type { Clock } from '../../../platform/clock'
 import type { HandlerContext } from '../../../platform/contract/handlers'
 import { statementTimeoutSetting, unitOfWork, type Db, type Tx } from '../../../platform/persistence/db'
-import { completionOf } from '../domain/completion'
 import { persistCompletion } from '../domain/persist-completion'
 import { readProfileRowsTx } from '../persistence/profile-read'
-import { completionInputOf } from './get-profile'
+import { storedCompletion, type CompletionModel } from './completion-items'
 import { profileNotFound } from './own-profile'
 
 export interface SectionDeps {
   db: Db
   clock: Clock
+  /** onboarding-tour C1 (E6): the stored flags' meaning on this stage (COMPLETION_MODEL); `legacy` when absent. */
+  completionModel?: CompletionModel
 }
 
 /** A section write's statement timeout, as writeTransaction's default. */
@@ -46,7 +47,7 @@ export async function replaceSection<T>(
     if (opts.completion) {
       const rows = await readProfileRowsTx(tx, principal.userId)
       // The stored flags come with the re-read: persistCompletion does not read them again (audit P4).
-      if (rows) await persistCompletion(tx, own.id, completionOf(completionInputOf(rows)), rows.profile)
+      if (rows) await persistCompletion(tx, own.id, storedCompletion(rows, deps.completionModel ?? 'legacy'), rows.profile)
     }
     await ctx.audit.record(tx, {
       action: PROFILE_UPDATE,

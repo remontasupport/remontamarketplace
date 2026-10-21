@@ -2,7 +2,7 @@
 // shape (no database); the run itself and its idempotency on PostGIS.
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { isProductionHost, productionGuard } from '../../scripts/backfill-completion'
-import { backfillCompletion, formatCompletionReport, type CompletionBackfillReport } from '../../src/modules/worker/backfill'
+import { applyGuard, backfillCompletion, formatCompletionReport, type CompletionBackfillReport } from '../../src/modules/worker/backfill'
 import { workerHarness, type WorkerHarness } from './harness'
 
 describe('the production guard (U1-SEC-08)', () => {
@@ -26,7 +26,7 @@ describe('the production guard (U1-SEC-08)', () => {
 describe('the report', () => {
   it('formats the counts per flag and the sample', () => {
     const r: CompletionBackfillReport = {
-      apply: false,
+      apply: false, model: 'legacy',
       now: new Date('2026-10-12T00:00:00Z'),
       examined: 3,
       changed: 1,
@@ -79,4 +79,20 @@ describe.skipIf(!local)('backfillCompletion on PostGIS (P14)', () => {
     const storedAgain = await h.db.workerProfile.findUniqueOrThrow({ where: { id: h.a.profileId }, select: { setupProgress: true, profileCompleted: true, verificationStatus: true } })
     expect(storedAgain).toEqual(storedAfter)
   }, 120_000)
+})
+
+describe('applyGuard (onboarding-tour C1, CP5)', () => {
+  const now = new Date('2026-10-21T03:00:00.000Z')
+  const dry = (patch: Record<string, unknown> = {}) => ({ apply: false, model: 'groups', now: '2026-10-21T02:30:00.000Z', ...patch })
+  it('lets an apply repeat a recent dry run of the same model', () => {
+    expect(applyGuard(dry(), 'groups', now)).toBeNull()
+    expect(applyGuard(dry({ model: undefined }), 'legacy', now)).toBeNull() // a report from before the model existed is legacy
+  })
+  it('refuses without a report, an applied report, another model, or one older than an hour', () => {
+    expect(applyGuard(null, 'groups', now)).toMatch(/no dry-run report/)
+    expect(applyGuard(dry({ apply: true }), 'groups', now)).toMatch(/not a dry run/)
+    expect(applyGuard(dry({ model: 'legacy' }), 'groups', now)).toMatch(/--model=legacy/)
+    expect(applyGuard(dry({ now: '2026-10-21T01:59:00.000Z' }), 'groups', now)).toMatch(/older than an hour/)
+    expect(applyGuard(dry({ now: 'yesterday' }), 'groups', now)).toMatch(/older than an hour/)
+  })
 })

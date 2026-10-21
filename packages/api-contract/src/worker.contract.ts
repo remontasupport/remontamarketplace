@@ -307,6 +307,51 @@ export type Profile = z.output<typeof profileSchema>
 export const tourViewSchema = z.strictObject({ seenAt: isoDate.nullable() })
 export type TourView = z.output<typeof tourViewSchema>
 
+/**
+ * onboarding-tour C1 (E5): "complete", declared once in the api. The My Profile pages (the sidebar's slugs), the three
+ * checklist groups with their next step, the percent over the 11 required pages, and each chosen service's documents.
+ * Its own entry: the profile read's strict shape is parsed by deployed apps.
+ */
+export const COMPLETION_GROUP_IDS = ['my-profile', 'services', 'compliance'] as const
+/** The My Profile pages by the sidebar's slugs, in its order; 11 required (CD3). The api's rules and the app's links key on these. */
+export const MY_PROFILE_PAGES = [
+  { slug: 'name', required: true },
+  { slug: 'photo', required: true },
+  { slug: 'bio', required: true },
+  { slug: 'address', required: false },
+  { slug: 'date-of-birth', required: true },
+  { slug: 'gender', required: true },
+  { slug: 'languages', required: true },
+  { slug: 'experience', required: true },
+  { slug: 'work-history', required: true },
+  { slug: 'education', required: true },
+  { slug: 'preferred-hours', required: true },
+  { slug: 'vehicle', required: true },
+  { slug: 'cultural-background', required: false },
+  { slug: 'religion', required: false },
+  { slug: 'interests', required: false },
+  { slug: 'about-me', required: false },
+  { slug: 'preferences', required: false },
+  { slug: 'personality', required: false },
+] as const
+export type MyProfileSlug = (typeof MY_PROFILE_PAGES)[number]['slug']
+export const completionItemSchema = z.strictObject({ id: str(120), group: z.enum(COMPLETION_GROUP_IDS), required: z.boolean(), done: z.boolean() })
+export const completionViewSchema = z.strictObject({
+  percent: z.number().int().min(0).max(100),
+  profileCompleted: z.boolean(),
+  groups: z.array(z.strictObject({ id: z.enum(COMPLETION_GROUP_IDS), complete: z.boolean(), done: z.number().int().min(0), total: z.number().int().min(0), firstUnfinished: str(120).nullable() })).length(3),
+  items: z.array(completionItemSchema).max(200),
+  serviceDocuments: z
+    .array(
+      z.strictObject({
+        categoryId: str(80),
+        documents: z.array(z.strictObject({ type: str(80), name: str(160), kind: z.enum(['QUALIFICATION', 'TRAINING', 'REGISTRATION', 'INSURANCE']), required: z.boolean(), uploaded: z.boolean() })).max(50),
+      }),
+    )
+    .max(50),
+})
+export type CompletionView = z.output<typeof completionViewSchema>
+
 export const workerContract = defineContract('worker', {
   getProfile: {
     method: 'GET',
@@ -361,6 +406,8 @@ export const workerContract = defineContract('worker', {
   getDocumentLink: { method: 'GET', path: '/v1/worker/documents/:documentId/link', summary: "A five-minute link to view any of the worker's own documents (a legacy row answers its stored URL).", pathParams: serviceDocumentParamsSchema, responses: { 200: documentLinkSchema }, meta: workerRead({ privateCacheSeconds: 30 }) },
   putBankAccount: { method: 'PUT', path: '/v1/worker/bank-account', summary: 'Replace the bank account (all four fields); every read returns it masked.', body: json(bankAccountSchema), responses: { 200: maskedBankAccountSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
 
+  // ---- onboarding-tour C1: completion declared once (its own entry; the profile read is unchanged).
+  getCompletion: { method: 'GET', path: '/v1/worker/completion', summary: 'How complete the worker is: every My Profile page, the three checklist groups (My Profile, Services, Compliance) with their next step, the percent over the 11 required pages, and each service’s documents. Privately cacheable for a minute with ETag/304.', responses: { 200: completionViewSchema }, meta: workerRead() },
   // ---- onboarding-tour U1: the tour's "seen" time, apart from the profile read (whose strict shape the deployed app parses).
   getTour: { method: 'GET', path: '/v1/worker/tour', summary: 'When the worker first ended the dashboard tour (or chose "Not now"); null when not yet. Never cached.', responses: { 200: tourViewSchema }, meta: workerRead({ noCache: true }) },
   putTourSeen: { method: 'PUT', path: '/v1/worker/tour/seen', summary: 'Record that the worker has seen the tour; the first time is kept. No body; the time is the api clock. Refused while an admin impersonates the worker.', responses: { 200: tourViewSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1 }) },
