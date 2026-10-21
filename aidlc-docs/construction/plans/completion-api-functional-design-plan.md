@@ -40,14 +40,14 @@ backfill. Requirements: `inception/requirements/completion-requirements.md` (FR-
 
 ## Plan
 
-- [ ] 1. The items, their rules and groups (domain-entities.md, business-rules.md) -- Q1
-- [ ] 2. The entry's shape, errors, caching
-- [ ] 3. The two meanings of the stored flags and the setting
-- [ ] 4. The job: what counts as a change, batches, the daily full pass -- Q2
-- [ ] 5. The backfill and its report
-- [ ] 6. The service documents in the entry (OC-2) -- Q3
-- [ ] 7. The oracle comparison and the property candidates (for NFR Design)
-- [ ] 8. Artifacts: `construction/completion-api/functional-design/{domain-entities,business-rules,business-logic-model}.md`
+- [x] 1. The items, their rules and groups (domain-entities.md, business-rules.md) -- Q1
+- [x] 2. The entry's shape, errors, caching
+- [x] 3. The two meanings of the stored flags and the setting
+- [x] 4. The job: what counts as a change, batches, the daily full pass -- Q2
+- [x] 5. The backfill and its report
+- [x] 6. The service documents in the entry (OC-2) -- Q3
+- [x] 7. The oracle comparison and the property candidates (for NFR Design)
+- [x] 8. Artifacts: `construction/completion-api/functional-design/{domain-entities,business-rules,business-logic-model}.md`
 
 ## Questions
 
@@ -60,7 +60,7 @@ B) Any text
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 2
 After an admin approves, rejects or resets a document, how soon must the worker's stored completion (what the admin
@@ -73,7 +73,7 @@ B) Once a day is enough
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 3
 A service's documents on the Services checklist item: a service with only **optional** documents (e.g. Support
@@ -86,4 +86,4 @@ B) Done with nothing uploaded (optional means optional)
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a

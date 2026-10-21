@@ -4832,3 +4832,15 @@ takes, used only to check a confirm) -- OC-2's answer: exposed by the new entry.
 declaration, the entry's shape and caching, `COMPLETION_MODEL = legacy | groups`, the `completion-sync` job, the
 backfill, the old function as oracle; 8 steps; Q1 the bio length, Q2 how soon the stored flags follow an admin's
 review, Q3 a service with only optional documents). Waiting for the answers.
+
+## 2026-10-21 -- C1 completion-api functional design written
+
+**User input (verbatim):** "answered"
+
+**Answers in `construction/plans/completion-api-functional-design-plan.md`:** Q1 a (bio 50+) · Q2 a (every 5 minutes
+plus a daily full pass) · Q3 a (an optional-only service done with one upload). The proposed design stood.
+
+**Written:** `construction/completion-api/functional-design/` -- `domain-entities.md` (E1 items, E2 the 18-page table,
+E3 Services items, E4 Compliance items from `requirementGroups`, E5 the view, E6 `COMPLETION_MODEL` legacy/groups),
+`business-rules.md` (CR-1..CR-14 and the five on-purpose differences from today), `business-logic-model.md` (L1-L6,
+file placement, property candidates). **Approval prompt (2026-10-21):** presented; next NFR Design C1.
