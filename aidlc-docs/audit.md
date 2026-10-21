@@ -5144,3 +5144,17 @@ mismatch); api healthy, no contract drift. Not resolved.
 **Found:** only #101 (`chore/refresh-prisma-clients`) merged (`main` `2f52c40`); H2 (`3852f7c`) and H1 (`3f229fc`) not in
 `main`. #101 production builds succeeded; app /login, /dashboard/worker, /registration/worker 200; marketing 200;
 the database-backed `/api/suburbs?q=parramatta` returns rows (Prisma works on production).
+
+## 2026-10-21 -- Session close
+
+**User input (verbatim):** "set your password, is this on the Account step?" -- answered: no; `/setup-password` is a
+standalone pre-sign-in page for invited accounts on the default password, linked from nowhere in the code.
+**User input (verbatim):** "what is the the H2 preview address" -- `remonta-q1dimv7i4-remontas-projects.vercel.app`.
+**User input (verbatim):** "It didn't emailed the link"
+**Found:** no audit row and no token on the staging copy (the account entered was not eligible: by design); **197 of
+1,768 ACTIVE workers on the staging copy are still on the default password** (count only) -- on production, until H2
+merges, each is open to the takeover.
+**User input (verbatim):** "nevermind, it works already. can you continue the clean up so we can close this session"
+**Done:** `fix/h2-setup-password-takeover` and `fix/h1-bank-details-exposure` (superseded by the `-v2` branches) deleted
+with their commits recorded; 28 remote branches; the local checkout on `main` `2f52c40`, 14 local branches.
+**Not done (the user's):** H2 and H1 are pushed but **no PR is open and neither is merged**.

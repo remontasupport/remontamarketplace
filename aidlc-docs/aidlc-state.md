@@ -54,11 +54,21 @@
   `feat/account-app`; `main` (production) still has the old sidebar. The tour's code branches from `feat/account-app`
   and ships with or after it.
 
-  **Resume here (2026-10-21):**
-  1. `git ls-remote origin main feat/account-app`; ask what was merged since.
-  2. `feat/account-app`'s preview (`ffad332`): CLAUDE.md's checklist + tour checks 8-10. Then, on the user's word:
-     merge `feat/account-app` into `main`, production checks, re-record the Vercel rollback rows, close the cycle. `../remonta-pr57` is on `feat/account-app` again. Open for the user: the browser check of today's production app against staging. OI-1 is settled: "seen" has its own read and
-     save (the profile read's schema is strict; changing it would break today's production app).
+  **Resume here (session closed 2026-10-21 evening):**
+  1. `git ls-remote origin main`; ask what was merged since.
+  2. **SECURITY FIRST: H2** (`fix/h2-setup-password-takeover-v2`: `/setup-password` sets any default-password worker's
+     password from an email alone; ~197 accounts on the staging copy are on `WelcomeRemonta`) and **H1**
+     (`fix/h1-bank-details-v2`: the share link returns bank details). Pushed, previews built, **no PR open, not merged**.
+     After the merge: verify on production (the page asks for an email only), delete both `-v2` branches, tighten the
+     app lint baseline (H1 removes one finding).
+  3. **H3** (`fix/h3-published-workers-only-v2`, local only): a product decision -- 1 of 1,765 workers is published.
+  4. Rotate the Zoho OAuth secret once committed in the deleted `apps/app/docs/Zoho_Jobs_To_DB.md` (in git history).
+  5. The production 403 on `GET /v1/worker/profile` for one non-WORKER account (`cmj85z8m60000vxr002l9hqqo`, 07:15Z and
+     08:22Z): the role, an impersonation?; then fix access or the message.
+  6. **C2 `completion-app`** (the cycle's last unit): Functional Design first; then the switch to `groups` + the backfill.
+  7. `test/my-profile-columns` (24 database tests) to bring up to date and merge.
+  Live today: #94 (the worker dashboard), C1 (api `00014-wdv` = `9fdcf6d`), #95-#101. Branch lists with commits:
+  `inception/review/deleted-branches-2026-10-21.md`.
 
 ## Stage Progress
 ### INCEPTION PHASE

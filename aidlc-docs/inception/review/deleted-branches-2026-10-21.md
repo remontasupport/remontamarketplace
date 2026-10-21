@@ -122,3 +122,10 @@ Every branch below was fully merged into `main` (its tip an ancestor of `main` a
 | `u6/app-verify` | `a360d6828318ae9ec337d39fc183a97272f0b19a` | a one-off Vercel verification marker |
 | `chore/staging-services-check` | `8933b42aa6b8e295c940968d6c683cdd97837ce0` | a one-off staging script (2026-10-15) |
 | `app-feature` | `5f70d4a21480405fa7d70a3e0e10d763b4c4985e` | a 2025 pre-monorepo change to files since deleted |
+
+## Third pass (2026-10-21): superseded security branches
+
+| Branch | Commit | Why |
+|---|---|---|
+| `fix/h2-setup-password-takeover` | `cafc1736fc663254d3610b8aab9b510312848ae1` | superseded by `fix/h2-setup-password-takeover-v2` (the same commit cherry-picked onto today's main) |
+| `fix/h1-bank-details-exposure` | `03b36d1527d8ae1e75f7efb1d5791fab25e8d2cb` | superseded by `fix/h1-bank-details-v2` (the remaining half on today's main) |
