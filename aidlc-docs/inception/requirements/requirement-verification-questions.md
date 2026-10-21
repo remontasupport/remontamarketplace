@@ -15,7 +15,7 @@ browser data.
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 2
 Who sees the tour automatically?
@@ -28,7 +28,7 @@ C) Only workers whose profile is not complete yet (new or existing)
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 3
 How does the tour start?
@@ -40,7 +40,7 @@ B) A small welcome card asks "Take a quick tour?" with Start and "Not now" (reco
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: b
 
 ## Question 4
 Which sidebar items are tour steps, in this order?
@@ -53,7 +53,7 @@ C) The profile-completion groups, then a last step on the profile completion che
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: c
 
 ## Question 5
 When a group such as My Profile is highlighted, what does the worker see?
@@ -66,7 +66,7 @@ C) The same as B, plus a "Go there" button that leaves the tour and opens that p
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 6
 Which buttons does each step have?
@@ -77,7 +77,7 @@ B) Next and Skip tour only
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 7
 Can a worker replay the tour later?
@@ -90,7 +90,7 @@ C) No replay
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: b
 
 ## Question 8
 On a phone the sidebar is hidden behind the menu button. What should the tour do there?
@@ -103,7 +103,7 @@ C) No tour on phones
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 9
 The dashboard home already shows the profile completion checklist (and a congratulations pop-up when complete). How
@@ -115,7 +115,7 @@ B) Hide the checklist until the tour is finished or skipped
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 10
 Who writes the text on each step?
@@ -126,7 +126,7 @@ B) You supply the text
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 11
 How should the tour be built?
@@ -138,7 +138,7 @@ B) An existing tour library (for example driver.js)
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 12
 When should the tour be released?
@@ -149,7 +149,7 @@ B) Together with `feat/account-app`, in the same release
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: b
 
 ## Question 13
 Should we record how workers use the tour (finished, skipped, at which step)?
@@ -160,7 +160,7 @@ B) Yes, finished or skipped and the last step reached, stored with the "seen" fl
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question: Security Extensions
 Should security extension rules be enforced for this project?
@@ -171,7 +171,7 @@ B) No — skip all SECURITY rules (suitable for PoCs, prototypes, and experiment
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question: Resiliency Extensions
 Should the resiliency baseline be applied to this project?
@@ -188,7 +188,7 @@ B) No — skip the resiliency baseline (suitable for PoCs, prototypes, and exper
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question: Property-Based Testing Extension
 Should property-based testing (PBT) rules be enforced for this project?
@@ -201,6 +201,6 @@ C) No — skip all PBT rules (suitable for simple CRUD applications, UI-only pro
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 (Last cycle's answers, for reference: Security A, Resiliency A, PBT A.)

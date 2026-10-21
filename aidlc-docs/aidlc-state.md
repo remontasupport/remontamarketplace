@@ -8,8 +8,8 @@
   "Basically just a tour how to complete the profile". Record branch `aidlc/onboarding-tour` (from `aidlc/api-review`
   `d9289f3`). The previous cycle, api-review, is **parked**: `aidlc-docs/archive/api-review/PARKED.md`
   (`feat/account-app` held, not released).
-- **Current Stage**: INCEPTION -- Requirements Analysis, **waiting for the user's answers** in
-  `aidlc-docs/inception/requirements/requirement-verification-questions.md`.
+- **Current Stage**: INCEPTION -- Requirements Analysis. The 16 answers are in (audit 2026-10-21); **waiting for the two
+  follow-ups** in `aidlc-docs/inception/requirements/requirement-clarification-questions.md` (F1, F2).
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory
   `aidlc-docs/inception/inventory/onboarding-tour-inventory.md` (on `feat/account-app` `4d62630`).
@@ -20,14 +20,14 @@
 
   **Resume here (2026-10-21):**
   1. `git ls-remote origin main feat/account-app`; ask what was merged since.
-  2. Read the answers in the questions file; ask follow-ups for anything ambiguous; then `requirements.md`, the
-     extension decisions below, then workflow planning.
+  2. Read F1 and F2; then `requirements.md`, the extension table below, then workflow planning. Decided so far:
+     released together with `feat/account-app` (Q12 b), so that release waits for the tour.
 
 ## Stage Progress
 ### INCEPTION PHASE
 - [x] Workspace Detection
 - [x] Reverse Engineering (targeted inventory)
-- [ ] Requirements Analysis (questions out)
+- [ ] Requirements Analysis (16 answered; follow-ups F1, F2 out)
 - [ ] User Stories
 - [ ] Workflow Planning
 - [ ] Application Design

@@ -4523,3 +4523,28 @@ or after it.
 - Requirements Analysis: depth standard (new feature, one component plus perhaps one api field; simple to moderate).
   `inception/requirements/requirement-verification-questions.md`: 13 questions plus the three extension opt-ins.
   Waiting for the answers.
+
+## 2026-10-21 -- Requirements answers (onboarding-tour)
+
+**User input (verbatim):** "why did you save the question to the remonta record? I am in the remontamarketplace"
+**Answered:** the record branch `aidlc/onboarding-tour` is checked out in `../remonta-record` (as in earlier cycles);
+offered to open the file there (recommended) or check the record out in `remontamarketplace`.
+
+**User input (verbatim):** "answered"
+
+**Answers in `requirement-verification-questions.md` (as written by the user):** Q1 a · Q2 a · Q3 b · Q4 c · Q5 a ·
+Q6 a · Q7 b · Q8 a · Q9 a · Q10 a · Q11 a · Q12 b · Q13 a · Security a · Resiliency a · PBT a.
+
+**Read as:** "seen" kept on the account through `apps/api`; every worker once, existing ones included; a welcome card
+("Take a quick tour?", Start / Not now; Not now counts as seen); steps My Profile, Services, Compliance, Additional
+Credentials, then the completion checklist on the dashboard home; the heading highlighted with a short card; Next,
+Back, Skip tour, Finish; replay from a help button (?) in the dashboard header; on a phone the drawer opens; the tour
+first, the checklist stays; Claude drafts the texts for review; our own component (Radix popover, Tailwind, the steps as
+data); released **together with `feat/account-app`**; only "seen" recorded. Extensions: Security blocking, Resiliency,
+PBT full.
+
+**Found while analysing:** the header (`SimpleDashboardHeader`, via `DashboardLayout`) is shared with the client and
+coordinator dashboards, so the help button must show for workers only. The completion checklist always renders on the
+home, so its step is always available there. Releasing together means `feat/account-app` waits for the tour.
+
+**Follow-ups:** `requirement-clarification-questions.md` F1 (help button on another page) and F2 (resiliency targets).
