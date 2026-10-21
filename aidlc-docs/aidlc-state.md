@@ -21,8 +21,8 @@
   **New area in this cycle (user, 2026-10-21): profile completion.** Audit written
   (`inception/review/profile-completion-audit.md`, F1-F9, I1-I6); answered; requirements written
   (`inception/requirements/completion-requirements.md`, approved 2026-10-21); execution plan
-  (`inception/plans/completion-execution-plan.md`, approved); C1 Functional Design approved; C1 NFR Design written
-  (`construction/completion-api/nfr-design/`) **waiting for the user's approval**; next C1 code generation plan.
+  (`inception/plans/completion-execution-plan.md`, approved); C1 Functional Design approved; C1 NFR Design approved; C1 code generation plan
+  (`construction/plans/completion-api-code-generation-plan.md`) **waiting for the user's approval**.
   C2 waits for the `feat/account-app` release (CD8).
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory

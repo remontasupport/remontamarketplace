@@ -4863,3 +4863,14 @@ failing job). Waiting for the answer.
 in `infra/cloudrun/monitoring/` (as `outbox-dead-letter`).
 **Written:** `construction/completion-api/nfr-design/` (CP1-CP9, CT1-CT6, the resumability property; logical
 components). **Approval prompt (2026-10-21):** presented; next C1 code generation plan.
+
+## 2026-10-21 -- C1 NFR design approved; C1 code generation plan
+
+**User input (verbatim):** "approved and continue"
+
+**Found:** `backfill:completion` already exists (U1 worker-area: `scripts/backfill-completion.ts`, dry run, `--apply`,
+`--report`, the production guard) -- extended, not duplicated; metrics are created in `infra/cloudrun/bootstrap.sh`,
+the alert lists in `lib.sh` `alerts_for`, tested by `infra/test/monitoring.test.ts`.
+
+**Written:** `construction/plans/completion-api-code-generation-plan.md` (14 steps; the staging checks after the
+merge). **Approval prompt (2026-10-21):** presented.
