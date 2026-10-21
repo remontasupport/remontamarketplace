@@ -4937,3 +4937,11 @@ required pages. The promotion image is `0fbd3d443da54a29b24a88aeaf9abacfc652312e
 **Verified:** `remonta-api-00013-rl7` = `0fbd3d4`, 100 %; health 200; the new entries 401 without a token. completion-sync's
 first run: full pass 1,878 checked, 8 changed (stale stored flags corrected), 0 failed. The alert's metric is missing
 (not created yet); the policy not applied. Rollback row on `docs/rollback-rows-2026-10-21-completion` `cf0f1b0`.
+
+## 2026-10-21 -- The completion-sync alert applied on production
+
+**User input (verbatim):** "yes run it"
+
+**Done:** the log metric `remonta-api-completion-sync-failed` created (the bootstrap's definition); `apply-alerts.sh prod
+--dry-run` showed 1 to create, 7 unchanged; `--only completion-sync-failing` created policy
+`17950320262560625485`, enabled, notifying support@. C1 complete on production.

@@ -25,8 +25,9 @@
   (`00055-j29`), checks 10/10; **not promoted** (safe any time: invisible under `legacy`; promote with the full sha
   `1eda05ac2c6682b9fe34d2f09dcb06ca78962a06`, then the alert's metric + `apply-alerts.sh prod`). Decided 2026-10-21: **Language
   optional** (10 required pages): merged (#91, `main` `0fbd3d4`), staging `00056-rgt` checks 10/10. **Promoted 2026-10-21**:
-  `remonta-api-00013-rl7` = `0fbd3d4`; the first full pass corrected 8 stale workers. Open: the alert's metric +
-  `apply-alerts.sh prod`; the rollback-row PR `docs/rollback-rows-2026-10-21-completion`. 
+  `remonta-api-00013-rl7` = `0fbd3d4`; the first full pass corrected 8 stale workers. The alert applied (metric +
+  policy, 2026-10-21). **C1 complete.** Open: the rollback-row PR `docs/rollback-rows-2026-10-21-completion`;
+  then `feat/account-app`'s release, then C2 (Functional Design first). 
   C2 waits for the `feat/account-app` release (CD8).
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory

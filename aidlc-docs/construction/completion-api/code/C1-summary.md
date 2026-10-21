@@ -113,3 +113,11 @@ migrate. The choice for C2 remains: keep Language required (they see one short p
 - **Not yet done:** the log metric `remonta-api-completion-sync-failed` does not exist on the project (checked), so
   the `completion-sync-failing` policy is not applied either.
 - Rollback row: branch `docs/rollback-rows-2026-10-21-completion` `cf0f1b0` (one line; the user's PR).
+
+## The alert applied (2026-10-21, the user: "yes run it")
+
+- `gcloud logging metrics create remonta-api-completion-sync-failed` (the bootstrap's line: filter
+  `resource.type="cloud_run_revision" AND jsonPayload.alert="completion-sync-failed"`): created.
+- `apply-alerts.sh prod --dry-run`: 1 to create, 0 to update, 7 unchanged; then `--only completion-sync-failing`:
+  created `projects/remonta-api-510206/alertPolicies/17950320262560625485`, enabled, one notification channel
+  (support@).
