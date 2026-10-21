@@ -4595,3 +4595,18 @@ header comment and a `down.sql`.
 
 **Written:** `construction/plans/tour-seen-api-functional-design-plan.md` (8 steps, Q1-Q5: the column's table, the
 paths, the audit action, a worker without a profile row, the read's caching). Waiting for the answers.
+
+## 2026-10-21 -- U1 tour-seen-api functional design written
+
+**User input (verbatim):** "answered"
+
+**Answers in `construction/plans/tour-seen-api-functional-design-plan.md`:** Q1 a (`worker_profiles.tourSeenAt`) ·
+Q2 a (`GET /v1/worker/tour`, `PUT /v1/worker/tour/seen`) · Q3 a (`PROFILE_UPDATE`, section `putTourSeen`) · Q4 a (404
+without a profile row) · Q5 a (`no-store`).
+
+**Written:** `construction/tour-seen-api/functional-design/` -- `domain-entities.md` (E1 the column and its migration,
+E2 `TourView`, E3 the audit row), `business-rules.md` (BR-1..BR-9 and the error table with what the app does),
+`business-logic-model.md` (the two entries, flows L1/L2 through `replaceSection`, file placement, property candidates).
+Found: `workerRead()` always sets a 60 s private cache, so the read needs an option without it (code generation).
+
+**Approval prompt (2026-10-21):** U1 functional design presented; next NFR Design (both units).

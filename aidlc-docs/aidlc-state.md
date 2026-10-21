@@ -8,8 +8,8 @@
   "Basically just a tour how to complete the profile". Record branch `aidlc/onboarding-tour` (from `aidlc/api-review`
   `d9289f3`). The previous cycle, api-review, is **parked**: `aidlc-docs/archive/api-review/PARKED.md`
   (`feat/account-app` held, not released).
-- **Current Stage**: CONSTRUCTION -- U1 `tour-seen-api` Functional Design: **waiting for the answers** (Q1-Q5) in
-  `aidlc-docs/construction/plans/tour-seen-api-functional-design-plan.md`. Requirements and the execution plan
+- **Current Stage**: CONSTRUCTION -- U1 `tour-seen-api` Functional Design written
+  (`aidlc-docs/construction/tour-seen-api/functional-design/`); **waiting for the user's approval** (next: NFR Design). Requirements and the execution plan
   approved 2026-10-21.
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory
@@ -21,7 +21,7 @@
 
   **Resume here (2026-10-21):**
   1. `git ls-remote origin main feat/account-app`; ask what was merged since.
-  2. Read Q1-Q5; write `construction/tour-seen-api/functional-design/`; then NFR Design (both units),
+  2. On approval: NFR Design (both units, `construction/plans/onboarding-tour-nfr-design-plan.md`),
      Functional Design U2 with the five step texts for the user's review. OI-1 is settled: "seen" has its own read and
      save (the profile read's schema is strict; changing it would break today's production app).
 
@@ -36,7 +36,7 @@
 - [ ] Units Generation -- SKIP (U1 `tour-seen-api`, U2 `tour-app` fixed in the plan)
 
 ### CONSTRUCTION PHASE
-- [ ] Functional Design -- EXECUTE (U1: plan + questions out; U2)
+- [ ] Functional Design -- EXECUTE (U1 written, awaiting approval; U2)
 - [ ] NFR Requirements -- SKIP (NFR-01..10 in the requirements)
 - [ ] NFR Design -- EXECUTE (one document)
 - [ ] Infrastructure Design -- SKIP

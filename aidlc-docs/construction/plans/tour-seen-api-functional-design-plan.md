@@ -15,14 +15,14 @@ What `main` already has, read for this plan:
 
 ## Plan
 
-- [ ] 1. Domain entity: the column (table, name, type, null meaning) -- Q1
-- [ ] 2. The two entries: paths, methods, request and response shapes, status codes -- Q2, Q4
-- [ ] 3. Business rules: first time kept, server clock, ownership, a worker without a profile -- Q4
-- [ ] 4. The audit row -- Q3
-- [ ] 5. Caching of the read -- Q5
-- [ ] 6. Error cases and what the app does with each (NFR-01)
-- [ ] 7. Property candidates for NFR Design (idempotency; another worker's token never changes this worker's value)
-- [ ] 8. Artifacts: `construction/tour-seen-api/functional-design/{domain-entities,business-rules,business-logic-model}.md`
+- [x] 1. Domain entity: the column (table, name, type, null meaning) -- Q1
+- [x] 2. The two entries: paths, methods, request and response shapes, status codes -- Q2, Q4
+- [x] 3. Business rules: first time kept, server clock, ownership, a worker without a profile -- Q4
+- [x] 4. The audit row -- Q3
+- [x] 5. Caching of the read -- Q5
+- [x] 6. Error cases and what the app does with each (NFR-01)
+- [x] 7. Property candidates for NFR Design (idempotency; another worker's token never changes this worker's value)
+- [x] 8. Artifacts: `construction/tour-seen-api/functional-design/{domain-entities,business-rules,business-logic-model}.md`
 
 ## Questions
 
@@ -38,7 +38,7 @@ B) On the account row (`users.tourSeenAt`), next to the other account settings s
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 2
 The two entries' paths:
@@ -50,7 +50,7 @@ B) `GET /v1/worker/onboarding` and `PUT /v1/worker/onboarding/tour`, leaving roo
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 3
 Every write in the worker area writes an audit row. Which action should the save use?
@@ -63,7 +63,7 @@ migration step)
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 4
 A worker account with no profile row (rare: an account the sign-up did not finish). What should the entries do?
@@ -74,7 +74,7 @@ B) The read answers `{ "seenAt": null }` and the save answers 404
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 5
 Other worker reads may be kept by the browser for 60 seconds. For this one:
@@ -86,4 +86,4 @@ B) Kept 60 seconds like the other worker reads; the app clears it after a save
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
