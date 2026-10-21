@@ -8,8 +8,9 @@
   "Basically just a tour how to complete the profile". Record branch `aidlc/onboarding-tour` (from `aidlc/api-review`
   `d9289f3`). The previous cycle, api-review, is **parked**: `aidlc-docs/archive/api-review/PARKED.md`
   (`feat/account-app` held, not released).
-- **Current Stage**: CONSTRUCTION -- U1 `tour-seen-api` Code Generation, Part 1: the plan
-  (`aidlc-docs/construction/plans/tour-seen-api-code-generation-plan.md`) **waiting for the user's approval**. NFR design approved 2026-10-21. U1 functional design approved 2026-10-21. Requirements and the execution plan
+- **Current Stage**: CONSTRUCTION -- U1 `tour-seen-api` code generated and pushed (`feat/tour-seen-api` `d25c9ce`,
+  gates green); **waiting for the user to open and merge the PR**, then the staging checklist
+  (`construction/tour-seen-api/code/U1-summary.md`). Next after that: U2's code generation plan. NFR design approved 2026-10-21. U1 functional design approved 2026-10-21. Requirements and the execution plan
   approved 2026-10-21.
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory
@@ -21,8 +22,8 @@
 
   **Resume here (2026-10-21):**
   1. `git ls-remote origin main feat/account-app`; ask what was merged since.
-  2. On approval: generate U1 step by step (plan Steps 1-11) on (`feat/tour-seen-api` from
-     `main`). OI-1 is settled: "seen" has its own read and
+  2. Is the U1 PR merged (`git ls-remote origin main`)? Then the staging checklist (U1-summary.md), merge `main` into
+     `feat/account-app` (app + api gates there), and U2's code generation plan on `feat/onboarding-tour`. OI-1 is settled: "seen" has its own read and
      save (the profile read's schema is strict; changing it would break today's production app).
 
 ## Stage Progress
@@ -40,7 +41,7 @@
 - [ ] NFR Requirements -- SKIP (NFR-01..10 in the requirements)
 - [x] NFR Design -- approved 2026-10-21 (U1 amended with BR-10)
 - [ ] Infrastructure Design -- SKIP
-- [ ] Code Generation -- EXECUTE (U1: plan awaiting approval; U2)
+- [ ] Code Generation -- EXECUTE (U1 done 2026-10-21, `d25c9ce`, PR to open; U2 next)
 - [ ] Build and Test -- EXECUTE (U1, U2)
 
 ## Previous cycles (archived, read-only)

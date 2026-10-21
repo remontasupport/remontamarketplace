@@ -4685,3 +4685,17 @@ contract tests; `sections/tour.ts` and two handlers with the impersonation refus
 the P8 properties; the docs; the gates; push for a PR the user opens; construction notes).
 
 **Approval prompt (2026-10-21):** U1 code generation plan presented for approval.
+
+## 2026-10-21 -- U1 tour-seen-api code generated and pushed
+
+**User input (verbatim):** "approved" (the U1 code generation plan) · "continue"
+
+**Done (plan Steps 1-11):** branch `feat/tour-seen-api` from `main` `b4d48c1`; the migration and `down.sql` (run
+forward/down/forward on the developer's Neon branch `ep-royal-night`, rolled back); the contract (`workerRead({ noCache:
+true })`, `tourViewSchema`, `getTour`, `putTourSeen`, `openapi.json`); `sections/tour.ts` and the two handlers; tests
+(contract 6, api pipeline 10, PostGIS 5); `docs/worker/README.md`. The impersonation guard proved to fail without it.
+Gates: api-contract, api, db, app quality exit 0; turbo build 3/3. Pushed `d25c9ce` (4 commits). Deviations (3) and the
+staging checklist: `construction/tour-seen-api/code/U1-summary.md`.
+
+**Next, by the user:** open the PR (compare `main...feat%2Ftour-seen-api`), CI green (API Quality runs the PostGIS
+tests), merge ("Merge pull request"); then the staging checklist.
