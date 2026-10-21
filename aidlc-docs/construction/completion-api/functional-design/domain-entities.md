@@ -85,3 +85,7 @@ A per-stage setting (`infra/lib/stages.ts`, the api's config), `legacy` (default
 | `profileCompleted` | the four | the three groups |
 
 The entry always answers the groups model; the profile read's `completion` stays on today's rules (NFR-C1).
+
+## Amendment 2026-10-21
+
+E2: `languages` is **optional** (the requirements' CD3 amendment): 10 required pages. The rule for "filled" is unchanged.

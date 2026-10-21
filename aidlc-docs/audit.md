@@ -4906,3 +4906,12 @@ gates on profileCompleted (display only). Details: `construction/completion-api/
 S1; the sign-up never asks for languages; no blank-only values; the rule already falls back to the legacy column (283
 counted that way); of the 148 complete today, 62 have none. Not a data gap: unanswered. Details:
 `construction/completion-api/code/C1-summary.md`. The C2 choice (accept, or make pages optional) put back to the user.
+
+## 2026-10-21 -- Language made optional
+
+**User input (verbatim):** "B"
+**Asked (which pages become optional; the measured effect of each option on the staging copy). User's choice:** "Language only".
+
+**Done:** `feat/completion-language-optional` from `main` `1eda05a`: `MY_PROFILE_PAGES` languages `required: false` (10
+required), tests and docs updated, `openapi.json`; gates api-contract 108, api 878 green; pushed. Requirements CD3 and
+functional design E2 amended. The PR is the user's; staging and the promotion follow it.

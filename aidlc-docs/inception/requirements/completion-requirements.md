@@ -90,3 +90,13 @@ profile's content; MFA; the jobs area.
 | OC-2 | Where the service table is exposed for FR-SCR-04: in FR-CMP-07, or in the profile read's requirement groups (strictness, F9) |
 | OC-3 | The admin contractor profile and the share page (`profilePreview.service.ts`): read the computed values through the api instead of the stored flags |
 | OC-4 | The congratulations pop-up's trigger under three groups (once per worker, CD7) |
+
+## Amendment 2026-10-21 (user: "B", then "Language only")
+
+**CD3 amended:** Language is optional. **Required My Profile pages (10):** Name, Profile Photo, Bio, Date of Birth,
+Gender, Experience, Work History, Education, Preferred Hours, Vehicle Access. **Optional (8):** Address, Language,
+Cultural Background, Religion, Interests, Support & Activities, Preferences, Personality. FR-CMP-03: percent = round(100
+× required pages filled / 10). Why: on the staging copy 1,202 of 1,790 workers (all pre-S1; the sign-up never asked)
+have no language anywhere -- unanswered, not a data gap (`construction/completion-api/code/C1-summary.md`).
+Measured options (staging copy, 148 complete today): as designed 65 profile complete / 83 drop out; **Language optional
+75 / 73**; + Education 82 / 66; + Work History 86 / 62; + Experience and Preferred Hours 145 / 3.

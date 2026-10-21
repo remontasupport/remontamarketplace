@@ -23,9 +23,9 @@
   (`inception/requirements/completion-requirements.md`, approved 2026-10-21); execution plan
   (`inception/plans/completion-execution-plan.md`, approved); C1 Functional Design approved; C1 NFR Design approved; C1 merged (#89, `main` `1eda05a`) and on staging
   (`00055-j29`), checks 10/10; **not promoted** (safe any time: invisible under `legacy`; promote with the full sha
-  `1eda05ac2c6682b9fe34d2f09dcb06ca78962a06`, then the alert's metric + `apply-alerts.sh prod`). **A decision before C2**:
-  under `groups` 83 workers stop being "complete" and 942 lose accountDetails (C1-summary.md); accept, or change the
-  required pages. Open: the rollback-row PR
+  `1eda05ac2c6682b9fe34d2f09dcb06ca78962a06`, then the alert's metric + `apply-alerts.sh prod`). Decided 2026-10-21: **Language
+  optional** (10 required pages): PR branch `feat/completion-language-optional` (pushed, the user's PR); promote its
+  merge sha instead of `1eda05a`. Open: the rollback-row PR
   (`docs/rollback-rows-2026-10-21-tour`, not merged).
   C2 waits for the `feat/account-app` release (CD8).
 
