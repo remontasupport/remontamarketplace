@@ -4776,3 +4776,18 @@ app code on `feat/account-app` and goes live only when that branch is merged int
 `/v1/worker/profile` 401 without a token. Previous: `remonta-api-00011-99p` = `b8fe2eb`. Rollback row re-recorded on
 branch `docs/rollback-rows-2026-10-21-tour` (`54db937`, PR for the user). Not done: the app release
 (`feat/account-app` -> `main`), so the tour is not visible to workers yet.
+
+## 2026-10-21 -- Profile completion audit (onboarding-tour cycle, a new area)
+
+**User input (verbatim):** "Maybe we can keep this in the cycle. I just want you to audit the profile completion of the workers, how it was track from the api and backend, analyse the structure of this feature and apply improvements"
+
+**Read (no code changed):** `apps/api` `domain/completion.ts`, `persist-completion.ts`, `get-profile.ts`,
+`replace-section.ts`, the 27 write handlers' completion switch, `service-requirements.ts`; `apps/app`
+`ProfileCompletionReminder`, `Sidebar`, `workerMenu.ts`, `ProfileShell`, `ProfileIndex`, `ServiceQualificationStep`,
+`config/serviceDocumentRequirements.ts`, `profilePreview.service.ts`, the admin compliance routes; `docs/worker/README.md` §4.
+
+**Written:** `inception/review/profile-completion-audit.md` (how it works; findings F1-F9: three measures on one
+screen, the ticks a second copy of the rules, Account Details tied to the service area, languages counted twice,
+stored flags stale after admin document actions, a fifth rule gating apply on the profile page, the checklist's
+pre-sidebar wording, the service table twice, the strict profile read; improvements I1-I6) and
+`inception/requirements/completion-questions.md` (Q1-Q8). Waiting for the answers.

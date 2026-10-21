@@ -16,7 +16,11 @@
   **`feat/onboarding-tour` merged into `feat/account-app` (`ffad332`)**. **U1 promoted to production 2026-10-21
   02:59Z** (`remonta-api-00012-gts` = `f00a3cb`; checks pass; rollback row on `docs/rollback-rows-2026-10-21-tour`).
   Open: `feat/account-app`'s preview checklist + tour checks 8-10, then its merge into `main` (the tour, the sidebar,
-  PR #57 and U5 go live together), production checks, then Operations / close the cycle. NFR design approved 2026-10-21. U1 functional design approved 2026-10-21. Requirements and the execution plan
+  PR #57 and U5 go live together), production checks, then Operations / close the cycle.
+
+  **New area in this cycle (user, 2026-10-21): profile completion.** Audit written
+  (`inception/review/profile-completion-audit.md`, F1-F9, I1-I6); **waiting for the answers** in
+  `inception/requirements/completion-questions.md` (Q1-Q8). Then requirements and units for it. NFR design approved 2026-10-21. U1 functional design approved 2026-10-21. Requirements and the execution plan
   approved 2026-10-21.
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory
