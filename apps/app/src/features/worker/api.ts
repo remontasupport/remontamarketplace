@@ -3,7 +3,7 @@
 // a 401 with a fresh token, and a typed outcome instead of a thrown error. The section
 // saves go through the form engine (saveSection); this client holds the read and the
 // photo calls, which upload files rather than save a body.
-import { createClient, workerContract, type CitizenshipBody, type ComplianceDocument, type ConfirmComplianceDocumentBody, type ConfirmServiceDocumentBody, type SignContractBody, type SignedContract, type DocumentLink, type Profile, type ServiceDocument, type ServiceDocumentTicketRequest, type ServiceDocumentTicketResponse, type ServiceRegistrationBody, type ServiceRegistrationView, type ServicesBody } from "@remonta/api-contract";
+import { createClient, workerContract, type CitizenshipBody, type ComplianceDocument, type ConfirmComplianceDocumentBody, type ConfirmServiceDocumentBody, type SignContractBody, type SignedContract, type TourView, type DocumentLink, type Profile, type ServiceDocument, type ServiceDocumentTicketRequest, type ServiceDocumentTicketResponse, type ServiceRegistrationBody, type ServiceRegistrationView, type ServicesBody } from "@remonta/api-contract";
 import { apiToken } from "@/lib/api/admin";
 import { failure, type ApiOutcome } from "@/lib/api/outcome";
 import { Unauthenticated, type TokenSource } from "@/lib/api/token";
@@ -49,6 +49,10 @@ export interface WorkerApi {
   putCitizenship(body: CitizenshipBody): Promise<ApiOutcome<ComplianceDocument>>;
   /** U4d: the signed contract and its engagement, recorded together. */
   signContract(body: SignContractBody): Promise<ApiOutcome<SignedContract>>;
+  /** onboarding-tour: when the worker first ended the dashboard tour; null when not yet (never cached by the api). */
+  getTour(opts?: { signal?: AbortSignal }): Promise<ApiOutcome<TourView>>;
+  /** onboarding-tour: record that the tour was seen; the first time is kept; 403 while impersonating. */
+  putTourSeen(): Promise<ApiOutcome<TourView>>;
 }
 
 export interface WorkerApiDeps {
@@ -74,7 +78,9 @@ type EntryName =
   | "confirmComplianceDocument"
   | "deleteComplianceDocument"
   | "putCitizenship"
-  | "signContract";
+  | "signContract"
+  | "getTour"
+  | "putTourSeen";
 
 export function createWorkerApi(deps: WorkerApiDeps): WorkerApi {
   const doFetch = deps.fetch ?? ((input: RequestInfo | URL, init?: RequestInit) => globalThis.fetch(input, init));
@@ -138,6 +144,8 @@ export function createWorkerApi(deps: WorkerApiDeps): WorkerApi {
     deleteComplianceDocument: (documentId) => call("deleteComplianceDocument", { params: { documentId } }),
     putCitizenship: (body) => call("putCitizenship", { body }),
     signContract: (body) => call("signContract", { body }),
+    getTour: (opts) => call("getTour", {}, opts),
+    putTourSeen: () => call("putTourSeen", {}),
   };
 }
 
