@@ -4992,3 +4992,22 @@ legacy columns); the admin api returns it but the dashboard does not show it; co
 Merged into `feat/account-app` (`ca55155`, which also brings main's C1 commits) and the Service Area definition loses
 the field (`b6cb225`); gates on `feat/account-app`: contract 109, api 879, app 73 / 289 known and 286 tests. **Order:**
 the api PR merged (staging) before the preview's Service Area works; promoted before the `feat/account-app` release.
+
+## 2026-10-21 -- The release check
+
+**User input (verbatim):** "Done. I think all the changes can be release now including the deletion of unuse files, can you run a thourough check first to the PRs before we release to the production"
+
+**Checked:**
+- #93 merged (`main` `9fdcf6d`), CI 13/13; staging `remonta-api-staging-00057-jxz`: a service-area save without a
+  distance kept the stored 72 km (200); an out-of-range distance still 400.
+- `main` merged into `feat/account-app` (`5049ae0`, 0 behind, 113 ahead), pushed. Every gate green: schemas 84,
+  api-contract 109, form-engine 76, db 50, api 879 (+216 skipped, CI), infra 43 + render check, app 73 / 289 known and
+  286 tests, web 76 known, `turbo run build` 3/3.
+- **The deletions (67 files, 22 routes):** no remaining code fetches a deleted route; the leftover strings
+  (`/api/worker/compliance-documents`, `/api/worker/identity-documents`) are arguments the hooks ignore (they call
+  `workerApi`); `profileRedirects.ts` redirects the old setup URLs on purpose; `/api/upload/worker-photo` (still used)
+  is not deleted.
+- **The added lines (5,003):** no console output, no localhost or staging hosts, no secrets, no TODOs; two explained
+  lint suppressions.
+- Open: the `feat/account-app` preview (Vercel building `5049ae0`) and the person-run checks; the production promotion
+  of `9fdcf6d` before the app; PR #57 superseded (to close).
