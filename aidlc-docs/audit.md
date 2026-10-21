@@ -5137,3 +5137,10 @@ mismatch); api healthy, no contract drift. Not resolved.
   copies of the main checkout's); 83 fully merged local branches deleted (98 -> 15). The user's untracked
   `_u2-staging-writes.ts` left alone.
 - **Production untouched by this pass:** `main` unchanged (`4a7add3`); app, marketing and api health 200.
+
+## 2026-10-21 -- #101 live; H1, H2 still open
+
+**User input (verbatim):** "Done merged, what's next now?"
+**Found:** only #101 (`chore/refresh-prisma-clients`) merged (`main` `2f52c40`); H2 (`3852f7c`) and H1 (`3f229fc`) not in
+`main`. #101 production builds succeeded; app /login, /dashboard/worker, /registration/worker 200; marketing 200;
+the database-backed `/api/suburbs?q=parramatta` returns rows (Prisma works on production).
