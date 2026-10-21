@@ -4874,3 +4874,15 @@ the alert lists in `lib.sh` `alerts_for`, tested by `infra/test/monitoring.test.
 
 **Written:** `construction/plans/completion-api-code-generation-plan.md` (14 steps; the staging checks after the
 merge). **Approval prompt (2026-10-21):** presented.
+
+## 2026-10-21 -- C1 completion-api code generated and pushed
+
+**User input (verbatim):** "approved and continue" (the C1 code generation plan)
+
+**Done (plan Steps 1-12, 14; Step 13's PR is the user's):** `feat/completion-api` `c4e4505` (7 commits, 29 files).
+Gates green (api-contract 108, api 878 + 215 skipped, infra 43, app 127, build 3/3). Found and fixed: Compliance with
+no services had no next step (the property). Proved: the resumability property fails without the cursor. Deviations
+(7) and the staging checks: `construction/completion-api/code/C1-summary.md`.
+
+**Also corrected to the user:** the rollback-row branch `docs/rollback-rows-2026-10-21-tour` is not merged (Claude had
+said it was, reading its own branch's CLAUDE.md).

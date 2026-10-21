@@ -21,8 +21,10 @@
   **New area in this cycle (user, 2026-10-21): profile completion.** Audit written
   (`inception/review/profile-completion-audit.md`, F1-F9, I1-I6); answered; requirements written
   (`inception/requirements/completion-requirements.md`, approved 2026-10-21); execution plan
-  (`inception/plans/completion-execution-plan.md`, approved); C1 Functional Design approved; C1 NFR Design approved; C1 code generation plan
-  (`construction/plans/completion-api-code-generation-plan.md`) **waiting for the user's approval**.
+  (`inception/plans/completion-execution-plan.md`, approved); C1 Functional Design approved; C1 NFR Design approved; C1 code generated and pushed
+  (`feat/completion-api` `c4e4505`, gates green); **waiting for the user to open and merge the PR**, then the staging
+  checks of `construction/completion-api/code/C1-summary.md`. Open: the rollback-row PR
+  (`docs/rollback-rows-2026-10-21-tour`, not merged).
   C2 waits for the `feat/account-app` release (CD8).
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory
