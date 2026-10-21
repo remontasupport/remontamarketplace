@@ -181,7 +181,7 @@ Promote the last known-good deployment in Vercel. Seconds, no rebuild.
 |---|---|
 | `remonta-app` | `2ewmXaYfTHuo6fBcNpNoKS13yBhY` — https://vercel.com/remontas-projects/remonta-app/2ewmXaYfTHuo6fBcNpNoKS13yBhY (the `main` `48a8a7e` build, verified live 2026-10-09) |
 | `remontamarketplace` | `5y5Ffr8mtJgmE2pg12GviLo4Rz72` — https://vercel.com/remontas-projects/remontamarketplace/5y5Ffr8mtJgmE2pg12GviLo4Rz72 (the same merge, 2026-10-09) |
-| `remonta-api` (Cloud Run) | revision `remonta-api-00008-dq4` = image `b9ff6f4156923c89ae49ec0af59056e7cda71762` (worker-profile-api U1, promoted 2026-10-12); the previous known-good is `remonta-api-00007-j7w` = `024596f5ba2ba5b796eb88002b011a4bdc289a38` (2026-10-09). Roll back with the deploy-api dispatch naming that full sha, or Cloud Run → Revisions → route traffic. |
+| `remonta-api` (Cloud Run) | revision `remonta-api-00011-99p` = image `b8fe2eb8c64697e8eb295f93cb5d2c90814bc2ac` (#85, the State filter + #61-#84, promoted 2026-10-19); the previous known-good is `remonta-api-00010-8vk` = `182f94f757551997d5c75843e01524b221db5281` (2026-10-14). The migration `u5d_users_password_changed_at` (expand-only) stays on a rollback. Roll back with the deploy-api dispatch naming that full sha, or Cloud Run → Revisions → route traffic. |
 
 Re-record these before any unit that changes deployment settings. **Promote a
 deployment; do not redeploy a commit** — a rebuild can fail, an existing build cannot.
