@@ -4929,3 +4929,11 @@ reachable on GitHub by its sha. From now on, commits name their paths, never `-A
 
 **Found:** #91 merged (`main` `0fbd3d4`), CI 13/13; #90 merged as well; staging `00056-rgt`; checks 10/10 with 10
 required pages. The promotion image is `0fbd3d443da54a29b24a88aeaf9abacfc652312e`.
+
+## 2026-10-21 -- C1 promoted to production
+
+**User input (verbatim):** "the deploy-api is done"
+
+**Verified:** `remonta-api-00013-rl7` = `0fbd3d4`, 100 %; health 200; the new entries 401 without a token. completion-sync's
+first run: full pass 1,878 checked, 8 changed (stale stored flags corrected), 0 failed. The alert's metric is missing
+(not created yet); the policy not applied. Rollback row on `docs/rollback-rows-2026-10-21-completion` `cf0f1b0`.

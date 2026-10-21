@@ -102,3 +102,14 @@ migrate. The choice for C2 remains: keep Language required (they see one short p
 - **Staging:** revision `remonta-api-staging-00056-rgt`, 100 % traffic (04:45Z). Checks 10/10 again: 18 My Profile
   items, **10 required**; the staging worker My Profile 10/10.
 - **The image to promote is `0fbd3d443da54a29b24a88aeaf9abacfc652312e`** (not `1eda05a`).
+
+## Promoted to production (2026-10-21)
+
+- deploy-api `workflow_dispatch` of `0fbd3d4` at 04:48Z, success: **`remonta-api-00013-rl7`**, 100 % traffic
+  (previous `remonta-api-00012-gts` = `f00a3cb`). Production checks: health 200; `/v1/worker/completion` and
+  `/v1/worker/tour` 401 without a token. `COMPLETION_MODEL=legacy`: nothing visible changes.
+- **completion-sync's first production run** (04:49:49Z, Cloud Logging): the day's full pass, **1,878 checked, 8
+  changed, 0 failed** -- eight workers whose stored flags had gone stale under today's own rules (F5), now true.
+- **Not yet done:** the log metric `remonta-api-completion-sync-failed` does not exist on the project (checked), so
+  the `completion-sync-failing` policy is not applied either.
+- Rollback row: branch `docs/rollback-rows-2026-10-21-completion` `cf0f1b0` (one line; the user's PR).
