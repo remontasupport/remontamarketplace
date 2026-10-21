@@ -5075,3 +5075,12 @@ all 40 run-time-built api URLs: no other deleted route reachable. The user's PR.
 service setup steps have their own layout). **Done:** `fix/service-area-card-top`: `profile-step--top` on `ProfileShell`
 for `slug === "service-area"`; at 768 px and below `margin-top: 2.5rem; margin-bottom: 0` (about 4rem under the header
 with the main column's padding). Lint and types clean; pushed; the user's PR.
+
+## 2026-10-21 -- Mobile: every profile step near the top
+
+**User input (verbatim):** "it is still at the center, can you place it on the higher"
+**Found:** #99 merged and live (the production CSS holds `profile-step--top`), so the card meant was another page.
+**Asked (which page); user's choice:** "A My Profile step".
+**Done:** `fix/profile-steps-top` from `main`: one rule for every `ProfileShell` step at 768 px and below
+(`.profile-step { margin-top: 2.5rem }`), replacing #97's centring and #99's Service Area exception. Lint and types
+clean; pushed; the user's PR.
