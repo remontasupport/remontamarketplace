@@ -4582,3 +4582,16 @@ Infrastructure Design. Units: U1 `tour-seen-api` (`feat/tour-seen-api` from `mai
 the tour.
 
 **Approval prompt (2026-10-21):** execution plan presented; next stage Functional Design (U1).
+
+## 2026-10-21 -- Workflow plan approved; U1 functional design plan (onboarding-tour)
+
+**User input (verbatim):** "approved and continue"
+
+**Status:** execution plan approved as written. CONSTRUCTION starts with U1 `tour-seen-api`.
+
+**Read on `main` for the plan:** `workerRead()` caches privately 60 s by default; `workerWrite(audit)` requires an
+audit action (all section writes use `PROFILE_UPDATE`); no `privateCacheSeconds` = `no-store`; migrations carry a
+header comment and a `down.sql`.
+
+**Written:** `construction/plans/tour-seen-api-functional-design-plan.md` (8 steps, Q1-Q5: the column's table, the
+paths, the audit action, a worker without a profile row, the read's caching). Waiting for the answers.

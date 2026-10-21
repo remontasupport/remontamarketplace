@@ -8,8 +8,9 @@
   "Basically just a tour how to complete the profile". Record branch `aidlc/onboarding-tour` (from `aidlc/api-review`
   `d9289f3`). The previous cycle, api-review, is **parked**: `aidlc-docs/archive/api-review/PARKED.md`
   (`feat/account-app` held, not released).
-- **Current Stage**: INCEPTION -- Workflow Planning, `aidlc-docs/inception/plans/execution-plan.md` written; **waiting
-  for the user's approval** (next: Functional Design of U1 `tour-seen-api`). Requirements approved 2026-10-21.
+- **Current Stage**: CONSTRUCTION -- U1 `tour-seen-api` Functional Design: **waiting for the answers** (Q1-Q5) in
+  `aidlc-docs/construction/plans/tour-seen-api-functional-design-plan.md`. Requirements and the execution plan
+  approved 2026-10-21.
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory
   `aidlc-docs/inception/inventory/onboarding-tour-inventory.md` (on `feat/account-app` `4d62630`).
@@ -20,7 +21,7 @@
 
   **Resume here (2026-10-21):**
   1. `git ls-remote origin main feat/account-app`; ask what was merged since.
-  2. On approval: Functional Design U1 (`construction/tour-seen-api/functional-design/`), NFR Design (both units),
+  2. Read Q1-Q5; write `construction/tour-seen-api/functional-design/`; then NFR Design (both units),
      Functional Design U2 with the five step texts for the user's review. OI-1 is settled: "seen" has its own read and
      save (the profile read's schema is strict; changing it would break today's production app).
 
@@ -30,12 +31,12 @@
 - [x] Reverse Engineering (targeted inventory)
 - [x] Requirements Analysis (approved 2026-10-21)
 - [x] User Stories -- SKIP
-- [ ] Workflow Planning (`plans/execution-plan.md`; awaiting approval)
+- [x] Workflow Planning (approved 2026-10-21)
 - [ ] Application Design -- SKIP
 - [ ] Units Generation -- SKIP (U1 `tour-seen-api`, U2 `tour-app` fixed in the plan)
 
 ### CONSTRUCTION PHASE
-- [ ] Functional Design -- EXECUTE (U1, U2)
+- [ ] Functional Design -- EXECUTE (U1: plan + questions out; U2)
 - [ ] NFR Requirements -- SKIP (NFR-01..10 in the requirements)
 - [ ] NFR Design -- EXECUTE (one document)
 - [ ] Infrastructure Design -- SKIP
