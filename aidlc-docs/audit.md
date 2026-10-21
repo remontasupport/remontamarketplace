@@ -5158,3 +5158,14 @@ merges, each is open to the takeover.
 **Done:** `fix/h2-setup-password-takeover` and `fix/h1-bank-details-exposure` (superseded by the `-v2` branches) deleted
 with their commits recorded; 28 remote branches; the local checkout on `main` `2f52c40`, 14 local branches.
 **Not done (the user's):** H2 and H1 are pushed but **no PR is open and neither is merged**.
+
+## 2026-10-21 -- H2 and H1 live; session closed
+
+**User input (verbatim):** "there is an error in#102 Code scanning results / CodeQL"
+**Found:** #102 (H2) CodeQL `js/user-controlled-bypass` at `setup-password/route.ts` L36 (the email-presence check):
+answered as a false positive (input validation; the guard is the database check -- WORKER, ACTIVE, default password --
+and the token goes to the account's own email); dismiss recommended; the other checks green.
+**User input (verbatim):** "the 2 prs are already merged. can I end the session now?"
+**Verified:** #102 (H2) and #103 (H1) merged, `main` `62e24f9`, production build success. Production
+`POST /api/auth/setup-password` with an email and a password answers the generic message and sets nothing (the takeover
+path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` deleted (merged).

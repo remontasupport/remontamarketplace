@@ -56,11 +56,8 @@
 
   **Resume here (session closed 2026-10-21 evening):**
   1. `git ls-remote origin main`; ask what was merged since.
-  2. **SECURITY FIRST: H2** (`fix/h2-setup-password-takeover-v2`: `/setup-password` sets any default-password worker's
-     password from an email alone; ~197 accounts on the staging copy are on `WelcomeRemonta`) and **H1**
-     (`fix/h1-bank-details-v2`: the share link returns bank details). Pushed, previews built, **no PR open, not merged**.
-     After the merge: verify on production (the page asks for an email only), delete both `-v2` branches, tighten the
-     app lint baseline (H1 removes one finding).
+  2. H2 (#102) and H1 (#103) **merged and live 2026-10-21** (`main` `62e24f9`; the takeover path verified closed on
+     production). Small leftover: tighten the app lint baseline (H1 removed one finding).
   3. **H3** (`fix/h3-published-workers-only-v2`, local only): a product decision -- 1 of 1,765 workers is published.
   4. Rotate the Zoho OAuth secret once committed in the deleted `apps/app/docs/Zoho_Jobs_To_DB.md` (in git history).
   5. The production 403 on `GET /v1/worker/profile` for one non-WORKER account (`cmj85z8m60000vxr002l9hqqo`, 07:15Z and
