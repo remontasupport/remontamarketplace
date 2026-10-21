@@ -30,7 +30,6 @@
 1	src/app/login/page.tsx::react/no-unescaped-entities
 1	src/app/registration/clients/page.tsx::@typescript-eslint/no-explicit-any
 1	src/app/registration/clients/page.tsx::react/no-unescaped-entities
-1	src/app/setup-password/page.tsx::react/no-unescaped-entities
 4	src/app/share/profile/[token]/page.tsx::@typescript-eslint/no-explicit-any
 1	src/app/unauthorized/page.tsx::react/no-unescaped-entities
 4	src/app/workers/[id]/profile/page.tsx::@typescript-eslint/no-explicit-any
