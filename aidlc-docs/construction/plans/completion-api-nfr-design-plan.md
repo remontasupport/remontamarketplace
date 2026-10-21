@@ -35,12 +35,12 @@ Inputs: NFR-C1..C5 (`inception/requirements/completion-requirements.md`), the fu
 
 ## Plan
 
-- [ ] 1. The setting and its release switch
-- [ ] 2. The job's bounds, resumption and load
-- [ ] 3. The backfill's safety and rollback
-- [ ] 4. Observability and alerting -- Q1
-- [ ] 5. Testing scenarios and properties
-- [ ] 6. Artifacts: `construction/completion-api/nfr-design/{nfr-design-patterns,logical-components}.md`
+- [x] 1. The setting and its release switch
+- [x] 2. The job's bounds, resumption and load
+- [x] 3. The backfill's safety and rollback
+- [x] 4. Observability and alerting -- Q1
+- [x] 5. Testing scenarios and properties
+- [x] 6. Artifacts: `construction/completion-api/nfr-design/{nfr-design-patterns,logical-components}.md`
 
 ## Question 1
 If `completion-sync` keeps failing (the database unreachable, a bug), the stored flags the admin screens read go stale
@@ -53,4 +53,4 @@ B) No alert: the worker's own screens are always right (they compute on read); t
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a

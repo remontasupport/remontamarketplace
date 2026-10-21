@@ -4854,3 +4854,12 @@ file placement, property candidates). **Approval prompt (2026-10-21):** presente
 **Written:** `construction/plans/completion-api-nfr-design-plan.md` (the switch as a reviewed one-line PR + promotion;
 the job's bounds and resumption; the backfill's safety; rollback of the meaning; testing scenarios; Q1 an alert for a
 failing job). Waiting for the answer.
+
+## 2026-10-21 -- C1 NFR design written
+
+**User input (verbatim):** "answered"
+**Answer:** Q1 a (an alert after three failed runs).
+**Found:** the alert pattern is a log line tagged `alert="<name>"`, a log-based metric `remonta-api-<name>` and a policy
+in `infra/cloudrun/monitoring/` (as `outbox-dead-letter`).
+**Written:** `construction/completion-api/nfr-design/` (CP1-CP9, CT1-CT6, the resumability property; logical
+components). **Approval prompt (2026-10-21):** presented; next C1 code generation plan.
