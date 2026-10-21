@@ -4844,3 +4844,13 @@ plus a daily full pass) · Q3 a (an optional-only service done with one upload).
 E3 Services items, E4 Compliance items from `requirementGroups`, E5 the view, E6 `COMPLETION_MODEL` legacy/groups),
 `business-rules.md` (CR-1..CR-14 and the five on-purpose differences from today), `business-logic-model.md` (L1-L6,
 file placement, property candidates). **Approval prompt (2026-10-21):** presented; next NFR Design C1.
+
+## 2026-10-21 -- C1 functional design approved; C1 NFR design plan
+
+**User input (verbatim):** "approved and continue"
+
+**Found:** per-stage plain settings in `infra/lib/stages.ts` `environment`; no alert for a failing scheduled job.
+
+**Written:** `construction/plans/completion-api-nfr-design-plan.md` (the switch as a reviewed one-line PR + promotion;
+the job's bounds and resumption; the backfill's safety; rollback of the meaning; testing scenarios; Q1 an alert for a
+failing job). Waiting for the answer.
