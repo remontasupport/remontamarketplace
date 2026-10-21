@@ -28,7 +28,8 @@
   `remonta-api-00013-rl7` = `0fbd3d4`; the first full pass corrected 8 stale workers. The alert applied (metric +
   policy, 2026-10-21). **C1 complete.** Open: the rollback-row PR `docs/rollback-rows-2026-10-21-completion`;
   then `feat/account-app`'s release, then C2 (Functional Design first). **Before the release (user, 2026-10-21):
-  small mobile-view changes on `feat/account-app`**, one at a time: 1) the tour's ? hidden on phones (`c9da208`). 
+  small UI changes on `feat/account-app`**, one at a time: 1) the tour's ? hidden on phones (`c9da208`);
+  2) no Preview profile on the steps, no role under the first name. The dev branch has the tour migration now. 
   C2 waits for the `feat/account-app` release (CD8).
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory

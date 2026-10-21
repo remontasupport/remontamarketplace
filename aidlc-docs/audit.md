@@ -4967,3 +4967,14 @@ of production's `_prisma_migrations` against the repository; an optional rename 
 **Asked (which screen size). User's choice:** "Hide on phones".
 **Done:** `.tour-help-button { display: none }` inside the 768 px media query of `dashboard.css` (unlayered, so it
 beats the Tailwind `flex` utility); `feat/account-app` `c9da208`, pushed.
+
+**User input (verbatim):** "I have a lot of changes to the UI, so it is better to develope the changes to the local server"
+**Done:** the dev branch (`ep-royal-night`) lacked one migration (`20261021120000_tour_worker_profiles_tour_seen_at`; the
+earlier test was rolled back): applied with `migrate:deploy` (dev host checked); the local api (4000) and app (3000)
+started on the dev branch.
+**User input (verbatim):** "aobort"
+**Asked; user's choice:** "Stop local servers". Stopped (the wrappers and the two node processes; ports free).
+**User input (verbatim):** "actually this is is just a small changes so need to run the local, Can you remove the preview profile to each step?, also remove the worker's role under the First Name"
+**Done (read as "no need to run local"):** `ProfileShell.tsx` loses "Preview profile" (the step header only for Review
+application during a job application); `Sidebar.tsx` loses the role line under the first name. App gate exit 0 (73 / 289
+known, 286 tests). `feat/account-app`, pushed.
