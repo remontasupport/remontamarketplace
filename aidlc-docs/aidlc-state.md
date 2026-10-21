@@ -13,8 +13,10 @@
   word: imageTag `f00a3cb85ba22939f9d6cebcf4e36509d4cb28d9`). `main` merged into `feat/account-app` (`dda4f61`, gates
   green). **U2 generated and pushed** (`feat/onboarding-tour` `ffad332`, gates green, preview built). **Build and Test
   written** (`construction/build-and-test/`): automated tests all pass. Preview checks 1-7 done by the user;
-  **`feat/onboarding-tour` merged into `feat/account-app` (`ffad332`)**. Open before the release: checks 8-10 and the
-  NFR-02 browser check, on `feat/account-app`'s preview; then the release order in `build-and-test-summary.md`. NFR design approved 2026-10-21. U1 functional design approved 2026-10-21. Requirements and the execution plan
+  **`feat/onboarding-tour` merged into `feat/account-app` (`ffad332`)**. **U1 promoted to production 2026-10-21
+  02:59Z** (`remonta-api-00012-gts` = `f00a3cb`; checks pass; rollback row on `docs/rollback-rows-2026-10-21-tour`).
+  Open: `feat/account-app`'s preview checklist + tour checks 8-10, then its merge into `main` (the tour, the sidebar,
+  PR #57 and U5 go live together), production checks, then Operations / close the cycle. NFR design approved 2026-10-21. U1 functional design approved 2026-10-21. Requirements and the execution plan
   approved 2026-10-21.
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory
@@ -26,9 +28,8 @@
 
   **Resume here (2026-10-21):**
   1. `git ls-remote origin main feat/account-app`; ask what was merged since.
-  2. `feat/account-app`'s preview (`ffad332`): CLAUDE.md's checklist + tour checks 8-10 + NFR-02. Then, on the user's
-     word: promote U1 (`f00a3cb85ba22939f9d6cebcf4e36509d4cb28d9`), re-record rollback rows, merge `feat/account-app`
-     into `main`, production checks. `../remonta-pr57` is on `feat/account-app` again. Open for the user: the browser check of today's production app against staging. OI-1 is settled: "seen" has its own read and
+  2. `feat/account-app`'s preview (`ffad332`): CLAUDE.md's checklist + tour checks 8-10. Then, on the user's word:
+     merge `feat/account-app` into `main`, production checks, re-record the Vercel rollback rows, close the cycle. `../remonta-pr57` is on `feat/account-app` again. Open for the user: the browser check of today's production app against staging. OI-1 is settled: "seen" has its own read and
      save (the profile read's schema is strict; changing it would break today's production app).
 
 ## Stage Progress

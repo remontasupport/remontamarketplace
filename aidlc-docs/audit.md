@@ -4762,3 +4762,17 @@ and keyboard"; next "Merge into account-app (Recommended)".
 
 **Done:** `feat/account-app` fast-forwarded to `ffad332` and pushed. Open: checks 8-10, carried to `feat/account-app`'s
 preview checklist; the NFR-02 browser check.
+
+## 2026-10-21 -- U1 promoted to production
+
+**User input (verbatim):** "If I deploy the api, does it mean the nav sidebar would be push to the production as well?."
+**Answered:** no; the api promotion changes the Cloud Run image only (the column and the two entries); the sidebar is
+app code on `feat/account-app` and goes live only when that branch is merged into `main`.
+
+**User input (verbatim):** "Done deploying, is the feature done already? I will be adding more feature when you confirm that this is done"
+
+**Verified:** deploy-api `workflow_dispatch` of `f00a3cb` at 02:59Z, success; production `remonta-api-00012-gts` = image
+`f00a3cb85ba22939f9d6cebcf4e36509d4cb28d9`, 100 % traffic. Production checks: health 200; `/v1/worker/tour` 401 and
+`/v1/worker/profile` 401 without a token. Previous: `remonta-api-00011-99p` = `b8fe2eb`. Rollback row re-recorded on
+branch `docs/rollback-rows-2026-10-21-tour` (`54db937`, PR for the user). Not done: the app release
+(`feat/account-app` -> `main`), so the tour is not visible to workers yet.
