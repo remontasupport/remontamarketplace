@@ -4915,3 +4915,10 @@ counted that way); of the 148 complete today, 62 have none. Not a data gap: unan
 **Done:** `feat/completion-language-optional` from `main` `1eda05a`: `MY_PROFILE_PAGES` languages `required: false` (10
 required), tests and docs updated, `openapi.json`; gates api-contract 108, api 878 green; pushed. Requirements CD3 and
 functional design E2 amended. The PR is the user's; staging and the promotion follow it.
+
+**Mistake and fix (2026-10-21):** `git add -A apps/api` also staged the user's untracked
+`apps/api/scripts/_u2-staging-writes.ts` (a one-off staging script, header "not committed") into `f162793`, which was
+pushed. Checked: no secrets (it reads them through gcloud at run time), no personal data; the only URL is the staging
+api's. No PR existed; the commit was amended without the file and the branch updated with `--force-with-lease`:
+`feat/completion-language-optional` = `4056bbe` (7 files). The local file is intact and untracked. `f162793` may stay
+reachable on GitHub by its sha. From now on, commits name their paths, never `-A` on a directory.
