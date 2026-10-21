@@ -44,7 +44,7 @@ Not committed: the regenerated app Prisma client (`apps/app/src/generated/auth-c
   skipped. `npx turbo run build`: 3 of 3. The regenerated Prisma clients in `apps/app` and `apps/web` restored after
   the build.
 - **Pushed:** `feat/tour-seen-api` `d25c9ce` (4 commits: `4bfea82` db, `cad51cb` contract, `c303ba8` api, `d25c9ce`
-  docs; 11 files).
+  docs; 12 files, +626 −6).
 
 ## After the merge: the staging checklist (requirements §6.2)
 
