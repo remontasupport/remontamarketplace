@@ -5109,3 +5109,31 @@ H1 open on the share link (`fetchProfileByUserId` selects `workerAdditionalInfo.
   user.
 - **Branches:** the list with commits recorded (`inception/review/deleted-branches-2026-10-21.md`), then 105 merged
   remote branches deleted (0 failed); 35 remain.
+
+## 2026-10-21 -- Clean-up items 3-5
+
+**User input (verbatim):** "hey there is an error to the production Editing your profile is temporarily unavailable. Please try again in a few minutes."
+**Found (then stopped):** prod api 403 on `GET /v1/worker/profile` (8 at 08:22Z, 2 at 07:15Z) for one account
+(`cmj85z8m60000vxr002l9hqqo`): the token's role is not WORKER (an admin or client on a worker page, or a role
+mismatch); api healthy, no contract drift. Not resolved.
+**User input (verbatim):** "abort" -- stopped.
+**User input (verbatim):** "what's next with the clean up now?" -- the remaining items listed.
+**User input (verbatim):** "go ahead, make sure the production isn't compromise, like the admin dashboard earlier"
+
+**Done:**
+- **Item 5, the committed Prisma client:** both Vercel builds run `prisma generate` before `next build`, so production
+  never used the committed clients. Chosen: refresh, not untrack (no change to what Vercel receives; the `.gitignore`
+  records a reason to commit them). `chore/refresh-prisma-clients` `04042d1`: the 7 `auth-client` files with real content
+  changes (passwordChangedAt, tourSeenAt, the home address, the reconciler indexes); the others differ only in line
+  endings or a machine path (not committed). App and web gates pass **without** a local regenerate; build 3/3. The
+  user's PR (preview builds of both projects before merging).
+- **Item 3, branches:** all 35 reviewed (date, commits ahead, content left). 6 deleted with their commits recorded
+  (`inception/review/deleted-branches-2026-10-21.md`, second pass): `feat/edit-profile-app` (closes #57: confirmed
+  closed), `feat/services-app`, `fix/db-package-explicit-prisma-client`, `u6/app-verify`,
+  `chore/staging-services-check`, `app-feature`. Kept: `aidlc/*`, `u7/completion` (record lines), the pre-monorepo and
+  migration history (`app/*`, `u1-quality`, `u5-*`, `w1/p5-read-switch`, `hotfix/provider-agreement-v2`),
+  `test/my-profile-columns`, the security branches until merged/decided. 30 remain.
+- **Item 4, local:** the `../remonta-pr57` worktree removed (HEAD in main, nothing unpushed, its `.env` files identical
+  copies of the main checkout's); 83 fully merged local branches deleted (98 -> 15). The user's untracked
+  `_u2-staging-writes.ts` left alone.
+- **Production untouched by this pass:** `main` unchanged (`4a7add3`); app, marketing and api health 200.

@@ -111,3 +111,14 @@ Every branch below was fully merged into `main` (its tip an ancestor of `main` a
 | `u7/completion-rebased` | `0d428befaf49c9c63fe0946f14559e2cbd03f2ea` |
 | `u7/packages` | `5754073ed9d57367ad6def5272d3c4670382c861` |
 | `u8/packages-db` | `a7c57f229fa0c765bc01c8217b2e97d2f69208ed` |
+
+## Second pass (2026-10-21, after review): branches with leftovers judged stale
+
+| Branch | Commit | Why |
+|---|---|---|
+| `feat/edit-profile-app` | `6b4a9bd1189e532ed8bc2f5a38a89bc7e26efdda` | PR #57's branch; no content difference with main (deleting it closes #57) |
+| `feat/services-app` | `a79d52a756d76e0a92e3817cfd3a1d240ca95f42` | no content difference with main |
+| `fix/db-package-explicit-prisma-client` | `f8fedbd506a3ee04ee9110321643d08a7b35ecca` | declares @prisma/client in packages/db, which never imports it |
+| `u6/app-verify` | `a360d6828318ae9ec337d39fc183a97272f0b19a` | a one-off Vercel verification marker |
+| `chore/staging-services-check` | `8933b42aa6b8e295c940968d6c683cdd97837ce0` | a one-off staging script (2026-10-15) |
+| `app-feature` | `5f70d4a21480405fa7d70a3e0e10d763b4c4985e` | a 2025 pre-monorepo change to files since deleted |
