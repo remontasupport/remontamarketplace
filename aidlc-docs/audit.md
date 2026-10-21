@@ -5066,3 +5066,12 @@ code"; the dashboard builds the URL at run time (`/api/admin/reports/${reportTyp
 `cf43d23`; `new NextResponse(new Uint8Array(buffer))` in daily and weekly (the two type findings the tightened baseline
 no longer allowed). App gate exit 0 (56 / 279 known, 286 tests); the app build lists the four report routes. Re-check of
 all 40 run-time-built api URLs: no other deleted route reachable. The user's PR.
+
+## 2026-10-21 -- Mobile: the Service Area card near the top
+
+**User input (verbatim):** "merged, now a quick fix again to the my services card, can you place a bit on top and not on the centered instead"
+**Verified:** #98 (the restored reports) in `main` `5f2390e`.
+**Read as:** the Services group's page that #97 centred is Service Area (the only Services page on `ProfileShell`; the
+service setup steps have their own layout). **Done:** `fix/service-area-card-top`: `profile-step--top` on `ProfileShell`
+for `slug === "service-area"`; at 768 px and below `margin-top: 2.5rem; margin-bottom: 0` (about 4rem under the header
+with the main column's padding). Lint and types clean; pushed; the user's PR.
