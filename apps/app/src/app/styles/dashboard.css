@@ -677,6 +677,11 @@
     margin-top: auto;
     margin-bottom: auto;
   }
+  /* Service Area (the Services group): a little below the header rather than centred (user, 2026-10-21). */
+  .profile-step.profile-step--top {
+    margin-top: 2.5rem;
+    margin-bottom: 0;
+  }
 }
 
 .header-logo-img {
