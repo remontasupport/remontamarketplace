@@ -15,7 +15,7 @@ C) Only the backend: I4 and I6 (the screens later)
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 2
 What should the percent on the My Profile badge count?
@@ -28,7 +28,7 @@ the double-counted language
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 3
 Which My Profile pages must be filled for a page to count as "complete"? Today some pages are optional in practice
@@ -41,7 +41,7 @@ History, Education, Preferred Hours, Vehicle Access; the rest are ticked when fi
 
 X) Other (please list after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: b
 
 ## Question 4
 The home checklist's items. Today: Account Details, Compliance, Trainings, My Services.
@@ -54,7 +54,7 @@ B) Keep the four, renamed to the menu's words (My Profile, Compliance, Trainings
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 5
 "Account Details" (or "My Profile" after Q4) needs a suburb. Which one?
@@ -65,7 +65,7 @@ B) The service area (Services)
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: Private home address can be excluded
 
 ## Question 6
 Applying for a job from the profile page is blocked until Experience, Fun Fact, Languages, Interests and Support &
@@ -78,7 +78,7 @@ B) Gated everywhere, by the same rule (please say which sections after [Answer]:
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 7
 When the release with these changes ships, should the congratulations pop-up (shown once at 100 %) appear again for
@@ -90,7 +90,7 @@ B) Yes, once more under the new rules
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 8
 Should these changes ship with the held `feat/account-app` release (the tour, the sidebar, PR #57), or after it?
@@ -102,4 +102,4 @@ B) With it, in the same release
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a

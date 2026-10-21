@@ -4791,3 +4791,15 @@ screen, the ticks a second copy of the rules, Account Details tied to the servic
 stored flags stale after admin document actions, a fifth rule gating apply on the profile page, the checklist's
 pre-sidebar wording, the service table twice, the strict profile read; improvements I1-I6) and
 `inception/requirements/completion-questions.md` (Q1-Q8). Waiting for the answers.
+
+## 2026-10-21 -- Profile completion: answers and requirements
+
+**User input (verbatim):** "answered"
+
+**Answers in `inception/requirements/completion-questions.md`:** Q1 a · Q2 a · Q3 b · Q4 a · Q5 "Private home address
+can be excluded" · Q6 a · Q7 a · Q8 a. **Follow-up asked** (Q5's meaning); **user's choice:** "No suburb for My
+Profile" (the Address page optional; the Service Area counts under Services).
+
+**Written:** `inception/requirements/completion-requirements.md` (CD1-CD8; FR-CMP-01..07, FR-SCR-01..05,
+FR-STO-01..05; NFR-C1..C5; units C1 `completion-api`, C2 `completion-app`; OC-1..OC-4). **Approval prompt
+(2026-10-21):** presented for review.
