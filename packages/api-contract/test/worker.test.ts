@@ -314,10 +314,10 @@ describe('the completion entry (onboarding-tour C1)', () => {
     expect(e.responses[200]).toBe(completionViewSchema)
   })
 
-  it('the My Profile pages: 18 slugs, unique, 11 required (CD3)', () => {
+  it('the My Profile pages: 18 slugs, unique, 10 required (CD3; Language optional)', () => {
     expect(MY_PROFILE_PAGES).toHaveLength(18)
     expect(new Set(MY_PROFILE_PAGES.map((p) => p.slug)).size).toBe(18)
-    expect(MY_PROFILE_PAGES.filter((p) => p.required)).toHaveLength(11)
+    expect(MY_PROFILE_PAGES.filter((p) => p.required)).toHaveLength(10)
   })
 
   it('the view is strict: three groups, bounded lists, no extra field', () => {

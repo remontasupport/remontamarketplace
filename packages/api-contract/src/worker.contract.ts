@@ -309,11 +309,11 @@ export type TourView = z.output<typeof tourViewSchema>
 
 /**
  * onboarding-tour C1 (E5): "complete", declared once in the api. The My Profile pages (the sidebar's slugs), the three
- * checklist groups with their next step, the percent over the 11 required pages, and each chosen service's documents.
+ * checklist groups with their next step, the percent over the 10 required pages, and each chosen service's documents.
  * Its own entry: the profile read's strict shape is parsed by deployed apps.
  */
 export const COMPLETION_GROUP_IDS = ['my-profile', 'services', 'compliance'] as const
-/** The My Profile pages by the sidebar's slugs, in its order; 11 required (CD3). The api's rules and the app's links key on these. */
+/** The My Profile pages by the sidebar's slugs, in its order; 10 required (CD3; Language optional, user 2026-10-21). The api's rules and the app's links key on these. */
 export const MY_PROFILE_PAGES = [
   { slug: 'name', required: true },
   { slug: 'photo', required: true },
@@ -321,7 +321,7 @@ export const MY_PROFILE_PAGES = [
   { slug: 'address', required: false },
   { slug: 'date-of-birth', required: true },
   { slug: 'gender', required: true },
-  { slug: 'languages', required: true },
+  { slug: 'languages', required: false },
   { slug: 'experience', required: true },
   { slug: 'work-history', required: true },
   { slug: 'education', required: true },
@@ -407,7 +407,7 @@ export const workerContract = defineContract('worker', {
   putBankAccount: { method: 'PUT', path: '/v1/worker/bank-account', summary: 'Replace the bank account (all four fields); every read returns it masked.', body: json(bankAccountSchema), responses: { 200: maskedBankAccountSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
 
   // ---- onboarding-tour C1: completion declared once (its own entry; the profile read is unchanged).
-  getCompletion: { method: 'GET', path: '/v1/worker/completion', summary: 'How complete the worker is: every My Profile page, the three checklist groups (My Profile, Services, Compliance) with their next step, the percent over the 11 required pages, and each service’s documents. Privately cacheable for a minute with ETag/304.', responses: { 200: completionViewSchema }, meta: workerRead() },
+  getCompletion: { method: 'GET', path: '/v1/worker/completion', summary: 'How complete the worker is: every My Profile page, the three checklist groups (My Profile, Services, Compliance) with their next step, the percent over the 10 required pages, and each service’s documents. Privately cacheable for a minute with ETag/304.', responses: { 200: completionViewSchema }, meta: workerRead() },
   // ---- onboarding-tour U1: the tour's "seen" time, apart from the profile read (whose strict shape the deployed app parses).
   getTour: { method: 'GET', path: '/v1/worker/tour', summary: 'When the worker first ended the dashboard tour (or chose "Not now"); null when not yet. Never cached.', responses: { 200: tourViewSchema }, meta: workerRead({ noCache: true }) },
   putTourSeen: { method: 'PUT', path: '/v1/worker/tour/seen', summary: 'Record that the worker has seen the tour; the first time is kept. No body; the time is the api clock. Refused while an admin impersonates the worker.', responses: { 200: tourViewSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1 }) },

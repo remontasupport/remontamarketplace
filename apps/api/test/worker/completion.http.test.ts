@@ -37,7 +37,7 @@ describe('GET /v1/worker/completion', () => {
     const res = await get(workerToken('u_a'))
     expect(res.statusCode).toBe(200)
     const body = completionViewSchema.parse(res.json())
-    expect(body.percent).toBe(91)
+    expect(body.percent).toBe(90)
     expect(body.groups.map((g) => g.id)).toEqual(['my-profile', 'services', 'compliance'])
     expect(res.headers['cache-control']).toBe('private, max-age=60')
     expect(String(res.headers['etag'])).toMatch(/^"sha256-/)

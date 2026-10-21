@@ -214,11 +214,12 @@ never calls it; every write that can change a flag (U2-U4) does. U1 ships the ba
 comes from its items. Design: `aidlc-docs/construction/completion-api/` (record branch `aidlc/onboarding-tour`).
 
 - **My Profile**: the 18 pages by the sidebar's slugs (`MY_PROFILE_PAGES` in the contract, in its order). Required
-  (11): name, photo, bio of 50+ characters, date of birth (or a stored age), gender, a language (the additional-info
-  list, else the legacy column), an experience row, a job, an education entry, an availability slot, the vehicle
-  answered. Optional (7, ticked when filled, never holding anything back): address, cultural background, religion,
-  interests, support & activities, preferences, personality. **No suburb is required.**
-- **Percent** = round(100 × required pages done / 11).
+  (10): name, photo, bio of 50+ characters, date of birth (or a stored age), gender, an experience row, a job, an
+  education entry, an availability slot, the vehicle answered. Optional (8, ticked when filled, never holding
+  anything back): address, language (the additional-info list, else the legacy column; optional since 2026-10-21:
+  1,202 of 1,790 pre-S1 workers never answered it), cultural background, religion, interests, support & activities,
+  preferences, personality. **No suburb is required.**
+- **Percent** = round(100 × required pages done / 10).
 - **Services** = a service chosen, each chosen service's documents (the rule above, per service; a service with only
   optional documents needs one), and a Service Area.
 - **Compliance** = `compliance && trainings` (unchanged); its items are the requirement groups' mandatory steps and

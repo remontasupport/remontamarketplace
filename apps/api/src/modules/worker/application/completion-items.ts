@@ -39,7 +39,7 @@ type Rows = ProfileRows['profile']
 const filled = (list: readonly (string | null)[] | null | undefined) => (list ?? []).some((v) => nonEmpty(v))
 
 /**
- * E2: the 18 My Profile pages, by the sidebar's slugs (`apps/app` workerMenu.ts) and in its order. 11 required
+ * E2: the 18 My Profile pages, by the sidebar's slugs (`apps/app` workerMenu.ts) and in its order. 10 required (Language optional since 2026-10-21)
  * (CD3); the rest ticked when filled, never holding the percent back. No suburb is required (CD5).
  */
 const PAGE_DONE: Record<MyProfileSlug, (p: Rows) => boolean> = {

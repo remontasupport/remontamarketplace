@@ -11449,7 +11449,7 @@
     "/v1/worker/completion": {
       "get": {
         "operationId": "worker.getCompletion",
-        "summary": "How complete the worker is: every My Profile page, the three checklist groups (My Profile, Services, Compliance) with their next step, the percent over the 11 required pages, and each service’s documents. Privately cacheable for a minute with ETag/304.",
+        "summary": "How complete the worker is: every My Profile page, the three checklist groups (My Profile, Services, Compliance) with their next step, the percent over the 10 required pages, and each service’s documents. Privately cacheable for a minute with ETag/304.",
         "responses": {
           "200": {
             "description": "Success",
