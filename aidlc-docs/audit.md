@@ -4712,3 +4712,18 @@ reads people's emails); not worked around; the user named a staging worker inste
 **Staging checklist:** 13/13 (one re-read of the audit rows with the database's clock; details in
 `construction/tour-seen-api/code/U1-summary.md`). The worker reset to null. Open: the browser check of today's
 production app against staging (the user). The production promotion waits for the user.
+
+## 2026-10-21 -- main merged into feat/account-app; U2 branch; U2 code generation plan
+
+**User input (verbatim):** "yes"
+
+**Done:** `main` (`f00a3cb`) merged into `feat/account-app` in `../remonta-pr57`: clean, the 13 U1 files only; pushed
+`dda4f61`. Gates there: api-contract exit 0 (105 tests), api exit 0 (797 passed / 213 skipped), app exit 0 after a
+local `db:generate` (73 type / 289 lint known, 244 tests). **Found:** the first app run failed with 7 type findings in
+routes untouched by the merge (`homeStreetLine`, `passwordChangedAt`, ...): the worktree held the committed Prisma
+client (deliberately old, `fdbff45`), which `feat/account-app`'s code outgrew; postinstall and the Vercel build
+regenerate it. Regenerated locally, not committed. `feat/onboarding-tour` created from `dda4f61` and pushed.
+
+**Written:** `construction/plans/tour-app-code-generation-plan.md` (12 steps). It decides to test U2's rules as pure
+functions in Node (the app has no DOM test setup) instead of the two component tests the functional design listed;
+the components are checked on the preview. **Approval prompt (2026-10-21):** U2 code generation plan presented.

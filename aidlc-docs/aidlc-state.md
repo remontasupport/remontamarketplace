@@ -10,7 +10,9 @@
   (`feat/account-app` held, not released).
 - **Current Stage**: CONSTRUCTION -- U1 `tour-seen-api` merged (#88, `main` `f00a3cb`) and on staging
   (`remonta-api-staging-00054-f7t`); staging checklist 13/13. **Not promoted to production** (later, on the user's
-  word: imageTag `f00a3cb85ba22939f9d6cebcf4e36509d4cb28d9`). Next: U2's code generation plan. NFR design approved 2026-10-21. U1 functional design approved 2026-10-21. Requirements and the execution plan
+  word: imageTag `f00a3cb85ba22939f9d6cebcf4e36509d4cb28d9`). `main` merged into `feat/account-app` (`dda4f61`, gates
+  green); `feat/onboarding-tour` created. U2's code generation plan
+  (`construction/plans/tour-app-code-generation-plan.md`) **waiting for the user's approval**. NFR design approved 2026-10-21. U1 functional design approved 2026-10-21. Requirements and the execution plan
   approved 2026-10-21.
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory
@@ -22,8 +24,8 @@
 
   **Resume here (2026-10-21):**
   1. `git ls-remote origin main feat/account-app`; ask what was merged since.
-  2. U2: merge `main` (`f00a3cb`) into `feat/account-app` (app + api gates there), branch `feat/onboarding-tour`, the
-     U2 code generation plan. Open for the user: the browser check of today's production app against staging. OI-1 is settled: "seen" has its own read and
+  2. On approval: generate U2 (plan Steps 2-12) on `feat/onboarding-tour` in `../remonta-pr57` (that worktree is now
+     on this branch, not `feat/account-app`; the app gate needs a local `db:generate` there, never committed). Open for the user: the browser check of today's production app against staging. OI-1 is settled: "seen" has its own read and
      save (the profile read's schema is strict; changing it would break today's production app).
 
 ## Stage Progress
