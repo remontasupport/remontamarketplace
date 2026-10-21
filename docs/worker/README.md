@@ -146,9 +146,23 @@ and the citizenship PATCH (the app moves onto them in U4b). Design: `aidlc-docs/
 `GET /v1/worker/profile` gains `complianceDocuments[]` (`{id, requirementType, name, status, documentCategory, url,
 fileName, uploadedAt, expiresAt, isCitizen}`, every row that is not a service document, newest first).
 
+### The dashboard tour's "seen" time (onboarding-tour U1)
+
+When the worker first ended the dashboard tour or chose "Not now", kept apart from the profile read: the deployed app
+parses `GET /v1/worker/profile` strictly, so a new field there would break it. Design:
+`aidlc-docs/construction/tour-seen-api/functional-design/` (record branch `aidlc/onboarding-tour`).
+
+| Entry | Body | Rules |
+|---|---|---|
+| `GET /v1/worker/tour` | -- | `{seenAt}`: the stored time (ISO 8601) or `null` when not seen. **Never cached**: `Cache-Control: no-store`, no ETag (`workerRead({ noCache: true })`), so a reload after the save reads the new value. 404 for a worker without a profile row |
+| `PUT /v1/worker/tour/seen` | none (a body is 400) | stores the api's clock **only when the column is null** (`COALESCE` in one statement: two saves at once keep one time) and answers `{seenAt}` with the stored time; `updatedAt` is left alone. Audit `PROFILE_UPDATE` with section `putTourSeen`, as every section write. **403 while an admin impersonates the worker** (the tour is the worker's own first visit), with the reason in `fields.general`; nothing written. The write limits (60 / 120 per minute), `maxBodyKb 1` |
+
+To show a worker the tour again: `UPDATE worker_profiles SET "tourSeenAt" = NULL WHERE "userId" = '<id>';` (staging
+or by hand; there is no entry for it).
+
 ## 3. Caching
 
-Each 200 carries `Cache-Control: private, max-age=60`, `Vary: Authorization` and a strong `ETag` (a hash of the
+Each 200 (except `GET /v1/worker/tour`, never cached) carries `Cache-Control: private, max-age=60`, `Vary: Authorization` and a strong `ETag` (a hash of the
 body). The browser answers an identical request within a minute from its own cache; afterwards it revalidates
 with `If-None-Match` and gets a **304** with no body when nothing changed. The body is per user, so the api's
 response memo is not used (a 304 saves bandwidth and client work, not statements). Errors are never cached.
@@ -263,7 +277,7 @@ The 5xx-ratio alert counts 503s: a burst that sheds shows there first, which is 
 
 ## 8. Reading the tables
 
-`worker_profiles` (columns above, plus `setupProgress`, `profileCompleted`, `verificationStatus`),
+`worker_profiles` (columns above, plus `setupProgress`, `profileCompleted`, `verificationStatus`, `tourSeenAt`),
 `worker_services`, `verification_requirements` (`requirementType`, `status`, `documentCategory`, `documentUrl`),
 `worker_availability`, `worker_experience`, `worker_job_history`, `worker_education`, `worker_additional_info`,
 `worker_locations` (kind `HOME`) + `au_localities`, and the catalogue `Category` → `CategoryDocument` → `Document`

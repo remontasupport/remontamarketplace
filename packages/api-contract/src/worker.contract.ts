@@ -75,8 +75,12 @@ export const WORKER_PRIVATE_CACHE_SECONDS = 60
  */
 export const PROFILE_UPDATE = 'PROFILE_UPDATE'
 
-/** A role-restricted GET for the worker's own data: per-user and per-IP limits, privately cacheable (R8.1). */
-export const workerRead = (opts: { privateCacheSeconds?: number } = {}) =>
+/**
+ * A role-restricted GET for the worker's own data: per-user and per-IP limits, privately cacheable (R8.1).
+ * `noCache` leaves the private cache off, so the api answers `no-store` (onboarding-tour U1 BR-7: a value the
+ * worker changes and reloads at once).
+ */
+export const workerRead = (opts: { privateCacheSeconds?: number; noCache?: true } = {}) =>
   meta({
     access: { roles: ['WORKER'] },
     bot: 'none',
@@ -87,7 +91,7 @@ export const workerRead = (opts: { privateCacheSeconds?: number } = {}) =>
     maxBodyKb: 1,
     // Personal data: the browser's private cache and ETag/304 only, never a shared cache,
     // never the api's memo (the body is per user).
-    privateCacheSeconds: opts.privateCacheSeconds ?? WORKER_PRIVATE_CACHE_SECONDS,
+    ...(opts.noCache ? {} : { privateCacheSeconds: opts.privateCacheSeconds ?? WORKER_PRIVATE_CACHE_SECONDS }),
   })
 
 /**
@@ -299,6 +303,10 @@ export const profileSchema = z.strictObject({
 })
 export type Profile = z.output<typeof profileSchema>
 
+/** onboarding-tour U1 (E2): when the worker first ended the dashboard tour or chose "Not now"; null = not seen. */
+export const tourViewSchema = z.strictObject({ seenAt: isoDate.nullable() })
+export type TourView = z.output<typeof tourViewSchema>
+
 export const workerContract = defineContract('worker', {
   getProfile: {
     method: 'GET',
@@ -352,6 +360,10 @@ export const workerContract = defineContract('worker', {
   signContract: { method: 'POST', path: '/v1/worker/contract', summary: 'Sign the contract of agreement: the signed PDF (uploaded by ticket) kept privately and the engagement (ABN or TFN) marked signed, together. No tax file number is stored.', body: json(signContractSchema), responses: { 201: signedContractSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 2 }) },
   getDocumentLink: { method: 'GET', path: '/v1/worker/documents/:documentId/link', summary: "A five-minute link to view any of the worker's own documents (a legacy row answers its stored URL).", pathParams: serviceDocumentParamsSchema, responses: { 200: documentLinkSchema }, meta: workerRead({ privateCacheSeconds: 30 }) },
   putBankAccount: { method: 'PUT', path: '/v1/worker/bank-account', summary: 'Replace the bank account (all four fields); every read returns it masked.', body: json(bankAccountSchema), responses: { 200: maskedBankAccountSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
+
+  // ---- onboarding-tour U1: the tour's "seen" time, apart from the profile read (whose strict shape the deployed app parses).
+  getTour: { method: 'GET', path: '/v1/worker/tour', summary: 'When the worker first ended the dashboard tour (or chose "Not now"); null when not yet. Never cached.', responses: { 200: tourViewSchema }, meta: workerRead({ noCache: true }) },
+  putTourSeen: { method: 'PUT', path: '/v1/worker/tour/seen', summary: 'Record that the worker has seen the tour; the first time is kept. No body; the time is the api clock. Refused while an admin impersonates the worker.', responses: { 200: tourViewSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1 }) },
 })
 
 function json<S extends z.ZodType>(schema: S): { kind: 'json'; schema: S } {
