@@ -4637,3 +4637,18 @@ and `logical-components.md` (no new infrastructure). **U1 amended:** BR-10 (`put
 `session.user.impersonatedBy`), and the error table's save rows now say one background retry.
 
 **Approval prompt (2026-10-21):** NFR design presented; next Functional Design of U2 `tour-app`.
+
+## 2026-10-21 -- NFR design approved; U2 tour-app functional design plan
+
+**User input (verbatim):** "approved"
+
+**Status:** NFR design (both units) approved, with U1's BR-10.
+
+**Read on `feat/account-app` for the plan:** `DashboardLayout` (shared by every role) owns the drawer and checks
+`isImpersonating(session)`; the sidebar's headings render from `WORKER_MENU`; the header holds the phone number and
+Log Out; the checklist is `ul.completion-checklist`; `workerApi`'s `rateLimited` outcome carries `retryAfterSeconds`.
+
+**Written:** `construction/plans/tour-app-functional-design-plan.md`: the proposed design for OI-4 (`data-tour`
+anchors from the menu ids), OI-5 (the tour inside `DashboardLayout`), OI-6 (mounted for WORKER only, a lazy chunk),
+replay via `/dashboard/worker?tour=start`; 8 steps; Q1 the draft step texts (D10), Q2 the welcome card, Q3 the help
+button, Q4 the step card's position. Waiting for the answers.

@@ -8,8 +8,8 @@
   "Basically just a tour how to complete the profile". Record branch `aidlc/onboarding-tour` (from `aidlc/api-review`
   `d9289f3`). The previous cycle, api-review, is **parked**: `aidlc-docs/archive/api-review/PARKED.md`
   (`feat/account-app` held, not released).
-- **Current Stage**: CONSTRUCTION -- NFR Design (both units) written (`aidlc-docs/construction/shared/nfr-design/`);
-  **waiting for the user's approval** (next: Functional Design of U2 `tour-app`). U1 functional design approved 2026-10-21. Requirements and the execution plan
+- **Current Stage**: CONSTRUCTION -- U2 `tour-app` Functional Design: **waiting for the answers** (Q1-Q4, Q1 = the
+  step texts) in `aidlc-docs/construction/plans/tour-app-functional-design-plan.md`. NFR design approved 2026-10-21. U1 functional design approved 2026-10-21. Requirements and the execution plan
   approved 2026-10-21.
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory
@@ -21,8 +21,8 @@
 
   **Resume here (2026-10-21):**
   1. `git ls-remote origin main feat/account-app`; ask what was merged since.
-  2. On approval:
-     Functional Design U2 with the five step texts for the user's review. OI-1 is settled: "seen" has its own read and
+  2. Read Q1-Q4; write `construction/tour-app/functional-design/`; then Code Generation U1 (`feat/tour-seen-api` from
+     `main`). OI-1 is settled: "seen" has its own read and
      save (the profile read's schema is strict; changing it would break today's production app).
 
 ## Stage Progress
@@ -36,9 +36,9 @@
 - [ ] Units Generation -- SKIP (U1 `tour-seen-api`, U2 `tour-app` fixed in the plan)
 
 ### CONSTRUCTION PHASE
-- [ ] Functional Design -- EXECUTE (U1 approved 2026-10-21; U2 after NFR Design)
+- [ ] Functional Design -- EXECUTE (U1 approved 2026-10-21; U2 plan + questions out)
 - [ ] NFR Requirements -- SKIP (NFR-01..10 in the requirements)
-- [ ] NFR Design -- EXECUTE (written, awaiting approval; U1 amended with BR-10)
+- [x] NFR Design -- approved 2026-10-21 (U1 amended with BR-10)
 - [ ] Infrastructure Design -- SKIP
 - [ ] Code Generation -- EXECUTE (U1, U2)
 - [ ] Build and Test -- EXECUTE (U1, U2)
