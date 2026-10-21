@@ -10,6 +10,7 @@ import {
   profileSchema,
   REQUIREMENT_ITEM_STATUSES,
   toOpenApi,
+  tourViewSchema,
   VERIFICATION_STATUSES,
   workerContract,
   workerRead,
@@ -245,3 +246,58 @@ describe('profileSchema (E1)', () => {
 function emptyInfo() {
   return { languages: [], culturalBackground: [], religion: [], interests: [], workPreferences: [], lgbtqiaSupport: null, nonSmoker: null, petFriendly: null, personality: null, uniqueService: [], funFact: null }
 }
+
+describe('the tour entries (onboarding-tour U1)', () => {
+  const entries = workerContract.entries as Record<string, EntryDef>
+
+  it('getTour: a WORKER-only GET with the read limits and no private cache, so the api answers no-store (BR-6, BR-7)', () => {
+    const e = entries.getTour!
+    expect([e.method, e.path]).toEqual(['GET', '/v1/worker/tour'])
+    expect(e.meta.access).toEqual({ roles: ['WORKER'] })
+    expect(e.meta.rateLimit).toEqual([
+      { per: 'user', limit: 120, window: '1m' },
+      { per: 'ip', limit: 300, window: '1m' },
+    ])
+    expect(e.meta.privateCacheSeconds).toBeUndefined()
+    expect(e.responses[200]).toBe(tourViewSchema)
+  })
+
+  it('putTourSeen: a WORKER-only PUT with no body, the write limits, a 1 KB body limit and the profile audit action (BR-4..BR-6)', () => {
+    const e = entries.putTourSeen!
+    expect([e.method, e.path]).toEqual(['PUT', '/v1/worker/tour/seen'])
+    expect(e.meta.access).toEqual({ roles: ['WORKER'] })
+    expect(e.body).toBeUndefined()
+    expect(e.meta.maxBodyKb).toBe(1)
+    expect(e.meta.audit).toBe('PROFILE_UPDATE')
+    expect(e.meta.rateLimit).toEqual([
+      { per: 'user', limit: 60, window: '1m' },
+      { per: 'ip', limit: 120, window: '1m' },
+    ])
+  })
+
+  it('the profile read is unchanged by the tour (BR-8: the deployed app parses it strictly)', () => {
+    expect(Object.keys(profileSchema.shape)).not.toContain('seenAt')
+    expect(Object.keys(profileSchema.shape)).not.toContain('tourSeenAt')
+  })
+
+  it('workerRead({ noCache: true }) sets no private cache; the default stays 60 s', () => {
+    expect(workerRead({ noCache: true }).privateCacheSeconds).toBeUndefined()
+    expect(workerRead().privateCacheSeconds).toBe(60)
+  })
+
+  it('property (P8 U1-3): any stored instant or null, sent as the api sends it, parses and round-trips', () => {
+    fc.assert(
+      fc.property(fc.option(fc.date({ min: new Date('2000-01-01T00:00:00Z'), max: new Date('2100-01-01T00:00:00Z'), noInvalidDate: true }), { nil: null }), (d) => {
+        const body = JSON.parse(JSON.stringify({ seenAt: d === null ? null : d.toISOString() }))
+        const parsed = tourViewSchema.parse(body)
+        expect(parsed.seenAt === null ? null : new Date(parsed.seenAt).getTime()).toBe(d === null ? null : d.getTime())
+      }),
+    )
+  })
+
+  it('refuses anything but the one field', () => {
+    expect(tourViewSchema.safeParse({ seenAt: null, extra: 1 }).success).toBe(false)
+    expect(tourViewSchema.safeParse({}).success).toBe(false)
+    expect(tourViewSchema.safeParse({ seenAt: 'yesterday' }).success).toBe(false)
+  })
+})
