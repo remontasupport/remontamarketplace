@@ -43,7 +43,8 @@ export default function ProfileShell({ slug, children }: { slug?: string; childr
 
   return (
     <DashboardLayout profileData={profile ? { firstName: profile.names.firstName, photo: profile.photos.main, role: profile.displayRole } : undefined}>
-      <div className="profile-step max-w-3xl mx-auto w-full px-1 sm:px-0">
+      {/* The Services group's page (Service Area) sits near the top on a phone, not centred (user, 2026-10-21). */}
+      <div className={`profile-step ${slug === "service-area" ? "profile-step--top" : ""} max-w-3xl mx-auto w-full px-1 sm:px-0`}>
         {apply && (
           <div className="mb-3 rounded-xl border border-green-200 bg-green-50 px-4 py-2.5 text-sm font-poppins text-green-800">
             Applying for: <strong>{apply.applyJobTitle}</strong>. Update your profile, review it and press Apply Now when ready.
