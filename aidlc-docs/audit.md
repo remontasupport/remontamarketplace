@@ -5011,3 +5011,18 @@ the api PR merged (staging) before the preview's Service Area works; promoted be
   lint suppressions.
 - Open: the `feat/account-app` preview (Vercel building `5049ae0`) and the person-run checks; the production promotion
   of `9fdcf6d` before the app; PR #57 superseded (to close).
+
+## 2026-10-21 -- Released: the worker dashboard (#94)
+
+**User input (verbatim):** "Merged"
+
+**Verified:** the api promoted first (deploy-api dispatch of `9fdcf6d` at 06:16Z, `remonta-api-00014-wdv`, 100 %), then
+**#94** `feat/account-app` -> main (`cf43d23`, 06:22Z). Vercel production builds of `cf43d23` succeeded (remonta-app,
+remontamarketplace). Production checks (unauthenticated): api health 200; `/v1/worker/{completion,tour,profile}` 401;
+`app.remontaservices.com.au` /login, /dashboard/worker, /registration/worker 200; the marketing site 200; **the new
+code is live**: `/dashboard/worker/account/setup` and `/profile-building` redirect (307) to the new My Profile pages,
+the deleted `/api/worker/requirements` and `/api/upload/vehicle-photo` answer 404.
+**Rollback rows** re-recorded: `docs/rollback-rows-2026-10-21-release` `26d7beb` (app and marketing: the `9fdcf6d`
+production builds; api `00014-wdv`, previous `00013-rl7`); the user's PR.
+**Open:** the signed-in production checks (the user, with an internal worker: dashboard, My Profile, a save, the tour
+card, the ? hidden on a phone); PR #57 to close as superseded; C2 (completion screens) is now unblocked.
