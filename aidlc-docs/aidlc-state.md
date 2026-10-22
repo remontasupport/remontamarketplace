@@ -7,11 +7,10 @@
   a cleaning tools and yard and maintenance tools to the worker's dashboard if their services have cleaning and yard
   and maintenance". Record branch `aidlc/worker-tools` (from `aidlc/onboarding-tour`, closed the same day:
   `aidlc-docs/archive/onboarding-tour/`).
-- **Current Stage**: CONSTRUCTION -- **U1 and U2 live** (2026-10-22): #104 promoted (`c523f53`, run 39723885178,
-  04:44Z, migration applied); #105 merged (`main` `8ef704d`, 03:54Z, before the promotion: see audit). Open: the follow-up
-  PR `feat/tools-filter-type-of-support` (Tools per type of support, above Experience with, the rollback row);
-  production checks (user); then the **tool search** (approved design `construction/tools-api/functional-design/tool-search-addendum.md`):
-  api PR `feat/worker-tools-search-api`, then the page.
+- **Current Stage**: CONSTRUCTION -- U1 and U2 live (2026-10-22; `c523f53` promoted, `main` `8ef704d`). **Tool search built**
+  (design `construction/tools-api/functional-design/tool-search-addendum.md`): api `feat/worker-tools-search-api` (`85c245b`)
+  and app `feat/worker-tools-search-app` (`7607332`, includes `feat/tools-filter-type-of-support`). Next: the api PR ->
+  staging -> the app preview -> promote that sha -> the app PR; production checks; then Build and Test record and the close.
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory
   `inception/inventory/worker-tools-inventory.md` (on `main` `62e24f9`).
