@@ -5,6 +5,7 @@
 // key are the same string for the same filters. No React here; tested in node.
 import { AGE_RANGES, AU_STATES, AU_STATE_NAMES, CARE_DOMAINS, SORT_FIELDS, adminContract, canonicalQueryOf, workerSearchQuerySchema, type WorkerSearchQuery } from '@remonta/api-contract'
 import { EXPERIENCE_AREA_SEPARATOR, experienceAreasOf, splitExperienceAreaPair } from '@remonta/schemas/data/experienceAreas'
+import { SERVICE_TOOLS, TOOL_IDS, TOOL_SERVICES, type ToolService } from '@remonta/schemas/data/serviceTools'
 
 export type AgeRange = (typeof AGE_RANGES)[number]
 export type SortField = (typeof SORT_FIELDS)[number]
@@ -45,6 +46,8 @@ export interface AdminFilters {
    * written). Areas of a domain not in experienceWith are never sent (R3.11).
    */
   experienceAreas: Partial<Record<CareDomain, string[]>>
+  /** worker-tools (UR-8): tool ids from the shared lists; the worker must have all of them. */
+  tools: string[]
 }
 
 export const PAGE_SIZE = 6
@@ -75,7 +78,15 @@ export const DEFAULT_FILTERS: AdminFilters = {
   therapeuticSubcategories: [],
   experienceWith: [],
   experienceAreas: {},
+  tools: [],
 }
+
+/** The Tools filter's groups (UR-8): each service with a list, its name and its tools, in list order. */
+export const TOOL_GROUPS: ReadonlyArray<{ service: ToolService; label: string; tools: ReadonlyArray<{ id: string; label: string }> }> = TOOL_SERVICES.map((service) => ({
+  service,
+  label: service === 'cleaning-services' ? 'Cleaning Services' : 'Home and Yard Maintenance',
+  tools: SERVICE_TOOLS[service],
+}))
 
 export const domainOf = (label: string): CareDomain | undefined => EXPERIENCE_OPTIONS.find((o) => o.label === label)?.domain
 const labelOf = (domain: string): string | undefined => EXPERIENCE_OPTIONS.find((o) => o.domain === domain)?.label
@@ -113,6 +124,9 @@ export function toQuery(f: AdminFilters): WorkerSearchQuery {
   // R3.11: only the areas of a searched domain, and only the vocabulary's.
   const pairs = domains.flatMap((d) => (f.experienceAreas[d] ?? []).filter((a) => experienceAreasOf(d).includes(a)).map((a) => `${d}${EXPERIENCE_AREA_SEPARATOR}${a}`))
   if (pairs.length) q.experienceAreas = pairs
+  // worker-tools: only listed ids.
+  const tools = f.tools.filter((id) => (TOOL_IDS as readonly string[]).includes(id))
+  if (tools.length) q.tools = tools
   return q
 }
 
@@ -153,6 +167,7 @@ export function filtersFromURL(params: URLSearchParams): AdminFilters {
     therapeuticSubcategories: q.therapeuticSubcategories ?? [],
     experienceWith: (q.experienceWith ?? []).map(labelOf).filter((l): l is string => l !== undefined),
     experienceAreas: {},
+    tools: q.tools ?? [],
   }
   for (const pair of q.experienceAreas ?? []) {
     const split = splitExperienceAreaPair(pair)

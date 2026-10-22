@@ -9,8 +9,10 @@ import ServiceSelectionModal from '@/components/modals/ServiceSelectionModal'
 import QuoteSelectionModal from '@/components/modals/QuoteSelectionModal'
 import { EXPERIENCE_OPTIONS, HOBBIES_OPTIONS, UNIQUE_SERVICE_OPTIONS, WHY_ENJOY_OPTIONS } from '@/constants/profileAnswers'
 import NextImage from 'next/image'
-import { useState, useCallback, useEffect } from 'react'
+import { Fragment, useState, useCallback, useEffect } from 'react'
 import type { MaskedBankAccount } from '@/lib/bankAccount'
+import { adminApi } from '@/lib/api/admin'
+import WorkerToolsLine, { toolServiceNamed } from './WorkerToolsLine'
 import './contractor-profile.css'
 
 interface WorkerProfile {
@@ -67,6 +69,15 @@ export default function WorkerDetailPage() {
       const res = await fetch(`/api/admin/contractors/${workerId}`)
       if (!res.ok) throw new Error('Failed to fetch worker')
       return res.json()
+    },
+  })
+
+  // worker-tools (UR-9): the services with their tools, from apps/api; a failure leaves the tools lines out.
+  const { data: workerServices } = useQuery({
+    queryKey: ['worker-services', workerId],
+    queryFn: async () => {
+      const r = await adminApi.getWorkerServices(workerId)
+      return r.kind === 'ok' ? r.body.services : null
     },
   })
 
@@ -790,8 +801,13 @@ export default function WorkerDetailPage() {
                   )}
                 </div>
                 <div className="services-list">
-                  {servicesItems.map((service, index) => (
-                    <div key={index} className="service-item">
+                  {servicesItems.map((service, index) => {
+                    // worker-tools (UR-9): the tools under Cleaning and Home and Yard; not in the downloaded profile
+                    // (user, 2026-10-22).
+                    const withTools = isDownloadingPDF ? undefined : toolServiceNamed(workerServices ?? undefined, service)
+                    return (
+                    <Fragment key={index}>
+                    <div className="service-item">
                       <div className="service-bullet"></div>
                       <div className="service-text">
                         <span
@@ -826,7 +842,14 @@ export default function WorkerDetailPage() {
                         )}
                       </div>
                     </div>
-                  ))}
+                    {withTools && (
+                      <div style={{ paddingLeft: 'calc(9px + 0.875rem)', marginTop: '-0.25rem', marginBottom: '0.5rem', color: 'white' }}>
+                        <WorkerToolsLine service={withTools} />
+                      </div>
+                    )}
+                    </Fragment>
+                    )
+                  })}
                 </div>
               </div>
 

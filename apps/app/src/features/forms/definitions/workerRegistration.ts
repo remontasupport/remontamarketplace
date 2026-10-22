@@ -61,6 +61,8 @@ export const workerRegistrationForm = defineForm({
           subcategoriesName: "supportWorkerCategories",
           title: "What services can you offer?",
           hint: "You can select more than one, but make sure you have the relevant qualifications.",
+          // worker-tools (FR-10, UR-10): only a note; the tools themselves are on the dashboard.
+          notes: [{ whenAny: ["cleaning-services", "home-yard-maintenance"], text: "Some jobs require your own tools, so please be ready to bring them." }],
         },
       ],
     },

@@ -123,3 +123,23 @@ describe('adminApi', () => {
     expect(await api.searchWorkers({})).toEqual({ kind: 'unavailable' })
   })
 })
+
+describe('getWorkerServices (worker-tools UR-9)', () => {
+  const body = { services: [{ categoryId: 'cleaning-services', categoryName: 'Cleaning Services', subcategoryNames: [], toolIds: ['vacuum-cleaner'], otherTools: ['Hose'] }] }
+
+  it("GETs the worker's services by profile id with the bearer token", async () => {
+    const h = harness([{ status: 200, body }])
+    expect(await h.api.getWorkerServices('cmj85z8m60000vxr002l9hqqo')).toEqual({ kind: 'ok', body })
+    expect(h.seen[0]!.url).toBe('https://api.example/v1/admin/workers/cmj85z8m60000vxr002l9hqqo/services')
+    expect(new Headers(h.seen[0]!.init.headers).get('authorization')).toBe('Bearer tok1')
+  })
+
+  it('a 401 retries once with a fresh token; a 404 is a failure', async () => {
+    const h = harness([{ status: 401 }, { status: 200, body }])
+    expect((await h.api.getWorkerServices('w1')).kind).toBe('ok')
+    expect(h.invalidations()).toBe(1)
+    const missing = harness([{ status: 404, body: { error: { code: 'NOT_FOUND', message: 'x', requestId: 'r' } } }])
+    expect(await missing.api.getWorkerServices('w1')).toMatchObject({ kind: 'failed', status: 404 })
+  })
+})
+

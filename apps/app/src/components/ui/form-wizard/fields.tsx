@@ -4,7 +4,7 @@
 // Props in, callbacks out: no fetching, no validation rules, no form library.
 // The rules live in @remonta/form-engine; the wiring in features/forms.
 import { useState } from "react";
-import { AlertTriangle, Eye, EyeOff, Loader2, Search, Check } from "lucide-react";
+import { AlertTriangle, Eye, EyeOff, Info, Loader2, Search, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -221,6 +221,13 @@ export interface ServicesFieldProps {
   subcategories: string[];
   onChange: (services: string[], subcategories: string[]) => void;
   error?: string;
+  /** Notes shown under the list while any of their service ids is ticked (worker-tools UR-10). */
+  notes?: readonly { whenAny: readonly string[]; text: string }[];
+}
+
+/** The notes to show for the ticked services, in their declared order. */
+export function notesFor(notes: ServicesFieldProps["notes"], services: readonly string[]): string[] {
+  return (notes ?? []).filter((n) => n.whenAny.some((id) => services.includes(id))).map((n) => n.text);
 }
 
 /** Ticking or unticking a service; null = open the sub-category dialog instead. */
@@ -255,7 +262,7 @@ export function FieldLoading({ label }: { label: string }) {
   );
 }
 
-export function ServicesField({ title, hint, options, categories, services, subcategories, onChange, error }: ServicesFieldProps) {
+export function ServicesField({ title, hint, options, categories, services, subcategories, onChange, error, notes }: ServicesFieldProps) {
   const [dialogFor, setDialogFor] = useState<ServiceCategory | null>(null);
   const subsOf = (c: ServiceCategory) => subcategories.filter((id) => c.subcategories.some((s) => s.id === id));
 
@@ -302,6 +309,12 @@ export function ServicesField({ title, hint, options, categories, services, subc
           );
         })}
       </div>
+      {notesFor(notes, services).map((text) => (
+        <div key={text} role="note" className="mt-4 flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 p-3 text-sm font-poppins text-blue-900">
+          <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          <span>{text}</span>
+        </div>
+      ))}
       <FieldError message={error} />
       {dialogFor && (
         <CategorySubcategoriesDialog

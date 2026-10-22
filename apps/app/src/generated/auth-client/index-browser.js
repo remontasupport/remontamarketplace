@@ -334,6 +334,8 @@ exports.Prisma.WorkerServiceScalarFieldEnum = {
   subcategoryIds: 'subcategoryIds',
   subcategoryNames: 'subcategoryNames',
   metadata: 'metadata',
+  toolIds: 'toolIds',
+  otherTools: 'otherTools',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

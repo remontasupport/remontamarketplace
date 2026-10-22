@@ -10,6 +10,7 @@ import {
   adminContract,
   createClient,
   serializeCanonical,
+  type AdminWorkerServices,
   type SuspendedListQuery,
   type SuspendedListResponse,
   type UserListResponse,
@@ -32,6 +33,8 @@ export interface AdminApi {
   searchWorkers(query: WorkerSearchQuery, opts?: CallOptions): Promise<ApiOutcome<WorkerSearchResponse>>
   listUsers(query: UserSearchQuery, opts?: CallOptions): Promise<ApiOutcome<UserListResponse>>
   listSuspendedWorkers(query: SuspendedListQuery, opts?: CallOptions): Promise<ApiOutcome<SuspendedListResponse>>
+  /** worker-tools (UR-9): one worker's services and their tools, by the worker profile id. */
+  getWorkerServices(workerId: string, opts?: CallOptions): Promise<ApiOutcome<AdminWorkerServices>>
   /** The canonical query string of a search (R8.5): what the URL bar and the cache key carry. */
   canonicalSearch(query: WorkerSearchQuery): string
 }
@@ -42,13 +45,14 @@ export interface AdminApiDeps {
   fetch?: typeof globalThis.fetch
 }
 
-type EntryName = 'searchWorkers' | 'listUsers' | 'listSuspendedWorkers'
+type QueryEntryName = 'searchWorkers' | 'listUsers' | 'listSuspendedWorkers'
+type EntryName = QueryEntryName | 'getWorkerServices'
 
 export function createAdminApi(deps: AdminApiDeps): AdminApi {
   const doFetch = deps.fetch ?? ((input: RequestInfo | URL, init?: RequestInit) => globalThis.fetch(input, init))
   let warned = false
 
-  function canonical(name: EntryName, query: unknown): Record<string, string> | { fields: Record<string, string[]> } {
+  function canonical(name: QueryEntryName, query: unknown): Record<string, string> | { fields: Record<string, string[]> } {
     const schema = adminContract.entries[name].query
     const parsed = schema.safeParse(query ?? {})
     if (!parsed.success) {
@@ -62,7 +66,7 @@ export function createAdminApi(deps: AdminApiDeps): AdminApi {
     return Object.fromEntries(new URLSearchParams(serializeCanonical(parsed.data as Record<string, unknown>)))
   }
 
-  async function call<T>(name: EntryName, query: unknown, opts?: CallOptions): Promise<ApiOutcome<T>> {
+  async function call<T>(name: EntryName, query: unknown, opts?: CallOptions, params?: Record<string, string>): Promise<ApiOutcome<T>> {
     if (!deps.baseUrl) {
       if (!warned) {
         warned = true
@@ -70,8 +74,9 @@ export function createAdminApi(deps: AdminApiDeps): AdminApi {
       }
       return { kind: 'unavailable' }
     }
-    const q = canonical(name, query)
-    if ('fields' in q && typeof q.fields === 'object') return { kind: 'failed', status: 400, fields: q.fields as Record<string, string[]> }
+    // An entry with path parameters (getWorkerServices) has no query to make canonical.
+    const q = name === 'getWorkerServices' ? undefined : canonical(name, query)
+    if (q && 'fields' in q && typeof q.fields === 'object') return { kind: 'failed', status: 400, fields: q.fields as Record<string, string[]> }
     const reload = opts?.cache === 'reload'
     const client = createClient(adminContract, {
       baseUrl: deps.baseUrl,
@@ -87,7 +92,7 @@ export function createAdminApi(deps: AdminApiDeps): AdminApi {
       }
       let res: Awaited<ReturnType<(typeof client)[EntryName]>>
       try {
-        res = await client[name]({ query: q } as never, { signal: opts?.signal, headers: { authorization: `Bearer ${token}` } })
+        res = await client[name]((params ? { params } : { query: q }) as never, { signal: opts?.signal, headers: { authorization: `Bearer ${token}` } })
       } catch (err) {
         if (opts?.signal?.aborted) throw err
         return { kind: 'unavailable' }
@@ -106,6 +111,7 @@ export function createAdminApi(deps: AdminApiDeps): AdminApi {
     searchWorkers: (query, opts) => call('searchWorkers', query, opts),
     listUsers: (query, opts) => call('listUsers', query, opts),
     listSuspendedWorkers: (query, opts) => call('listSuspendedWorkers', query, opts),
+    getWorkerServices: (workerId, opts) => call('getWorkerServices', undefined, opts, { workerId }),
     canonicalSearch: (query) => {
       const q = canonical('searchWorkers', query)
       return 'fields' in q && typeof q.fields === 'object' ? '' : new URLSearchParams(q as Record<string, string>).toString()

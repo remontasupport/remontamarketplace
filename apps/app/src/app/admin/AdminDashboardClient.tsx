@@ -21,6 +21,7 @@ import {
   EXPERIENCE_OPTIONS,
   STATE_OPTIONS,
   THERAPEUTIC_CATEGORY_ID,
+  TOOL_GROUPS,
   WITHIN_OPTIONS_KM,
   canonicalOf,
   domainOf,
@@ -49,7 +50,7 @@ interface SuburbMatch {
 /** The panel's draft until "Apply Filters" (E7 pendingFilters). */
 type PendingFilters = Pick<
   AdminFilters,
-  'locality' | 'withinKm' | 'state' | 'typeOfSupport' | 'gender' | 'hasVehicle' | 'workerType' | 'languages' | 'age' | 'therapeuticSubcategories' | 'experienceWith' | 'experienceAreas'
+  'locality' | 'withinKm' | 'state' | 'typeOfSupport' | 'gender' | 'hasVehicle' | 'workerType' | 'languages' | 'age' | 'therapeuticSubcategories' | 'experienceWith' | 'experienceAreas' | 'tools'
 >
 
 const pendingOf = (f: AdminFilters): PendingFilters => ({
@@ -65,6 +66,7 @@ const pendingOf = (f: AdminFilters): PendingFilters => ({
   therapeuticSubcategories: f.therapeuticSubcategories,
   experienceWith: f.experienceWith,
   experienceAreas: f.experienceAreas,
+  tools: f.tools,
 })
 
 const suburbLabel = (s: SuburbMatch) => `${s.name} ${s.state.abbreviation} ${s.postcode}`
@@ -735,6 +737,44 @@ export default function AdminDashboard() {
                   </div>
                 )
               })}
+            </div>
+
+            {/* Tools (worker-tools UR-8): workers with all the chosen tools, each on its own service */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Tools
+              </label>
+              <p className="text-xs text-gray-500 mb-2">Workers with all the chosen tools</p>
+              {TOOL_GROUPS.map((group) => (
+                <div key={group.service} className="mt-2 rounded-lg border border-gray-200 bg-gray-50 p-3" data-testid={`tools-${group.service}`}>
+                  <span className="text-sm font-medium text-gray-700 mb-2 block">{group.label}</span>
+                  <div className="flex flex-wrap gap-2">
+                    {group.tools.map((tool) => {
+                      const isSelected = pendingFilters.tools.includes(tool.id)
+                      return (
+                        <button
+                          key={tool.id}
+                          type="button"
+                          aria-pressed={isSelected}
+                          onClick={() => {
+                            setPendingFilters(prev => ({
+                              ...prev,
+                              tools: prev.tools.includes(tool.id) ? prev.tools.filter(id => id !== tool.id) : [...prev.tools, tool.id],
+                            }))
+                          }}
+                          className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+                            isSelected
+                              ? 'border-indigo-600 bg-indigo-600 text-white'
+                              : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                          }`}
+                        >
+                          {tool.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* Therapeutic Subcategories (conditional) */}

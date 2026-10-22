@@ -27,7 +27,13 @@ export type FieldDef =
   | (FieldBase & { kind: "password"; strengthMeter?: boolean })
   | (FieldBase & { kind: "locality"; placeholder?: string })
   /** Services, and the sub-categories chosen for them (a second contract field). */
-  | (FieldBase & { kind: "services"; subcategoriesName: string; title?: string })
+  | (FieldBase & {
+      kind: "services";
+      subcategoriesName: string;
+      title?: string;
+      /** Words shown under the list while any of `whenAny` (service ids) is ticked; display only, never sent (worker-tools UR-10). */
+      notes?: readonly { whenAny: readonly string[]; text: string }[];
+    })
   /**
    * A photo uploaded straight to storage (U3): `ticketEntry` names the key the browser
    * may fill, `confirmEntry` checks what landed; the staged id is the value.
