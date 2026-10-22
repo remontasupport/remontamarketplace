@@ -5215,3 +5215,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-22):** "continue to Next Stage"
 
 **AI action (2026-10-22):** U1 Functional Design approved. NFR Design (shared U1 + U2): `construction/shared/nfr-design/nfr-design-patterns.md` (N1 backward compatibility -- additive entries, unchanged profile/search schemas asserted against `main`, expand-only migration, today's production app proven against staging; N2 validation and access; N3 limits; N4 logging/audit; N5 performance, EXPLAIN on staging, GIN deferred; N6 UI resilience; N7 PBT P1-P6 with fast-check; N8 delivery) and `logical-components.md` (no new infrastructure). No questions: each category settled by the existing pipeline or an earlier decision, stated. Approval requested.
+
+**User input (2026-10-22):** "Continue to next stage"
+
+**AI action (2026-10-22):** NFR Design approved. Code Generation Part 1 for U1: `construction/plans/tools-api-code-generation-plan.md` (7 steps: declaration, migration, contract, worker write/read, admin filter/read, docs, gates + PR). Found while planning: `appliedFiltersSchema` echoes filters as optional fields; `tools` echoed only when queried, so the old app never receives it; N1's compatibility test allows exactly that difference. Approval of the plan requested.
