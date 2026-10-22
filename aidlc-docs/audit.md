@@ -5251,3 +5251,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User answers (2026-10-22, in `tools-app-functional-design-plan.md`):** Q1 b (a "Your tools" screen of its own after the certificate, saved on Next) · Q2 "This should be the same with the Cultural and Languages fields" · Q3 a · Q4 a · Q5 a.
 
 **AI action (2026-10-22):** Q2 read as the shared `MultiSelectField` (toggle tags plus "Add your own", the Languages field), extended by optional `maxOwn` / `ownMaxLength` / `onAddOwn` for the 5 x 60 own-tool limits. U2 Functional Design written (`construction/tools-app/functional-design/`: business-rules UR-1..UR-12, domain-entities A1-A5, business-logic-model flows W, A1, A2, S and PU1-PU4, frontend-components). Approval requested.
+
+**User input (2026-10-22):** "continue to next stage"
+
+**AI action (2026-10-22):** U2 Functional Design approved. Code Generation Part 1 for U2: `construction/plans/tools-app-code-generation-plan.md` (8 steps: page logic, worker client, shared field, the tools screen, admin filter/read/line, the sign-up note via a `notes` property on the services field kind, Prisma clients + docs, gates + PR; preview checks listed). Approval of the plan requested.
