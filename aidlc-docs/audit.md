@@ -5195,3 +5195,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User answers (2026-10-22, in `requirement-clarification-questions.md`):** F1 a · F2 a · F3 a · F4 "Do not show it, it's on the dashboard only but add a note \"Some of the jobs required your personal tools, please be ready\"".
 
 **AI action (2026-10-22):** F4 supersedes Q8 b (no tools at sign-up; a note only). `inception/requirements/requirements.md` written: FR-1..FR-10, NFR-1..NFR-5, the proposed shape (`worker_services.toolIds` / `otherTools` + GIN index; `PUT /v1/worker/services/:categoryId/tools`; units U1 `tools-api`, U2 `tools-app`), out of scope. The note's wording proposed with grammar fixed ("Some jobs require your own tools, so please be ready to bring them."), to confirm. User Stories proposed as skipped (one actor per side, small feature). Approval requested.
+
+**User input (2026-10-22):** "Approve and continue"
+
+**AI action (2026-10-22):** requirements approved (FR-10's note in the proposed wording "Some jobs require your own tools, so please be ready to bring them.", not objected to); User Stories skipped. Workflow Planning: `inception/plans/execution-plan.md` -- Application Design SKIP, Units Generation SKIP (U1 `tools-api`, U2 `tools-app` fixed in the plan), Functional Design EXECUTE, NFR Requirements SKIP, NFR Design EXECUTE (one shared document), Infrastructure Design SKIP; risk low; U1 to production before U2. Approval requested.
