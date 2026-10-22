@@ -5279,3 +5279,9 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-22):** "can you place it above the experience with instead"
 
 **AI action (2026-10-22):** the Tools block moved directly under "Type of support", above "Experience with" (a move only; types 56 known); docs/admin updated; `feat/worker-tools-app` pushed.
+
+**User input (2026-10-22):** "perfect, now on the tools, can you add a search field where in the admin can search by word? how can we design this feature? I want the search to be accurate."
+
+**User answers (2026-10-22, AskUserQuestion):** searches "Workers' tools + own tools (Recommended)" · match "Anywhere in the text" · synonyms "Yes, a reviewed list (Recommended)" · words "All words, same tool (Recommended)".
+
+**AI action (2026-10-22):** design written: `construction/tools-api/functional-design/tool-search-addendum.md` (TS-1 one shared matcher in packages/schemas; TS-2 normalising incl. a plural rule; TS-3 match rules incl. synonyms reaching workers' own tools; TS-4 api `toolSearch` + one filter row; TS-5 the admin search box narrowing the buttons; TS-6 properties; TS-7 delivery: a new api PR, promote that newer sha instead of `c523f53`) and a 29-row synonym list for approval. No code written.
