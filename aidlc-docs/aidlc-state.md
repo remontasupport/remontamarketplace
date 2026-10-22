@@ -9,8 +9,8 @@
   `aidlc-docs/archive/onboarding-tour/`).
 - **Current Stage**: CONSTRUCTION -- U1 merged (#104, `main` `c523f53`) and on staging (migration applied 03:09Z);
   **not promoted** (full sha `c523f538e310ec32236ec8c5748948ba4b686479`, after the staging checks in the PR body).
-  U2 Functional Design approved; U2 code generation plan (`construction/plans/tools-app-code-generation-plan.md`)
-  awaiting approval. U2 merges only after U1's promotion (user, 2026-10-22: U2 started before it).
+  U2 code pushed (`feat/worker-tools-app` `ccae8ef`, gates green, `construction/tools-app/code/U2-summary.md`): the user
+  opens the PR; preview checks; **merge only after U1's promotion**. Then production checks and the cycle close. U2 merges only after U1's promotion (user, 2026-10-22: U2 started before it).
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory
   `inception/inventory/worker-tools-inventory.md` (on `main` `62e24f9`).
@@ -30,7 +30,7 @@
 - [ ] NFR Requirements -- SKIP
 - [x] NFR Design -- shared, approved 2026-10-22
 - [ ] Infrastructure Design -- SKIP
-- [ ] Code Generation -- U1 merged #104, on staging; U2 plan awaiting approval
+- [ ] Code Generation -- U1 merged #104, on staging; U2 pushed, held until U1's promotion
 - [ ] Build and Test
 
 ## Previous cycles (archived, read-only)

@@ -5259,3 +5259,11 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-22):** "wait, do not touch the Langauges field"
 
 **AI action (2026-10-22):** `MultiSelectField` (the Languages field) is not edited: the tools screen uses it unchanged and checks each reported value itself (`acceptChange`: a typed listed label becomes its tag, repeats dropped, a 6th own tool or one over 60 characters refused with a message as the field's `error`). U2 design (UR-3, A2, flows, PU2-PU3, components) and plan (Step 3 removed) updated. Visible difference stated: the "Add your own" box does not disable at 5; a message shows instead. Plan approval requested again.
+
+**User input (2026-10-22):** "approve"
+
+**AI action (2026-10-22):** U2 plan approved; Part 2 on `feat/worker-tools-app` (from `main` `c523f53`), 8 commits, head `ccae8ef`, pushed (29 files, +693 / -37). Gates: app types 56 known, lint 277 known, 303 tests; form-engine 76; web 70 known; build 3/3.
+
+**User answer (2026-10-22, AskUserQuestion on the admin page being the downloadable profile card):** "No need to include it to the download for now".
+
+**AI action (2026-10-22):** the tools line rendered under the two services but not while the JPEG is made. Finding recorded (U2-summary): Vercel regenerates the Prisma client from `packages/db` at build, so production's app since `c523f53` knows the two columns before production's database has them; checked every `apps/app` query on `worker_services` (explicit `select`, no create/update/delete, no relation include): none names them, production unaffected. Summary `construction/tools-app/code/U2-summary.md`; PR description handed over; U2 held until U1's promotion.
