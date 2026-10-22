@@ -5307,3 +5307,5 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-22):** "merged and deployed already"
 
 **AI action (2026-10-22):** verified by refs and runs: deploy-api run 39742444682 "Promote bf9b9666494df5300b3694e339d6138af2012e30 to prod" success 07:44:35Z; PR #107 (`feat/worker-tools-search-app`, incl. the follow-up `feat/tools-filter-type-of-support`) merged after it, `main` `8943f93` at 07:46:20Z; production api health 200; the Vercel production builds of `8943f93` were still pending (watched).
+
+**AI action (2026-10-22):** Vercel production builds of `8943f93` success (remonta-app, remontamarketplace) by 07:48Z; `app.remontaservices.com.au/login` and `www.remontaservices.com.au` 200. The signed-in production checks of the tool search are the user's. Open for the close: CLAUDE.md's api rollback row now = `bf9b966` (the follow-up's row named `c523f53`), Vercel rows; Build and Test record.
