@@ -17,7 +17,10 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { manageServicesHref } from "@/features/worker/manageServicesLink";
 import StepContainer from "@/components/account-setup/shared/StepContainer";
 import { useWorkerProfile as useApiProfile } from "@/features/worker/profile";
-import { formOf, saveRegistration } from "@/features/worker/services";
+import { formOf, messageOf, saveRegistration } from "@/features/worker/services";
+import { workerApi } from "@/features/worker/api";
+import { bodyOf, fieldValueOf, toolServiceOfTitle } from "@/features/worker/serviceTools";
+import ServiceToolsStep, { type ToolsState } from "@/components/services-setup/steps/ServiceToolsStep";
 import { generateServicesSetupSteps, SERVICES_SETUP_STEPS } from "@/config/servicesSetupSteps";
 import { serviceHasQualifications } from "@/config/serviceQualificationRequirements";
 import { getServiceDocumentRequirements } from "@/config/serviceDocumentRequirements";
@@ -132,13 +135,38 @@ function ServicesSetupContent() {
     if (viewParam === 'qualifications') {
       return { view: 'qualifications' as const, serviceTitle };
     }
+    // worker-tools (UR-1): the "Your tools" screen, for the services that have a tool list only.
+    if (viewParam === 'tools' && toolServiceOfTitle(serviceTitle)) {
+      return { view: 'tools' as const, serviceTitle };
+    }
 
     // Deterministic fallback when no view param (will be redirected by useEffect below)
     // Use qualifications as default to match most common case
     return { view: 'qualifications' as const, serviceTitle };
   }, [viewParam, currentStepData?.serviceTitle]);
 
- 
+  // worker-tools (UR-5, UR-6): the "Your tools" screen's value, read when the screen opens and saved by Next.
+  const toolService = toolServiceOfTitle(currentStepData?.serviceTitle);
+  const [tools, setTools] = useState<{ state: ToolsState; value: string[]; error?: string }>({ state: 'loading', value: [] });
+  const [toolsAttempt, setToolsAttempt] = useState(0);
+  useEffect(() => {
+    if (currentView.view !== 'tools' || !toolService) return;
+    const ctl = new AbortController();
+    setTools({ state: 'loading', value: [] });
+    workerApi
+      .getServiceTools({ signal: ctl.signal })
+      .then((r) => {
+        if (ctl.signal.aborted) return;
+        if (r.kind !== 'ok') return setTools({ state: 'failed', value: [] });
+        const entry = r.body.services.find((x) => x.categoryId === toolService);
+        setTools({ state: 'ready', value: entry ? fieldValueOf(entry) : [] });
+      })
+      .catch(() => {
+        if (!ctl.signal.aborted) setTools({ state: 'failed', value: [] });
+      });
+    return () => ctl.abort();
+  }, [currentView.view, toolService, toolsAttempt]);
+
 
   // Populate form data ONLY on initial load
   useEffect(() => {
@@ -306,6 +334,23 @@ function ServicesSetupContent() {
       }
     }
 
+    // --- THE TOOLS SCREEN (worker-tools) ---
+    // After the service's last screen comes "Your tools" (UR-1); its Next saves them before moving on (UR-5). When the
+    // read failed nothing was shown, so there is nothing to save (UR-6).
+    if (toolService && view !== 'tools') {
+      router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=tools`);
+      return;
+    }
+    if (view === 'tools' && toolService && tools.state === 'ready') {
+      setIsNavigating(true);
+      const saved = await workerApi.putServiceTools(toolService, bodyOf(toolService, tools.value));
+      setIsNavigating(false);
+      if (saved.kind !== 'ok') {
+        setTools((t) => ({ ...t, error: messageOf(saved, "We couldn't save your tools right now. Please try again in a moment.") }));
+        return;
+      }
+    }
+
     // --- SAVE AND NAVIGATE TO NEXT STEP ---
     if (!validateStep() || !session?.user?.id) return;
 
@@ -338,6 +383,12 @@ function ServicesSetupContent() {
 
   // Go to previous step
   const handlePrevious = async () => {
+    // worker-tools (UR-7): back from "Your tools" to the service's last screen.
+    if (currentView.view === 'tools') {
+      const hasDocuments = currentStepData?.serviceTitle ? getServiceDocumentRequirements(currentStepData.serviceTitle).length > 0 : false;
+      router.push(`/dashboard/worker/services/setup?step=${stepSlug}&view=${hasDocuments ? 'documents' : 'offerings'}`);
+      return;
+    }
     // If we're currently showing documents view
     if (currentView.view === 'documents') {
       // Check if worker has selected subcategories for this service
@@ -514,8 +565,8 @@ function ServicesSetupContent() {
 
   // Determine if we should show the Previous button
   const shouldShowPrevious = useMemo(() => {
-    // Always show on documents view
-    if (currentView.view === 'documents') {
+    // Always show on documents view, and on the tools screen (worker-tools)
+    if (currentView.view === 'documents' || currentView.view === 'tools') {
       return true;
     }
 
@@ -606,6 +657,11 @@ function ServicesSetupContent() {
     const documentRequirements = currentStepData?.serviceTitle ? getServiceDocumentRequirements(currentStepData.serviceTitle) : [];
     const currentServiceHasDocuments = documentRequirements.length > 0;
 
+    // worker-tools (UR-7): "Your tools" is the service's last screen, so every screen before it says Next.
+    if (toolService) {
+      return currentView.view === 'tools' && isLastService ? "Complete" : "Next";
+    }
+
     // If showing documents view of last service, show "Complete"
     if (currentView.view === 'documents' && isLastService) {
       return "Complete";
@@ -682,8 +738,19 @@ function ServicesSetupContent() {
             </Link>
           </p>
 
-          {/* Render current step */}
-          <CurrentStepComponent {...stepProps} />
+          {/* Render current step (worker-tools: the "Your tools" screen in place of the service's screens) */}
+          {currentView.view === 'tools' && toolService ? (
+            <ServiceToolsStep
+              service={toolService}
+              state={tools.state}
+              value={tools.value}
+              onChange={(value) => setTools((t) => ({ ...t, value, error: undefined }))}
+              onRetry={() => setToolsAttempt((n) => n + 1)}
+              error={tools.error}
+            />
+          ) : (
+            <CurrentStepComponent {...stepProps} />
+          )}
         </StepContainer>
       ) : (
         <LoadingOverlay isOpen={isFinalSaving} message="Completing your services setup..." />
