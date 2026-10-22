@@ -5169,3 +5169,13 @@ and the token goes to the account's own email); dismiss recommended; the other c
 **Verified:** #102 (H2) and #103 (H1) merged, `main` `62e24f9`, production build success. Production
 `POST /api/auth/setup-password` with an email and a password answers the generic message and sets nothing (the takeover
 path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` deleted (merged).
+
+## 2026-10-22 — Session resumed
+
+**User input (2026-10-22):** "start aidlc"
+
+**AI action (2026-10-22):** checked by refs: `origin/main` = `62e24f9` (unchanged since the 2026-10-21 close: nothing merged since); the record branch `aidlc/onboarding-tour` = `bece1e1`. The resume list (H3 decision, Zoho rotation, prod 403, C2 `completion-app`, `test/my-profile-columns`) presented for the user to choose the next item.
+
+**User input (2026-10-22):** "let us start a new ai dlc"
+
+**AI action (2026-10-22):** asked for the new cycle's goal and what to do with the open `onboarding-tour` cycle (C2 `completion-app` unbuilt; H3, Zoho rotation, the prod 403, `test/my-profile-columns` open) before any inventory.

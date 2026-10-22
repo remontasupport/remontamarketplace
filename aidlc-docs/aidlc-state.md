@@ -3,87 +3,25 @@
 ## Project Information
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
-- **Current Cycle**: onboarding-tour -- started 2026-10-21. Goal (user, verbatim in `audit.md`): a quick tour for a
-  worker's first sign-in that highlights the sidebar groups in turn (My Profile, Next, Services, Next, Compliance, ...):
-  "Basically just a tour how to complete the profile". Record branch `aidlc/onboarding-tour` (from `aidlc/api-review`
-  `d9289f3`). The previous cycle, api-review, is **parked**: `aidlc-docs/archive/api-review/PARKED.md`
-  (`feat/account-app` held, not released).
-- **Current Stage**: CONSTRUCTION -- U1 `tour-seen-api` merged (#88, `main` `f00a3cb`) and on staging
-  (`remonta-api-staging-00054-f7t`); staging checklist 13/13. **Not promoted to production** (later, on the user's
-  word: imageTag `f00a3cb85ba22939f9d6cebcf4e36509d4cb28d9`). `main` merged into `feat/account-app` (`dda4f61`, gates
-  green). **U2 generated and pushed** (`feat/onboarding-tour` `ffad332`, gates green, preview built). **Build and Test
-  written** (`construction/build-and-test/`): automated tests all pass. Preview checks 1-7 done by the user;
-  **`feat/onboarding-tour` merged into `feat/account-app` (`ffad332`)**. **U1 promoted to production 2026-10-21
-  02:59Z** (`remonta-api-00012-gts` = `f00a3cb`; checks pass; rollback row on `docs/rollback-rows-2026-10-21-tour`).
-  Open: `feat/account-app`'s preview checklist + tour checks 8-10, then its merge into `main` (the tour, the sidebar,
-  PR #57 and U5 go live together), production checks, then Operations / close the cycle.
-
-  **New area in this cycle (user, 2026-10-21): profile completion.** Audit written
-  (`inception/review/profile-completion-audit.md`, F1-F9, I1-I6); answered; requirements written
-  (`inception/requirements/completion-requirements.md`, approved 2026-10-21); execution plan
-  (`inception/plans/completion-execution-plan.md`, approved); C1 Functional Design approved; C1 NFR Design approved; C1 merged (#89, `main` `1eda05a`) and on staging
-  (`00055-j29`), checks 10/10; **not promoted** (safe any time: invisible under `legacy`; promote with the full sha
-  `1eda05ac2c6682b9fe34d2f09dcb06ca78962a06`, then the alert's metric + `apply-alerts.sh prod`). Decided 2026-10-21: **Language
-  optional** (10 required pages): merged (#91, `main` `0fbd3d4`), staging `00056-rgt` checks 10/10. **Promoted 2026-10-21**:
-  `remonta-api-00013-rl7` = `0fbd3d4`; the first full pass corrected 8 stale workers. The alert applied (metric +
-  policy, 2026-10-21). **C1 complete.** Open: the rollback-row PR `docs/rollback-rows-2026-10-21-completion`;
-  then `feat/account-app`'s release, then C2 (Functional Design first). **Before the release (user, 2026-10-21):
-  small UI changes on `feat/account-app`**, one at a time: 1) the tour's ? hidden on phones (`c9da208`);
-  2) no Preview profile on the steps, no role under the first name. The dev branch has the tour migration now.
-  3) "How far you travel" removed: **api PR `feat/service-area-radius-optional` (`b7b5b4b`) first** -> merge -> staging
-  -> promote, then the app (`feat/account-app` `b6cb225`, which has main + the api change merged in). Until the api PR
-  is on staging, the preview's Service Area save answers 400. -> #93 merged (`9fdcf6d`), staging checked.
-  **RELEASED 2026-10-21: #94 (`cf43d23`) after the api promotion (`00014-wdv` = `9fdcf6d`); the new code verified live
-  (audit). Open: the signed-in production checks (user); close #57; the rollback-row PR
-  `docs/rollback-rows-2026-10-21-release`; next C2.** **Live 2026-10-21 (`main` `5089344`):** #95 the clean-up
-  (98 unused files), #96 the rollback rows, #97 the centred step card on phones. Open: close #57; rotate the old Zoho
-  secret (in git history); C2. **Security (2026-10-21):** H2 (`fix/h2-setup-password-takeover-v2`) and H1
-  (`fix/h1-bank-details-v2`) pushed for the user's PRs, H2 first; H3 held (1 of 1,765 workers published: a product
-  decision). 105 + 6 remote branches deleted (lists with commits in `inception/review/deleted-branches-2026-10-21.md`); #57
-  closed; the `remonta-pr57` worktree removed; `chore/refresh-prisma-clients` (the user's PR). **Open:** the prod 403 on
-  the profile read for one non-WORKER account (investigation stopped by the user). Earlier: **Release check done (2026-10-21, audit):** `feat/account-app` `5049ae0` = main + 113, all gates green, deletions
-  safe. **The release, on the user's word:** promote `9fdcf6df31b24226a4a24d7ff44b563139abb0e9` -> production api
-  checks -> the preview checks on `5049ae0` -> PR `feat/account-app` -> main ("Merge pull request"), close #57 ->
-  production checks -> re-record the Vercel rollback rows. 
-  C2 waits for the `feat/account-app` release (CD8).
+- **Current Cycle**: worker-tools -- started 2026-10-22. Goal (user, verbatim in `audit.md`): "I want to add a lists of
+  a cleaning tools and yard and maintenance tools to the worker's dashboard if their services have cleaning and yard
+  and maintenance". Record branch `aidlc/worker-tools` (from `aidlc/onboarding-tour`, closed the same day:
+  `aidlc-docs/archive/onboarding-tour/`).
+- **Current Stage**: INCEPTION -- Requirements Analysis: the questions file
+  `inception/requirements/requirement-verification-questions.md` is with the user.
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory
-  `aidlc-docs/inception/inventory/onboarding-tour-inventory.md` (on `feat/account-app` `4d62630`).
-
-  **The constraint found:** the tour points at the new worker menu (`WORKER_MENU`), which exists only on
-  `feat/account-app`; `main` (production) still has the old sidebar. The tour's code branches from `feat/account-app`
-  and ships with or after it.
-
-  **Resume here (session closed 2026-10-21 evening):**
-  1. `git ls-remote origin main`; ask what was merged since.
-  2. H2 (#102) and H1 (#103) **merged and live 2026-10-21** (`main` `62e24f9`; the takeover path verified closed on
-     production). Small leftover: tighten the app lint baseline (H1 removed one finding).
-  3. **H3** (`fix/h3-published-workers-only-v2`, local only): a product decision -- 1 of 1,765 workers is published.
-  4. Rotate the Zoho OAuth secret once committed in the deleted `apps/app/docs/Zoho_Jobs_To_DB.md` (in git history).
-  5. The production 403 on `GET /v1/worker/profile` for one non-WORKER account (`cmj85z8m60000vxr002l9hqqo`, 07:15Z and
-     08:22Z): the role, an impersonation?; then fix access or the message.
-  6. **C2 `completion-app`** (the cycle's last unit): Functional Design first; then the switch to `groups` + the backfill.
-  7. `test/my-profile-columns` (24 database tests) to bring up to date and merge.
-  Live today: #94 (the worker dashboard), C1 (api `00014-wdv` = `9fdcf6d`), #95-#101. Branch lists with commits:
-  `inception/review/deleted-branches-2026-10-21.md`.
+  `inception/inventory/worker-tools-inventory.md` (on `main` `62e24f9`).
 
 ## Stage Progress
 ### INCEPTION PHASE
 - [x] Workspace Detection
 - [x] Reverse Engineering (targeted inventory)
-- [x] Requirements Analysis (approved 2026-10-21)
-- [x] User Stories -- SKIP
-- [x] Workflow Planning (approved 2026-10-21)
-- [ ] Application Design -- SKIP
-- [ ] Units Generation -- SKIP (U1 `tour-seen-api`, U2 `tour-app` fixed in the plan)
-
-### CONSTRUCTION PHASE
-- [x] Functional Design -- U1 and U2 approved 2026-10-21
-- [ ] NFR Requirements -- SKIP (NFR-01..10 in the requirements)
-- [x] NFR Design -- approved 2026-10-21 (U1 amended with BR-10)
-- [ ] Infrastructure Design -- SKIP
-- [ ] Code Generation -- EXECUTE (U1 done, merged #88, staging 13/13; U2 pushed `ffad332`, preview checks next)
-- [ ] Build and Test -- written 2026-10-21; the person-run checks open
+- [ ] Requirements Analysis -- questions with the user
+- [ ] User Stories
+- [ ] Workflow Planning
+- [ ] Application Design
+- [ ] Units Generation
 
 ## Previous cycles (archived, read-only)
 
@@ -97,6 +35,7 @@
 | Admin worker search on `apps/api` (U1 `api-identity`, U2 `admin-search`, + experience sub-areas) | `aidlc-docs/archive/admin-search-api/` | PRs #41-#47 merged 2026-10-08/09; api image `024596f` on prod (dispatch 2026-10-09 02:41Z); the app on `main` `48a8a7e`; verified live by the user |
 | Worker profile on `apps/api` (U1 `worker-area`, U2 `edit-profile` in part) | `aidlc-docs/archive/worker-profile-api/` | **Parked 2026-10-14** with work open (`PARKED.md`); U1 live 2026-10-12, U2 PR 2 live; PR #57 held |
 | API review: the worker dashboard on `apps/api` (U3-U5, the State filter) | `aidlc-docs/archive/api-review/` | **Parked 2026-10-21** (`PARKED.md`); api #61-#85 live (prod `b8fe2eb`, 2026-10-19); the State filter live (#86); `feat/account-app` held |
+| Onboarding tour + profile completion (U1 `tour-seen-api`, U2 `tour-app`, C1 `completion-api`; H1/H2) | `aidlc-docs/archive/onboarding-tour/` | Closed 2026-10-22; #88-#103 live (api prod `00014-wdv` = `9fdcf6d`, app `main` `62e24f9`); C2 not built (follow-up 27) |
 
 `aidlc-docs/audit.md` is the single append-only audit trail across cycles; never rewrite it.
 
@@ -199,6 +138,12 @@
 26. **No test covers the `apps/app` writes** of Services, Compliance and Account, and CI (app) has no database: see the
     open question in Current Stage.
 
+27. **C2 `completion-app`** (onboarding-tour's last unit): Functional Design first; then `COMPLETION_MODEL` to `groups` + the backfill.
+28. **H3 published-only search** (local `fix/h3-published-workers-only-v2`, 1 ahead / 7 behind `main`): a product decision, 1 of 1,765 workers published.
+29. **Rotate the Zoho OAuth secret** committed in the deleted `apps/app/docs/Zoho_Jobs_To_DB.md` (in git history).
+30. **Production 403 on `GET /v1/worker/profile`** for one non-WORKER account (`cmj85z8m60000vxr002l9hqqo`, 2026-10-21 07:15Z, 08:22Z): role or impersonation; fix access or the message.
+31. **`test/my-profile-columns`** (24 database tests): bring up to date and merge. Also tighten the app lint baseline (H1 removed one finding).
+
 ## Workspace State
 - **Existing Code**: Yes
 - **Programming Languages**: TypeScript
@@ -215,7 +160,7 @@
 - **Documentation**: aidlc-docs/ only
 - **Structure patterns**: CLAUDE.md "Dynamic by default" (contract entries + handlers; form definitions)
 
-## Extension Configuration (onboarding-tour)
+## Extension Configuration (onboarding-tour's values; re-asked for worker-tools)
 | Extension | Enabled | Decided At |
 |---|---|---|
 | Security Baseline | Yes, blocking | onboarding-tour, Requirements Analysis 2026-10-21 (Security A) |
