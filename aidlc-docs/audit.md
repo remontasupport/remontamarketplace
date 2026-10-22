@@ -5235,3 +5235,5 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-22):** "merged, but the columns are still not in neon"
 
 **AI action (2026-10-22):** by refs `main` = `c523f53` (merge of PR #104, head `b52f532`) at 02:58Z; deploy-api run 39714324255 was at its quality gates at 03:00Z, before the staging migration step; watching the run.
+
+**AI action (2026-10-22):** deploy-api run 39714324255 completed success: quality, build and push `api:c523f538e310ec32236ec8c5748948ba4b686479`, "Apply pending migrations to the staging database" success (03:09Z), staging deployed; promote skipped. Staging `/v1/health` 200; `GET /v1/worker/services/tools` without a token 401 (the route exists). Production untouched.
