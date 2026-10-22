@@ -1,7 +1,7 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { formSchemaFor, loadDraft, neverSavedKeys, saveDraft, toRequestBody } from "@remonta/form-engine";
-import { localityInputText, saveSubcategories, toggleService, type ServiceCategory } from "@/components/ui/form-wizard/fields";
+import { localityInputText, notesFor, saveSubcategories, toggleService, type ServiceCategory } from "@/components/ui/form-wizard/fields";
 import { workerRegistrationForm } from "./definitions/workerRegistration";
 import { previewKeyOf } from "./photoPreview";
 import { wizardResolver } from "./resolver";
@@ -65,6 +65,17 @@ describe("the worker sign-up definition", () => {
     const body = toRequestBody(workerRegistrationForm, { ...filled, photoUploadId: "3f2b8c1e-7d4a-4f5b-9c2e-1a2b3c4d5e6f" }, new URLSearchParams("id=123"));
     expect(body).toMatchObject({ localityId: 5410, consentWordingVersion: "worker-profile-share-v1", zohoLeadId: "123", consentProfileShare: true });
     expect(body).not.toHaveProperty("location");
+  });
+
+  it("worker-tools (UR-10): the services field's tools note shows while Cleaning or Home and Yard is ticked, and is never sent", () => {
+    const field = workerRegistrationForm.steps[2]!.fields[0] as { kind: string; notes?: { whenAny: string[]; text: string }[] };
+    const note = "Some jobs require your own tools, so please be ready to bring them.";
+    expect(notesFor(field.notes, ["support-worker"])).toEqual([]);
+    expect(notesFor(field.notes, ["cleaning-services"])).toEqual([note]);
+    expect(notesFor(field.notes, ["home-yard-maintenance", "cleaning-services"])).toEqual([note]);
+    expect(notesFor(undefined, ["cleaning-services"])).toEqual([]);
+    const body = toRequestBody(workerRegistrationForm, { ...filled, services: ["cleaning-services"], supportWorkerCategories: [], photoUploadId: "3f2b8c1e-7d4a-4f5b-9c2e-1a2b3c4d5e6f" }, new URLSearchParams());
+    expect(JSON.stringify(body)).not.toContain("tools");
   });
 });
 
