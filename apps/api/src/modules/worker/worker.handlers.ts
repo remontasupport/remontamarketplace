@@ -19,6 +19,7 @@ import { GROUPS_WITH_COMPLETION, writeAdditionalInfo, writeBankAccount } from '.
 import { deleteEducationEntry, deleteExperienceArea, deleteJobHistoryEntry, writeAvailability, writeEducation, writeExperience, writeJobHistory } from './application/sections/lists'
 import { ApiError } from '../../platform/errors'
 import { ownServiceDocument, writeServiceRegistration, writeServices } from './application/sections/services'
+import { readServiceTools, writeServiceTools } from './application/sections/service-tools'
 import { complianceAlreadyRecorded, complianceTargetOf, ownComplianceBlobUrl, recordComplianceDocument, removeComplianceDocument, writeCitizenship } from './application/compliance-documents'
 import { alreadyRecorded, confirmTargetOf, createDocumentTicket, deleteDocumentFiles, DOCUMENT_UPLOAD_INCOMPLETE, linkFor, recordDocument, removeDocument, stageDocument, type DocumentFile } from './application/service-documents'
 import { writeAbn, writeSignedEngagement, writeBio, writeDateOfBirth, writeGender, writeName, writeVehicle } from './application/sections/profile'
@@ -119,6 +120,17 @@ export function workerHandlers(deps: WorkerModuleDeps) {
     putServiceRegistration: async (req, ctx) => ({
       status: 200,
       body: await replaceSection(s, ctx, { section: `putServiceRegistration.${req.params.categoryId}`, completion: true }, (tx, p) => writeServiceRegistration(tx, p.id, req.params.categoryId, req.body)),
+    }),
+    // worker-tools U1 (flows 1-2): not part of completion (BR-15); audited per service (BR-16).
+    getServiceTools: async (_req, ctx) => {
+      const started = Date.now()
+      const body = await readServiceTools(deps.db, ctx.principal!, ctx.log)
+      ctx.log.info({ entry: 'worker.getServiceTools', durationMs: Date.now() - started, userId: ctx.principal!.userId, services: body.services.length }, 'worker service tools read')
+      return { status: 200, body }
+    },
+    putServiceTools: async (req, ctx) => ({
+      status: 200,
+      body: await replaceSection(s, ctx, { section: `putServiceTools.${req.params.categoryId}`, completion: false }, (tx, p) => writeServiceTools(tx, p.id, req.params.categoryId, req.body)),
     }),
     // U3b service documents (u3b-service-documents-design.md).
     createServiceDocumentTicket: async (req, ctx) => {
