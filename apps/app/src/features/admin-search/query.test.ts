@@ -4,8 +4,8 @@
 import { describe, expect, it } from 'vitest'
 import * as fc from 'fast-check'
 import { AGE_RANGES, workerSearchQuerySchema } from '@remonta/api-contract'
-import { TOOL_IDS } from '@remonta/schemas/data/serviceTools'
-import { canonicalOf, DEFAULT_FILTERS, TOOL_GROUPS, EXPERIENCE_OPTIONS, experienceAreasOfLabel, filtersFromURL, toQuery, urlFromFilters, type AdminFilters } from './query'
+import { SERVICE_TOOLS, TOOL_IDS, TOOL_SERVICES, toolSearchOf } from '@remonta/schemas/data/serviceTools'
+import { canonicalOf, DEFAULT_FILTERS, TOOL_GROUPS, toolGroupFor, toolSearchView, EXPERIENCE_OPTIONS, experienceAreasOfLabel, filtersFromURL, toQuery, urlFromFilters, type AdminFilters } from './query'
 
 describe('toQuery (R11.1)', () => {
   it('maps display values to canonical ones and omits all/none', () => {
@@ -98,7 +98,7 @@ describe('the URL state (R11.2)', () => {
       withinKm: fc.option(fc.constantFrom(5, 10, 20, 50), { nil: undefined }),
       unplaced: fc.boolean(),
       state: fc.constantFrom('all' as const, 'NSW' as const, 'VIC' as const, 'WA' as const),
-      typeOfSupport: fc.option(fc.constantFrom('support-worker', 'therapeutic-supports', 'nursing-services'), { nil: undefined }),
+      typeOfSupport: fc.option(fc.constantFrom('support-worker', 'therapeutic-supports', 'nursing-services', 'cleaning-services', 'home-yard-maintenance'), { nil: undefined }),
       gender: fc.constantFrom('all' as const, 'male' as const, 'female' as const),
       hasVehicle: fc.constantFrom('all' as const, 'Yes' as const, 'No' as const),
       workerType: fc.constantFrom('all' as const, 'Employee' as const, 'Contractor' as const),
@@ -114,6 +114,7 @@ describe('the URL state (R11.2)', () => {
         { requiredKeys: [] },
       ),
       tools: fc.uniqueArray(fc.constantFrom(...TOOL_IDS), { maxLength: 4 }),
+      toolSearch: fc.constantFrom('', 'gurney', 'pressure washer', 'mowers', '&', 'Saw'),
     })
     .map((f) => ({ ...f, pageSize: 6 }))
 
@@ -136,21 +137,69 @@ describe('the URL state (R11.2)', () => {
   })
 })
 
-describe('the Tools filter (worker-tools UR-8, PU4)', () => {
-  it('two groups, the shared lists in order; toQuery sends listed ids only; none means no filter', () => {
+describe('the Tools filter (worker-tools UR-8, PU4; shown for its type of support only, user 2026-10-22)', () => {
+  it('two groups, the shared lists in order; a group only for its own type of support', () => {
     expect(TOOL_GROUPS.map((g) => [g.label, g.tools.length])).toEqual([['Cleaning Services', 14], ['Home and Yard Maintenance', 15]])
-    expect(toQuery({ ...DEFAULT_FILTERS, tools: ['ladder', 'hammer', 'vacuum-cleaner'] }).tools).toEqual(['ladder', 'vacuum-cleaner'])
+    expect(toolGroupFor('cleaning-services')?.label).toBe('Cleaning Services')
+    expect(toolGroupFor('home-yard-maintenance')?.label).toBe('Home and Yard Maintenance')
+    expect(toolGroupFor('support-worker')).toBeUndefined()
+    expect(toolGroupFor(undefined)).toBeUndefined()
+  })
+
+  it("toQuery sends only the type of support's own listed tools; none without one of the two services", () => {
+    expect(toQuery({ ...DEFAULT_FILTERS, typeOfSupport: 'home-yard-maintenance', tools: ['ladder', 'hammer', 'vacuum-cleaner'] }).tools).toEqual(['ladder'])
+    expect(toQuery({ ...DEFAULT_FILTERS, typeOfSupport: 'cleaning-services', tools: ['ladder', 'vacuum-cleaner'] }).tools).toEqual(['vacuum-cleaner'])
+    expect(toQuery({ ...DEFAULT_FILTERS, tools: ['ladder'] })).not.toHaveProperty('tools')
+    expect(toQuery({ ...DEFAULT_FILTERS, typeOfSupport: 'support-worker', tools: ['ladder'] })).not.toHaveProperty('tools')
     expect(toQuery(DEFAULT_FILTERS)).not.toHaveProperty('tools')
   })
 
-  it('PU4: any chosen set reaches the contract and comes back from the URL as the same set', () => {
+  it('a URL with tools but another type of support restores no tools', () => {
+    expect(filtersFromURL(new URLSearchParams('tools=ladder&typeOfSupport=support-worker')).tools).toEqual([])
+    expect(filtersFromURL(new URLSearchParams('tools=ladder,vacuum-cleaner&typeOfSupport=home-yard-maintenance')).tools).toEqual(['ladder'])
+  })
+
+  it("PU4: any set of the service's tools reaches the contract and comes back from the URL as the same set", () => {
     fc.assert(
-      fc.property(fc.uniqueArray(fc.constantFrom(...TOOL_IDS), { minLength: 1, maxLength: 8 }), (tools) => {
-        const f = { ...DEFAULT_FILTERS, tools }
-        const parsed = workerSearchQuerySchema.parse(Object.fromEntries(new URLSearchParams(canonicalOf(f))))
-        expect([...(parsed.tools ?? [])].sort()).toEqual([...tools].sort())
-        expect([...filtersFromURL(new URLSearchParams(urlFromFilters(f))).tools].sort()).toEqual([...tools].sort())
+      fc.property(
+        fc.constantFrom(...TOOL_SERVICES).chain((service) => fc.tuple(fc.constant(service), fc.uniqueArray(fc.constantFrom(...SERVICE_TOOLS[service].map((t) => t.id)), { minLength: 1, maxLength: 8 }))),
+        ([service, tools]) => {
+          const f = { ...DEFAULT_FILTERS, typeOfSupport: service, tools: tools as string[] }
+          const parsed = workerSearchQuerySchema.parse(Object.fromEntries(new URLSearchParams(canonicalOf(f))))
+          expect([...(parsed.tools ?? [])].sort()).toEqual([...tools].sort())
+          expect([...filtersFromURL(new URLSearchParams(urlFromFilters(f))).tools].sort()).toEqual([...tools].sort())
+        },
+      ),
+    )
+  })
+})
+
+describe('the tool search box (tool search TS-5)', () => {
+  it('sent only with a type of support that has a list and a kept word; restored from the URL the same way', () => {
+    expect(toQuery({ ...DEFAULT_FILTERS, typeOfSupport: 'home-yard-maintenance', toolSearch: '  gurney ' }).toolSearch).toBe('gurney')
+    expect(toQuery({ ...DEFAULT_FILTERS, typeOfSupport: 'support-worker', toolSearch: 'gurney' })).not.toHaveProperty('toolSearch')
+    expect(toQuery({ ...DEFAULT_FILTERS, toolSearch: 'gurney' })).not.toHaveProperty('toolSearch')
+    expect(toQuery({ ...DEFAULT_FILTERS, typeOfSupport: 'cleaning-services', toolSearch: '& a' })).not.toHaveProperty('toolSearch')
+    expect(filtersFromURL(new URLSearchParams('toolSearch=gurney&typeOfSupport=home-yard-maintenance')).toolSearch).toBe('gurney')
+    expect(filtersFromURL(new URLSearchParams('toolSearch=gurney&typeOfSupport=support-worker')).toolSearch).toBe('')
+  })
+
+  it("narrows the buttons to the api's own matches, keeps the ticked ones, and names the other names", () => {
+    const v = toolSearchView('home-yard-maintenance', 'gurney', ['ladder'])
+    expect(v.tools.map((t) => t.id)).toEqual(['pressure-washer', 'ladder'])
+    expect(v.otherNames).toContain('water blaster')
+    expect(toolSearchView('home-yard-maintenance', '', []).tools).toHaveLength(15)
+    expect(toolSearchView('support-worker', 'gurney', []).tools).toEqual([])
+  })
+
+  it("TS-6: the narrowed buttons are exactly the shared matcher's listed tools (plus the ticked ones)", () => {
+    fc.assert(
+      fc.property(fc.constantFrom(...TOOL_SERVICES), fc.string({ maxLength: 20 }), (service, text) => {
+        const m = toolSearchOf(text, [service])
+        const shown = toolSearchView(service, text, []).tools.map((t) => t.id)
+        expect(shown).toEqual(m ? m.listedIds : SERVICE_TOOLS[service].map((t) => t.id))
       }),
     )
   })
 })
+

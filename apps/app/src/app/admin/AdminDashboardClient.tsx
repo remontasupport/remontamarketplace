@@ -21,7 +21,8 @@ import {
   EXPERIENCE_OPTIONS,
   STATE_OPTIONS,
   THERAPEUTIC_CATEGORY_ID,
-  TOOL_GROUPS,
+  toolGroupFor,
+  toolSearchView,
   WITHIN_OPTIONS_KM,
   canonicalOf,
   domainOf,
@@ -50,7 +51,7 @@ interface SuburbMatch {
 /** The panel's draft until "Apply Filters" (E7 pendingFilters). */
 type PendingFilters = Pick<
   AdminFilters,
-  'locality' | 'withinKm' | 'state' | 'typeOfSupport' | 'gender' | 'hasVehicle' | 'workerType' | 'languages' | 'age' | 'therapeuticSubcategories' | 'experienceWith' | 'experienceAreas' | 'tools'
+  'locality' | 'withinKm' | 'state' | 'typeOfSupport' | 'gender' | 'hasVehicle' | 'workerType' | 'languages' | 'age' | 'therapeuticSubcategories' | 'experienceWith' | 'experienceAreas' | 'tools' | 'toolSearch'
 >
 
 const pendingOf = (f: AdminFilters): PendingFilters => ({
@@ -67,6 +68,7 @@ const pendingOf = (f: AdminFilters): PendingFilters => ({
   experienceWith: f.experienceWith,
   experienceAreas: f.experienceAreas,
   tools: f.tools,
+  toolSearch: f.toolSearch,
 })
 
 const suburbLabel = (s: SuburbMatch) => `${s.name} ${s.state.abbreviation} ${s.postcode}`
@@ -642,6 +644,9 @@ export default function AdminDashboard() {
                             ...prev,
                             typeOfSupport: prev.typeOfSupport === category.id ? undefined : category.id,
                             therapeuticSubcategories: prev.typeOfSupport === category.id || category.id !== THERAPEUTIC_CATEGORY_ID ? [] : prev.therapeuticSubcategories,
+                            // worker-tools: another type of support hides the Tools and forgets them, and the search.
+                            tools: [],
+                            toolSearch: '',
                           }))
                         }}
                       >
@@ -657,6 +662,69 @@ export default function AdminDashboard() {
                 )}
               </div>
             </div>
+
+            {/* Tools (worker-tools UR-8): only for Cleaning Services or Home and Yard Maintenance as the type of support
+                (user, 2026-10-22, as the areas under "Experience with"); workers with all the chosen tools */}
+            {(() => {
+              const group = toolGroupFor(pendingFilters.typeOfSupport)
+              if (!group) return null
+              // TS-5: the search box narrows the buttons with the api's own matcher; the text is sent on Apply.
+              const view = toolSearchView(pendingFilters.typeOfSupport, pendingFilters.toolSearch, pendingFilters.tools)
+              return (
+            <div className="mb-4">
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-3" data-testid={`tools-${group.service}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-700">{group.label}: tools</span>
+                  <span className="text-xs text-gray-500">{pendingFilters.tools.length === 0 ? 'Any tools' : `All of ${pendingFilters.tools.length}`}</span>
+                </div>
+                <input
+                  type="search"
+                  value={pendingFilters.toolSearch}
+                  onChange={(e) => {
+                    const toolSearch = e.target.value.slice(0, 60)
+                    setPendingFilters(prev => ({ ...prev, toolSearch }))
+                  }}
+                  placeholder="Search tools"
+                  aria-label={`Search ${group.label} tools`}
+                  maxLength={60}
+                  className="w-full mb-1 px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-gray-900"
+                />
+                <p className="text-xs text-gray-500 mb-2">Finds the word in the tools, their other names, and tools workers added themselves.</p>
+                {view.otherNames.length > 0 && (
+                  <p className="text-xs text-gray-600 mb-2" data-testid="tool-search-also">Also matches: {view.otherNames.join(', ')}</p>
+                )}
+                {view.tools.length === 0 && (
+                  <p className="text-xs text-gray-600 mb-2">{"No listed tool matches; workers' own tools are still searched."}</p>
+                )}
+                  <div className="flex flex-wrap gap-2">
+                    {view.tools.map((tool) => {
+                      const isSelected = pendingFilters.tools.includes(tool.id)
+                      return (
+                        <button
+                          key={tool.id}
+                          type="button"
+                          aria-pressed={isSelected}
+                          onClick={() => {
+                            setPendingFilters(prev => ({
+                              ...prev,
+                              tools: prev.tools.includes(tool.id) ? prev.tools.filter(id => id !== tool.id) : [...prev.tools, tool.id],
+                            }))
+                          }}
+                          className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+                            isSelected
+                              ? 'border-indigo-600 bg-indigo-600 text-white'
+                              : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                          }`}
+                        >
+                          {tool.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+              </div>
+            </div>
+              )
+            })()}
 
             {/* Experience With (display names; the query carries CareDomain values) */}
             <div className="mb-4">
@@ -737,44 +805,6 @@ export default function AdminDashboard() {
                   </div>
                 )
               })}
-            </div>
-
-            {/* Tools (worker-tools UR-8): workers with all the chosen tools, each on its own service */}
-            <div className="mb-4">
-              <label className="text-sm font-medium text-gray-700 mb-1 block">
-                Tools
-              </label>
-              <p className="text-xs text-gray-500 mb-2">Workers with all the chosen tools</p>
-              {TOOL_GROUPS.map((group) => (
-                <div key={group.service} className="mt-2 rounded-lg border border-gray-200 bg-gray-50 p-3" data-testid={`tools-${group.service}`}>
-                  <span className="text-sm font-medium text-gray-700 mb-2 block">{group.label}</span>
-                  <div className="flex flex-wrap gap-2">
-                    {group.tools.map((tool) => {
-                      const isSelected = pendingFilters.tools.includes(tool.id)
-                      return (
-                        <button
-                          key={tool.id}
-                          type="button"
-                          aria-pressed={isSelected}
-                          onClick={() => {
-                            setPendingFilters(prev => ({
-                              ...prev,
-                              tools: prev.tools.includes(tool.id) ? prev.tools.filter(id => id !== tool.id) : [...prev.tools, tool.id],
-                            }))
-                          }}
-                          className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
-                            isSelected
-                              ? 'border-indigo-600 bg-indigo-600 text-white'
-                              : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-                          }`}
-                        >
-                          {tool.label}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
             </div>
 
             {/* Therapeutic Subcategories (conditional) */}
