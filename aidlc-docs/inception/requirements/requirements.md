@@ -33,7 +33,7 @@ each: trimmed, blanks dropped, duplicates (ignoring case, and any that equal a l
 message when the service is not chosen (404, as `putServiceRegistration`), an id is not on that service's list, or an
 Other entry breaks FR-3. Saving an empty selection is allowed (clears it).
 
-**FR-5 Read back.** The worker's profile read returns each service's tools (ids and other tools), so the step shows
+**FR-5 Read back.** The api returns each service's tools (by its own read, not the profile read: U1 BR-11, 2026-10-22) (ids and other tools), so the step shows
 what was saved after a reload.
 
 **FR-6 Removed with the service (Q7 a).** Removing the service deletes its tools; choosing it again starts empty.
@@ -74,8 +74,8 @@ your own tools, so please be ready to bring them."** (confirm at approval). Noth
 
 ## Proposed shape (for Workflow Planning; not yet a decision)
 
-- Storage: two columns on the `worker_services` row, `toolIds text[]` and `otherTools text[]`, default empty, with a GIN
-  index on `toolIds` for the all-of filter (`toolIds @> $1`). On the service's own row, FR-6 is automatic. (The unused
+- Storage: two columns on the `worker_services` row, `toolIds text[]` and `otherTools text[]`, default empty, the all-of filter
+  per service through the existing unique index (U1 BR-12: no GIN index). On the service's own row, FR-6 is automatic. (The unused
   `metadata` Json was considered: harder to validate and to index.)
 - Contract: `PUT /v1/worker/services/:categoryId/tools` (one entry, one handler); `tools` on `workerServiceSchema`;
   `tools` query param on the admin workers entry.

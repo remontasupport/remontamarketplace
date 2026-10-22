@@ -3,13 +3,13 @@
 Inputs: `inception/requirements/requirements.md` (FR-1..FR-10, NFR-1..5), `inception/plans/execution-plan.md`.
 
 ## Steps
-- [ ] The tool declaration (`packages/schemas`): ids, labels, keyed by category id; the Other normalisation
-- [ ] Domain entities: the two `worker_services` columns; the view on the profile read
-- [ ] The write `putServiceTools`: inputs, rules, errors, audit, completion untouched
-- [ ] The read: tools per service on `GET /v1/worker/profile`; stale ids
-- [ ] The admin filter `tools` (all-of) in the filter registry; its validation
-- [ ] The admin page's read of a worker's tools (Q1)
-- [ ] Business scenarios and edge cases; PBT properties named for NFR Design
+- [x] The tool declaration (`packages/schemas`): ids, labels, keyed by category id; the Other normalisation
+- [x] Domain entities: the two `worker_services` columns; the view on the profile read
+- [x] The write `putServiceTools`: inputs, rules, errors, audit, completion untouched
+- [x] The read: tools per service on `GET /v1/worker/profile`; stale ids
+- [x] The admin filter `tools` (all-of) in the filter registry; its validation
+- [x] The admin page's read of a worker's tools (Q1)
+- [x] Business scenarios and edge cases; PBT properties named for NFR Design
 
 ## What I found that shapes the design
 - `PUT /v1/worker/services` **keeps** a kept service's row (it updates only names/sub-categories) and deletes a removed
@@ -29,14 +29,14 @@ B) A new api entry `GET /v1/admin/workers/:workerId/services` (admin-only, on th
    moving that page to the api, follow-up 21)
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: b
 
 ### Q2: The admin search's result cards
 A) Unchanged: the tools filter narrows the list; tools are seen on the worker's page
 B) When the tools filter is used, each card also lists the matched tools
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Decided without a question (say if any is wrong)
 - **Stored in list order, not tick order**; ids are deduplicated. The answer of a save is what the read returns.

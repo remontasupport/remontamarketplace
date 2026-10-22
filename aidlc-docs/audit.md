@@ -5205,3 +5205,9 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **AI action (2026-10-22):** execution plan approved (Application Design and Units Generation skipped). CONSTRUCTION, U1 `tools-api`, Functional Design: the code read (`sections/services.ts`: a kept service's row is updated in place, a removed one deleted -- tools on the row follow FR-6 with no extra code; `metadata` holds the registrations, so the inventory is corrected; the admin filter registry; the admin page reads the app route `/api/admin/contractors/[id]`). Plan `construction/plans/tools-api-functional-design-plan.md` with Q1 (the admin page's read: app route or a new api entry) and Q2 (result cards), and the rules decided without a question, handed to the user.
 
 **User input (2026-10-22, mid-turn):** ";'" (taken as a stray keystroke).
+
+**User input (2026-10-22):** "answered"
+
+**User answers (2026-10-22, in `tools-api-functional-design-plan.md`):** Q1 b (a new admin api entry `GET /v1/admin/workers/:workerId/services`) · Q2 a (result cards unchanged).
+
+**AI action (2026-10-22):** found: `createClient` parses every response with the contract's strict schema, so a new field on `GET /v1/worker/profile` would break today's production app before U2 (the tour cycle's BR-8). U1 Functional Design written (`construction/tools-api/functional-design/`: domain-entities E1-E4 with the 29 tool ids, business-rules BR-1..BR-17, business-logic-model flows 1-4, scenarios, PBT P1-P5): the profile read unchanged and a separate `getServiceTools` read (FR-5 amended); the filter per service through the existing unique index, no GIN index (requirements' proposed shape amended); 400 for a service without a list (path enum), 404 for a service not chosen. Approval requested.
