@@ -3,8 +3,9 @@
 // state, filtersFromURL(urlFromFilters(f)) builds the same URL again.
 import { describe, expect, it } from 'vitest'
 import * as fc from 'fast-check'
-import { AGE_RANGES } from '@remonta/api-contract'
-import { canonicalOf, DEFAULT_FILTERS, EXPERIENCE_OPTIONS, experienceAreasOfLabel, filtersFromURL, toQuery, urlFromFilters, type AdminFilters } from './query'
+import { AGE_RANGES, workerSearchQuerySchema } from '@remonta/api-contract'
+import { TOOL_IDS } from '@remonta/schemas/data/serviceTools'
+import { canonicalOf, DEFAULT_FILTERS, TOOL_GROUPS, EXPERIENCE_OPTIONS, experienceAreasOfLabel, filtersFromURL, toQuery, urlFromFilters, type AdminFilters } from './query'
 
 describe('toQuery (R11.1)', () => {
   it('maps display values to canonical ones and omits all/none', () => {
@@ -112,6 +113,7 @@ describe('the URL state (R11.2)', () => {
         },
         { requiredKeys: [] },
       ),
+      tools: fc.uniqueArray(fc.constantFrom(...TOOL_IDS), { maxLength: 4 }),
     })
     .map((f) => ({ ...f, pageSize: 6 }))
 
@@ -131,5 +133,24 @@ describe('the URL state (R11.2)', () => {
     const a = canonicalOf({ ...DEFAULT_FILTERS, languages: ['Spanish', 'Arabic'], experienceWith: ['Disability', 'Aged Care'] })
     const b = canonicalOf({ ...DEFAULT_FILTERS, languages: ['Arabic', 'Spanish'], experienceWith: ['Aged Care', 'Disability'] })
     expect(a).toBe(b)
+  })
+})
+
+describe('the Tools filter (worker-tools UR-8, PU4)', () => {
+  it('two groups, the shared lists in order; toQuery sends listed ids only; none means no filter', () => {
+    expect(TOOL_GROUPS.map((g) => [g.label, g.tools.length])).toEqual([['Cleaning Services', 14], ['Home and Yard Maintenance', 15]])
+    expect(toQuery({ ...DEFAULT_FILTERS, tools: ['ladder', 'hammer', 'vacuum-cleaner'] }).tools).toEqual(['ladder', 'vacuum-cleaner'])
+    expect(toQuery(DEFAULT_FILTERS)).not.toHaveProperty('tools')
+  })
+
+  it('PU4: any chosen set reaches the contract and comes back from the URL as the same set', () => {
+    fc.assert(
+      fc.property(fc.uniqueArray(fc.constantFrom(...TOOL_IDS), { minLength: 1, maxLength: 8 }), (tools) => {
+        const f = { ...DEFAULT_FILTERS, tools }
+        const parsed = workerSearchQuerySchema.parse(Object.fromEntries(new URLSearchParams(canonicalOf(f))))
+        expect([...(parsed.tools ?? [])].sort()).toEqual([...tools].sort())
+        expect([...filtersFromURL(new URLSearchParams(urlFromFilters(f))).tools].sort()).toEqual([...tools].sort())
+      }),
+    )
   })
 })
