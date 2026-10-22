@@ -5267,3 +5267,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User answer (2026-10-22, AskUserQuestion on the admin page being the downloadable profile card):** "No need to include it to the download for now".
 
 **AI action (2026-10-22):** the tools line rendered under the two services but not while the JPEG is made. Finding recorded (U2-summary): Vercel regenerates the Prisma client from `packages/db` at build, so production's app since `c523f53` knows the two columns before production's database has them; checked every `apps/app` query on `worker_services` (explicit `select`, no create/update/delete, no relation include): none names them, production unaffected. Summary `construction/tools-app/code/U2-summary.md`; PR description handed over; U2 held until U1's promotion.
+
+**User input (2026-10-22):** "what is the preview link? I want to test it now"
+
+**AI action (2026-10-22):** Vercel built `ccae8ef` on the branch push (statuses "Vercel – remonta-app" and "– remontamarketplace" success). Branch preview `https://remonta-app-git-feat-worker-tools-app-remontas-projects.vercel.app` answers 302 to Vercel's sign-in (protected preview, as usual). Link and test steps handed to the user.
