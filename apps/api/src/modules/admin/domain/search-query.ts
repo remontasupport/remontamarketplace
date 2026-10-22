@@ -4,7 +4,7 @@
 // answer 400 with the field named.
 import type { AppliedFilters, AuState, WorkerSearchQueryParsed } from '@remonta/api-contract'
 import { splitExperienceAreaPair } from '@remonta/schemas/data/experienceAreas'
-import { toolServiceOf, type ToolService } from '@remonta/schemas/data/serviceTools'
+import { isToolService, toolSearchOf, toolServiceOf, type ToolSearch, type ToolService } from '@remonta/schemas/data/serviceTools'
 import { ApiError } from '../../../platform/errors'
 
 export type SortField = 'createdAt' | 'firstName' | 'lastName' | 'city' | 'state' | 'distance'
@@ -52,6 +52,8 @@ export interface SearchQuery {
   tools: string[]
   /** The same ids grouped by their service: all of them, each on its own service's row (BR-12). */
   toolsByService: Partial<Record<ToolService, string[]>>
+  /** Tool search (TS-4): the text as given (echoed) and what it matches; absent when no text or no word kept (TS-2). */
+  toolSearch?: { text: string; match: ToolSearch }
 }
 
 export interface LocalityRef {
@@ -93,6 +95,8 @@ export function normaliseQuery(raw: WorkerSearchQueryParsed, now: Date): SearchQ
   const tools = raw.tools ?? []
   const toolsByService: Partial<Record<ToolService, string[]>> = {}
   for (const id of tools) (toolsByService[toolServiceOf(id)!] ??= []).push(id)
+  // TS-3: on the type of support's service when it has a tool list, else on both.
+  const toolSearchMatch = raw.toolSearch ? toolSearchOf(raw.toolSearch, raw.typeOfSupport && isToolService(raw.typeOfSupport) ? [raw.typeOfSupport] : undefined) : null
 
   return {
     page: raw.page,
@@ -117,6 +121,7 @@ export function normaliseQuery(raw: WorkerSearchQueryParsed, now: Date): SearchQ
     experienceAreasByDomain,
     tools,
     toolsByService,
+    ...(toolSearchMatch ? { toolSearch: { text: raw.toolSearch!, match: toolSearchMatch } } : {}),
   }
 }
 
@@ -170,5 +175,6 @@ export function appliedFiltersOf(q: SearchQuery, locality?: LocalityRef): Applie
     ...(q.experienceWith.length ? { experienceWith: q.experienceWith } : {}),
     ...(q.experienceAreas.length ? { experienceAreas: q.experienceAreas } : {}),
     ...(q.tools.length ? { tools: q.tools } : {}),
+    ...(q.toolSearch ? { toolSearch: q.toolSearch.text } : {}),
   }
 }

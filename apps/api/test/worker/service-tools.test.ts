@@ -3,7 +3,7 @@ import { serviceToolsSchema, workerSearchQuerySchema } from '@remonta/api-contra
 import { SERVICE_TOOLS, TOOL_IDS, TOOL_SERVICES } from '@remonta/schemas/data/serviceTools'
 import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
-import { normaliseQuery } from '../../src/modules/admin/domain/search-query'
+import { appliedFiltersOf, normaliseQuery } from '../../src/modules/admin/domain/search-query'
 import { FILTERS, whereOf } from '../../src/modules/admin/application/filters'
 import { OTHER_TOOL_TOO_LONG, TOO_MANY_OTHER_TOOLS, toolsFromBody, toolsOf, toolsOrEmpty } from '../../src/modules/worker/application/sections/service-tools'
 import { ApiError } from '../../src/platform/errors'
@@ -99,3 +99,40 @@ describe('the admin tools filter (BR-12)', () => {
     expect(whereOf(query({ tools: TOOL_IDS.join(',') })).sql.match(/EXISTS \(SELECT 1 FROM worker_services ws/g)).toHaveLength(2)
   })
 })
+
+describe('the admin tool search (TS-3, TS-4)', () => {
+  const query = (q: Record<string, string>) => normaliseQuery(workerSearchQuerySchema.parse(q), new Date('2026-10-22T00:00:00Z'))
+  const spec = () => FILTERS.find((f) => f.name === 'toolSearch')!
+
+  it('scoped to the type of support when it has a list, else both; ignored when no word is kept', () => {
+    expect(query({ toolSearch: 'gurney', typeOfSupport: 'home-yard-maintenance' }).toolSearch!.match.services).toEqual(['home-yard-maintenance'])
+    expect(query({ toolSearch: 'gurney' }).toolSearch!.match.services).toEqual(['cleaning-services', 'home-yard-maintenance'])
+    expect(query({ toolSearch: 'gurney', typeOfSupport: 'support-worker' }).toolSearch!.match.services).toEqual(['cleaning-services', 'home-yard-maintenance'])
+    expect(query({ toolSearch: '& a' }).toolSearch).toBeUndefined()
+    expect(spec().applies(query({}))).toBe(false)
+  })
+
+  it('one EXISTS on the searched rows: the listed ids by overlap, the own-tool patterns by LIKE, every value bound', () => {
+    const sql = spec().sql(query({ toolSearch: 'pressure washer', typeOfSupport: 'home-yard-maintenance' }))
+    expect(sql.sql).toContain('ws."toolIds" && ')
+    expect(sql.sql).toContain('unnest(ws."otherTools") o')
+    expect(sql.sql).toContain(String.raw`'\s+'`)
+    expect(sql.values[0]).toEqual(['home-yard-maintenance'])
+    expect(sql.values[1]).toEqual(['pressure-washer'])
+    expect(sql.values).toContain('%pressure%')
+    expect(sql.values).toContain('%gurney%')
+    expect(sql.sql).not.toMatch(/gurney|pressure/)
+  })
+
+  it("LIKE's wildcards in a word are escaped", () => {
+    const sql = spec().sql(query({ toolSearch: '50% off_road' }))
+    expect(sql.values).toContain(String.raw`%50\%%`)
+    expect(sql.values).toContain(String.raw`%off\_road%`)
+  })
+
+  it('echoed as given only when kept', () => {
+    expect(appliedFiltersOf(query({ toolSearch: 'Gurney' })).toolSearch).toBe('Gurney')
+    expect(appliedFiltersOf(query({}))).not.toHaveProperty('toolSearch')
+  })
+})
+
