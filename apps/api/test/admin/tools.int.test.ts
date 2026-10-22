@@ -3,7 +3,7 @@
 // and a shared last name (the search's name filter keeps the rest of the database out); their tool rows re-drawn on
 // every run. Runs only when TEST_DATABASE_URL points at localhost (CI's API Quality job).
 import { adminContract } from '@remonta/api-contract'
-import { SERVICE_TOOLS, TOOL_IDS, TOOL_SERVICES, toolServiceOf, type ToolService } from '@remonta/schemas/data/serviceTools'
+import { ownToolMatches, SERVICE_TOOLS, TOOL_IDS, TOOL_SERVICES, toolSearchOf, toolServiceOf, type ToolService } from '@remonta/schemas/data/serviceTools'
 import fc from 'fast-check'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { adminHandlers } from '../../src/modules/admin/admin.handlers'
@@ -18,6 +18,8 @@ const LAST_NAME = 'Toolsfilterharness'
 const COUNT = 12
 
 type Row = Partial<Record<ToolService, string[]>>
+/** A worker's rows for the search oracle: per service, ticked ids and own tools. */
+type SearchRow = Partial<Record<ToolService, { ids: string[]; own: string[] }>>
 
 describe.skipIf(!local)('worker-tools U1: the admin tools filter on PostGIS', () => {
   let db: Db
@@ -102,5 +104,37 @@ describe.skipIf(!local)('worker-tools U1: the admin tools filter on PostGIS', ()
     await seed([{ 'home-yard-maintenance': ['ladder'] }, { 'home-yard-maintenance': ['ladder'] }])
     await db.workerProfile.update({ where: { id: ids[1]! }, data: { gender: 'Female' } })
     expect(await found({ tools: 'ladder', gender: 'Female' })).toEqual([ids[1]!])
+  })
+
+  it('TS-6 oracle: for random tool rows and search texts, the search equals the shared matcher run in memory', async () => {
+    const OWN = ['Garden hose', 'Gurney 2000', 'Karcher Pressure-Washer', 'pressure hose', 'Window washer', 'Ride-On  MOWER', 'Brush cutter', 'Spirit level', '50% off_road kit']
+    const TEXTS = ['gurney', 'pressure washer', 'hose', 'mowers', 'ride-on', 'saw', 'brushcutter', 'vac', 'level', '50%', 'off_road', 'washer pressure']
+    const searchRow: fc.Arbitrary<SearchRow> = fc.record(
+      Object.fromEntries(
+        TOOL_SERVICES.map((s) => [s, fc.record({ ids: fc.subarray(SERVICE_TOOLS[s].map((x) => x.id) as string[], { maxLength: 4 }), own: fc.subarray(OWN, { maxLength: 3 }) })]),
+      ) as Record<ToolService, fc.Arbitrary<{ ids: string[]; own: string[] }>>,
+      { requiredKeys: [] },
+    )
+    await fc.assert(
+      fc.asyncProperty(fc.array(searchRow, { minLength: COUNT, maxLength: COUNT }), fc.constantFrom(...TEXTS), fc.constantFrom<ToolService | undefined>(undefined, ...TOOL_SERVICES), async (rows, text, typeOfSupport) => {
+        await db.workerService.deleteMany({ where: { workerProfileId: { in: ids } } })
+        await db.workerService.createMany({
+          data: rows.flatMap((r, i) => (Object.entries(r) as [ToolService, { ids: string[]; own: string[] }][]).map(([categoryId, v]) => ({ workerProfileId: ids[i]!, categoryId, categoryName: categoryId, toolIds: v.ids, otherTools: v.own }))),
+        })
+        const m = toolSearchOf(text, typeOfSupport ? [typeOfSupport] : undefined)!
+        const expected = ids
+          .filter((_, i) =>
+            // The typeOfSupport filter itself also requires that service's row.
+            (!typeOfSupport || rows[i]![typeOfSupport] !== undefined) &&
+            m.services.some((s) => {
+              const r = rows[i]![s]
+              return !!r && (r.ids.some((id) => m.listedIds.includes(id as never)) || r.own.some((o) => ownToolMatches(o, m)))
+            }),
+          )
+          .sort()
+        expect(await found({ toolSearch: text, ...(typeOfSupport ? { typeOfSupport } : {}) }), `${text} / ${typeOfSupport}`).toEqual(expected)
+      }),
+      { numRuns: 30 },
+    )
   })
 })

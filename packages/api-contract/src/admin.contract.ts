@@ -6,7 +6,7 @@
 // (privateCacheSeconds, D15/D16). Adding an endpoint = one entry here + one handler in
 // apps/api's admin module.
 import { EXPERIENCE_AREA_PAIRS } from '@remonta/schemas/data/experienceAreas'
-import { OTHER_TOOL_MAX_CHARS, OTHER_TOOLS_MAX, TOOL_IDS } from '@remonta/schemas/data/serviceTools'
+import { OTHER_TOOL_MAX_CHARS, OTHER_TOOLS_MAX, TOOL_IDS, TOOL_SEARCH_MAX_CHARS } from '@remonta/schemas/data/serviceTools'
 import * as z from 'zod'
 import { defineContract } from './define'
 import { meta, ROLES } from './meta'
@@ -85,6 +85,11 @@ export const workerSearchQuerySchema = z.strictObject({
    * its own service's row. The worker's own (free-text) tools are never searched.
    */
   tools: csv(z.enum(TOOL_IDS), TOOL_IDS.length).optional(),
+  /**
+   * Tool search (TS-4): a word or words found in the listed tools, their other names and the workers' own tools
+   * (packages/schemas toolSearchOf); on the type of support's service when it has a tool list, else both.
+   */
+  toolSearch: z.string().trim().min(1).max(TOOL_SEARCH_MAX_CHARS).regex(/^[^\p{Cc}]*$/u, 'Plain text only').optional(),
 })
 export type WorkerSearchQuery = z.input<typeof workerSearchQuerySchema>
 export type WorkerSearchQueryParsed = z.output<typeof workerSearchQuerySchema>
@@ -155,6 +160,8 @@ export const appliedFiltersSchema = z.strictObject({
   experienceAreas: z.array(z.string()).optional(),
   /** Present only when the query had tools: today's app never sends them, so never receives it (N1). */
   tools: z.array(z.string()).optional(),
+  /** Present only when the query had a tool search (N1: today's app never sends it). */
+  toolSearch: z.string().optional(),
 })
 export type AppliedFilters = z.output<typeof appliedFiltersSchema>
 

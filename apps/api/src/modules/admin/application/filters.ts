@@ -10,6 +10,9 @@ import { AU_STATE_NAMES } from '@remonta/api-contract'
 import { Prisma } from '../../../platform/persistence/db'
 import { escapeLike, type SearchQuery } from '../domain/search-query'
 
+/** TS-2 in SQL, for a stored own tool `o`: as normaliseToolText (lower case, hyphens/slashes/dots as spaces, one space). */
+const NORMALISED_OWN = Prisma.sql`regexp_replace(regexp_replace(lower(o), '[-/.]+', ' ', 'g'), '\\s+', ' ', 'g')`
+
 export interface FilterSpec {
   name: string
   applies(q: SearchQuery): boolean
@@ -132,6 +135,21 @@ export const FILTERS: readonly FilterSpec[] = [
           ),
         ' AND ',
       ),
+  },
+  {
+    // Tool search (TS-3, TS-4): on a searched service's row, a matching listed tool ticked, or an own tool holding every
+    // word of one pattern (the query's words, or a whole name of a matched listed tool). Every word bound, LIKE's
+    // wildcards escaped; the patterns come from packages/schemas' toolSearchOf, the page's own matcher.
+    name: 'toolSearch',
+    applies: (q) => q.toolSearch !== undefined,
+    sql: (q) => {
+      const m = q.toolSearch!.match
+      const own = Prisma.join(
+        m.ownPatterns.map((p) => Prisma.sql`(${Prisma.join(p.map((w) => Prisma.sql`${NORMALISED_OWN} LIKE ${like(w)}`), ' AND ')})`),
+        ' OR ',
+      )
+      return Prisma.sql`EXISTS (SELECT 1 FROM worker_services ws WHERE ws."workerProfileId" = p.id AND ws."categoryId" = ANY(${m.services}::text[]) AND (ws."toolIds" && ${m.listedIds}::text[] OR EXISTS (SELECT 1 FROM unnest(ws."otherTools") o WHERE ${own})))`
+    },
   },
 ]
 
