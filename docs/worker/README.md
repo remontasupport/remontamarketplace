@@ -146,6 +146,20 @@ and the citizenship PATCH (the app moves onto them in U4b). Design: `aidlc-docs/
 `GET /v1/worker/profile` gains `complianceDocuments[]` (`{id, requirementType, name, status, documentCategory, url,
 fileName, uploadedAt, expiresAt, isCitizen}`, every row that is not a service document, newest first).
 
+### Service tools (worker-tools U1)
+
+The tools a worker brings for **Cleaning Services** and **Home and Yard Maintenance**: ticked from one list per
+service (`packages/schemas/src/data/serviceTools.ts`, 14 and 15 tools; ids unique across both lists, labels free to
+reword) plus up to five of the worker's own. Stored on the service's own `worker_services` row (`toolIds`, `otherTools`),
+so removing the service with `PUT /v1/worker/services` removes them and a kept service keeps them. Kept apart from the
+profile read, as the tour is (the deployed app parses that response strictly). **Not part of completion.** Design:
+`aidlc-docs/construction/tools-api/functional-design/` (record branch `aidlc/worker-tools`).
+
+| Entry | Body | Rules |
+|---|---|---|
+| `GET /v1/worker/services/tools` | -- | `{services: [{categoryId, toolIds, otherTools}]}`: one entry per chosen service that has a list, in the services' order; none chosen = `[]`. An id no longer on the list is left out. **Never cached** (`no-store`). 404 for a worker without a profile row |
+| `PUT /v1/worker/services/:categoryId/tools` | `{toolIds: [id], otherTools: [text]}` | `:categoryId` is `cleaning-services` or `home-yard-maintenance` (else 400). 404 when the worker has not chosen it. Every id must be on **that** service's list (400 `fields.toolIds` naming the tool); stored in list order, each once. Own tools: single-line plain text (control characters 400), at most 20 sent of 200 characters; then trimmed, inner spaces collapsed, empties, case-insensitive repeats and copies of a listed label dropped; then at most **5** (400 `fields.otherTools` "Up to 5 other tools") of at most **60** characters ("Keep each tool under 60 characters"). Replaces both columns; `{toolIds: [], otherTools: []}` clears. 200 with what was stored. Audit `PROFILE_UPDATE` with section `putServiceTools.<categoryId>`; an impersonating admin's save is allowed and carries the actor. The write limits, `maxBodyKb 4` |
+
 ### The dashboard tour's "seen" time (onboarding-tour U1)
 
 When the worker first ended the dashboard tour or chose "Not now", kept apart from the profile read: the deployed app
@@ -318,7 +332,7 @@ The 5xx-ratio alert counts 503s: a burst that sheds shows there first, which is 
 ## 8. Reading the tables
 
 `worker_profiles` (columns above, plus `setupProgress`, `profileCompleted`, `verificationStatus`, `tourSeenAt`),
-`worker_services`, `verification_requirements` (`requirementType`, `status`, `documentCategory`, `documentUrl`),
+`worker_services` (with `toolIds` and `otherTools`, worker-tools), `verification_requirements` (`requirementType`, `status`, `documentCategory`, `documentUrl`),
 `worker_availability`, `worker_experience`, `worker_job_history`, `worker_education`, `worker_additional_info`,
 `worker_locations` (kind `HOME`) + `au_localities`, and the catalogue `Category` → `CategoryDocument` → `Document`
 and `Subcategory` → `SubcategoryDocument` → `Document`. One transaction issues one statement per relation (17 for
