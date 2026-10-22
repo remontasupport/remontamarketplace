@@ -660,6 +660,48 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            {/* Tools (worker-tools UR-8): only for Cleaning Services or Home and Yard Maintenance as the type of support
+                (user, 2026-10-22, as the areas under "Experience with"); workers with all the chosen tools */}
+            {(() => {
+              const group = toolGroupFor(pendingFilters.typeOfSupport)
+              if (!group) return null
+              return (
+            <div className="mb-4">
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-3" data-testid={`tools-${group.service}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-700">{group.label}: tools</span>
+                  <span className="text-xs text-gray-500">{pendingFilters.tools.length === 0 ? 'Any tools' : `All of ${pendingFilters.tools.length}`}</span>
+                </div>
+                  <div className="flex flex-wrap gap-2">
+                    {group.tools.map((tool) => {
+                      const isSelected = pendingFilters.tools.includes(tool.id)
+                      return (
+                        <button
+                          key={tool.id}
+                          type="button"
+                          aria-pressed={isSelected}
+                          onClick={() => {
+                            setPendingFilters(prev => ({
+                              ...prev,
+                              tools: prev.tools.includes(tool.id) ? prev.tools.filter(id => id !== tool.id) : [...prev.tools, tool.id],
+                            }))
+                          }}
+                          className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+                            isSelected
+                              ? 'border-indigo-600 bg-indigo-600 text-white'
+                              : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                          }`}
+                        >
+                          {tool.label}
+                        </button>
+                      )
+                    })}
+                  </div>
+              </div>
+            </div>
+              )
+            })()}
+
             {/* Experience With (display names; the query carries CareDomain values) */}
             <div className="mb-4">
               <label className="text-sm font-medium text-gray-700 mb-2 block">
@@ -740,48 +782,6 @@ export default function AdminDashboard() {
                 )
               })}
             </div>
-
-            {/* Tools (worker-tools UR-8): only for Cleaning Services or Home and Yard Maintenance as the type of support
-                (user, 2026-10-22, as the areas under "Experience with"); workers with all the chosen tools */}
-            {(() => {
-              const group = toolGroupFor(pendingFilters.typeOfSupport)
-              if (!group) return null
-              return (
-            <div className="mb-4">
-              <div className="rounded-lg border border-gray-200 bg-gray-50 p-3" data-testid={`tools-${group.service}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700">{group.label}: tools</span>
-                  <span className="text-xs text-gray-500">{pendingFilters.tools.length === 0 ? 'Any tools' : `All of ${pendingFilters.tools.length}`}</span>
-                </div>
-                  <div className="flex flex-wrap gap-2">
-                    {group.tools.map((tool) => {
-                      const isSelected = pendingFilters.tools.includes(tool.id)
-                      return (
-                        <button
-                          key={tool.id}
-                          type="button"
-                          aria-pressed={isSelected}
-                          onClick={() => {
-                            setPendingFilters(prev => ({
-                              ...prev,
-                              tools: prev.tools.includes(tool.id) ? prev.tools.filter(id => id !== tool.id) : [...prev.tools, tool.id],
-                            }))
-                          }}
-                          className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
-                            isSelected
-                              ? 'border-indigo-600 bg-indigo-600 text-white'
-                              : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
-                          }`}
-                        >
-                          {tool.label}
-                        </button>
-                      )
-                    })}
-                  </div>
-              </div>
-            </div>
-              )
-            })()}
 
             {/* Therapeutic Subcategories (conditional) */}
             {pendingFilters.typeOfSupport === THERAPEUTIC_CATEGORY_ID && (
