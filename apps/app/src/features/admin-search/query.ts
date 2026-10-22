@@ -5,7 +5,7 @@
 // key are the same string for the same filters. No React here; tested in node.
 import { AGE_RANGES, AU_STATES, AU_STATE_NAMES, CARE_DOMAINS, SORT_FIELDS, adminContract, canonicalQueryOf, workerSearchQuerySchema, type WorkerSearchQuery } from '@remonta/api-contract'
 import { EXPERIENCE_AREA_SEPARATOR, experienceAreasOf, splitExperienceAreaPair } from '@remonta/schemas/data/experienceAreas'
-import { isToolService, SERVICE_TOOLS, TOOL_SERVICES, toolServiceOf, type ToolService } from '@remonta/schemas/data/serviceTools'
+import { isToolService, SERVICE_TOOLS, TOOL_SEARCH_MAX_CHARS, TOOL_SERVICES, toolSearchOf, toolServiceOf, type ToolService } from '@remonta/schemas/data/serviceTools'
 
 export type AgeRange = (typeof AGE_RANGES)[number]
 export type SortField = (typeof SORT_FIELDS)[number]
@@ -52,6 +52,8 @@ export interface AdminFilters {
    * Yard Maintenance is the type of support, as the areas under "Experience with").
    */
   tools: string[]
+  /** Tool search (TS-5): the text typed in the Tools box; sent only with a type of support that has a tool list. */
+  toolSearch: string
 }
 
 export const PAGE_SIZE = 6
@@ -83,6 +85,7 @@ export const DEFAULT_FILTERS: AdminFilters = {
   experienceWith: [],
   experienceAreas: {},
   tools: [],
+  toolSearch: '',
 }
 
 /** The Tools filter's groups (UR-8): each service with a list, its name and its tools, in list order. */
@@ -95,6 +98,19 @@ export const TOOL_GROUPS: ReadonlyArray<{ service: ToolService; label: string; t
 /** The Tools group shown for a type of support: its service's, or none (UR-8 as changed by the user, 2026-10-22). */
 export function toolGroupFor(typeOfSupport: string | undefined): (typeof TOOL_GROUPS)[number] | undefined {
   return typeOfSupport && isToolService(typeOfSupport) ? TOOL_GROUPS.find((g) => g.service === typeOfSupport) : undefined
+}
+
+/**
+ * TS-5: what the Tools box shows for a search text -- the type of support's tools that match (the same matcher the api
+ * runs, so the narrowed buttons are what the search finds), always with the ticked ones, and the other names that count.
+ * No text, or no word kept: every tool, no other names.
+ */
+export function toolSearchView(typeOfSupport: string | undefined, text: string, ticked: readonly string[]): { tools: ReadonlyArray<{ id: string; label: string }>; otherNames: string[] } {
+  const group = toolGroupFor(typeOfSupport)
+  if (!group) return { tools: [], otherNames: [] }
+  const m = toolSearchOf(text, [group.service])
+  if (!m) return { tools: group.tools, otherNames: [] }
+  return { tools: group.tools.filter((t) => (m.listedIds as string[]).includes(t.id) || ticked.includes(t.id)), otherNames: m.otherNames }
 }
 
 /** The chosen tools that count: those of the type of support's service, in the order chosen. */
@@ -142,6 +158,9 @@ export function toQuery(f: AdminFilters): WorkerSearchQuery {
   // worker-tools: only the listed tools of the type of support's service.
   const tools = toolsFor(f.typeOfSupport, f.tools)
   if (tools.length) q.tools = tools
+  // Tool search (TS-5): only with a type of support that has a list, and only when a word is kept (TS-2).
+  const toolSearch = f.toolSearch.trim().slice(0, TOOL_SEARCH_MAX_CHARS)
+  if (toolGroupFor(f.typeOfSupport) && toolSearchOf(toolSearch)) q.toolSearch = toolSearch
   return q
 }
 
@@ -200,5 +219,6 @@ export function filtersFromURL(params: URLSearchParams): AdminFilters {
   if (q.workerType) f.workerType = q.workerType
   if (q.age) f.age = q.age
   f.tools = toolsFor(f.typeOfSupport, f.tools)
+  f.toolSearch = toolGroupFor(f.typeOfSupport) ? (q.toolSearch ?? '') : ''
   return f
 }
