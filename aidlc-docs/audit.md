@@ -5199,3 +5199,9 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-22):** "Approve and continue"
 
 **AI action (2026-10-22):** requirements approved (FR-10's note in the proposed wording "Some jobs require your own tools, so please be ready to bring them.", not objected to); User Stories skipped. Workflow Planning: `inception/plans/execution-plan.md` -- Application Design SKIP, Units Generation SKIP (U1 `tools-api`, U2 `tools-app` fixed in the plan), Functional Design EXECUTE, NFR Requirements SKIP, NFR Design EXECUTE (one shared document), Infrastructure Design SKIP; risk low; U1 to production before U2. Approval requested.
+
+**User input (2026-10-22):** "approve and continue"
+
+**AI action (2026-10-22):** execution plan approved (Application Design and Units Generation skipped). CONSTRUCTION, U1 `tools-api`, Functional Design: the code read (`sections/services.ts`: a kept service's row is updated in place, a removed one deleted -- tools on the row follow FR-6 with no extra code; `metadata` holds the registrations, so the inventory is corrected; the admin filter registry; the admin page reads the app route `/api/admin/contractors/[id]`). Plan `construction/plans/tools-api-functional-design-plan.md` with Q1 (the admin page's read: app route or a new api entry) and Q2 (result cards), and the rules decided without a question, handed to the user.
+
+**User input (2026-10-22, mid-turn):** ";'" (taken as a stray keystroke).

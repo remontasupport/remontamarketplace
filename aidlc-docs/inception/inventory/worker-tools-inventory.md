@@ -10,7 +10,7 @@ dashboard if their services have cleaning and yard and maintenance"
   (`packages/db/scripts/local/seed-catalogue.sql:18-19`). **Neither has a subcategory.** (Support Worker's
   "Domestic tasks (cleaning, laundry, home organisation)" is a separate subcategory of `support-worker`.)
 - A worker's choice is a `worker_services` row (`schema.prisma:391`): `categoryId`, `categoryName`, `subcategoryIds/Names`,
-  and an unused **`metadata Json?`** column. Written by `PUT /v1/worker/services` (`packages/api-contract/src/worker.contract.ts:394`);
+  and a **`metadata Json?`** column (corrected 2026-10-22: it holds the nursing/therapeutic registration, `writeServiceRegistration` in `apps/api/src/modules/worker/application/sections/services.ts`; unused for these two services). Written by `PUT /v1/worker/services` (`packages/api-contract/src/worker.contract.ts:394`);
   read back in the profile read `GET /v1/worker/profile` as `services[]` (`worker.contract.ts:287`).
 - Documents: both services ask nothing required, one optional `qualification-certificate`
   (`apps/api/src/modules/worker/domain/service-requirements.ts:38-39`; app copy `apps/app/src/config/serviceDocumentRequirements.ts:89`);
@@ -36,7 +36,7 @@ No table, column, contract entry, option list or page mentions tools or equipmen
 | A fixed option list shared by app and api | `packages/schemas/src/data/experienceAreas.ts`, `profileOptions.ts` | the tool lists, one place |
 | An array-of-labels write with its own entry | `putInterests`, `putSupportActivities` (`worker.contract.ts:388-389`) on `worker_additional_info` | the worker's ticked tools |
 | A per-service write | `putServiceRegistration` (`worker.contract.ts:395`), 404 when the service is not chosen | tools only when the service is chosen |
-| Per-service storage | `worker_services.metadata` (unused Json) or a new table | where ticks live; removed with the service |
+| Per-service storage | new columns on `worker_services` (`metadata` is the registrations') | where ticks live; removed with the service |
 | Admin search filter on a list | `experienceAreas` on `GET /v1/admin/workers` | if admins should find workers by tool |
 
 ## Constraints that apply

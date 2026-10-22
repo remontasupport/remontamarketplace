@@ -7,8 +7,8 @@
   a cleaning tools and yard and maintenance tools to the worker's dashboard if their services have cleaning and yard
   and maintenance". Record branch `aidlc/worker-tools` (from `aidlc/onboarding-tour`, closed the same day:
   `aidlc-docs/archive/onboarding-tour/`).
-- **Current Stage**: INCEPTION -- Workflow Planning: `inception/plans/execution-plan.md` awaiting approval
-  (requirements approved 2026-10-22).
+- **Current Stage**: CONSTRUCTION -- U1 `tools-api` Functional Design: the plan's questions
+  (`construction/plans/tools-api-functional-design-plan.md`, Q1-Q2) with the user. Execution plan approved 2026-10-22.
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory
   `inception/inventory/worker-tools-inventory.md` (on `main` `62e24f9`).
@@ -19,9 +19,17 @@
 - [x] Reverse Engineering (targeted inventory)
 - [x] Requirements Analysis (approved 2026-10-22)
 - [x] User Stories -- SKIP
-- [ ] Workflow Planning -- awaiting approval
-- [ ] Application Design -- SKIP (proposed)
-- [ ] Units Generation -- SKIP (U1 `tools-api`, U2 `tools-app` in the plan)
+- [x] Workflow Planning (approved 2026-10-22)
+- [x] Application Design -- SKIP
+- [x] Units Generation -- SKIP (U1 `tools-api`, U2 `tools-app` in the plan)
+
+### CONSTRUCTION PHASE
+- [ ] Functional Design -- U1 questions out
+- [ ] NFR Requirements -- SKIP
+- [ ] NFR Design -- one shared document
+- [ ] Infrastructure Design -- SKIP
+- [ ] Code Generation
+- [ ] Build and Test
 
 ## Previous cycles (archived, read-only)
 
