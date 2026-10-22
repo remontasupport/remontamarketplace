@@ -6,6 +6,7 @@
 // (privateCacheSeconds, D15/D16). Adding an endpoint = one entry here + one handler in
 // apps/api's admin module.
 import { EXPERIENCE_AREA_PAIRS } from '@remonta/schemas/data/experienceAreas'
+import { OTHER_TOOL_MAX_CHARS, OTHER_TOOLS_MAX, TOOL_IDS } from '@remonta/schemas/data/serviceTools'
 import * as z from 'zod'
 import { defineContract } from './define'
 import { meta, ROLES } from './meta'
@@ -79,6 +80,11 @@ export const workerSearchQuerySchema = z.strictObject({
    * otherwise), so one meaning has one URL.
    */
   experienceAreas: csv(z.enum(EXPERIENCE_AREA_PAIRS as [string, ...string[]]), EXPERIENCE_AREA_PAIRS.length).optional(),
+  /**
+   * worker-tools U1 (BR-12): tool ids from packages/schemas' serviceTools; the worker must have all of them, each on
+   * its own service's row. The worker's own (free-text) tools are never searched.
+   */
+  tools: csv(z.enum(TOOL_IDS), TOOL_IDS.length).optional(),
 })
 export type WorkerSearchQuery = z.input<typeof workerSearchQuerySchema>
 export type WorkerSearchQueryParsed = z.output<typeof workerSearchQuerySchema>
@@ -147,6 +153,8 @@ export const appliedFiltersSchema = z.strictObject({
   therapeuticSubcategories: z.array(z.string()).optional(),
   experienceWith: z.array(z.string()).optional(),
   experienceAreas: z.array(z.string()).optional(),
+  /** Present only when the query had tools: today's app never sends them, so never receives it (N1). */
+  tools: z.array(z.string()).optional(),
 })
 export type AppliedFilters = z.output<typeof appliedFiltersSchema>
 
@@ -204,6 +212,24 @@ const adminRead = (limits: { user: number; ip: number }) =>
 export const adminDocumentParamsSchema = z.strictObject({ documentId: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/, 'Not a document id') })
 export const adminDocumentLinkSchema = z.strictObject({ url: z.url().max(4096), expiresAt: z.iso.datetime({ offset: true }).nullable() })
 
+/** worker-tools U1 (E3, Q1 B): one worker's services and their tools, for the worker's admin page. */
+export const adminWorkerParamsSchema = z.strictObject({ workerId: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/, 'Not a worker id') })
+export const adminWorkerServicesSchema = z.strictObject({
+  services: z
+    .array(
+      z.strictObject({
+        categoryId: z.string().max(80),
+        categoryName: z.string().max(120),
+        subcategoryNames: z.array(z.string().max(120)).max(50),
+        /** Empty for a service with no tool list. */
+        toolIds: z.array(z.enum(TOOL_IDS)).max(TOOL_IDS.length),
+        otherTools: z.array(z.string().max(OTHER_TOOL_MAX_CHARS)).max(OTHER_TOOLS_MAX),
+      }),
+    )
+    .max(50),
+})
+export type AdminWorkerServices = z.output<typeof adminWorkerServicesSchema>
+
 export const adminContract = defineContract('admin', {
   searchWorkers: {
     method: 'GET',
@@ -238,6 +264,15 @@ export const adminContract = defineContract('admin', {
     summary: "A five-minute link to view one worker's service document (a private file), or the stored URL of a legacy public one.",
     pathParams: adminDocumentParamsSchema,
     responses: { 200: adminDocumentLinkSchema },
+    meta: adminRead({ user: 120, ip: 300 }),
+  },
+
+  getWorkerServices: {
+    method: 'GET',
+    path: '/v1/admin/workers/:workerId/services',
+    summary: "One worker's chosen services in their order, with the sub-categories and, for Cleaning Services and Home and Yard Maintenance, the tools; 404 when no worker has that id.",
+    pathParams: adminWorkerParamsSchema,
+    responses: { 200: adminWorkerServicesSchema },
     meta: adminRead({ user: 120, ip: 300 }),
   },
 })

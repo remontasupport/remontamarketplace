@@ -22,6 +22,7 @@ import {
   VEHICLE_ANSWERS,
   WORK_PREFERENCES,
 } from '@remonta/schemas/data/profileOptions'
+import { OTHER_TOOL_MAX_CHARS, OTHER_TOOLS_MAX, TOOL_IDS, TOOL_SERVICES } from '@remonta/schemas/data/serviceTools'
 import { DOCUMENT_MAX_BYTES, DOCUMENT_TYPES } from '@remonta/schemas/document-type'
 import { abnChecksum, normaliseAbn } from '@remonta/schemas/validations/abn'
 import * as z from 'zod'
@@ -311,6 +312,34 @@ export const serviceRegistrationViewSchema = z.strictObject({
   expiryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
 })
 export type ServiceRegistrationView = z.output<typeof serviceRegistrationViewSchema>
+
+// ---- Service tools (worker-tools U1, domain-entities E3) ---------------------------------------------------------
+
+/** The services with a tool list (packages/schemas serviceTools); any other is 400 from the path (BR-2). */
+export const serviceToolsParamsSchema = z.strictObject({ categoryId: z.enum(TOOL_SERVICES) })
+
+/**
+ * One service's tools as sent: ids of any list (the api checks they are this service's, BR-4) and the worker's own
+ * tools raw, single-line plain text. The api cleans them (normaliseOtherTools) and then holds them to
+ * OTHER_TOOLS_MAX of OTHER_TOOL_MAX_CHARS (BR-6), so a long or repeated entry the cleaning removes is not refused.
+ */
+export const serviceToolsBodySchema = z.strictObject({
+  toolIds: z.array(z.enum(TOOL_IDS)).max(TOOL_IDS.length),
+  otherTools: z.array(z.string().max(200).regex(/^[^\p{Cc}]*$/u, 'Plain text only')).max(20),
+})
+export type ServiceToolsBody = z.output<typeof serviceToolsBodySchema>
+
+/** One service's tools as stored: list ids in list order, the cleaned own tools (BR-5, BR-6, BR-8). */
+export const serviceToolsSchema = z.strictObject({
+  categoryId: z.enum(TOOL_SERVICES),
+  toolIds: z.array(z.enum(TOOL_IDS)).max(TOOL_IDS.length),
+  otherTools: z.array(z.string().max(OTHER_TOOL_MAX_CHARS)).max(OTHER_TOOLS_MAX),
+})
+export type ServiceTools = z.output<typeof serviceToolsSchema>
+
+/** BR-17: one entry per chosen service that has a list, in the services' order. */
+export const serviceToolsViewSchema = z.strictObject({ services: z.array(serviceToolsSchema).max(TOOL_SERVICES.length) })
+export type ServiceToolsView = z.output<typeof serviceToolsViewSchema>
 
 // ---- Service documents (U3b, u3b-service-documents-design.md) ---------------------------------------------------
 

@@ -117,6 +117,22 @@ export const FILTERS: readonly FilterSpec[] = [
         ' AND ',
       ),
   },
+  {
+    // worker-tools U1, BR-12: the worker has every chosen tool, each on its own service's row; one EXISTS per service
+    // (it probes the unique ("workerProfileId", "categoryId")), all of them. The worker's own tools are never searched.
+    name: 'tools',
+    applies: (q) => q.tools.length > 0,
+    sql: (q) =>
+      Prisma.join(
+        Object.entries(q.toolsByService)
+          .sort(([a], [b]) => (a < b ? -1 : 1))
+          .map(
+            ([service, ids]) =>
+              Prisma.sql`EXISTS (SELECT 1 FROM worker_services ws WHERE ws."workerProfileId" = p.id AND ws."categoryId" = ${service} AND ws."toolIds" @> ${ids}::text[])`,
+          ),
+        ' AND ',
+      ),
+  },
 ]
 
 /** R3.10: the base condition every list shares. */

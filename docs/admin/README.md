@@ -91,6 +91,7 @@ parameters are refused (400). Limits: 120 per minute per admin, 300 per minute p
 | `languages` | comma-separated names | any of; the additional-info list first, else the profile's |
 | `experienceWith` | comma-separated `DISABILITY`, `AGED_CARE`, `WORKING_WITH_CHILDREN`, `MENTAL_HEALTH`, `CHRONIC_MEDICAL` | **all** of |
 | `experienceAreas` | comma-separated `DOMAIN:Area` pairs from the shared vocabulary (`packages/schemas/src/data/experienceAreas.ts`, the labels the edit-profile page offers and `worker_experience.specificAreas` stores), e.g. `AGED_CARE:Dementia` | within a domain **any** of its areas on that worker's domain row; across domains **all** of. Each pair's domain must also be in `experienceWith`, else 400 `fields.experienceAreas` |
+| `tools` | comma-separated tool ids from `packages/schemas/src/data/serviceTools.ts` (Cleaning Services and Home and Yard Maintenance), e.g. `ladder,vacuum-cleaner` | **all** of, each on the worker's row of its own service (`worker_services."toolIds" @> ...`, one `EXISTS` per service). The worker's own free-text tools are never searched. An unknown id is 400. Echoed as `appliedFilters.tools` only when given (worker-tools U1) |
 
 Every filter combines with the others and with the suburb by AND. Only active accounts are listed.
 
@@ -99,6 +100,13 @@ unplacedCount }`. A row carries today's columns plus `serviceIds`, `distanceKm` 
 measured between suburb centres) and `location { localityLabel, precision, travelRadiusKm }` for placed workers.
 `appliedFilters` echoes the canonical query and names the suburb used (`locality { id, label }`). `unplacedCount`
 is the number of active workers matching the other filters with no mapped suburb.
+
+### `GET /v1/admin/workers/:workerId/services` -- one worker's services and tools (worker-tools U1)
+
+For the worker's admin page: `{services: [{categoryId, categoryName, subcategoryNames, toolIds, otherTools}]}`, every
+chosen service in the worker's order; `toolIds` (list order, ids no longer listed left out) and `otherTools` are empty
+for a service without a tool list. `:workerId` is the worker **profile** id (the admin page's `[id]`); 404 when none.
+Limits 120 / 300 per minute; privately cacheable for a minute. Logged with the profile id.
 
 ### `GET /v1/admin/users?search=<2..100 chars>[&role=WORKER|CLIENT|COORDINATOR|ADMIN]`
 

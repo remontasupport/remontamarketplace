@@ -10,6 +10,7 @@ import type { PhotoStore } from '../registration/adapters/photo-store'
 import { linkFor } from '../worker/application/service-documents'
 import { listSuspendedWorkers, listUsers } from './application/lists'
 import { searchWorkers } from './application/search-workers'
+import { getWorkerServices } from './application/worker-services'
 
 export interface AdminModuleDeps {
   db: Db
@@ -38,6 +39,13 @@ export function adminHandlers(deps: AdminModuleDeps) {
       if (!row) throw new ApiError(404, 'document not found')
       ctx.log.info({ entry: 'admin.getDocumentLink', documentId: req.params.documentId, workerProfileId: row.workerProfileId }, 'admin document link')
       return { status: 200, body: await linkFor(deps.bucket, row, deps.clock()) }
+    },
+
+    // worker-tools U1 (BR-14): the worker's admin page; logged with the profile id, as the document link.
+    getWorkerServices: async (req, ctx) => {
+      const body = await getWorkerServices(deps, req.params.workerId)
+      ctx.log.info({ entry: 'admin.getWorkerServices', workerProfileId: req.params.workerId, services: body.services.length }, 'admin worker services')
+      return { status: 200, body }
     },
   })
 }
