@@ -7,8 +7,9 @@
   a cleaning tools and yard and maintenance tools to the worker's dashboard if their services have cleaning and yard
   and maintenance". Record branch `aidlc/worker-tools` (from `aidlc/onboarding-tour`, closed the same day:
   `aidlc-docs/archive/onboarding-tour/`).
-- **Current Stage**: CONSTRUCTION -- U1 Code Generation Part 1: `construction/plans/tools-api-code-generation-plan.md`
-  awaiting approval. NFR Design approved 2026-10-22. Execution plan approved 2026-10-22.
+- **Current Stage**: CONSTRUCTION -- U1 `tools-api` code pushed (`feat/worker-tools-api` `b52f532`, gates green, summary
+  `construction/tools-api/code/U1-summary.md`). Next: the user opens the PR; CI; merge; staging checks (the PR body's
+  list); promotion by the full sha on the user's word; then U2 `tools-app` Functional Design. Execution plan approved 2026-10-22.
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory
   `inception/inventory/worker-tools-inventory.md` (on `main` `62e24f9`).
@@ -28,7 +29,7 @@
 - [ ] NFR Requirements -- SKIP
 - [x] NFR Design -- shared, approved 2026-10-22
 - [ ] Infrastructure Design -- SKIP
-- [ ] Code Generation -- U1 plan awaiting approval
+- [ ] Code Generation -- U1 done (pushed, PR to open); U2 to do
 - [ ] Build and Test
 
 ## Previous cycles (archived, read-only)

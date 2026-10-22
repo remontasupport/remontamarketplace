@@ -5219,3 +5219,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-22):** "Continue to next stage"
 
 **AI action (2026-10-22):** NFR Design approved. Code Generation Part 1 for U1: `construction/plans/tools-api-code-generation-plan.md` (7 steps: declaration, migration, contract, worker write/read, admin filter/read, docs, gates + PR). Found while planning: `appliedFiltersSchema` echoes filters as optional fields; `tools` echoed only when queried, so the old app never receives it; N1's compatibility test allows exactly that difference. Approval of the plan requested.
+
+**User input (2026-10-22):** "continue and approve"
+
+**AI action (2026-10-22):** U1 code generation plan approved; Part 2 executed on `feat/worker-tools-api` (from `main` `62e24f9`), 7 commits, head `b52f532`, pushed (24 files, +3,207 / -4). Gates: schemas 92, api-contract 117, db 50, form-engine 76, api lint + tsc + 908 tests (225 database-gated skipped: Docker does not answer on this machine; CI runs them), app 286 tests and lint baseline OK, turbo build 3/3. Deviations: the regenerated app Prisma clients restored, not committed (production's database gets the columns only at the api's promotion; the app deploys on merge); `docs/admin/README.md` rebuilt on `main`'s bytes after a line-ending rewrite. Summary `construction/tools-api/code/U1-summary.md`. Compare link and PR description handed to the user; no PR opened by the AI (no gh).
