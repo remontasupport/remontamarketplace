@@ -5237,3 +5237,11 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **AI action (2026-10-22):** by refs `main` = `c523f53` (merge of PR #104, head `b52f532`) at 02:58Z; deploy-api run 39714324255 was at its quality gates at 03:00Z, before the staging migration step; watching the run.
 
 **AI action (2026-10-22):** deploy-api run 39714324255 completed success: quality, build and push `api:c523f538e310ec32236ec8c5748948ba4b686479`, "Apply pending migrations to the staging database" success (03:09Z), staging deployed; promote skipped. Staging `/v1/health` 200; `GET /v1/worker/services/tools` without a token 401 (the route exists). Production untouched.
+
+**User input (2026-10-22):** "Saw the columns now, is it ready to test on the prview now?"
+
+**AI action (2026-10-22):** answered: U1 is api-only, so the preview has no tools screen yet; the preview can prove today's app works against the new staging api (the regression list given); the new entries only by api calls. Proposed starting U2 now (its PR preview talks to staging, which has U1), merging U2 only after U1's promotion -- a change of order from the execution plan.
+
+**User input (2026-10-22):** "start the U2 now"
+
+**AI action (2026-10-22):** U2 `tools-app` Functional Design started; the app read (the setup page's Next-driven views, saves on Next; the admin dashboard's filter panel and `query.ts`; the admin worker page; `ServicesField`). Plan `construction/plans/tools-app-functional-design-plan.md` with Q1-Q5 and the rules decided without a question, handed to the user. Recorded: U2 merges only after U1 is promoted; U2 refreshes the app's committed Prisma clients. The staging regression checks of U1 remain open (user).

@@ -7,9 +7,10 @@
   a cleaning tools and yard and maintenance tools to the worker's dashboard if their services have cleaning and yard
   and maintenance". Record branch `aidlc/worker-tools` (from `aidlc/onboarding-tour`, closed the same day:
   `aidlc-docs/archive/onboarding-tour/`).
-- **Current Stage**: CONSTRUCTION -- U1 `tools-api` code pushed (`feat/worker-tools-api` `b52f532`, gates green, summary
-  `construction/tools-api/code/U1-summary.md`). Next: the user opens the PR; CI; merge; staging checks (the PR body's
-  list); promotion by the full sha on the user's word; then U2 `tools-app` Functional Design. Execution plan approved 2026-10-22.
+- **Current Stage**: CONSTRUCTION -- U1 merged (#104, `main` `c523f53`) and on staging (migration applied 03:09Z);
+  **not promoted** (full sha `c523f538e310ec32236ec8c5748948ba4b686479`, after the staging checks in the PR body).
+  U2 `tools-app` Functional Design: questions Q1-Q5 (`construction/plans/tools-app-functional-design-plan.md`) with the
+  user. U2 merges only after U1's promotion (user, 2026-10-22: U2 started before it).
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory
   `inception/inventory/worker-tools-inventory.md` (on `main` `62e24f9`).
@@ -25,11 +26,11 @@
 - [x] Units Generation -- SKIP (U1 `tools-api`, U2 `tools-app` in the plan)
 
 ### CONSTRUCTION PHASE
-- [ ] Functional Design -- U1 approved 2026-10-22; U2 to do
+- [ ] Functional Design -- U1 approved 2026-10-22; U2 questions out
 - [ ] NFR Requirements -- SKIP
 - [x] NFR Design -- shared, approved 2026-10-22
 - [ ] Infrastructure Design -- SKIP
-- [ ] Code Generation -- U1 done (pushed, PR to open); U2 to do
+- [ ] Code Generation -- U1 merged #104, on staging; U2 to do
 - [ ] Build and Test
 
 ## Previous cycles (archived, read-only)
