@@ -60,6 +60,10 @@ import {
   serviceDocumentTicketResponseSchema,
   serviceRegistrationBodySchema,
   serviceRegistrationParamsSchema,
+  serviceToolsBodySchema,
+  serviceToolsParamsSchema,
+  serviceToolsSchema,
+  serviceToolsViewSchema,
   serviceRegistrationViewSchema,
   servicesBodySchema,
   vehicleSchema,
@@ -393,6 +397,10 @@ export const workerContract = defineContract('worker', {
   // ---- U3a services: the chosen services and their registrations.
   putServices: { method: 'PUT', path: '/v1/worker/services', summary: 'Replace the chosen services and sub-categories (checked against the catalogue). A removed service is deleted entirely: its registration, its documents and their files.', body: json(servicesBodySchema), responses: { 200: servicesViewSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 8 }) },
   putServiceRegistration: { method: 'PUT', path: '/v1/worker/services/:categoryId/registration', summary: 'Replace the registration of a chosen nursing or therapeutic service; 404 when the service is not chosen.', pathParams: serviceRegistrationParamsSchema, body: json(serviceRegistrationBodySchema), responses: { 200: serviceRegistrationViewSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 2 }) },
+  // worker-tools U1: the tools of the two services that have a list. Their own read: the profile read stays as it is,
+  // because today's app parses it strictly (BR-11).
+  getServiceTools: { method: 'GET', path: '/v1/worker/services/tools', summary: "The tools of each chosen service that has a tool list (Cleaning Services, Home and Yard Maintenance): the ticked ids in list order and the worker's own tools. Never cached.", responses: { 200: serviceToolsViewSchema }, meta: workerRead({ noCache: true }) },
+  putServiceTools: { method: 'PUT', path: '/v1/worker/services/:categoryId/tools', summary: "Replace the tools of a chosen service that has a tool list: ids of that service's list (stored in list order) and up to 5 of the worker's own (cleaned, 60 characters each); 404 when the service is not chosen. Not part of completion.", pathParams: serviceToolsParamsSchema, body: json(serviceToolsBodySchema), responses: { 200: serviceToolsSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
   // ---- U3b service documents: straight to a private bucket by ticket, confirmed, viewed through a short signed link.
   createServiceDocumentTicket: { method: 'POST', path: '/v1/worker/service-documents/tickets', summary: 'A ticket to upload one worker document (PDF or a photo, 50 MB) straight to the private bucket: a service document or (U4a) a compliance document.', body: json(serviceDocumentTicketRequestSchema), responses: { 201: serviceDocumentTicketResponseSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1, limit: 20 }) },
   confirmServiceDocument: { method: 'POST', path: '/v1/worker/service-documents', summary: 'Confirm an uploaded document as one the chosen service calls for -- or, with categoryId other-documents, an insurance or transport document: checked, kept privately, recorded (it replaces the previous file of that type).', body: json(confirmServiceDocumentSchema), responses: { 201: serviceDocumentSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 2 }) },

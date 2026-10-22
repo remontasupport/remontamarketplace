@@ -1,0 +1,1661 @@
+{
+ "profile": {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+   "id": {
+    "type": "string",
+    "maxLength": 40
+   },
+   "names": {
+    "type": "object",
+    "properties": {
+     "firstName": {
+      "type": "string",
+      "maxLength": 100
+     },
+     "middleName": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 100
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "lastName": {
+      "type": "string",
+      "maxLength": 100
+     }
+    },
+    "required": [
+     "firstName",
+     "middleName",
+     "lastName"
+    ],
+    "additionalProperties": false
+   },
+   "mobile": {
+    "type": "string",
+    "maxLength": 40
+   },
+   "photos": {
+    "type": "object",
+    "properties": {
+     "main": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 2048
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "required": [
+     "main"
+    ],
+    "additionalProperties": false
+   },
+   "bio": {
+    "anyOf": [
+     {
+      "type": "string",
+      "maxLength": 2000
+     },
+     {
+      "type": "null"
+     }
+    ]
+   },
+   "personalInfo": {
+    "type": "object",
+    "properties": {
+     "dateOfBirth": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 20
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "age": {
+      "anyOf": [
+       {
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "gender": {
+      "anyOf": [
+       {
+        "type": "string",
+        "maxLength": 40
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "hasVehicle": {
+      "anyOf": [
+       {
+        "type": "string",
+        "enum": [
+         "Yes",
+         "No"
+        ]
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "languages": {
+      "maxItems": 50,
+      "type": "array",
+      "items": {
+       "type": "string",
+       "maxLength": 40
+      }
+     }
+    },
+    "required": [
+     "dateOfBirth",
+     "age",
+     "gender",
+     "hasVehicle",
+     "languages"
+    ],
+    "additionalProperties": false
+   },
+   "abn": {
+    "anyOf": [
+     {
+      "type": "object",
+      "properties": {
+       "type": {
+        "type": "string",
+        "enum": [
+         "abn",
+         "tfn"
+        ]
+       },
+       "value": {
+        "anyOf": [
+         {
+          "type": "string",
+          "maxLength": 20
+         },
+         {
+          "type": "null"
+         }
+        ]
+       },
+       "signed": {
+        "type": "boolean"
+       }
+      },
+      "required": [
+       "type",
+       "value",
+       "signed"
+      ],
+      "additionalProperties": false
+     },
+     {
+      "type": "null"
+     }
+    ]
+   },
+   "homeAddress": {
+    "anyOf": [
+     {
+      "type": "object",
+      "properties": {
+       "streetLine": {
+        "anyOf": [
+         {
+          "type": "string",
+          "maxLength": 200
+         },
+         {
+          "type": "null"
+         }
+        ]
+       },
+       "localityId": {
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
+       },
+       "suburb": {
+        "type": "string",
+        "maxLength": 100
+       },
+       "state": {
+        "type": "string",
+        "maxLength": 10
+       },
+       "postcode": {
+        "type": "string",
+        "maxLength": 10
+       }
+      },
+      "required": [
+       "streetLine",
+       "localityId",
+       "suburb",
+       "state",
+       "postcode"
+      ],
+      "additionalProperties": false
+     },
+     {
+      "type": "null"
+     }
+    ]
+   },
+   "serviceArea": {
+    "anyOf": [
+     {
+      "type": "object",
+      "properties": {
+       "localityId": {
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
+       },
+       "label": {
+        "type": "string",
+        "maxLength": 120
+       },
+       "travelRadiusKm": {
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
+       },
+       "precision": {
+        "type": "string",
+        "enum": [
+         "LOCALITY",
+         "ADDRESS"
+        ]
+       }
+      },
+      "required": [
+       "localityId",
+       "label",
+       "travelRadiusKm",
+       "precision"
+      ],
+      "additionalProperties": false
+     },
+     {
+      "type": "null"
+     }
+    ]
+   },
+   "displayRole": {
+    "type": "string",
+    "maxLength": 200
+   },
+   "verificationStatus": {
+    "type": "string",
+    "maxLength": 40
+   },
+   "isPublished": {
+    "type": "boolean"
+   },
+   "completion": {
+    "type": "object",
+    "properties": {
+     "accountDetails": {
+      "type": "boolean"
+     },
+     "compliance": {
+      "type": "boolean"
+     },
+     "trainings": {
+      "type": "boolean"
+     },
+     "services": {
+      "type": "boolean"
+     },
+     "profileCompleted": {
+      "type": "boolean"
+     },
+     "percent": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+     }
+    },
+    "required": [
+     "accountDetails",
+     "compliance",
+     "trainings",
+     "services",
+     "profileCompleted",
+     "percent"
+    ],
+    "additionalProperties": false
+   },
+   "requirements": {
+    "type": "object",
+    "properties": {
+     "mandatory": {
+      "maxItems": 100,
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "id": {
+         "type": "string",
+         "maxLength": 80
+        },
+        "name": {
+         "type": "string",
+         "maxLength": 120
+        },
+        "requirementType": {
+         "type": "string",
+         "maxLength": 80
+        },
+        "documentType": {
+         "type": "string",
+         "enum": [
+          "REQUIRED",
+          "OPTIONAL"
+         ]
+        },
+        "status": {
+         "type": "string",
+         "enum": [
+          "missing",
+          "submitted",
+          "approved",
+          "rejected",
+          "expired"
+         ]
+        },
+        "description": {
+         "default": "",
+         "type": "string",
+         "maxLength": 1000
+        },
+        "hasExpiration": {
+         "default": false,
+         "type": "boolean"
+        }
+       },
+       "required": [
+        "id",
+        "name",
+        "requirementType",
+        "documentType",
+        "status",
+        "description",
+        "hasExpiration"
+       ],
+       "additionalProperties": false
+      }
+     },
+     "trainings": {
+      "maxItems": 100,
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "id": {
+         "type": "string",
+         "maxLength": 80
+        },
+        "name": {
+         "type": "string",
+         "maxLength": 120
+        },
+        "requirementType": {
+         "type": "string",
+         "maxLength": 80
+        },
+        "documentType": {
+         "type": "string",
+         "enum": [
+          "REQUIRED",
+          "OPTIONAL"
+         ]
+        },
+        "status": {
+         "type": "string",
+         "enum": [
+          "missing",
+          "submitted",
+          "approved",
+          "rejected",
+          "expired"
+         ]
+        },
+        "description": {
+         "default": "",
+         "type": "string",
+         "maxLength": 1000
+        },
+        "hasExpiration": {
+         "default": false,
+         "type": "boolean"
+        }
+       },
+       "required": [
+        "id",
+        "name",
+        "requirementType",
+        "documentType",
+        "status",
+        "description",
+        "hasExpiration"
+       ],
+       "additionalProperties": false
+      }
+     },
+     "additional": {
+      "default": [],
+      "maxItems": 50,
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "id": {
+         "type": "string",
+         "maxLength": 80
+        },
+        "name": {
+         "type": "string",
+         "maxLength": 120
+        },
+        "category": {
+         "type": "string",
+         "enum": [
+          "INSURANCE",
+          "TRANSPORT"
+         ]
+        },
+        "description": {
+         "type": "string",
+         "maxLength": 1000
+        },
+        "documentType": {
+         "type": "string",
+         "enum": [
+          "REQUIRED",
+          "OPTIONAL",
+          "CONDITIONAL"
+         ]
+        },
+        "conditionKey": {
+         "anyOf": [
+          {
+           "type": "string",
+           "maxLength": 80
+          },
+          {
+           "type": "null"
+          }
+         ]
+        },
+        "requiredIfTrue": {
+         "type": [
+          "boolean",
+          "null"
+         ]
+        },
+        "status": {
+         "type": "string",
+         "enum": [
+          "missing",
+          "submitted",
+          "approved",
+          "rejected",
+          "expired"
+         ]
+        }
+       },
+       "required": [
+        "id",
+        "name",
+        "category",
+        "description",
+        "documentType",
+        "conditionKey",
+        "requiredIfTrue",
+        "status"
+       ],
+       "additionalProperties": false
+      }
+     }
+    },
+    "required": [
+     "mandatory",
+     "trainings",
+     "additional"
+    ],
+    "additionalProperties": false
+   },
+   "services": {
+    "maxItems": 50,
+    "type": "array",
+    "items": {
+     "type": "object",
+     "properties": {
+      "categoryId": {
+       "type": "string",
+       "maxLength": 80
+      },
+      "categoryName": {
+       "type": "string",
+       "maxLength": 120
+      },
+      "subcategoryIds": {
+       "maxItems": 50,
+       "type": "array",
+       "items": {
+        "type": "string",
+        "maxLength": 80
+       }
+      },
+      "subcategoryNames": {
+       "maxItems": 50,
+       "type": "array",
+       "items": {
+        "type": "string",
+        "maxLength": 120
+       }
+      }
+     },
+     "required": [
+      "categoryId",
+      "categoryName",
+      "subcategoryIds",
+      "subcategoryNames"
+     ],
+     "additionalProperties": false
+    }
+   },
+   "serviceRegistrations": {
+    "maxItems": 2,
+    "type": "array",
+    "items": {
+     "type": "object",
+     "properties": {
+      "categoryId": {
+       "type": "string",
+       "enum": [
+        "nursing-services",
+        "therapeutic-supports"
+       ]
+      },
+      "nursingType": {
+       "anyOf": [
+        {
+         "type": "string",
+         "enum": [
+          "registered",
+          "enrolled"
+         ]
+        },
+        {
+         "type": "null"
+        }
+       ]
+      },
+      "hasExperience": {
+       "type": [
+        "boolean",
+        "null"
+       ]
+      },
+      "registrationNumber": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 60
+        },
+        {
+         "type": "null"
+        }
+       ]
+      },
+      "expiryDate": {
+       "anyOf": [
+        {
+         "type": "string",
+         "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        {
+         "type": "null"
+        }
+       ]
+      }
+     },
+     "required": [
+      "categoryId",
+      "nursingType",
+      "hasExperience",
+      "registrationNumber",
+      "expiryDate"
+     ],
+     "additionalProperties": false
+    }
+   },
+   "serviceDocuments": {
+    "maxItems": 200,
+    "type": "array",
+    "items": {
+     "type": "object",
+     "properties": {
+      "id": {
+       "type": "string",
+       "maxLength": 40
+      },
+      "serviceName": {
+       "type": "string",
+       "maxLength": 120
+      },
+      "requirementType": {
+       "type": "string",
+       "maxLength": 80
+      },
+      "name": {
+       "type": "string",
+       "maxLength": 200
+      },
+      "status": {
+       "type": "string",
+       "maxLength": 20
+      },
+      "url": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 2048
+        },
+        {
+         "type": "null"
+        }
+       ]
+      },
+      "fileName": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 200
+        },
+        {
+         "type": "null"
+        }
+       ]
+      },
+      "uploadedAt": {
+       "anyOf": [
+        {
+         "type": "string",
+         "format": "date-time",
+         "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        },
+        {
+         "type": "null"
+        }
+       ]
+      }
+     },
+     "required": [
+      "id",
+      "serviceName",
+      "requirementType",
+      "name",
+      "status",
+      "url",
+      "fileName",
+      "uploadedAt"
+     ],
+     "additionalProperties": false
+    }
+   },
+   "complianceDocuments": {
+    "maxItems": 200,
+    "type": "array",
+    "items": {
+     "type": "object",
+     "properties": {
+      "id": {
+       "type": "string",
+       "maxLength": 40
+      },
+      "requirementType": {
+       "type": "string",
+       "maxLength": 120
+      },
+      "name": {
+       "type": "string",
+       "maxLength": 200
+      },
+      "status": {
+       "type": "string",
+       "maxLength": 20
+      },
+      "documentCategory": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 40
+        },
+        {
+         "type": "null"
+        }
+       ]
+      },
+      "url": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 2048
+        },
+        {
+         "type": "null"
+        }
+       ]
+      },
+      "fileName": {
+       "anyOf": [
+        {
+         "type": "string",
+         "maxLength": 200
+        },
+        {
+         "type": "null"
+        }
+       ]
+      },
+      "uploadedAt": {
+       "anyOf": [
+        {
+         "type": "string",
+         "format": "date-time",
+         "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        },
+        {
+         "type": "null"
+        }
+       ]
+      },
+      "expiresAt": {
+       "anyOf": [
+        {
+         "type": "string",
+         "format": "date-time",
+         "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        },
+        {
+         "type": "null"
+        }
+       ]
+      },
+      "isCitizen": {
+       "type": [
+        "boolean",
+        "null"
+       ]
+      }
+     },
+     "required": [
+      "id",
+      "requirementType",
+      "name",
+      "status",
+      "documentCategory",
+      "url",
+      "fileName",
+      "uploadedAt",
+      "expiresAt",
+      "isCitizen"
+     ],
+     "additionalProperties": false
+    }
+   },
+   "sections": {
+    "type": "object",
+    "properties": {
+     "availability": {
+      "maxItems": 100,
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "day": {
+         "type": "string",
+         "enum": [
+          "MONDAY",
+          "TUESDAY",
+          "WEDNESDAY",
+          "THURSDAY",
+          "FRIDAY",
+          "SATURDAY",
+          "SUNDAY"
+         ]
+        },
+        "startMinute": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 1440
+        },
+        "endMinute": {
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 1440
+        }
+       },
+       "required": [
+        "day",
+        "startMinute",
+        "endMinute"
+       ],
+       "additionalProperties": false
+      }
+     },
+     "experience": {
+      "maxItems": 10,
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "domain": {
+         "type": "string",
+         "enum": [
+          "DISABILITY",
+          "AGED_CARE",
+          "WORKING_WITH_CHILDREN",
+          "MENTAL_HEALTH",
+          "CHRONIC_MEDICAL"
+         ]
+        },
+        "isProfessional": {
+         "type": "boolean"
+        },
+        "isPersonal": {
+         "type": "boolean"
+        },
+        "specificAreas": {
+         "maxItems": 50,
+         "type": "array",
+         "items": {
+          "type": "string",
+          "maxLength": 120
+         }
+        },
+        "otherAreas": {
+         "maxItems": 50,
+         "type": "array",
+         "items": {
+          "type": "string",
+          "maxLength": 120
+         }
+        },
+        "description": {
+         "anyOf": [
+          {
+           "type": "string",
+           "maxLength": 2000
+          },
+          {
+           "type": "null"
+          }
+         ]
+        }
+       },
+       "required": [
+        "domain",
+        "isProfessional",
+        "isPersonal",
+        "specificAreas",
+        "otherAreas",
+        "description"
+       ],
+       "additionalProperties": false
+      }
+     },
+     "jobHistory": {
+      "maxItems": 100,
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "id": {
+         "type": "string",
+         "maxLength": 40
+        },
+        "jobTitle": {
+         "type": "string",
+         "maxLength": 200
+        },
+        "company": {
+         "type": "string",
+         "maxLength": 200
+        },
+        "startMonth": {
+         "anyOf": [
+          {
+           "type": "string",
+           "maxLength": 20
+          },
+          {
+           "type": "null"
+          }
+         ]
+        },
+        "startYear": {
+         "anyOf": [
+          {
+           "type": "integer",
+           "minimum": -9007199254740991,
+           "maximum": 9007199254740991
+          },
+          {
+           "type": "null"
+          }
+         ]
+        },
+        "endMonth": {
+         "anyOf": [
+          {
+           "type": "string",
+           "maxLength": 20
+          },
+          {
+           "type": "null"
+          }
+         ]
+        },
+        "endYear": {
+         "anyOf": [
+          {
+           "type": "integer",
+           "minimum": -9007199254740991,
+           "maximum": 9007199254740991
+          },
+          {
+           "type": "null"
+          }
+         ]
+        },
+        "currentlyWorking": {
+         "type": "boolean"
+        }
+       },
+       "required": [
+        "id",
+        "jobTitle",
+        "company",
+        "startMonth",
+        "startYear",
+        "endMonth",
+        "endYear",
+        "currentlyWorking"
+       ],
+       "additionalProperties": false
+      }
+     },
+     "education": {
+      "maxItems": 100,
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "id": {
+         "type": "string",
+         "maxLength": 40
+        },
+        "institution": {
+         "type": "string",
+         "maxLength": 200
+        },
+        "qualification": {
+         "type": "string",
+         "maxLength": 200
+        },
+        "startMonth": {
+         "anyOf": [
+          {
+           "type": "string",
+           "maxLength": 20
+          },
+          {
+           "type": "null"
+          }
+         ]
+        },
+        "startYear": {
+         "anyOf": [
+          {
+           "type": "integer",
+           "minimum": -9007199254740991,
+           "maximum": 9007199254740991
+          },
+          {
+           "type": "null"
+          }
+         ]
+        },
+        "endMonth": {
+         "anyOf": [
+          {
+           "type": "string",
+           "maxLength": 20
+          },
+          {
+           "type": "null"
+          }
+         ]
+        },
+        "endYear": {
+         "anyOf": [
+          {
+           "type": "integer",
+           "minimum": -9007199254740991,
+           "maximum": 9007199254740991
+          },
+          {
+           "type": "null"
+          }
+         ]
+        },
+        "currentlyStudying": {
+         "type": "boolean"
+        }
+       },
+       "required": [
+        "id",
+        "institution",
+        "qualification",
+        "startMonth",
+        "startYear",
+        "endMonth",
+        "endYear",
+        "currentlyStudying"
+       ],
+       "additionalProperties": false
+      }
+     },
+     "additionalInfo": {
+      "anyOf": [
+       {
+        "type": "object",
+        "properties": {
+         "languages": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+           "type": "string",
+           "maxLength": 40
+          }
+         },
+         "culturalBackground": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+           "type": "string",
+           "maxLength": 80
+          }
+         },
+         "religion": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+           "type": "string",
+           "maxLength": 80
+          }
+         },
+         "interests": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+           "type": "string",
+           "maxLength": 80
+          }
+         },
+         "workPreferences": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+           "type": "string",
+           "maxLength": 80
+          }
+         },
+         "lgbtqiaSupport": {
+          "type": [
+           "boolean",
+           "null"
+          ]
+         },
+         "nonSmoker": {
+          "type": [
+           "boolean",
+           "null"
+          ]
+         },
+         "petFriendly": {
+          "type": [
+           "boolean",
+           "null"
+          ]
+         },
+         "personality": {
+          "anyOf": [
+           {
+            "type": "string",
+            "maxLength": 2000
+           },
+           {
+            "type": "null"
+           }
+          ]
+         },
+         "uniqueService": {
+          "maxItems": 50,
+          "type": "array",
+          "items": {
+           "type": "string",
+           "maxLength": 200
+          }
+         },
+         "funFact": {
+          "anyOf": [
+           {
+            "type": "string",
+            "maxLength": 1000
+           },
+           {
+            "type": "null"
+           }
+          ]
+         }
+        },
+        "required": [
+         "languages",
+         "culturalBackground",
+         "religion",
+         "interests",
+         "workPreferences",
+         "lgbtqiaSupport",
+         "nonSmoker",
+         "petFriendly",
+         "personality",
+         "uniqueService",
+         "funFact"
+        ],
+        "additionalProperties": false
+       },
+       {
+        "type": "null"
+       }
+      ]
+     },
+     "bankAccount": {
+      "anyOf": [
+       {
+        "type": "object",
+        "properties": {
+         "accountName": {
+          "type": "string",
+          "maxLength": 100
+         },
+         "bankName": {
+          "type": "string",
+          "maxLength": 100
+         },
+         "bsbLast3": {
+          "type": "string",
+          "pattern": "^\\d{3}$"
+         },
+         "accountNumberLast3": {
+          "type": "string",
+          "pattern": "^\\d{3}$"
+         }
+        },
+        "required": [
+         "accountName",
+         "bankName",
+         "bsbLast3",
+         "accountNumberLast3"
+        ],
+        "additionalProperties": false
+       },
+       {
+        "type": "null"
+       }
+      ]
+     }
+    },
+    "required": [
+     "availability",
+     "experience",
+     "jobHistory",
+     "education",
+     "additionalInfo",
+     "bankAccount"
+    ],
+    "additionalProperties": false
+   },
+   "updatedAt": {
+    "type": "string",
+    "format": "date-time",
+    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+   }
+  },
+  "required": [
+   "id",
+   "names",
+   "mobile",
+   "photos",
+   "bio",
+   "personalInfo",
+   "abn",
+   "homeAddress",
+   "serviceArea",
+   "displayRole",
+   "verificationStatus",
+   "isPublished",
+   "completion",
+   "requirements",
+   "services",
+   "serviceRegistrations",
+   "serviceDocuments",
+   "complianceDocuments",
+   "sections",
+   "updatedAt"
+  ],
+  "additionalProperties": false
+ },
+ "workerService": {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+   "categoryId": {
+    "type": "string",
+    "maxLength": 80
+   },
+   "categoryName": {
+    "type": "string",
+    "maxLength": 120
+   },
+   "subcategoryIds": {
+    "maxItems": 50,
+    "type": "array",
+    "items": {
+     "type": "string",
+     "maxLength": 80
+    }
+   },
+   "subcategoryNames": {
+    "maxItems": 50,
+    "type": "array",
+    "items": {
+     "type": "string",
+     "maxLength": 120
+    }
+   }
+  },
+  "required": [
+   "categoryId",
+   "categoryName",
+   "subcategoryIds",
+   "subcategoryNames"
+  ],
+  "additionalProperties": false
+ },
+ "servicesView": {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+   "services": {
+    "maxItems": 50,
+    "type": "array",
+    "items": {
+     "type": "object",
+     "properties": {
+      "categoryId": {
+       "type": "string",
+       "maxLength": 80
+      },
+      "categoryName": {
+       "type": "string",
+       "maxLength": 120
+      },
+      "subcategoryIds": {
+       "maxItems": 50,
+       "type": "array",
+       "items": {
+        "type": "string",
+        "maxLength": 80
+       }
+      },
+      "subcategoryNames": {
+       "maxItems": 50,
+       "type": "array",
+       "items": {
+        "type": "string",
+        "maxLength": 120
+       }
+      }
+     },
+     "required": [
+      "categoryId",
+      "categoryName",
+      "subcategoryIds",
+      "subcategoryNames"
+     ],
+     "additionalProperties": false
+    }
+   }
+  },
+  "required": [
+   "services"
+  ],
+  "additionalProperties": false
+ },
+ "searchResponse": {
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+   "data": {
+    "type": "array",
+    "items": {
+     "type": "object",
+     "properties": {
+      "id": {
+       "type": "string"
+      },
+      "userId": {
+       "type": "string"
+      },
+      "firstName": {
+       "type": "string"
+      },
+      "lastName": {
+       "type": "string"
+      },
+      "mobile": {
+       "type": "string"
+      },
+      "email": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "gender": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "age": {
+       "anyOf": [
+        {
+         "type": "integer",
+         "minimum": -9007199254740991,
+         "maximum": 9007199254740991
+        },
+        {
+         "type": "null"
+        }
+       ]
+      },
+      "languages": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "services": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "serviceIds": {
+       "type": "array",
+       "items": {
+        "type": "string"
+       }
+      },
+      "city": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "state": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "postalCode": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "photos": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "experience": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "introduction": {
+       "type": [
+        "string",
+        "null"
+       ]
+      },
+      "createdAt": {
+       "type": "string",
+       "format": "date-time",
+       "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+      },
+      "updatedAt": {
+       "type": "string",
+       "format": "date-time",
+       "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+      },
+      "isActive": {
+       "type": "boolean"
+      },
+      "distanceKm": {
+       "type": "number"
+      },
+      "location": {
+       "type": "object",
+       "properties": {
+        "localityLabel": {
+         "type": "string"
+        },
+        "precision": {
+         "type": "string",
+         "enum": [
+          "LOCALITY",
+          "ADDRESS"
+         ]
+        },
+        "travelRadiusKm": {
+         "type": "integer",
+         "minimum": -9007199254740991,
+         "maximum": 9007199254740991
+        }
+       },
+       "required": [
+        "localityLabel",
+        "precision",
+        "travelRadiusKm"
+       ],
+       "additionalProperties": false
+      }
+     },
+     "required": [
+      "id",
+      "userId",
+      "firstName",
+      "lastName",
+      "mobile",
+      "email",
+      "gender",
+      "age",
+      "languages",
+      "services",
+      "serviceIds",
+      "city",
+      "state",
+      "postalCode",
+      "photos",
+      "experience",
+      "introduction",
+      "createdAt",
+      "updatedAt",
+      "isActive"
+     ],
+     "additionalProperties": false
+    }
+   },
+   "pagination": {
+    "type": "object",
+    "properties": {
+     "total": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+     },
+     "page": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+     },
+     "pageSize": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+     },
+     "totalPages": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+     },
+     "hasNext": {
+      "type": "boolean"
+     },
+     "hasPrev": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "total",
+     "page",
+     "pageSize",
+     "totalPages",
+     "hasNext",
+     "hasPrev"
+    ],
+    "additionalProperties": false
+   },
+   "appliedFilters": {
+    "type": "object",
+    "properties": {
+     "sortBy": {
+      "type": "string",
+      "enum": [
+       "createdAt",
+       "firstName",
+       "lastName",
+       "city",
+       "state",
+       "distance"
+      ]
+     },
+     "sortOrder": {
+      "type": "string",
+      "enum": [
+       "asc",
+       "desc"
+      ]
+     },
+     "locality": {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
+       },
+       "label": {
+        "type": "string"
+       }
+      },
+      "required": [
+       "id",
+       "label"
+      ],
+      "additionalProperties": false
+     },
+     "withinKm": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
+     },
+     "unplaced": {
+      "type": "boolean",
+      "const": true
+     },
+     "state": {
+      "type": "string"
+     },
+     "search": {
+      "type": "string"
+     },
+     "typeOfSupport": {
+      "type": "string"
+     },
+     "gender": {
+      "type": "string"
+     },
+     "hasVehicle": {
+      "type": "string"
+     },
+     "workerType": {
+      "type": "string"
+     },
+     "age": {
+      "type": "string"
+     },
+     "languages": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "therapeuticSubcategories": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "experienceWith": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     },
+     "experienceAreas": {
+      "type": "array",
+      "items": {
+       "type": "string"
+      }
+     }
+    },
+    "required": [
+     "sortBy",
+     "sortOrder"
+    ],
+    "additionalProperties": false
+   },
+   "unplacedCount": {
+    "type": "integer",
+    "minimum": 0,
+    "maximum": 9007199254740991
+   }
+  },
+  "required": [
+   "data",
+   "pagination",
+   "appliedFilters",
+   "unplacedCount"
+  ],
+  "additionalProperties": false
+ }
+}
