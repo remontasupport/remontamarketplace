@@ -4,6 +4,7 @@
 // answer 400 with the field named.
 import type { AppliedFilters, AuState, WorkerSearchQueryParsed } from '@remonta/api-contract'
 import { splitExperienceAreaPair } from '@remonta/schemas/data/experienceAreas'
+import { toolServiceOf, type ToolService } from '@remonta/schemas/data/serviceTools'
 import { ApiError } from '../../../platform/errors'
 
 export type SortField = 'createdAt' | 'firstName' | 'lastName' | 'city' | 'state' | 'distance'
@@ -47,6 +48,10 @@ export interface SearchQuery {
   experienceAreas: string[]
   /** The same pairs grouped: the areas (any of) per domain (all of) the statement reads (R3.11). */
   experienceAreasByDomain: Partial<Record<CareDomain, string[]>>
+  /** worker-tools U1: the tool ids, echoed in appliedFilters. */
+  tools: string[]
+  /** The same ids grouped by their service: all of them, each on its own service's row (BR-12). */
+  toolsByService: Partial<Record<ToolService, string[]>>
 }
 
 export interface LocalityRef {
@@ -84,6 +89,11 @@ export function normaliseQuery(raw: WorkerSearchQueryParsed, now: Date): SearchQ
     ;(experienceAreasByDomain[split.domain] ??= []).push(split.area)
   }
 
+  // BR-12: the contract admits listed ids only, so every id has a service.
+  const tools = raw.tools ?? []
+  const toolsByService: Partial<Record<ToolService, string[]>> = {}
+  for (const id of tools) (toolsByService[toolServiceOf(id)!] ??= []).push(id)
+
   return {
     page: raw.page,
     pageSize: raw.pageSize,
@@ -105,6 +115,8 @@ export function normaliseQuery(raw: WorkerSearchQueryParsed, now: Date): SearchQ
     experienceWith,
     experienceAreas,
     experienceAreasByDomain,
+    tools,
+    toolsByService,
   }
 }
 
@@ -157,5 +169,6 @@ export function appliedFiltersOf(q: SearchQuery, locality?: LocalityRef): Applie
     ...(q.therapeuticSubcategories.length ? { therapeuticSubcategories: q.therapeuticSubcategories } : {}),
     ...(q.experienceWith.length ? { experienceWith: q.experienceWith } : {}),
     ...(q.experienceAreas.length ? { experienceAreas: q.experienceAreas } : {}),
+    ...(q.tools.length ? { tools: q.tools } : {}),
   }
 }
