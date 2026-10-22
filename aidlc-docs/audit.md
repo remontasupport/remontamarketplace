@@ -5179,3 +5179,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-22):** "let us start a new ai dlc"
 
 **AI action (2026-10-22):** asked for the new cycle's goal and what to do with the open `onboarding-tour` cycle (C2 `completion-app` unbuilt; H3, Zoho rotation, the prod 403, `test/my-profile-columns` open) before any inventory.
+
+**User answers (2026-10-22, AskUserQuestion):** goal: "I want to add a lists of a cleaning tools and yard and maintenance tools to the worker's dashboard if their services have cleaning and yard and maintenance"; the open cycle: "Close and carry over (Recommended)".
+
+**AI action (2026-10-22):** onboarding-tour closed: record moved to `aidlc-docs/archive/onboarding-tour/` (README, `aidlc-state-at-close.md`); a fresh `aidlc-state.md` with C2, H3, the Zoho rotation, the prod 403 and `test/my-profile-columns` as follow-ups 27-31 (commit `d0f4979` on `aidlc/onboarding-tour`). New cycle **worker-tools** on `aidlc/worker-tools`. Workspace detection: brownfield, unchanged. Targeted inventory `inception/inventory/worker-tools-inventory.md`: `cleaning-services` and `home-yard-maintenance` exist with no subcategories; nothing about tools exists; `worker_services.metadata` is unused; the Services group generates one step per chosen service. Requirements Analysis: `inception/requirements/requirement-verification-questions.md` (8 questions + the 3 extension opt-ins) handed to the user. No code written.
