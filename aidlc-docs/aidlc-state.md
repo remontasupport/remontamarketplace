@@ -9,8 +9,8 @@
   `aidlc-docs/archive/onboarding-tour/`).
 - **Current Stage**: CONSTRUCTION -- U1 merged (#104, `main` `c523f53`) and on staging (migration applied 03:09Z);
   **not promoted** (full sha `c523f538e310ec32236ec8c5748948ba4b686479`, after the staging checks in the PR body).
-  U2 `tools-app` Functional Design: questions Q1-Q5 (`construction/plans/tools-app-functional-design-plan.md`) with the
-  user. U2 merges only after U1's promotion (user, 2026-10-22: U2 started before it).
+  U2 `tools-app` Functional Design written (`construction/tools-app/functional-design/`, Q1 b, Q2 as Languages, Q3-Q5 a),
+  awaiting approval. U2 merges only after U1's promotion (user, 2026-10-22: U2 started before it).
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory
   `inception/inventory/worker-tools-inventory.md` (on `main` `62e24f9`).
@@ -26,7 +26,7 @@
 - [x] Units Generation -- SKIP (U1 `tools-api`, U2 `tools-app` in the plan)
 
 ### CONSTRUCTION PHASE
-- [ ] Functional Design -- U1 approved 2026-10-22; U2 questions out
+- [ ] Functional Design -- U1 approved 2026-10-22; U2 written, awaiting approval
 - [ ] NFR Requirements -- SKIP
 - [x] NFR Design -- shared, approved 2026-10-22
 - [ ] Infrastructure Design -- SKIP

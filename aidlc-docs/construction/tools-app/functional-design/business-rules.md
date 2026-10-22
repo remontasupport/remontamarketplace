@@ -1,0 +1,19 @@
+# U2 `tools-app`: business rules
+
+Answers: `construction/plans/tools-app-functional-design-plan.md` (Q1 b, Q2 "the same as the Cultural and Languages
+fields", Q3 a, Q4 a, Q5 a).
+
+| # | Rule | From |
+|---|---|---|
+| UR-1 | **A "Your tools" screen of its own** (`?view=tools`) in the step of Cleaning Services and of Home and Yard Maintenance, **after** the certificate screen (`documents`); no other service gets it. | Q1 b, FR-2 |
+| UR-2 | **One field, as Languages:** the shared `MultiSelectField` -- the service's tool labels as toggle tags, in list order, and an "Add your own" box with **Add**; an own tool shows as a tag the worker can remove. | Q2 |
+| UR-3 | **Own tools limited at the box:** at most 5 own tools (the box and Add disable at 5) of at most 60 characters (the box stops at 60). Typing a listed tool's label (any case) ticks that tool instead of adding a copy; a repeat (any case) adds nothing. The rules are the shared `normaliseOtherTools` and its limits, so the page and the api agree. | FR-3, BR-6 |
+| UR-4 | **Mapping:** the field's value is labels. On save, a value that is a listed label becomes its id (`toolIds`, list order); every other value is an own tool (`otherTools`). On load the reverse: ids to labels (stale ids dropped), then the own tools. | E3 |
+| UR-5 | **Saved on Next** (as the registrations): Next on the tools screen calls `PUT /v1/worker/services/:categoryId/tools`, then moves on (the next service, or Service Area after the last). On a refusal or failure the screen stays, keeps the tags and shows the message (the api's field message, else `messageOf`'s). Saving unchanged tools is allowed (a replace). | Q1 b, N6 |
+| UR-6 | **Read once per screen:** `GET /v1/worker/services/tools` when the tools screen opens. While loading: the field's place shows a loader. If the read fails: "We couldn't load your tools." with **Retry**; Next then moves on **without saving** (nothing typed would be lost: the field was never shown). | N6 |
+| UR-7 | **Previous** on the tools screen goes to the certificate screen; Previous on the certificate screen is unchanged. The button text on the certificate screen becomes "Next" for these services; on the tools screen it is "Complete" for the last service, else "Next". | Q1 b |
+| UR-8 | **Admin search filter (Q3 a):** a "Tools" filter in the panel, always shown, two groups headed "Cleaning Services" and "Home and Yard Maintenance", each the service's tools as toggle buttons (as "Experience with"). Any chosen → `tools=<ids>` (all of: the hint says "Workers with all the chosen tools"). In the URL and in the canonical query like the other filters; cleared by "Clear filters". | Q3 a, FR-8 |
+| UR-9 | **Admin worker page (Q4 a):** under Cleaning Services and Home and Yard Maintenance in the page's services list, one line: "Tools: <labels, list order>" and, when there are own tools, "· Other: <own tools>"; "Tools: none listed" when both are empty. Read from `GET /v1/admin/workers/:workerId/services`; if it fails, the line is left out and the rest of the page shows. Read-only (the page's edit mode does not edit tools). | Q4 a, FR-7 |
+| UR-10 | **The sign-up note (Q5 a):** while Cleaning Services or Home and Yard Maintenance is ticked on "What services can you offer?", a small blue information box with an (i) icon right under the list: "Some jobs require your own tools, so please be ready to bring them." Nothing is sent or stored. Declared in the form definition (the services field's `notes`), not in the component. | Q5 a, FR-10 |
+| UR-11 | **No completion or menu change** (FR-9); the preview and shared profiles do not show tools. | FR-9 |
+| UR-12 | **The app's committed Prisma clients refreshed** to today's schema (the two columns) in this PR: it merges only after U1 is promoted, so production has them. Checked with `git diff --ignore-all-space --numstat` (content, not line endings). | U1 deviation |

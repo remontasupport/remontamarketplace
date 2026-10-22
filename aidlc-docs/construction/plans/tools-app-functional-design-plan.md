@@ -5,13 +5,13 @@ Branch to come: `feat/worker-tools-app`; its PR preview talks to staging, which 
 is promoted to production** (the app deploys on merge; production's database gets the columns at the promotion).
 
 ## Steps
-- [ ] The worker's checklist on the two Services steps: where, how it saves, its errors (Q1, Q2)
-- [ ] The admin search's Tools filter (Q3) and the worker's admin page section (Q4)
-- [ ] The sign-up note (Q5)
-- [ ] The api glue: `workerApi` + `getServiceTools` / `putServiceTools`; the admin client + `getWorkerServices`, `tools` in
+- [x] The worker's checklist on the two Services steps: where, how it saves, its errors (Q1, Q2)
+- [x] The admin search's Tools filter (Q3) and the worker's admin page section (Q4)
+- [x] The sign-up note (Q5)
+- [x] The api glue: `workerApi` + `getServiceTools` / `putServiceTools`; the admin client + `getWorkerServices`, `tools` in
       `AdminFilters`, `toQuery`, the URL
-- [ ] The app's committed Prisma clients refreshed (the two columns), in this PR, since it merges after the promotion
-- [ ] Frontend components, states (loading, empty, error, saving), PBT properties
+- [x] The app's committed Prisma clients refreshed (the two columns), in this PR, since it merges after the promotion
+- [x] Frontend components, states (loading, empty, error, saving), PBT properties
 
 ## What I found that shapes the design
 - Each service's step is one page with several screens chosen by `?view=` (registration → qualifications → offerings →
@@ -34,14 +34,14 @@ B) Its own screen ("Your tools") after the certificate screen, saved on Next
 C) On the certificate screen with its own **Save tools** button (Next does not save it)
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: b
 
 ### Q2: How the worker adds their own tools
 A) One text box with an **Add** button; each added tool shows as a removable tag; the box hides after 5
 B) Five empty text boxes, filled as needed
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: This should be the same with the Cultural and Languages fields
 
 ### Q3: The admin search's Tools filter
 A) A "Tools" filter in the filter panel, always shown: two groups (Cleaning, Home and Yard) of toggle buttons, like
@@ -49,7 +49,7 @@ A) A "Tools" filter in the filter panel, always shown: two groups (Cleaning, Hom
 B) The same, but shown only when "Type of support" is Cleaning Services or Home and Yard Maintenance
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ### Q4: The worker's admin page
 A) Under each of those two services in the existing services list: "Tools: Vacuum cleaner, Mop and bucket · Other:
@@ -57,14 +57,14 @@ A) Under each of those two services in the existing services list: "Tools: Vacuu
 B) A separate "Tools" card on the page, per service
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ### Q5: The sign-up note's look ("Some jobs require your own tools, so please be ready to bring them.")
 A) A small blue information box with an (i) icon, right under the services list, shown while either service is ticked
 B) Plain grey text under the services list, shown while either service is ticked
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Decided without a question (say if any is wrong)
 - **Labels from the shared list**, in list order; ticks keep list order whatever the click order.

@@ -5245,3 +5245,9 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-22):** "start the U2 now"
 
 **AI action (2026-10-22):** U2 `tools-app` Functional Design started; the app read (the setup page's Next-driven views, saves on Next; the admin dashboard's filter panel and `query.ts`; the admin worker page; `ServicesField`). Plan `construction/plans/tools-app-functional-design-plan.md` with Q1-Q5 and the rules decided without a question, handed to the user. Recorded: U2 merges only after U1 is promoted; U2 refreshes the app's committed Prisma clients. The staging regression checks of U1 remain open (user).
+
+**User input (2026-10-22):** "answered"
+
+**User answers (2026-10-22, in `tools-app-functional-design-plan.md`):** Q1 b (a "Your tools" screen of its own after the certificate, saved on Next) · Q2 "This should be the same with the Cultural and Languages fields" · Q3 a · Q4 a · Q5 a.
+
+**AI action (2026-10-22):** Q2 read as the shared `MultiSelectField` (toggle tags plus "Add your own", the Languages field), extended by optional `maxOwn` / `ownMaxLength` / `onAddOwn` for the 5 x 60 own-tool limits. U2 Functional Design written (`construction/tools-app/functional-design/`: business-rules UR-1..UR-12, domain-entities A1-A5, business-logic-model flows W, A1, A2, S and PU1-PU4, frontend-components). Approval requested.
