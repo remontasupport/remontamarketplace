@@ -77,7 +77,7 @@ your own tools, so please be ready to bring them."** (confirm at approval). Noth
 - Storage: two columns on the `worker_services` row, `toolIds text[]` and `otherTools text[]`, default empty, the all-of filter
   per service through the existing unique index (U1 BR-12: no GIN index). On the service's own row, FR-6 is automatic. (The
   `metadata` Json holds the registrations; it was considered: harder to validate and to index.)
-- Contract: `PUT /v1/worker/services/:categoryId/tools` (one entry, one handler); `tools` on `workerServiceSchema`;
+- Contract: `PUT /v1/worker/services/:categoryId/tools` (one entry, one handler); a separate `GET /v1/worker/services/tools` (U1 BR-11);
   `tools` query param on the admin workers entry.
 - Two units: **U1 `tools-api`** (schemas list, migration, entry, read, admin filter and the admin page's read);
   **U2 `tools-app`** (the checklist on the Services step, the admin filter UI and page, the sign-up note).
