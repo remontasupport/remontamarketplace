@@ -21,7 +21,7 @@ import {
   EXPERIENCE_OPTIONS,
   STATE_OPTIONS,
   THERAPEUTIC_CATEGORY_ID,
-  TOOL_GROUPS,
+  toolGroupFor,
   WITHIN_OPTIONS_KM,
   canonicalOf,
   domainOf,
@@ -642,6 +642,8 @@ export default function AdminDashboard() {
                             ...prev,
                             typeOfSupport: prev.typeOfSupport === category.id ? undefined : category.id,
                             therapeuticSubcategories: prev.typeOfSupport === category.id || category.id !== THERAPEUTIC_CATEGORY_ID ? [] : prev.therapeuticSubcategories,
+                            // worker-tools: another type of support hides the Tools and forgets them.
+                            tools: [],
                           }))
                         }}
                       >
@@ -739,15 +741,18 @@ export default function AdminDashboard() {
               })}
             </div>
 
-            {/* Tools (worker-tools UR-8): workers with all the chosen tools, each on its own service */}
+            {/* Tools (worker-tools UR-8): only for Cleaning Services or Home and Yard Maintenance as the type of support
+                (user, 2026-10-22, as the areas under "Experience with"); workers with all the chosen tools */}
+            {(() => {
+              const group = toolGroupFor(pendingFilters.typeOfSupport)
+              if (!group) return null
+              return (
             <div className="mb-4">
-              <label className="text-sm font-medium text-gray-700 mb-1 block">
-                Tools
-              </label>
-              <p className="text-xs text-gray-500 mb-2">Workers with all the chosen tools</p>
-              {TOOL_GROUPS.map((group) => (
-                <div key={group.service} className="mt-2 rounded-lg border border-gray-200 bg-gray-50 p-3" data-testid={`tools-${group.service}`}>
-                  <span className="text-sm font-medium text-gray-700 mb-2 block">{group.label}</span>
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-3" data-testid={`tools-${group.service}`}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-700">{group.label}: tools</span>
+                  <span className="text-xs text-gray-500">{pendingFilters.tools.length === 0 ? 'Any tools' : `All of ${pendingFilters.tools.length}`}</span>
+                </div>
                   <div className="flex flex-wrap gap-2">
                     {group.tools.map((tool) => {
                       const isSelected = pendingFilters.tools.includes(tool.id)
@@ -773,9 +778,10 @@ export default function AdminDashboard() {
                       )
                     })}
                   </div>
-                </div>
-              ))}
+              </div>
             </div>
+              )
+            })()}
 
             {/* Therapeutic Subcategories (conditional) */}
             {pendingFilters.typeOfSupport === THERAPEUTIC_CATEGORY_ID && (
