@@ -5189,3 +5189,9 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User answers (2026-10-22, in `requirement-verification-questions.md`):** Q1 a · Q2 a · Q3 b · Q4 b · Q5 c · Q6 a · Q7 a · Q8 b · Security a · Resiliency a · PBT a.
 
 **AI action (2026-10-22):** extensions recorded (all three on). Ambiguities left: the tool lists themselves (Q3 b: drafted for approval), the "Other" entry's shape, any-of/all-of in the admin filter, optional or required at sign-up (the sign-up's `services` field already carries Support Worker's sub-categories, the precedent). Follow-up file `requirement-clarification-questions.md` (F1-F4) handed to the user. No code written.
+
+**User input (2026-10-22):** "answered"
+
+**User answers (2026-10-22, in `requirement-clarification-questions.md`):** F1 a · F2 a · F3 a · F4 "Do not show it, it's on the dashboard only but add a note \"Some of the jobs required your personal tools, please be ready\"".
+
+**AI action (2026-10-22):** F4 supersedes Q8 b (no tools at sign-up; a note only). `inception/requirements/requirements.md` written: FR-1..FR-10, NFR-1..NFR-5, the proposed shape (`worker_services.toolIds` / `otherTools` + GIN index; `PUT /v1/worker/services/:categoryId/tools`; units U1 `tools-api`, U2 `tools-app`), out of scope. The note's wording proposed with grammar fixed ("Some jobs require your own tools, so please be ready to bring them."), to confirm. User Stories proposed as skipped (one actor per side, small feature). Approval requested.

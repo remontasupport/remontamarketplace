@@ -43,21 +43,21 @@ Edit freely: strike, rename, add. The labels below are what workers and admins w
 A) Approved as drafted
 X) Changes (write them below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question F2: The "Other" entry
 A) Up to 5 free-text tools per service, 60 characters each; admins see them on the worker's page, but the admin search filter uses the fixed list only
 B) One free-text box per service (up to 300 characters), shown to admins; not searchable
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question F3: Admin search with several tools ticked
 A) The worker must have **all** the chosen tools ("mower and trailer")
 B) The worker must have **any** of them
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question F4: At sign-up
 The sign-up already asks "What services can you offer?". When Cleaning Services or Home and Yard Maintenance is ticked:
@@ -65,4 +65,4 @@ A) Show that service's tool checklist right under it, optional (the worker can s
 B) Show it under it, and require at least one tool
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: Do not show it, it's on the dashboard only but add a note "Some of the jobs required your personal tools, please be ready"
