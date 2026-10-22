@@ -6,16 +6,15 @@
 toolLabelsOf(service: ToolService): string[]                         // the field's options, list order
 fieldValueOf(t: ServiceTools): string[]                              // UR-4 load: labels (stale ids dropped) then own tools
 bodyOf(service, value: string[]): ServiceToolsBody                   // UR-4 save: listed labels -> ids; the rest -> otherTools
-addOwnTool(service, value, typed): { value: string[]; refused?: string }   // UR-3: label -> tick it; repeat -> nothing; 5 / 60 limits
+acceptChange(service, prev, next): { value: string[]; refused?: string }  // UR-3: the field's new value checked: label -> its tag; repeat -> dropped; 5 / 60 limits
 hasToolsScreen(serviceTitle | categoryId): boolean                   // UR-1 (isToolService on the slug)
 ```
 Plus the api calls on the existing `workerApi` (`getServiceTools`, `putServiceTools`) returning `ApiOutcome`.
 
-## A2 `MultiSelectField` (shared, `components/ui/form-wizard/sectionFields.tsx`)
+## A2 `MultiSelectField` (shared, `components/ui/form-wizard/sectionFields.tsx`): **unchanged**
 
-Two optional props, no change for current users: `maxOwn?: number` (Add disabled at that many own values) and
-`ownMaxLength?: number` (the box's `maxLength`); and `onAddOwn?(typed): string[] | null` so a page can map a typed
-label to its option (UR-3). Without them it behaves exactly as today (Languages, Interests, Other areas).
+Used as Languages uses it (`options`, `value`, `onChange`, `allowOwn`, `error`); not edited (user, 2026-10-22). The
+limits are the screen's `acceptChange` (UR-3).
 
 ## A3 Admin filters (`features/admin-search/query.ts`)
 

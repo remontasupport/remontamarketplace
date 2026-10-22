@@ -7,15 +7,15 @@ Design: `construction/tools-app/functional-design/` (UR-1..UR-12, A1-A5, flows W
 ## Steps
 
 ### Step 1 -- The page logic (`apps/app/src/features/worker/serviceTools.ts`) [A1, UR-3, UR-4]
-- [ ] `toolLabelsOf`, `fieldValueOf`, `bodyOf`, `addOwnTool`, `hasToolsScreen`; messages from the shared limits.
+- [ ] `toolLabelsOf`, `fieldValueOf`, `bodyOf`, `acceptChange`, `hasToolsScreen`; messages from the shared limits.
 - [ ] `serviceTools.test.ts`: the scenario table, PU1-PU3 (fast-check).
 
 ### Step 2 -- The worker client (`features/worker/api.ts`) [A1]
 - [ ] `getServiceTools()` and `putServiceTools(categoryId, body)` on `WorkerApi` (the same token / 401-retry / outcome
       path as `putServiceRegistration`); a test beside `tour.api.test.ts`'s pattern.
 
-### Step 3 -- The shared field (`components/ui/form-wizard/sectionFields.tsx`) [A2]
-- [ ] `MultiSelectField` + optional `maxOwn`, `ownMaxLength`, `onAddOwn`; current callers unchanged.
+### Step 3 -- (removed, user 2026-10-22) `MultiSelectField` is not edited
+- [x] Nothing to do: the tools screen uses it unchanged; the limits are `acceptChange` (Step 1).
 
 ### Step 4 -- The tools screen [UR-1, UR-2, UR-5..UR-7]
 - [ ] `components/services-setup/steps/ServiceToolsStep.tsx` (presentational).

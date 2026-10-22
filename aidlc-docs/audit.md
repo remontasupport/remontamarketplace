@@ -5255,3 +5255,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-22):** "continue to next stage"
 
 **AI action (2026-10-22):** U2 Functional Design approved. Code Generation Part 1 for U2: `construction/plans/tools-app-code-generation-plan.md` (8 steps: page logic, worker client, shared field, the tools screen, admin filter/read/line, the sign-up note via a `notes` property on the services field kind, Prisma clients + docs, gates + PR; preview checks listed). Approval of the plan requested.
+
+**User input (2026-10-22):** "wait, do not touch the Langauges field"
+
+**AI action (2026-10-22):** `MultiSelectField` (the Languages field) is not edited: the tools screen uses it unchanged and checks each reported value itself (`acceptChange`: a typed listed label becomes its tag, repeats dropped, a 6th own tool or one over 60 characters refused with a message as the field's `error`). U2 design (UR-3, A2, flows, PU2-PU3, components) and plan (Step 3 removed) updated. Visible difference stated: the "Add your own" box does not disable at 5; a message shows instead. Plan approval requested again.
