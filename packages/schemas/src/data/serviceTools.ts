@@ -94,3 +94,126 @@ export function normaliseOtherTools(raw: readonly string[], service: ToolService
   }
   return out
 }
+
+// ---- Tool search (tool-search addendum TS-1..TS-3, approved 2026-10-22) ------------------------------------------
+// One matcher, used by the admin page (to narrow the buttons as the admin types) and by the api (to build its query),
+// so what the page shows and what the api finds cannot disagree. A word matches anywhere in a name; several words must
+// all match within one name; a reviewed list of other names counts as the same tool.
+
+/** TS-1, approved 2026-10-22: other names that count as the same listed tool. */
+export const TOOL_SYNONYMS: Readonly<Record<ToolId, readonly string[]>> = {
+  'vacuum-cleaner': ['vacuum', 'vac', 'hoover'],
+  'mop-and-bucket': ['mop'],
+  'steam-mop': ['steam cleaner'],
+  'broom-and-dustpan': ['broom', 'dustpan', 'dust pan'],
+  'microfibre-cloths': ['microfiber', 'cloths', 'rags'],
+  'cleaning-products': ['cleaning chemicals', 'detergent', 'disinfectant'],
+  'eco-cleaning-products': ['eco products', 'green cleaning products', 'natural cleaning products'],
+  'scrubbing-brushes': ['scrubbing brush', 'scrubber', 'sponge'],
+  'window-cleaning-kit': ['squeegee', 'window cleaner'],
+  'carpet-cleaner': ['carpet shampooer', 'rug doctor'],
+  'oven-bbq-cleaning-kit': ['oven cleaner', 'bbq cleaner'],
+  'extendable-duster': ['duster', 'cobweb brush'],
+  'step-ladder': ['stepladder'],
+  'gloves-protective-gear': ['gloves', 'ppe'],
+  'push-mower': ['lawn mower', 'lawnmower', 'mower'],
+  'ride-on-mower': ['rideon', 'mower'], // "ride on mower" is the label once normalised (TS-2)
+  'whipper-snipper': ['whippersnipper', 'line trimmer', 'brushcutter', 'brush cutter', 'strimmer', 'weed eater'],
+  'hedge-trimmer': ['hedge cutter', 'hedger'],
+  'leaf-blower': ['blower', 'blower vac'],
+  chainsaw: ['chain saw'],
+  'pressure-washer': ['pressure cleaner', 'high pressure cleaner', 'gurney', 'water blaster'],
+  'pruning-shears': ['secateurs', 'pruners', 'loppers'],
+  'garden-hand-tools': ['rake', 'shovel', 'spade', 'hoe', 'trowel'],
+  wheelbarrow: ['barrow'],
+  ladder: ['extension ladder'],
+  trailer: ['box trailer'],
+  'power-drill': ['drill', 'cordless drill'],
+  'hand-tools': ['hammer', 'screwdriver', 'spanner', 'toolkit', 'tool kit'],
+  'gutter-cleaning-kit': ['gutter cleaner', 'gutter'],
+}
+
+export const TOOL_SEARCH_MAX_CHARS = 60
+export const TOOL_SEARCH_MAX_WORDS = 5
+
+/** TS-2 step 1, for the query and for every name compared: lower case, hyphens/slashes/dots as spaces, one space. */
+export function normaliseToolText(s: string): string {
+  return s.toLocaleLowerCase('en-AU').replace(/[-/.]+/g, ' ').replace(/\s+/g, ' ').trim()
+}
+
+/** TS-2 step 3: brushes -> brush, mowers -> mower, gloves -> glove; "glass", "gas" and short words untouched. */
+export function singularOf(word: string): string {
+  if (/(ches|shes|xes|sses)$/.test(word)) return word.slice(0, -2)
+  if (word.length >= 4 && word.endsWith('s') && !word.endsWith('ss')) return word.slice(0, -1)
+  return word
+}
+
+/** TS-2: the query's words -- normalised, one-character words dropped, plurals singular, at most 5, each once. */
+export function toolSearchWords(text: string): string[] {
+  const words = normaliseToolText(text.slice(0, TOOL_SEARCH_MAX_CHARS)).split(' ').filter((w) => w.length > 1).map(singularOf)
+  return [...new Set(words)].slice(0, TOOL_SEARCH_MAX_WORDS)
+}
+
+/** TS-3: a name matches when every word appears somewhere in it (normalised). */
+export function nameMatches(name: string, words: readonly string[]): boolean {
+  const n = normaliseToolText(name)
+  return words.length > 0 && words.every((w) => n.includes(w))
+}
+
+/** The words a name puts in an own-tool pattern (normalised, one-character words dropped; not singularised). */
+const patternOf = (name: string) => normaliseToolText(name).split(' ').filter((w) => w.length > 1)
+
+export interface ToolSearch {
+  /** The services searched, in declaration order. */
+  services: ToolService[]
+  /** The query's words (TS-2). */
+  words: string[]
+  /** Listed tools whose label or another name matches, in list order. */
+  listedIds: ToolId[]
+  /**
+   * An own tool matches when it contains every word of one pattern: the query's words, and the words of each name of a
+   * matched listed tool (so "pressure washer" also finds an own "Gurney 2000"). Deduplicated, the query's first.
+   */
+  ownPatterns: string[][]
+  /** The other names of the matched tools, for "Also matches: ..." on the page; label-equal names left out. */
+  otherNames: string[]
+}
+
+/**
+ * TS-3: what a search text matches, over `services` (both by default). null when the text keeps no word (TS-2: the
+ * search is then ignored, never an error).
+ */
+export function toolSearchOf(text: string, services: readonly ToolService[] = TOOL_SERVICES): ToolSearch | null {
+  const words = toolSearchWords(text)
+  if (!words.length) return null
+  const searched = TOOL_SERVICES.filter((s) => services.includes(s))
+  const listedIds: ToolId[] = []
+  const patterns: string[][] = [words]
+  const otherNames: string[] = []
+  for (const s of searched) {
+    for (const t of SERVICE_TOOLS[s]) {
+      const names = [t.label, ...TOOL_SYNONYMS[t.id]]
+      if (!names.some((n) => nameMatches(n, words))) continue
+      listedIds.push(t.id)
+      for (const n of names) {
+        const p = patternOf(n)
+        if (p.length) patterns.push(p)
+      }
+      for (const n of TOOL_SYNONYMS[t.id]) if (!otherNames.includes(n)) otherNames.push(n)
+    }
+  }
+  const seen = new Set<string>()
+  const ownPatterns = patterns.filter((p) => {
+    const k = p.join(' ')
+    if (seen.has(k)) return false
+    seen.add(k)
+    return true
+  })
+  return { services: searched, words, listedIds, ownPatterns, otherNames }
+}
+
+/** TS-3 in memory: does an own tool match a search (the api's SQL does the same on the stored own tools). */
+export function ownToolMatches(own: string, search: Pick<ToolSearch, 'ownPatterns'>): boolean {
+  const n = normaliseToolText(own)
+  return search.ownPatterns.some((p) => p.every((w) => n.includes(w)))
+}
