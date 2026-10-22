@@ -396,6 +396,10 @@ model WorkerService {
   subcategoryIds   String[]      @default([])
   subcategoryNames String[]      @default([])
   metadata         Json?
+  /// worker-tools U1 (E2): the ticked ids of the service's tool list (packages/schemas serviceTools), in list order.
+  toolIds          String[]      @default([])
+  /// worker-tools U1 (E2): the worker's own tools, cleaned (normaliseOtherTools): at most 5 of 60 characters.
+  otherTools       String[]      @default([])
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @default(now()) @updatedAt
   workerProfile    WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "worker_services_workerprofileid_fkey")
