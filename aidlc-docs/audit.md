@@ -5271,3 +5271,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-22):** "what is the preview link? I want to test it now"
 
 **AI action (2026-10-22):** Vercel built `ccae8ef` on the branch push (statuses "Vercel – remonta-app" and "– remontamarketplace" success). Branch preview `https://remonta-app-git-feat-worker-tools-app-remontas-projects.vercel.app` answers 302 to Vercel's sign-in (protected preview, as usual). Link and test steps handed to the user.
+
+**User input (2026-10-22):** "On the admin side, I think the Tools are only be visible if the admin ticks the Cleaning Services or Home and Yard Maintenance, the same behavior with the Experience with,"
+
+**AI action (2026-10-22):** UR-8 changed (Q3 a -> shown per type of support): the Tools block appears only while "Type of support" (single choice) is Cleaning Services or Home and Yard Maintenance, with that service's tools; changing or clearing the type forgets the tools; `toQuery` and `filtersFromURL` keep only that service's tools (`toolGroupFor`, `toolsFor`); tests updated (13 pass, the round trip now covers both services); type and lint baselines unchanged; docs/admin updated. `feat/worker-tools-app` `a34682a` pushed (the preview rebuilds).
