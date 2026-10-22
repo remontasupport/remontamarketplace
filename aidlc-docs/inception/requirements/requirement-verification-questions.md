@@ -11,7 +11,7 @@ B) Information only: a list of tools the worker is **expected to bring** (nothin
 C) Both: the expected list shown, and the worker ticks which ones they have
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 2: Where on the dashboard?
 A) Inside the existing Services step for each service (Services → Cleaning Services / Home and Yard Maintenance), under the certificate upload
@@ -19,21 +19,21 @@ B) A new item of its own in the sidebar ("My Tools"), shown only when either ser
 C) A card on the Dashboard home page
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 3: Which tools are on each list?
 A) You will send the two lists
 B) Draft them for me to approve (e.g. Cleaning: vacuum, mop and bucket, steam mop, cleaning chemicals, microfibre cloths, carpet cleaner...; Yard: lawn mower, whipper snipper, hedge trimmer, leaf blower, ladder, hand tools, trailer...)
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: b
 
 ## Question 4: Can the worker add a tool that is not on the list?
 A) No, the fixed list only
 B) Yes, an "Other" free-text entry as well
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: b
 
 ## Question 5: Who else sees the worker's tools? (if the list is saved)
 A) Only the worker
@@ -42,28 +42,28 @@ C) Also admins, and as a filter in the admin worker search ("has a lawn mower")
 D) Also clients, on the worker's public / shared profile
 X) Other (several letters are fine)
 
-[Answer]: 
+[Answer]: c
 
 ## Question 6: Does it count toward profile completion?
 A) No, optional
 B) Yes: at least one tool ticked for each of the two services the worker offers
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 7: When the worker removes the service, what happens to its ticked tools?
 A) They are deleted with the service (as documents are today)
 B) They are kept, in case the service is chosen again
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question 8: Should the sign-up form ask about tools too?
 A) No, the dashboard only
 B) Yes, also at sign-up when either service is picked
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: b
 
 ## Question: Security Extensions
 Should security extension rules be enforced for this project? (Last cycle: A.)
@@ -74,7 +74,7 @@ B) No — skip all SECURITY rules (suitable for PoCs, prototypes, and experiment
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question: Resiliency Extensions
 Should the resiliency baseline be applied to this project? (Last cycle: A; SLA 99.9 %, RTO ≤ 30 min, RPO ≤ 5 min, single region.)
@@ -91,7 +91,7 @@ B) No — skip the resiliency baseline (suitable for PoCs, prototypes, and exper
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a
 
 ## Question: Property-Based Testing Extension
 Should property-based testing (PBT) rules be enforced for this project? (Last cycle: A.)
@@ -104,4 +104,4 @@ C) No — skip all PBT rules (suitable for simple CRUD applications, UI-only pro
 
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]: 
+[Answer]: a

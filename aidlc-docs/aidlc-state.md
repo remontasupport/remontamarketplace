@@ -7,8 +7,8 @@
   a cleaning tools and yard and maintenance tools to the worker's dashboard if their services have cleaning and yard
   and maintenance". Record branch `aidlc/worker-tools` (from `aidlc/onboarding-tour`, closed the same day:
   `aidlc-docs/archive/onboarding-tour/`).
-- **Current Stage**: INCEPTION -- Requirements Analysis: the questions file
-  `inception/requirements/requirement-verification-questions.md` is with the user.
+- **Current Stage**: INCEPTION -- Requirements Analysis: the first questions answered (2026-10-22); the follow-ups
+  `inception/requirements/requirement-clarification-questions.md` (F1 the lists, F2 Other, F3 filter, F4 sign-up) with the user.
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory
   `inception/inventory/worker-tools-inventory.md` (on `main` `62e24f9`).
@@ -160,9 +160,9 @@
 - **Documentation**: aidlc-docs/ only
 - **Structure patterns**: CLAUDE.md "Dynamic by default" (contract entries + handlers; form definitions)
 
-## Extension Configuration (onboarding-tour's values; re-asked for worker-tools)
+## Extension Configuration (worker-tools)
 | Extension | Enabled | Decided At |
 |---|---|---|
-| Security Baseline | Yes, blocking | onboarding-tour, Requirements Analysis 2026-10-21 (Security A) |
-| Resiliency Baseline | Yes; SLA 99.9 %, RTO ≤ 30 min, RPO ≤ 5 min, single region; plus "the tour never gets in the way of the dashboard" | onboarding-tour, 2026-10-21 (Resiliency A, F2 A) |
-| Property-Based Testing | Yes, full | onboarding-tour, 2026-10-21 (PBT A) |
+| Security Baseline | Yes, blocking | worker-tools, Requirements Analysis 2026-10-22 (Security A) |
+| Resiliency Baseline | Yes; SLA 99.9 %, RTO ≤ 30 min, RPO ≤ 5 min, single region (carried) | worker-tools, 2026-10-22 (Resiliency A) |
+| Property-Based Testing | Yes, full | worker-tools, 2026-10-22 (PBT A) |

@@ -5183,3 +5183,9 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User answers (2026-10-22, AskUserQuestion):** goal: "I want to add a lists of a cleaning tools and yard and maintenance tools to the worker's dashboard if their services have cleaning and yard and maintenance"; the open cycle: "Close and carry over (Recommended)".
 
 **AI action (2026-10-22):** onboarding-tour closed: record moved to `aidlc-docs/archive/onboarding-tour/` (README, `aidlc-state-at-close.md`); a fresh `aidlc-state.md` with C2, H3, the Zoho rotation, the prod 403 and `test/my-profile-columns` as follow-ups 27-31 (commit `d0f4979` on `aidlc/onboarding-tour`). New cycle **worker-tools** on `aidlc/worker-tools`. Workspace detection: brownfield, unchanged. Targeted inventory `inception/inventory/worker-tools-inventory.md`: `cleaning-services` and `home-yard-maintenance` exist with no subcategories; nothing about tools exists; `worker_services.metadata` is unused; the Services group generates one step per chosen service. Requirements Analysis: `inception/requirements/requirement-verification-questions.md` (8 questions + the 3 extension opt-ins) handed to the user. No code written.
+
+**User input (2026-10-22):** "answered"
+
+**User answers (2026-10-22, in `requirement-verification-questions.md`):** Q1 a · Q2 a · Q3 b · Q4 b · Q5 c · Q6 a · Q7 a · Q8 b · Security a · Resiliency a · PBT a.
+
+**AI action (2026-10-22):** extensions recorded (all three on). Ambiguities left: the tool lists themselves (Q3 b: drafted for approval), the "Other" entry's shape, any-of/all-of in the admin filter, optional or required at sign-up (the sign-up's `services` field already carries Support Worker's sub-categories, the precedent). Follow-up file `requirement-clarification-questions.md` (F1-F4) handed to the user. No code written.
