@@ -7,8 +7,8 @@
   a cleaning tools and yard and maintenance tools to the worker's dashboard if their services have cleaning and yard
   and maintenance". Record branch `aidlc/worker-tools` (from `aidlc/onboarding-tour`, closed the same day:
   `aidlc-docs/archive/onboarding-tour/`).
-- **Current Stage**: CONSTRUCTION -- U1 `tools-api` Functional Design written (`construction/tools-api/functional-design/`,
-  Q1 b, Q2 a), awaiting approval. Execution plan approved 2026-10-22.
+- **Current Stage**: CONSTRUCTION -- NFR Design (shared) written (`construction/shared/nfr-design/`), awaiting approval.
+  U1 Functional Design approved 2026-10-22. Execution plan approved 2026-10-22.
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory
   `inception/inventory/worker-tools-inventory.md` (on `main` `62e24f9`).
@@ -24,9 +24,9 @@
 - [x] Units Generation -- SKIP (U1 `tools-api`, U2 `tools-app` in the plan)
 
 ### CONSTRUCTION PHASE
-- [ ] Functional Design -- U1 written, awaiting approval
+- [ ] Functional Design -- U1 approved 2026-10-22; U2 to do
 - [ ] NFR Requirements -- SKIP
-- [ ] NFR Design -- one shared document
+- [ ] NFR Design -- shared, written, awaiting approval
 - [ ] Infrastructure Design -- SKIP
 - [ ] Code Generation
 - [ ] Build and Test
