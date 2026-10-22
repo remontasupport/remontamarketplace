@@ -5303,3 +5303,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **AI action (2026-10-22):** by refs the search api was merged (`main` `bf9b966`, contains `85c245b`) and its staging deploy-api run had started at 05:09Z and was still in progress: the preview's request reached the previous staging image, whose strict query refuses the unknown `toolSearch` (400). Not a code fault; watching the run, then the user retries.
 
 **AI action (2026-10-22):** deploy-api run 39726417377 (push of `bf9b966`, the merge of PR #106) completed success: staging carries the tool search; staging `/v1/health` 200. The user to retry the preview. Promotion image for later: `bf9b9666494df5300b3694e339d6138af2012e30`.
+
+**User input (2026-10-22):** "merged and deployed already"
+
+**AI action (2026-10-22):** verified by refs and runs: deploy-api run 39742444682 "Promote bf9b9666494df5300b3694e339d6138af2012e30 to prod" success 07:44:35Z; PR #107 (`feat/worker-tools-search-app`, incl. the follow-up `feat/tools-filter-type-of-support`) merged after it, `main` `8943f93` at 07:46:20Z; production api health 200; the Vercel production builds of `8943f93` were still pending (watched).
