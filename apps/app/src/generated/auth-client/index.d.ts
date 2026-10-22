@@ -22166,6 +22166,8 @@ export namespace Prisma {
     subcategoryIds: number
     subcategoryNames: number
     metadata: number
+    toolIds: number
+    otherTools: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -22198,6 +22200,8 @@ export namespace Prisma {
     subcategoryIds?: true
     subcategoryNames?: true
     metadata?: true
+    toolIds?: true
+    otherTools?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -22283,6 +22287,8 @@ export namespace Prisma {
     subcategoryIds: string[]
     subcategoryNames: string[]
     metadata: JsonValue | null
+    toolIds: string[]
+    otherTools: string[]
     createdAt: Date
     updatedAt: Date
     _count: WorkerServiceCountAggregateOutputType | null
@@ -22312,6 +22318,8 @@ export namespace Prisma {
     subcategoryIds?: boolean
     subcategoryNames?: boolean
     metadata?: boolean
+    toolIds?: boolean
+    otherTools?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
@@ -22325,6 +22333,8 @@ export namespace Prisma {
     subcategoryIds?: boolean
     subcategoryNames?: boolean
     metadata?: boolean
+    toolIds?: boolean
+    otherTools?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
@@ -22338,6 +22348,8 @@ export namespace Prisma {
     subcategoryIds?: boolean
     subcategoryNames?: boolean
     metadata?: boolean
+    toolIds?: boolean
+    otherTools?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
@@ -22351,11 +22363,13 @@ export namespace Prisma {
     subcategoryIds?: boolean
     subcategoryNames?: boolean
     metadata?: boolean
+    toolIds?: boolean
+    otherTools?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type WorkerServiceOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workerProfileId" | "categoryId" | "categoryName" | "subcategoryIds" | "subcategoryNames" | "metadata" | "createdAt" | "updatedAt", ExtArgs["result"]["workerService"]>
+  export type WorkerServiceOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workerProfileId" | "categoryId" | "categoryName" | "subcategoryIds" | "subcategoryNames" | "metadata" | "toolIds" | "otherTools" | "createdAt" | "updatedAt", ExtArgs["result"]["workerService"]>
   export type WorkerServiceInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
   }
@@ -22379,6 +22393,14 @@ export namespace Prisma {
       subcategoryIds: string[]
       subcategoryNames: string[]
       metadata: Prisma.JsonValue | null
+      /**
+       * worker-tools U1 (E2): the ticked ids of the service's tool list (packages/schemas serviceTools), in list order.
+       */
+      toolIds: string[]
+      /**
+       * worker-tools U1 (E2): the worker's own tools, cleaned (normaliseOtherTools): at most 5 of 60 characters.
+       */
+      otherTools: string[]
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["workerService"]>
@@ -22812,6 +22834,8 @@ export namespace Prisma {
     readonly subcategoryIds: FieldRef<"WorkerService", 'String[]'>
     readonly subcategoryNames: FieldRef<"WorkerService", 'String[]'>
     readonly metadata: FieldRef<"WorkerService", 'Json'>
+    readonly toolIds: FieldRef<"WorkerService", 'String[]'>
+    readonly otherTools: FieldRef<"WorkerService", 'String[]'>
     readonly createdAt: FieldRef<"WorkerService", 'DateTime'>
     readonly updatedAt: FieldRef<"WorkerService", 'DateTime'>
   }
@@ -43045,6 +43069,8 @@ export namespace Prisma {
     subcategoryIds: 'subcategoryIds',
     subcategoryNames: 'subcategoryNames',
     metadata: 'metadata',
+    toolIds: 'toolIds',
+    otherTools: 'otherTools',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -45046,6 +45072,8 @@ export namespace Prisma {
     subcategoryIds?: StringNullableListFilter<"WorkerService">
     subcategoryNames?: StringNullableListFilter<"WorkerService">
     metadata?: JsonNullableFilter<"WorkerService">
+    toolIds?: StringNullableListFilter<"WorkerService">
+    otherTools?: StringNullableListFilter<"WorkerService">
     createdAt?: DateTimeFilter<"WorkerService"> | Date | string
     updatedAt?: DateTimeFilter<"WorkerService"> | Date | string
     workerProfile?: XOR<WorkerProfileScalarRelationFilter, WorkerProfileWhereInput>
@@ -45059,6 +45087,8 @@ export namespace Prisma {
     subcategoryIds?: SortOrder
     subcategoryNames?: SortOrder
     metadata?: SortOrderInput | SortOrder
+    toolIds?: SortOrder
+    otherTools?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     workerProfile?: WorkerProfileOrderByWithRelationInput
@@ -45076,6 +45106,8 @@ export namespace Prisma {
     subcategoryIds?: StringNullableListFilter<"WorkerService">
     subcategoryNames?: StringNullableListFilter<"WorkerService">
     metadata?: JsonNullableFilter<"WorkerService">
+    toolIds?: StringNullableListFilter<"WorkerService">
+    otherTools?: StringNullableListFilter<"WorkerService">
     createdAt?: DateTimeFilter<"WorkerService"> | Date | string
     updatedAt?: DateTimeFilter<"WorkerService"> | Date | string
     workerProfile?: XOR<WorkerProfileScalarRelationFilter, WorkerProfileWhereInput>
@@ -45089,6 +45121,8 @@ export namespace Prisma {
     subcategoryIds?: SortOrder
     subcategoryNames?: SortOrder
     metadata?: SortOrderInput | SortOrder
+    toolIds?: SortOrder
+    otherTools?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: WorkerServiceCountOrderByAggregateInput
@@ -45107,6 +45141,8 @@ export namespace Prisma {
     subcategoryIds?: StringNullableListFilter<"WorkerService">
     subcategoryNames?: StringNullableListFilter<"WorkerService">
     metadata?: JsonNullableWithAggregatesFilter<"WorkerService">
+    toolIds?: StringNullableListFilter<"WorkerService">
+    otherTools?: StringNullableListFilter<"WorkerService">
     createdAt?: DateTimeWithAggregatesFilter<"WorkerService"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"WorkerService"> | Date | string
   }
@@ -48077,6 +48113,8 @@ export namespace Prisma {
     subcategoryIds?: WorkerServiceCreatesubcategoryIdsInput | string[]
     subcategoryNames?: WorkerServiceCreatesubcategoryNamesInput | string[]
     metadata?: NullableJsonNullValueInput | InputJsonValue
+    toolIds?: WorkerServiceCreatetoolIdsInput | string[]
+    otherTools?: WorkerServiceCreateotherToolsInput | string[]
     createdAt?: Date | string
     updatedAt?: Date | string
     workerProfile: WorkerProfileCreateNestedOneWithoutWorkerServicesInput
@@ -48090,6 +48128,8 @@ export namespace Prisma {
     subcategoryIds?: WorkerServiceCreatesubcategoryIdsInput | string[]
     subcategoryNames?: WorkerServiceCreatesubcategoryNamesInput | string[]
     metadata?: NullableJsonNullValueInput | InputJsonValue
+    toolIds?: WorkerServiceCreatetoolIdsInput | string[]
+    otherTools?: WorkerServiceCreateotherToolsInput | string[]
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -48101,6 +48141,8 @@ export namespace Prisma {
     subcategoryIds?: WorkerServiceUpdatesubcategoryIdsInput | string[]
     subcategoryNames?: WorkerServiceUpdatesubcategoryNamesInput | string[]
     metadata?: NullableJsonNullValueInput | InputJsonValue
+    toolIds?: WorkerServiceUpdatetoolIdsInput | string[]
+    otherTools?: WorkerServiceUpdateotherToolsInput | string[]
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     workerProfile?: WorkerProfileUpdateOneRequiredWithoutWorkerServicesNestedInput
@@ -48114,6 +48156,8 @@ export namespace Prisma {
     subcategoryIds?: WorkerServiceUpdatesubcategoryIdsInput | string[]
     subcategoryNames?: WorkerServiceUpdatesubcategoryNamesInput | string[]
     metadata?: NullableJsonNullValueInput | InputJsonValue
+    toolIds?: WorkerServiceUpdatetoolIdsInput | string[]
+    otherTools?: WorkerServiceUpdateotherToolsInput | string[]
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -48126,6 +48170,8 @@ export namespace Prisma {
     subcategoryIds?: WorkerServiceCreatesubcategoryIdsInput | string[]
     subcategoryNames?: WorkerServiceCreatesubcategoryNamesInput | string[]
     metadata?: NullableJsonNullValueInput | InputJsonValue
+    toolIds?: WorkerServiceCreatetoolIdsInput | string[]
+    otherTools?: WorkerServiceCreateotherToolsInput | string[]
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -48137,6 +48183,8 @@ export namespace Prisma {
     subcategoryIds?: WorkerServiceUpdatesubcategoryIdsInput | string[]
     subcategoryNames?: WorkerServiceUpdatesubcategoryNamesInput | string[]
     metadata?: NullableJsonNullValueInput | InputJsonValue
+    toolIds?: WorkerServiceUpdatetoolIdsInput | string[]
+    otherTools?: WorkerServiceUpdateotherToolsInput | string[]
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -48149,6 +48197,8 @@ export namespace Prisma {
     subcategoryIds?: WorkerServiceUpdatesubcategoryIdsInput | string[]
     subcategoryNames?: WorkerServiceUpdatesubcategoryNamesInput | string[]
     metadata?: NullableJsonNullValueInput | InputJsonValue
+    toolIds?: WorkerServiceUpdatetoolIdsInput | string[]
+    otherTools?: WorkerServiceUpdateotherToolsInput | string[]
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -51055,6 +51105,8 @@ export namespace Prisma {
     subcategoryIds?: SortOrder
     subcategoryNames?: SortOrder
     metadata?: SortOrder
+    toolIds?: SortOrder
+    otherTools?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -53527,6 +53579,14 @@ export namespace Prisma {
     set: string[]
   }
 
+  export type WorkerServiceCreatetoolIdsInput = {
+    set: string[]
+  }
+
+  export type WorkerServiceCreateotherToolsInput = {
+    set: string[]
+  }
+
   export type WorkerProfileCreateNestedOneWithoutWorkerServicesInput = {
     create?: XOR<WorkerProfileCreateWithoutWorkerServicesInput, WorkerProfileUncheckedCreateWithoutWorkerServicesInput>
     connectOrCreate?: WorkerProfileCreateOrConnectWithoutWorkerServicesInput
@@ -53539,6 +53599,16 @@ export namespace Prisma {
   }
 
   export type WorkerServiceUpdatesubcategoryNamesInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type WorkerServiceUpdatetoolIdsInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type WorkerServiceUpdateotherToolsInput = {
     set?: string[]
     push?: string | string[]
   }
@@ -56371,6 +56441,8 @@ export namespace Prisma {
     subcategoryIds?: WorkerServiceCreatesubcategoryIdsInput | string[]
     subcategoryNames?: WorkerServiceCreatesubcategoryNamesInput | string[]
     metadata?: NullableJsonNullValueInput | InputJsonValue
+    toolIds?: WorkerServiceCreatetoolIdsInput | string[]
+    otherTools?: WorkerServiceCreateotherToolsInput | string[]
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -56382,6 +56454,8 @@ export namespace Prisma {
     subcategoryIds?: WorkerServiceCreatesubcategoryIdsInput | string[]
     subcategoryNames?: WorkerServiceCreatesubcategoryNamesInput | string[]
     metadata?: NullableJsonNullValueInput | InputJsonValue
+    toolIds?: WorkerServiceCreatetoolIdsInput | string[]
+    otherTools?: WorkerServiceCreateotherToolsInput | string[]
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -56890,6 +56964,8 @@ export namespace Prisma {
     subcategoryIds?: StringNullableListFilter<"WorkerService">
     subcategoryNames?: StringNullableListFilter<"WorkerService">
     metadata?: JsonNullableFilter<"WorkerService">
+    toolIds?: StringNullableListFilter<"WorkerService">
+    otherTools?: StringNullableListFilter<"WorkerService">
     createdAt?: DateTimeFilter<"WorkerService"> | Date | string
     updatedAt?: DateTimeFilter<"WorkerService"> | Date | string
   }
@@ -60917,6 +60993,8 @@ export namespace Prisma {
     subcategoryIds?: WorkerServiceCreatesubcategoryIdsInput | string[]
     subcategoryNames?: WorkerServiceCreatesubcategoryNamesInput | string[]
     metadata?: NullableJsonNullValueInput | InputJsonValue
+    toolIds?: WorkerServiceCreatetoolIdsInput | string[]
+    otherTools?: WorkerServiceCreateotherToolsInput | string[]
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -61078,6 +61156,8 @@ export namespace Prisma {
     subcategoryIds?: WorkerServiceUpdatesubcategoryIdsInput | string[]
     subcategoryNames?: WorkerServiceUpdatesubcategoryNamesInput | string[]
     metadata?: NullableJsonNullValueInput | InputJsonValue
+    toolIds?: WorkerServiceUpdatetoolIdsInput | string[]
+    otherTools?: WorkerServiceUpdateotherToolsInput | string[]
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -61089,6 +61169,8 @@ export namespace Prisma {
     subcategoryIds?: WorkerServiceUpdatesubcategoryIdsInput | string[]
     subcategoryNames?: WorkerServiceUpdatesubcategoryNamesInput | string[]
     metadata?: NullableJsonNullValueInput | InputJsonValue
+    toolIds?: WorkerServiceUpdatetoolIdsInput | string[]
+    otherTools?: WorkerServiceUpdateotherToolsInput | string[]
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -61100,6 +61182,8 @@ export namespace Prisma {
     subcategoryIds?: WorkerServiceUpdatesubcategoryIdsInput | string[]
     subcategoryNames?: WorkerServiceUpdatesubcategoryNamesInput | string[]
     metadata?: NullableJsonNullValueInput | InputJsonValue
+    toolIds?: WorkerServiceUpdatetoolIdsInput | string[]
+    otherTools?: WorkerServiceUpdateotherToolsInput | string[]
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
