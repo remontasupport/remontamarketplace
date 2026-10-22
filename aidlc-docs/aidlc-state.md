@@ -3,35 +3,11 @@
 ## Project Information
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
-- **Current Cycle**: worker-tools -- started 2026-10-22. Goal (user, verbatim in `audit.md`): "I want to add a lists of
-  a cleaning tools and yard and maintenance tools to the worker's dashboard if their services have cleaning and yard
-  and maintenance". Record branch `aidlc/worker-tools` (from `aidlc/onboarding-tour`, closed the same day:
-  `aidlc-docs/archive/onboarding-tour/`).
-- **Current Stage**: CONSTRUCTION -- U1 and U2 live (2026-10-22; `c523f53` promoted, `main` `8ef704d`). **Tool search built**
-  (design `construction/tools-api/functional-design/tool-search-addendum.md`): api `feat/worker-tools-search-api` (`85c245b`)
-  and app `feat/worker-tools-search-app` (`7607332`, includes `feat/tools-filter-type-of-support`). Next: the api PR ->
-  staging -> the app preview -> promote that sha -> the app PR; production checks; then Build and Test record and the close.
-
-  **Done:** workspace detection (brownfield, unchanged); the targeted inventory
-  `inception/inventory/worker-tools-inventory.md` (on `main` `62e24f9`).
-
-## Stage Progress
-### INCEPTION PHASE
-- [x] Workspace Detection
-- [x] Reverse Engineering (targeted inventory)
-- [x] Requirements Analysis (approved 2026-10-22)
-- [x] User Stories -- SKIP
-- [x] Workflow Planning (approved 2026-10-22)
-- [x] Application Design -- SKIP
-- [x] Units Generation -- SKIP (U1 `tools-api`, U2 `tools-app` in the plan)
-
-### CONSTRUCTION PHASE
-- [ ] Functional Design -- U1 approved 2026-10-22; U2 approved 2026-10-22
-- [ ] NFR Requirements -- SKIP
-- [x] NFR Design -- shared, approved 2026-10-22
-- [ ] Infrastructure Design -- SKIP
-- [ ] Code Generation -- U1 merged #104, on staging; U2 pushed, held until U1's promotion
-- [ ] Build and Test
+- **Current Cycle**: none. The worker-tools cycle closed 2026-10-22 (`aidlc-docs/archive/worker-tools/`).
+- **Current Stage**: between cycles. "continue the AI-DLC" starts a new cycle: a targeted inventory of the area, then
+  INCEPTION, then CONSTRUCTION per unit, on a branch `aidlc/<cycle>` for the record and `feat/...` branches for the code.
+  Open now: the docs PR `docs/rollback-rows-2026-10-22` (CLAUDE.md's rollback rows) to merge; the signed-in production
+  check of the tool search (user).
 
 ## Previous cycles (archived, read-only)
 
@@ -46,11 +22,18 @@
 | Worker profile on `apps/api` (U1 `worker-area`, U2 `edit-profile` in part) | `aidlc-docs/archive/worker-profile-api/` | **Parked 2026-10-14** with work open (`PARKED.md`); U1 live 2026-10-12, U2 PR 2 live; PR #57 held |
 | API review: the worker dashboard on `apps/api` (U3-U5, the State filter) | `aidlc-docs/archive/api-review/` | **Parked 2026-10-21** (`PARKED.md`); api #61-#85 live (prod `b8fe2eb`, 2026-10-19); the State filter live (#86); `feat/account-app` held |
 | Onboarding tour + profile completion (U1 `tour-seen-api`, U2 `tour-app`, C1 `completion-api`; H1/H2) | `aidlc-docs/archive/onboarding-tour/` | Closed 2026-10-22; #88-#103 live (api prod `00014-wdv` = `9fdcf6d`, app `main` `62e24f9`); C2 not built (follow-up 27) |
+| Worker tools (U1 `tools-api`, U2 `tools-app`, the tool search) | `aidlc-docs/archive/worker-tools/` | Closed 2026-10-22; #104-#107 live (api prod `bf9b966`, app `main` `8943f93`) |
 
 `aidlc-docs/audit.md` is the single append-only audit trail across cycles; never rewrite it.
 
 ## What is live (carry forward -- facts the next cycle builds on)
 
+- **Worker tools** (2026-10-22): `packages/schemas/src/data/serviceTools.ts` (the lists, `TOOL_SYNONYMS`, `toolSearchOf`)
+  is the one source for the page and the api; `worker_services."toolIds"`/`"otherTools"`; the worker's "Your tools"
+  screen (Cleaning, Home and Yard), the admin `tools` (all of) and `toolSearch` filters, `GET /v1/admin/workers/:id/services`.
+  Not in completion; clients never see tools. **Vercel regenerates the app's Prisma client from `packages/db` at build**:
+  a new column is known to the app from the merge, before production's database has it (keep app queries on explicit
+  `select`). Production api `bf9b966`.
 - **The worker sign-up has one backend: `apps/api`** (NestJS 11 on Fastify 5, Cloud Run `remonta-api`,
   `australia-southeast1`, project `remonta-api-510206`, URL `remonta-api-154148201608.australia-southeast1.run.app`).
   The app finds it through `NEXT_PUBLIC_API_URL` + `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`; with either missing the sign-up
@@ -153,6 +136,11 @@
 29. **Rotate the Zoho OAuth secret** committed in the deleted `apps/app/docs/Zoho_Jobs_To_DB.md` (in git history).
 30. **Production 403 on `GET /v1/worker/profile`** for one non-WORKER account (`cmj85z8m60000vxr002l9hqqo`, 2026-10-21 07:15Z, 08:22Z): role or impersonation; fix access or the message.
 31. **`test/my-profile-columns`** (24 database tests): bring up to date and merge. Also tighten the app lint baseline (H1 removed one finding).
+32. **Merge order guard**: #105 merged before its api was promoted. Consider a required check or a PR-template line for
+    app PRs that call a not-yet-promoted api entry.
+33. **Tools, options**: show matched tools on the admin result cards (Q2 B); tools on the client/shared profile; tools
+    for other services; review the synonym list after real use (the own tools workers type).
+34. **gcloud re-login** on this machine (revision names for the rollback rows).
 
 ## Workspace State
 - **Existing Code**: Yes
@@ -170,7 +158,7 @@
 - **Documentation**: aidlc-docs/ only
 - **Structure patterns**: CLAUDE.md "Dynamic by default" (contract entries + handlers; form definitions)
 
-## Extension Configuration (worker-tools)
+## Extension Configuration (worker-tools's values; re-asked next cycle)
 | Extension | Enabled | Decided At |
 |---|---|---|
 | Security Baseline | Yes, blocking | worker-tools, Requirements Analysis 2026-10-22 (Security A) |
