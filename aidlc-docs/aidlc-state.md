@@ -7,10 +7,11 @@
   a cleaning tools and yard and maintenance tools to the worker's dashboard if their services have cleaning and yard
   and maintenance". Record branch `aidlc/worker-tools` (from `aidlc/onboarding-tour`, closed the same day:
   `aidlc-docs/archive/onboarding-tour/`).
-- **Current Stage**: CONSTRUCTION -- U1 merged (#104, `main` `c523f53`) and on staging (migration applied 03:09Z);
-  **not promoted** (full sha `c523f538e310ec32236ec8c5748948ba4b686479`, after the staging checks in the PR body).
-  U2 code pushed (`feat/worker-tools-app` `ccae8ef`, gates green, `construction/tools-app/code/U2-summary.md`): the user
-  opens the PR; preview checks; **merge only after U1's promotion**. Then production checks and the cycle close. U2 merges only after U1's promotion (user, 2026-10-22: U2 started before it).
+- **Current Stage**: CONSTRUCTION -- **U1 and U2 live** (2026-10-22): #104 promoted (`c523f53`, run 39723885178,
+  04:44Z, migration applied); #105 merged (`main` `8ef704d`, 03:54Z, before the promotion: see audit). Open: the follow-up
+  PR `feat/tools-filter-type-of-support` (Tools per type of support, above Experience with, the rollback row);
+  production checks (user); then the **tool search** (approved design `construction/tools-api/functional-design/tool-search-addendum.md`):
+  api PR `feat/worker-tools-search-api`, then the page.
 
   **Done:** workspace detection (brownfield, unchanged); the targeted inventory
   `inception/inventory/worker-tools-inventory.md` (on `main` `62e24f9`).
