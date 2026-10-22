@@ -5223,3 +5223,15 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-22):** "continue and approve"
 
 **AI action (2026-10-22):** U1 code generation plan approved; Part 2 executed on `feat/worker-tools-api` (from `main` `62e24f9`), 7 commits, head `b52f532`, pushed (24 files, +3,207 / -4). Gates: schemas 92, api-contract 117, db 50, form-engine 76, api lint + tsc + 908 tests (225 database-gated skipped: Docker does not answer on this machine; CI runs them), app 286 tests and lint baseline OK, turbo build 3/3. Deviations: the regenerated app Prisma clients restored, not committed (production's database gets the columns only at the api's promotion; the app deploys on merge); `docs/admin/README.md` rebuilt on `main`'s bytes after a line-ending rewrite. Summary `construction/tools-api/code/U1-summary.md`. Compare link and PR description handed to the user; no PR opened by the AI (no gh).
+
+**User input (2026-10-22):** "what column name and which table are modified?"
+
+**AI action (2026-10-22):** answered: `worker_services."toolIds"` and `"otherTools"`, `TEXT[] NOT NULL DEFAULT '{}'`, migration `20261022120000_worker_services_tools`.
+
+**User input (2026-10-22):** " I check the neon database, but there are not additional columns"
+
+**AI action (2026-10-22):** by refs `main` was still `62e24f9` (not merged); explained that migrations are applied only by deploy-api (staging on merge, production on promotion).
+
+**User input (2026-10-22):** "merged, but the columns are still not in neon"
+
+**AI action (2026-10-22):** by refs `main` = `c523f53` (merge of PR #104, head `b52f532`) at 02:58Z; deploy-api run 39714324255 was at its quality gates at 03:00Z, before the staging migration step; watching the run.
