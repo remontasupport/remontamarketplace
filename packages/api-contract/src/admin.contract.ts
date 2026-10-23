@@ -31,7 +31,12 @@ export const AU_STATE_NAMES: Record<AuState, string> = {
   VIC: 'Victoria',
   WA: 'Western Australia',
 }
+/** worker-activation U1 (BR-5): the admin search's activation filter values. */
+export const ACTIVATION_FILTERS = ['active', 'inactive'] as const
 export const WORKER_SEARCH_LIMITS = { user: 120, ip: 300 } as const
+/** An admin working down a page of cards switches many in a minute; suspension is rarer. */
+export const ACTIVATION_WRITE_LIMITS = { user: 120, ip: 300 } as const
+export const SUSPENSION_WRITE_LIMITS = { user: 30, ip: 120 } as const
 export const ADMIN_LIST_LIMITS = { user: 60, ip: 120 } as const
 
 /** A comma-separated query value: split, trimmed, empties dropped, deduplicated, sorted (R1.5). */
@@ -90,6 +95,13 @@ export const workerSearchQuerySchema = z.strictObject({
    * (packages/schemas toolSearchOf); on the type of support's service when it has a tool list, else both.
    */
   toolSearch: z.string().trim().min(1).max(TOOL_SEARCH_MAX_CHARS).regex(/^[^\p{Cc}]*$/u, 'Plain text only').optional(),
+  /** worker-activation U1 (BR-5): the admin-set activation flag; absent = both. */
+  activation: z.enum(ACTIVATION_FILTERS).optional(),
+  /**
+   * worker-activation U1 (BR-6): each row carries `activated`. Opt-in because the app on production parses rows
+   * strictly and would refuse the new key; to become unconditional once no pre-activation build can be promoted.
+   */
+  withActivation: flag.optional(),
 })
 export type WorkerSearchQuery = z.input<typeof workerSearchQuerySchema>
 export type WorkerSearchQueryParsed = z.output<typeof workerSearchQuerySchema>
@@ -117,7 +129,10 @@ export const workerRowSchema = z.strictObject({
   introduction: z.string().nullable(),
   createdAt: isoDate,
   updatedAt: isoDate,
+  /** The account is not suspended (users.status ACTIVE). Not the activation flag: that is `activated`. */
   isActive: z.boolean(),
+  /** worker-activation U1 (BR-6): the admin-set flag, present only when the query had `withActivation`. */
+  activated: z.boolean().optional(),
   /** Present when a suburb was given and the worker is placed; one decimal (R6.4). */
   distanceKm: z.number().optional(),
   /** Present when the worker has a HOME row (R6.5). */
@@ -162,6 +177,8 @@ export const appliedFiltersSchema = z.strictObject({
   tools: z.array(z.string()).optional(),
   /** Present only when the query had a tool search (N1: today's app never sends it). */
   toolSearch: z.string().optional(),
+  /** Present only when the query had an activation filter (N1: today's app never sends it). */
+  activation: z.enum(ACTIVATION_FILTERS).optional(),
 })
 export type AppliedFilters = z.output<typeof appliedFiltersSchema>
 
@@ -215,12 +232,33 @@ const adminRead = (limits: { user: number; ip: number }) =>
     privateCacheSeconds: 60,
   })
 
+const json = <S extends z.ZodType>(schema: S): { kind: 'json'; schema: S } => ({ kind: 'json', schema })
+
+/** worker-activation U1 (N3): an admin write. Never cached; the body is one small object. */
+const adminWrite = (limits: { user: number; ip: number }) =>
+  meta({
+    access: { roles: ['ADMIN'] },
+    bot: 'none',
+    rateLimit: [
+      { per: 'user', limit: limits.user, window: '1m' },
+      { per: 'ip', limit: limits.ip, window: '1m' },
+    ],
+    maxBodyKb: 1,
+  })
+
 /** U3b: a short-lived link to view a worker's private document (the compliance review page opens it through the app). */
 export const adminDocumentParamsSchema = z.strictObject({ documentId: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/, 'Not a document id') })
 export const adminDocumentLinkSchema = z.strictObject({ url: z.url().max(4096), expiresAt: z.iso.datetime({ offset: true }).nullable() })
 
 /** worker-tools U1 (E3, Q1 B): one worker's services and their tools, for the worker's admin page. */
 export const adminWorkerParamsSchema = z.strictObject({ workerId: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/, 'Not a worker id') })
+/** worker-activation U1: the two admin switches. The target state travels in the body, so a repeat is harmless. */
+export const workerActivationBodySchema = z.strictObject({ activated: z.boolean() })
+export const workerActivationSchema = z.strictObject({ workerId: z.string(), activated: z.boolean() })
+export type WorkerActivation = z.output<typeof workerActivationSchema>
+export const workerSuspensionBodySchema = z.strictObject({ suspended: z.boolean() })
+export const workerSuspensionSchema = z.strictObject({ workerId: z.string(), suspended: z.boolean() })
+export type WorkerSuspension = z.output<typeof workerSuspensionSchema>
 export const adminWorkerServicesSchema = z.strictObject({
   services: z
     .array(
@@ -281,5 +319,27 @@ export const adminContract = defineContract('admin', {
     pathParams: adminWorkerParamsSchema,
     responses: { 200: adminWorkerServicesSchema },
     meta: adminRead({ user: 120, ip: 300 }),
+  },
+
+  // worker-activation U1: the admin-set activation flag (BR-1..BR-4) and the account's suspension (BR-7, BR-8), which
+  // the card's switch wrote through the app until now. No audit row (Q8 c): the request log line is the record.
+  setWorkerActivation: {
+    method: 'PUT',
+    path: '/v1/admin/workers/:workerId/activation',
+    summary: "Switch a worker on or off for clients and the public list: only the activation flag changes, never sign-in or Verify Compliance; 404 when no worker has that id.",
+    pathParams: adminWorkerParamsSchema,
+    body: json(workerActivationBodySchema),
+    responses: { 200: workerActivationSchema },
+    meta: adminWrite(ACTIVATION_WRITE_LIMITS),
+  },
+
+  setWorkerSuspension: {
+    method: 'PUT',
+    path: '/v1/admin/workers/:workerId/suspension',
+    summary: "Suspend a worker's account (no sign-in) or restore it; the activation flag is untouched. Worker accounts only: 404 when no worker has that id.",
+    pathParams: adminWorkerParamsSchema,
+    body: json(workerSuspensionBodySchema),
+    responses: { 200: workerSuspensionSchema },
+    meta: adminWrite(SUSPENSION_WRITE_LIMITS),
   },
 })

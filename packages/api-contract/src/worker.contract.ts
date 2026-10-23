@@ -311,6 +311,10 @@ export type Profile = z.output<typeof profileSchema>
 export const tourViewSchema = z.strictObject({ seenAt: isoDate.nullable() })
 export type TourView = z.output<typeof tourViewSchema>
 
+/** worker-activation U1 (BR-9): whether an admin has switched the worker on; its own read, as the tour's. */
+export const activationViewSchema = z.strictObject({ activated: z.boolean() })
+export type ActivationView = z.output<typeof activationViewSchema>
+
 /**
  * onboarding-tour C1 (E5): "complete", declared once in the api. The My Profile pages (the sidebar's slugs), the three
  * checklist groups with their next step, the percent over the 10 required pages, and each chosen service's documents.
@@ -418,6 +422,8 @@ export const workerContract = defineContract('worker', {
   getCompletion: { method: 'GET', path: '/v1/worker/completion', summary: 'How complete the worker is: every My Profile page, the three checklist groups (My Profile, Services, Compliance) with their next step, the percent over the 10 required pages, and each service’s documents. Privately cacheable for a minute with ETag/304.', responses: { 200: completionViewSchema }, meta: workerRead() },
   // ---- onboarding-tour U1: the tour's "seen" time, apart from the profile read (whose strict shape the deployed app parses).
   getTour: { method: 'GET', path: '/v1/worker/tour', summary: 'When the worker first ended the dashboard tour (or chose "Not now"); null when not yet. Never cached.', responses: { 200: tourViewSchema }, meta: workerRead({ noCache: true }) },
+  // worker-activation U1 (BR-9): the dashboard's "awaiting approval" note. Never cached: the note goes on the next load after an admin switches the worker on.
+  getActivation: { method: 'GET', path: '/v1/worker/activation', summary: 'Whether an admin has switched the worker on (shown to clients and in the public list). Never cached.', responses: { 200: activationViewSchema }, meta: workerRead({ noCache: true }) },
   putTourSeen: { method: 'PUT', path: '/v1/worker/tour/seen', summary: 'Record that the worker has seen the tour; the first time is kept. No body; the time is the api clock. Refused while an admin impersonates the worker.', responses: { 200: tourViewSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1 }) },
 })
 
