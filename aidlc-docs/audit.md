@@ -5349,3 +5349,11 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-23):** "ahh okay, ignore my suggestion, go with your plan"
 
 **AI action (2026-10-23):** the plan taken as approved (separate column). U1 Functional Design written: `construction/activation-api/functional-design/functional-design.md`. A finding corrects the plan: the production app parses responses strictly (`createClient` + `z.strictObject`, worker-tools BR-11), so a new field on every search row would break today's admin search after promotion; the field is returned only with `withActivation` (BR-6), and the worker's note gets its own `GET /v1/worker/activation` (BR-9). Column `worker_profiles."isActivated" BOOLEAN NOT NULL DEFAULT false` (the default is the FR-3 reset; no index); entries `setWorkerActivation`, `setWorkerSuspension` (WORKER accounts only; replaces the app route in U2), the `activation` filter; BR-1..BR-12. Awaiting approval.
+
+**User input (2026-10-23):** "I see a column that maybe we can use, there is a isPublish, a boolean type. We can use it to set the workers active if it is True, I think that way there is a minimal work only"
+
+**AI action (2026-10-23):** answered: `isPublished` is Verify Compliance (the publish route also sets `verificationStatus` Verified; the compliance pending/compliant lists split on it) and an input of the onboarding stage machine (`stage.ts`, the 5-minute reconciler: PUBLISHED / ACTION_REQUIRED, `publishedAt`; also returned by the profile read). Reusing it = Q6 C (one decision): activating would mark compliance verified and move the onboarding stage. Saving: the migration and `getActivation` only (~10-15 % of U1). Asked to choose.
+
+**User input (2026-10-23):** "Separate column (Recommended)"
+
+**AI action (2026-10-23):** U1 Functional Design unchanged (separate `isActivated`); its approval awaited.
