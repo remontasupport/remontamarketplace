@@ -85,6 +85,20 @@ describe.skipIf(!local)('the extra photos on PostGIS', () => {
     expect((await h.t.fastify.inject({ method: 'POST', url: '/v1/worker/photos/additional/remove', headers: as(h.a.userId), payload: { url: s.photos! } })).statusCode).toBe(400) // never the main
   })
 
+  it('make-main: an extra photo becomes the main and the old main takes its place; by the staging address too; not another worker’s', async () => {
+    const [m, x] = [await upload(), await upload()]
+    await claim(h.a.profileId, m, true)
+    const two = await claim(h.a.profileId, x, true)
+    const call = (url: string, user = h.a.userId) => h.t.fastify.inject({ method: 'POST', url: '/v1/worker/photos/additional/make-main', headers: as(user), payload: { url } })
+    expect((await call(two.additional[0]!, h.b.userId)).statusCode).toBe(400)
+    const res = await call(`https://storage.test/staging/${x}`)
+    expect(res.statusCode, res.body).toBe(200)
+    expect(res.json()).toEqual({ main: two.additional[0], additional: [two.main] })
+    expect(await stored(h.a.profileId)).toEqual({ photos: two.additional[0], additionalPhotos: JSON.stringify([two.main]) })
+    expect((await h.get(h.a.userId)).json().photos).toEqual({ main: two.additional[0] })
+    expect(blobDeletes).toEqual([]) // no file touched
+  })
+
   it('the admin: no extra without a main photo; reads and removes a worker’s extras; 404 for an unknown worker', async () => {
     const x = await upload()
     await expect(claim(h.b.profileId, x, false)).rejects.toMatchObject({ status: 400 })

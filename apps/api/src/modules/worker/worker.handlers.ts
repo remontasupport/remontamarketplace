@@ -13,7 +13,7 @@ import { confirmPhotoUpload } from '../registration/application/photo-confirm'
 import { createPhotoTicket } from '../registration/application/photo-ticket'
 import { writeHomeAddress, writeServiceArea } from './application/addresses'
 import { getProfile, type GetProfileDeps } from './application/get-profile'
-import { claimAsAdditional, claimAsPhoto, deleteStoredPhoto, removeAdditional, removeOne, workerPhotosOf } from './application/photos'
+import { claimAsAdditional, claimAsPhoto, deleteStoredPhoto, makeAdditionalMain, removeAdditional, removeOne, workerPhotosOf } from './application/photos'
 import { replaceSection } from './application/replace-section'
 import { GROUPS_WITH_COMPLETION, writeAdditionalInfo, writeBankAccount } from './application/sections/additional-info'
 import { deleteEducationEntry, deleteExperienceArea, deleteJobHistoryEntry, writeAvailability, writeEducation, writeExperience, writeJobHistory } from './application/sections/lists'
@@ -95,6 +95,11 @@ export function workerHandlers(deps: WorkerModuleDeps) {
       const body = await replaceSection(s, ctx, { section: 'addAdditionalPhoto', completion: true }, (tx, prof) => claimAsAdditional(tx, prof.id, req.body.uploadId, deps.clock(), true))
       return { status: 201, body }
     },
+    // "Replace photo" with an existing extra photo: the columns swap; completion counts the main photo.
+    makeAdditionalMain: async (req, ctx) => ({
+      status: 200,
+      body: await replaceSection(s, ctx, { section: 'makeAdditionalMain', completion: true }, (tx, p) => makeAdditionalMain(tx, p.id, req.body.url)),
+    }),
     removeAdditionalPhoto: async (req, ctx) => {
       let profileId = ''
       const out = await replaceSection(s, ctx, { section: 'removeAdditionalPhoto', completion: false }, (tx, p) => {
