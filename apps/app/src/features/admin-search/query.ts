@@ -56,6 +56,8 @@ export interface AdminFilters {
   toolSearch: string
   /** worker-activation (A3): the tab above the results; the admin-set flag. */
   activation: 'all' | 'active' | 'inactive'
+  /** The nurse type (2026-10-23): the worker's nursing answer; sent only with Nursing Services as the type of support. */
+  nursingType: 'all' | 'registered' | 'enrolled'
 }
 
 export const PAGE_SIZE = 6
@@ -89,7 +91,11 @@ export const DEFAULT_FILTERS: AdminFilters = {
   tools: [],
   toolSearch: '',
   activation: 'all',
+  nursingType: 'all',
 }
+
+/** The category whose row carries the nursing answer; the nurse type shows only with it as the type of support. */
+export const NURSING_SERVICE_ID = 'nursing-services'
 
 /** The Tools filter's groups (UR-8): each service with a list, its name and its tools, in list order. */
 export const TOOL_GROUPS: ReadonlyArray<{ service: ToolService; label: string; tools: ReadonlyArray<{ id: string; label: string }> }> = TOOL_SERVICES.map((service) => ({
@@ -165,6 +171,8 @@ export function toQuery(f: AdminFilters): WorkerSearchQuery {
   const toolSearch = f.toolSearch.trim().slice(0, TOOL_SEARCH_MAX_CHARS)
   if (toolGroupFor(f.typeOfSupport) && toolSearchOf(toolSearch)) q.toolSearch = toolSearch
   if (f.activation !== 'all') q.activation = f.activation
+  // The nurse type narrows Nursing Services only (the api refuses it otherwise).
+  if (f.typeOfSupport === NURSING_SERVICE_ID && f.nursingType !== 'all') q.nursingType = f.nursingType
   return q
 }
 
@@ -233,5 +241,6 @@ export function filtersFromURL(params: URLSearchParams): AdminFilters {
   f.tools = toolsFor(f.typeOfSupport, f.tools)
   f.toolSearch = toolGroupFor(f.typeOfSupport) ? (q.toolSearch ?? '') : ''
   if (q.activation) f.activation = q.activation
+  if (f.typeOfSupport === NURSING_SERVICE_ID && q.nursingType) f.nursingType = q.nursingType
   return f
 }

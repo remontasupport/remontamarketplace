@@ -29,6 +29,7 @@ import {
   experienceAreasOfLabel,
   filtersFromURL,
   searchRequestOf,
+  NURSING_SERVICE_ID,
   urlFromFilters,
   type AdminFilters,
 } from '@/features/admin-search/query'
@@ -51,7 +52,7 @@ interface SuburbMatch {
 /** The panel's draft until "Apply Filters" (E7 pendingFilters). */
 type PendingFilters = Pick<
   AdminFilters,
-  'locality' | 'withinKm' | 'state' | 'typeOfSupport' | 'gender' | 'hasVehicle' | 'workerType' | 'languages' | 'age' | 'therapeuticSubcategories' | 'experienceWith' | 'experienceAreas' | 'tools' | 'toolSearch'
+  'locality' | 'withinKm' | 'state' | 'typeOfSupport' | 'gender' | 'hasVehicle' | 'workerType' | 'languages' | 'age' | 'therapeuticSubcategories' | 'experienceWith' | 'experienceAreas' | 'tools' | 'toolSearch' | 'nursingType'
 >
 
 const ACTIVATION_TABS: ReadonlyArray<{ value: AdminFilters['activation']; label: string }> = [
@@ -75,6 +76,7 @@ const pendingOf = (f: AdminFilters): PendingFilters => ({
   experienceAreas: f.experienceAreas,
   tools: f.tools,
   toolSearch: f.toolSearch,
+  nursingType: f.nursingType,
 })
 
 const suburbLabel = (s: SuburbMatch) => `${s.name} ${s.state.abbreviation} ${s.postcode}`
@@ -642,6 +644,8 @@ export default function AdminDashboard() {
                             // worker-tools: another type of support hides the Tools and forgets them, and the search.
                             tools: [],
                             toolSearch: '',
+                            // The nurse type belongs to Nursing Services: another choice forgets it.
+                            nursingType: 'all',
                           }))
                         }}
                       >
@@ -657,6 +661,25 @@ export default function AdminDashboard() {
                 )}
               </div>
             </div>
+
+            {/* The nurse type (2026-10-23): only with Nursing Services as the type of support; the worker's own answer */}
+            {pendingFilters.typeOfSupport === NURSING_SERVICE_ID && (
+              <div className="mb-4">
+                <label htmlFor="nursing-type" className="text-sm font-medium text-gray-700 mb-2 block">
+                  Nurse type
+                </label>
+                <select
+                  id="nursing-type"
+                  value={pendingFilters.nursingType}
+                  onChange={(e) => setPendingFilters(prev => ({ ...prev, nursingType: e.target.value as PendingFilters['nursingType'] }))}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                >
+                  <option value="all">All</option>
+                  <option value="registered">Registered nurse</option>
+                  <option value="enrolled">Enrolled nurse</option>
+                </select>
+              </div>
+            )}
 
             {/* Tools (worker-tools UR-8): only for Cleaning Services or Home and Yard Maintenance as the type of support
                 (user, 2026-10-22, as the areas under "Experience with"); workers with all the chosen tools */}
