@@ -15,7 +15,10 @@ import {
   type SuspendedListResponse,
   type UserListResponse,
   type UserSearchQuery,
+  type PhotoTicketRequest,
+  type PhotoTicketResponse,
   type WorkerActivation,
+  type WorkerPhotos,
   type WorkerSearchQuery,
   type WorkerSearchResponse,
   type WorkerSuspension,
@@ -41,6 +44,11 @@ export interface AdminApi {
   setWorkerActivation(workerId: string, activated: boolean): Promise<ApiOutcome<WorkerActivation>>
   /** worker-activation U2 (A4, A5): suspend the account (no sign-in) or restore it; the activation flag is untouched. */
   setWorkerSuspension(workerId: string, suspended: boolean): Promise<ApiOutcome<WorkerSuspension>>
+  /** A worker's extra photos (2026-10-23): a ticket for the direct upload, the read, add and remove. */
+  createPhotoTicket(body: PhotoTicketRequest): Promise<ApiOutcome<PhotoTicketResponse>>
+  getWorkerPhotos(workerId: string): Promise<ApiOutcome<WorkerPhotos>>
+  addWorkerAdditionalPhoto(workerId: string, uploadId: string): Promise<ApiOutcome<WorkerPhotos>>
+  removeWorkerAdditionalPhoto(workerId: string, url: string): Promise<ApiOutcome<WorkerPhotos>>
   /** The canonical query string of a search (R8.5): what the URL bar and the cache key carry. */
   canonicalSearch(query: WorkerSearchQuery): string
 }
@@ -52,7 +60,8 @@ export interface AdminApiDeps {
 }
 
 type QueryEntryName = 'searchWorkers' | 'listUsers' | 'listSuspendedWorkers'
-type EntryName = QueryEntryName | 'getWorkerServices' | 'setWorkerActivation' | 'setWorkerSuspension'
+type EntryName = QueryEntryName | 'getWorkerServices' | 'setWorkerActivation' | 'setWorkerSuspension' | 'createAdminPhotoTicket' | 'getWorkerPhotos' | 'addWorkerAdditionalPhoto' | 'removeWorkerAdditionalPhoto'
+const QUERY_ENTRIES: ReadonlySet<EntryName> = new Set<EntryName>(['searchWorkers', 'listUsers', 'listSuspendedWorkers'])
 
 export function createAdminApi(deps: AdminApiDeps): AdminApi {
   const doFetch = deps.fetch ?? ((input: RequestInfo | URL, init?: RequestInit) => globalThis.fetch(input, init))
@@ -81,7 +90,7 @@ export function createAdminApi(deps: AdminApiDeps): AdminApi {
       return { kind: 'unavailable' }
     }
     // An entry with path parameters (getWorkerServices, the two switches) has no query to make canonical.
-    const q = params ? undefined : canonical(name as QueryEntryName, query)
+    const q = QUERY_ENTRIES.has(name) ? canonical(name as QueryEntryName, query) : undefined
     if (q && 'fields' in q && typeof q.fields === 'object') return { kind: 'failed', status: 400, fields: q.fields as Record<string, string[]> }
     const reload = opts?.cache === 'reload'
     const client = createClient(adminContract, {
@@ -98,7 +107,7 @@ export function createAdminApi(deps: AdminApiDeps): AdminApi {
       }
       let res: Awaited<ReturnType<(typeof client)[EntryName]>>
       try {
-        res = await client[name]((params ? { params, ...(body !== undefined ? { body } : {}) } : { query: q }) as never, { signal: opts?.signal, headers: { authorization: `Bearer ${token}` } })
+        res = await client[name]((q ? { query: q } : { ...(params ? { params } : {}), ...(body !== undefined ? { body } : {}) }) as never, { signal: opts?.signal, headers: { authorization: `Bearer ${token}` } })
       } catch (err) {
         if (opts?.signal?.aborted) throw err
         return { kind: 'unavailable' }
@@ -121,6 +130,10 @@ export function createAdminApi(deps: AdminApiDeps): AdminApi {
     // Writes are never cached: the browser does not cache a PUT, and the api answers no-store.
     setWorkerActivation: (workerId, activated) => call('setWorkerActivation', undefined, undefined, { workerId }, { activated }),
     setWorkerSuspension: (workerId, suspended) => call('setWorkerSuspension', undefined, undefined, { workerId }, { suspended }),
+    createPhotoTicket: (body) => call('createAdminPhotoTicket', undefined, undefined, undefined, body),
+    getWorkerPhotos: (workerId) => call('getWorkerPhotos', undefined, { cache: 'reload' }, { workerId }),
+    addWorkerAdditionalPhoto: (workerId, uploadId) => call('addWorkerAdditionalPhoto', undefined, undefined, { workerId }, { uploadId }),
+    removeWorkerAdditionalPhoto: (workerId, url) => call('removeWorkerAdditionalPhoto', undefined, undefined, { workerId }, { url }),
     canonicalSearch: (query) => {
       const q = canonical('searchWorkers', query)
       return 'fields' in q && typeof q.fields === 'object' ? '' : new URLSearchParams(q as Record<string, string>).toString()

@@ -6,6 +6,7 @@ import { declaredTypeOf, HEIC_MESSAGE, isHeicHeader, PHOTO_SERVICE_MESSAGE, PHOT
 import { readHeader } from "@/features/forms/adapters/readHeader";
 import { shrinkImage } from "@/features/forms/adapters/shrinkImage";
 import { xhrUploader } from "@/features/forms/adapters/xhrUploader";
+import type { PhotoTicketRequest, PhotoTicketResponse } from "@remonta/api-contract";
 import type { ApiOutcome } from "@/lib/api/outcome";
 import { workerApi, type Photos, type WorkerApi } from "./api";
 
@@ -37,6 +38,36 @@ export async function waitForCleanPhoto(stagedUrl: string, opts: { api?: WorkerA
     const r = await api.getProfile({ cache: "reload" });
     if (r.kind === "ok" && r.body.photos.main !== stagedUrl) return r.body.photos;
     if (Date.now() >= deadline) return null;
+  }
+}
+
+/** The device-side checks every photo upload shares: HEIC refused, shrunk, within the size limit; its declared type. */
+async function preparePhoto(file: File): Promise<{ ok: true; file: Blob; contentType: PhotoTicketRequest["contentType"] } | { ok: false; message: string }> {
+  const header = await readHeader(file);
+  if (isHeicHeader(header)) return { ok: false, message: HEIC_MESSAGE };
+  const small = await shrinkImage(file);
+  if (small.size > PHOTO_MAX_BYTES) return { ok: false, message: PHOTO_TOO_LARGE_MESSAGE };
+  return { ok: true, file: small, contentType: declaredTypeOf(await readHeader(small), small.type) };
+}
+
+/**
+ * One photo through any ticket and confirm (2026-10-23: the extra photos, by the worker or by an admin for a worker):
+ * prepared on the device, a ticket, straight to the bucket, then the confirm's answer.
+ */
+export async function uploadToPhotoStore<T>(
+  file: File,
+  deps: { ticket(body: PhotoTicketRequest): Promise<ApiOutcome<PhotoTicketResponse>>; confirm(uploadId: string): Promise<ApiOutcome<T>>; onProgress?: (percent: number) => void },
+): Promise<{ ok: true; body: T } | { ok: false; message: string }> {
+  try {
+    const prepared = await preparePhoto(file);
+    if (!prepared.ok) return prepared;
+    const ticket = await deps.ticket({ contentType: prepared.contentType, sizeBytes: prepared.file.size });
+    if (ticket.kind !== "ok") return { ok: false, message: photoMessageOf(ticket) };
+    await xhrUploader.upload(prepared.file, ticket.body.upload, { onProgress: (sent, total) => deps.onProgress?.(Math.round((sent / total) * 100)) });
+    const confirmed = await deps.confirm(ticket.body.photoUploadId);
+    return confirmed.kind === "ok" ? { ok: true, body: confirmed.body } : { ok: false, message: photoMessageOf(confirmed) };
+  } catch {
+    return { ok: false, message: UPLOAD_FAILED_MESSAGE };
   }
 }
 

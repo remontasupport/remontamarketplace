@@ -3,7 +3,7 @@
 // a 401 with a fresh token, and a typed outcome instead of a thrown error. The section
 // saves go through the form engine (saveSection); this client holds the read and the
 // photo calls, which upload files rather than save a body.
-import { createClient, workerContract, type CitizenshipBody, type ComplianceDocument, type ConfirmComplianceDocumentBody, type ConfirmServiceDocumentBody, type SignContractBody, type SignedContract, type TourView, type ActivationView, type DocumentLink, type Profile, type ServiceDocument, type ServiceDocumentTicketRequest, type ServiceDocumentTicketResponse, type ServiceRegistrationBody, type ServiceRegistrationView, type ServicesBody, type ServiceTools, type ServiceToolsBody, type ServiceToolsView } from "@remonta/api-contract";
+import { createClient, workerContract, type CitizenshipBody, type ComplianceDocument, type ConfirmComplianceDocumentBody, type ConfirmServiceDocumentBody, type SignContractBody, type SignedContract, type TourView, type ActivationView, type WorkerPhotos, type DocumentLink, type Profile, type ServiceDocument, type ServiceDocumentTicketRequest, type ServiceDocumentTicketResponse, type ServiceRegistrationBody, type ServiceRegistrationView, type ServicesBody, type ServiceTools, type ServiceToolsBody, type ServiceToolsView } from "@remonta/api-contract";
 import { apiToken } from "@/lib/api/admin";
 import { failure, type ApiOutcome } from "@/lib/api/outcome";
 import { Unauthenticated, type TokenSource } from "@/lib/api/token";
@@ -23,6 +23,10 @@ export interface WorkerApi {
   createPhotoTicket(body: { contentType: "image/jpeg" | "image/png" | "image/webp"; sizeBytes: number }): Promise<ApiOutcome<PhotoTicket>>;
   confirmPhoto(body: { uploadId: string }): Promise<ApiOutcome<Photos>>;
   removePhoto(url: string): Promise<ApiOutcome<Photos>>;
+  /** The extra photos (2026-10-23): the main photo and up to 2 more; their own entries. */
+  getPhotos(opts?: { signal?: AbortSignal }): Promise<ApiOutcome<WorkerPhotos>>;
+  addAdditionalPhoto(body: { uploadId: string }): Promise<ApiOutcome<WorkerPhotos>>;
+  removeAdditionalPhoto(url: string): Promise<ApiOutcome<WorkerPhotos>>;
   /** DELETE /v1/worker/experience/:domain (2026-10-14): one care area; the answer is the areas left. */
   deleteExperience(domain: Profile["sections"]["experience"][number]["domain"]): Promise<ApiOutcome<{ domains: Profile["sections"]["experience"] }>>;
   /** DELETE /v1/worker/job-history/:entryId (2026-10-14): one job; the answer is the jobs left. 404: not the caller's or already gone. */
@@ -72,6 +76,9 @@ type EntryName =
   | "createPhotoTicket"
   | "confirmPhoto"
   | "removePhoto"
+  | "getPhotos"
+  | "addAdditionalPhoto"
+  | "removeAdditionalPhoto"
   | "deleteExperience"
   | "deleteJobHistoryEntry"
   | "deleteEducationEntry"
@@ -140,6 +147,9 @@ export function createWorkerApi(deps: WorkerApiDeps): WorkerApi {
     createPhotoTicket: (body) => call("createPhotoTicket", { body }),
     confirmPhoto: (body) => call("confirmPhoto", { body }),
     removePhoto: (url) => call("removePhoto", { body: { url } }),
+    getPhotos: (opts) => call("getPhotos", {}, opts),
+    addAdditionalPhoto: (body) => call("addAdditionalPhoto", { body }),
+    removeAdditionalPhoto: (url) => call("removeAdditionalPhoto", { body: { url } }),
     deleteExperience: (domain) => call("deleteExperience", { params: { domain } }),
     deleteJobHistoryEntry: (entryId) => call("deleteJobHistoryEntry", { params: { entryId } }),
     deleteEducationEntry: (entryId) => call("deleteEducationEntry", { params: { entryId } }),
