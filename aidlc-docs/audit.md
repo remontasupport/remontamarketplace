@@ -5469,3 +5469,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-23):** "Merged it already"
 
 **AI action (2026-10-23):** verified: `main` = `8aaa5bd` (merge of PR #115, 07:04:28Z), after the promotion (06:56Z): the order held. Vercel production builds success; `app.remontaservices.com.au/login` 200, `www` 200. The extra photos are live for workers and admins (api `00019-p5m`). Signed-in production checks are the user's.
+
+**User input (2026-10-23):** "can you remove this card / Worker photos / Up to 2 extra photos beside the worker's main photo. They can then be picked for the profile card. / also remove this Account: Active / In the public worker list: No(the Active switch on the search card), and place the Suspend button on top"
+
+**AI action (2026-10-23):** branch `fix/admin-worker-page-tidy` (from `main` `8aaa5bd`): the worker's admin page loses the "Worker photos" block and the two status lines; `WorkerAccountStatus` is now the Suspend (confirm popover) / Restore account button only, in the header actions beside Edit Profile; its pure helper `accountActionOf` (test updated). The admin photo api entries stay (unused by the app). Docs. App gate green (55 / 277 known, 40 files). Pushed; app-only.
