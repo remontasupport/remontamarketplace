@@ -5447,3 +5447,11 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-23):** "why there is an npm? Some of our available support workers npm"
 
 **AI action (2026-10-23):** a stray `npm ` typed into the JSX after `</h2>` in `components/dashboard/client/WorkerSearchResults.tsx` (since the monorepo merge `0485312`, 2026-09-10), rendered as text under the Find Worker heading. Removed on `fix/client-search-all-workers` (second commit); a scan for other text after a closing tag found none; baselines unchanged. Pushed.
+
+**User input (2026-10-23):** "perfect. Now this weekend, I made a changes to the worker's dahsboard, specifically on allowing the to upload multiple image for their profile, can we revert the feature back? then apply it to the admin dashboard as well, there is still the column additionalPhotos"
+
+**AI action (2026-10-23):** history: the extra photos were removed on 2026-10-14 at the user's request ("I want it be only 1 photo"; `c2282ad` api, PR #57 page); before, 1 main + 2 additional; the column and files kept; the admin page shows them and picks one for the card only. Asked scope, limit, process.
+
+**User input (2026-10-23):** "Workers + admins (Recommended)", "2, as before (Recommended)", "Quick change, no cycle".
+
+**AI action (2026-10-23):** api branch `feat/additional-photos-api` (from `main` `57a6dd6`): new entries only (the profile read and the main photo's entries keep `{main}`, the deployed app parses them strictly): worker `getPhotos`, `addAdditionalPhoto` (main if none), `removeAdditionalPhoto`; admin `createAdminPhotoTicket`, `getWorkerPhotos`, `addWorkerAdditionalPhoto` (400 without a main), `removeWorkerAdditionalPhoto`; `packages/api-contract/src/photos.ts` (shared shapes; admin cannot import worker.sections); admin deps gain the photo settings + Blob store. Tests: properties for the pure rules, a database test (CI); contract 15 files, api 48 files green. Pushed.
