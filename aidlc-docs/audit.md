@@ -5465,3 +5465,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-23):** "promotion is done"
 
 **AI action (2026-10-23):** verified: deploy-api run 39914398244 (workflow_dispatch) "Promote 0275574..." success 06:56Z; prod revision `remonta-api-00019-p5m` serves 100 % (previous `00018-nl4` = `8daec55`); prod health 200; `/v1/worker/photos` and `/v1/admin/photos/tickets` answer 401 without a token (present). `main` still `0275574`: the app PR `feat/additional-photos-app` not merged yet (safe to merge now).
+
+**User input (2026-10-23):** "Merged it already"
+
+**AI action (2026-10-23):** verified: `main` = `8aaa5bd` (merge of PR #115, 07:04:28Z), after the promotion (06:56Z): the order held. Vercel production builds success; `app.remontaservices.com.au/login` 200, `www` 200. The extra photos are live for workers and admins (api `00019-p5m`). Signed-in production checks are the user's.
