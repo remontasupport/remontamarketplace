@@ -5443,3 +5443,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-23):** "Ok, now can you adjust the api for the client dashboard, I want you to fetch the workers instead, and make it visible there." -- asked (show all / move to apps/api / both); **User input:** "Show all workers to clients"
 
 **AI action (2026-10-23):** FR-5 changed by the user: the signed-in client search (`/api/client/workers`, Find Worker) back to every worker whose account is ACTIVE (no activation condition); the public list (`/api/public/workers`) keeps `LISTABLE_WORKER`. Admin wording: "In the public worker list" (worker page, switch label, card tooltip). Test updated (public uses it; client and by-ids do not; client keeps the not-suspended condition). Docs. App gate green (55 / 277 known, 39 files). Branch `fix/client-search-all-workers` pushed; app-only, no api change.
+
+**User input (2026-10-23):** "why there is an npm? Some of our available support workers npm"
+
+**AI action (2026-10-23):** a stray `npm ` typed into the JSX after `</h2>` in `components/dashboard/client/WorkerSearchResults.tsx` (since the monorepo merge `0485312`, 2026-09-10), rendered as text under the Find Worker heading. Removed on `fix/client-search-all-workers` (second commit); a scan for other text after a closing tag found none; baselines unchanged. Pushed.
