@@ -13,7 +13,7 @@ import { confirmPhotoUpload } from '../registration/application/photo-confirm'
 import { createPhotoTicket } from '../registration/application/photo-ticket'
 import { writeHomeAddress, writeServiceArea } from './application/addresses'
 import { getProfile, type GetProfileDeps } from './application/get-profile'
-import { claimAsPhoto, deleteStoredPhoto, removeOne } from './application/photos'
+import { claimAsAdditional, claimAsPhoto, deleteStoredPhoto, removeAdditional, removeOne, workerPhotosOf } from './application/photos'
 import { replaceSection } from './application/replace-section'
 import { GROUPS_WITH_COMPLETION, writeAdditionalInfo, writeBankAccount } from './application/sections/additional-info'
 import { deleteEducationEntry, deleteExperienceArea, deleteJobHistoryEntry, writeAvailability, writeEducation, writeExperience, writeJobHistory } from './application/sections/lists'
@@ -80,6 +80,29 @@ export function workerHandlers(deps: WorkerModuleDeps) {
       await confirmPhotoUpload(req.body.uploadId, ctx.ip, { db: deps.db, bucket: p.bucket, publicBaseUrl: p.publicBaseUrl, ipHashSecret: p.ipHashSecret, now: deps.clock }, ctx.log)
       const body = await replaceSection(s, ctx, { section: 'confirmPhoto', completion: true }, (tx, prof) => claimAsPhoto(tx, prof.id, req.body.uploadId, deps.clock()))
       return { status: 201, body }
+    },
+    // The extra photos (2026-10-23): the same upload, placed beside the main photo; their own entries (the main photo's
+    // answers keep the shape the deployed app parses).
+    getPhotos: async (_req, ctx) => {
+      const row = await deps.db.workerProfile.findUnique({ where: { userId: ctx.principal!.userId }, select: { photos: true, additionalPhotos: true } })
+      if (!row) throw new ApiError(404, 'profile not found')
+      return { status: 200, body: workerPhotosOf(row) }
+    },
+    addAdditionalPhoto: async (req, ctx) => {
+      const p = photoDeps()
+      await confirmPhotoUpload(req.body.uploadId, ctx.ip, { db: deps.db, bucket: p.bucket, publicBaseUrl: p.publicBaseUrl, ipHashSecret: p.ipHashSecret, now: deps.clock }, ctx.log)
+      // Completion: with no main photo the upload becomes the main, which the photo item counts.
+      const body = await replaceSection(s, ctx, { section: 'addAdditionalPhoto', completion: true }, (tx, prof) => claimAsAdditional(tx, prof.id, req.body.uploadId, deps.clock(), true))
+      return { status: 201, body }
+    },
+    removeAdditionalPhoto: async (req, ctx) => {
+      let profileId = ''
+      const out = await replaceSection(s, ctx, { section: 'removeAdditionalPhoto', completion: false }, (tx, p) => {
+        profileId = p.id
+        return removeAdditional(tx, p.id, req.body.url)
+      })
+      if (deps.photos) await deleteStoredPhoto(deps.photos.blob, out.removed, profileId, ctx.log)
+      return { status: 200, body: out.photos }
     },
     removePhoto: async (req, ctx) => {
       let profileId = ''

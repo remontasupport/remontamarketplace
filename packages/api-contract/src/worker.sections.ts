@@ -26,6 +26,7 @@ import { OTHER_TOOL_MAX_CHARS, OTHER_TOOLS_MAX, TOOL_IDS, TOOL_SERVICES } from '
 import { DOCUMENT_MAX_BYTES, DOCUMENT_TYPES } from '@remonta/schemas/document-type'
 import { abnChecksum, normaliseAbn } from '@remonta/schemas/validations/abn'
 import * as z from 'zod'
+import { photoUploadBodySchema, photoUrlBodySchema } from './photos'
 
 // ---- Primitives ---------------------------------------------------------------------
 
@@ -116,12 +117,12 @@ export type ServiceAreaInput = z.output<typeof serviceAreaInputSchema>
 
 // ---- Photos (R4) -------------------------------------------------------------------------------
 
-// One photo per worker (user, 2026-10-14: the additional photos removed). `worker_profiles.additionalPhotos` keeps what
-// is stored; no worker entry reads or writes it (the admin pages still show it).
+// The main photo's entries answer `{main}` only: the deployed app parses them strictly. The extra photos (back on
+// 2026-10-23, `worker_profiles.additionalPhotos`) have their own entries answering `{main, additional}` (photos.ts).
 export const photosSchema = z.strictObject({ main: z.string().max(2048).nullable() })
 export type Photos = z.output<typeof photosSchema>
-export const confirmPhotoSchema = z.strictObject({ uploadId: z.uuid() })
-export const photoUrlSchema = z.strictObject({ url: z.url().max(2048) })
+export const confirmPhotoSchema = photoUploadBodySchema
+export const photoUrlSchema = photoUrlBodySchema
 
 // ---- Preferred hours (R2.7) -----------------------------------------------------------------------
 
