@@ -179,6 +179,8 @@ production unchanged, then the timing replay). It prints results only, never a s
 | the tool search box (tool search TS-5) | in the Tools box | "Search tools": narrows the buttons as the admin types with the api's own matcher (`toolSearchView` -> `toolSearchOf`), the ticked tools always shown, "Also matches: ..." for the other names; the text is `AdminFilters.toolSearch`, sent as `toolSearch` on Apply only with a type of support that has a list, kept in the URL, cleared with the type of support and Clear filters |
 | the tools line (worker-tools U2) | `src/app/admin/contractors/[id]/page.tsx` + `WorkerToolsLine.tsx` | `adminApi.getWorkerServices(<profile id>)`; under Cleaning Services and Home and Yard Maintenance in the services list: "Tools: ... · Other: ..." ("Tools: none listed" when empty). **Not in the downloaded profile JPEG** (not rendered while it is made); a failed read leaves the line out |
 | the dashboard | `src/app/admin/AdminDashboardClient.tsx` | the suburb box keeps `{id, label}` from `/api/suburbs` (a row without an id, a Google fallback, cannot be picked); the State dropdown sits under it (all states, or one: sent as `state`, kept in the unmapped list); "Within" is enabled only with a suburb and resets when it clears; "N active workers have no mapped suburb" with a link to list them; "Results may be up to a minute old" with Refresh; the distance shown as an **estimated driving time** ("about 25 min drive from the suburb centre", `features/admin-search/travel.ts`: straight-line km × 1.3, banded speeds, +3 min, rounded to 5; the km stay in the tooltip; no routing service), the sort still by straight-line distance; every outcome has a notice and the last results stay on screen; `unauthenticated` sends the admin to `/login?callbackUrl=`; the status toggle and Reactivate reload past both caches |
+| activation (worker-activation U2) | the dashboard and the worker's admin page | the card's **Active** switch is the admin-set flag (`adminApi.setWorkerActivation`, no confirm; the card shows the answer, then the list reloads past both caches); it never suspends. Every search sends `withActivation=true` (`searchRequestOf`, kept out of the URL bar). Tabs **All · Active · Inactive** above the results, instant, kept in the URL as `activation`. "Suspended accounts" (was "Show Inactive Workers") lists `users.status = SUSPENDED` with **Restore** (`adminApi.setWorkerSuspension(id, false)`). The worker's admin page (`WorkerAccountStatus.tsx`, outside the JPEG card) shows "Account" and "Visible to clients" with **Suspend account** (an in-page confirm) or **Restore account**; `/api/admin/contractors/[id]` returns `account {status, isActivated}` for it |
+| the client and public lists | `src/lib/workers/listable.ts` (`LISTABLE_WORKER`) | `/api/client/workers` and `/api/public/workers` show only `isActivated` workers whose account is ACTIVE; the public list's 60 s cache means a switch shows there within a minute. A client's assigned workers (`/api/client/workers/by-ids`) are not filtered (BR-U4) |
 | the user picker | `src/app/admin/impersonate/page.tsx` | `adminApi.listUsers`: a search of at least two characters, the role filter narrowing it (a role alone no longer lists; the entry requires a search) |
 
 What a screen must do with each outcome is fixed by `construction/api-identity/functional-design/frontend-components.md`
@@ -188,7 +190,8 @@ What a screen must do with each outcome is fixed by `construction/api-identity/f
 The old Next.js routes (`/api/admin/contractors`, `/api/admin/users`, `/api/admin/contractors/inactive`,
 `/api/admin/filters`) and `src/lib/worker-search.ts` were deleted once no screen called them (the clean-up PR);
 the Redis response cache they kept (`admin:contractors:v1:*`) went with them. The per-contractor routes
-(`/api/admin/contractors/[id]`, `.../status`) remain: the dashboard's status toggle and Reactivate still use them.
+(`/api/admin/contractors/[id]`) remains for the worker's admin page; `.../status` was deleted by worker-activation U2
+(the switch and Restore call the api's `PUT .../activation` and `.../suspension`).
 
 **The worker's private details (U2).** `/api/admin/contractors/[id]` also returns the home address (`homeAddress`:
 street line, suburb, state, postcode, or null) and the bank account masked to the last three digits
@@ -196,3 +199,4 @@ street line, suburb, state, postcode, or null) and the bank account masked to th
 (private)" block **above** the profile card, never inside it: the "Download JPEG Profile" button captures only
 `.profile-card`, which is sent to clients. No client-facing route or page reads the home address
 (`src/lib/privacy.test.ts` checks every client-facing worker read selects named columns and none names it).
+
