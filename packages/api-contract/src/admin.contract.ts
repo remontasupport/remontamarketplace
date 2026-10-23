@@ -9,8 +9,6 @@ import { EXPERIENCE_AREA_PAIRS } from '@remonta/schemas/data/experienceAreas'
 import { OTHER_TOOL_MAX_CHARS, OTHER_TOOLS_MAX, TOOL_IDS, TOOL_SEARCH_MAX_CHARS } from '@remonta/schemas/data/serviceTools'
 import * as z from 'zod'
 import { defineContract } from './define'
-import { photoUploadBodySchema, photoUrlBodySchema, workerPhotosSchema } from './photos'
-import { photoTicketRequestSchema, photoTicketResponseSchema } from './registration.contract'
 import { meta, ROLES } from './meta'
 
 export const PAGE_SIZE_MAX = 100
@@ -41,8 +39,6 @@ export const WORKER_SEARCH_LIMITS = { user: 120, ip: 300 } as const
 /** An admin working down a page of cards switches many in a minute; suspension is rarer. */
 export const ACTIVATION_WRITE_LIMITS = { user: 120, ip: 300 } as const
 export const SUSPENSION_WRITE_LIMITS = { user: 30, ip: 120 } as const
-/** An admin managing a worker's photos (2026-10-23). */
-export const ADMIN_PHOTO_LIMITS = { user: 30, ip: 120 } as const
 export const ADMIN_LIST_LIMITS = { user: 60, ip: 120 } as const
 
 /** A comma-separated query value: split, trimmed, empties dropped, deduplicated, sorted (R1.5). */
@@ -354,45 +350,5 @@ export const adminContract = defineContract('admin', {
     body: json(workerSuspensionBodySchema),
     responses: { 200: workerSuspensionSchema },
     meta: adminWrite(SUSPENSION_WRITE_LIMITS),
-  },
-
-  // A worker's extra photos, managed by an admin (2026-10-23): the worker's own direct upload (a ticket, the bucket, the
-  // confirm, the clean copy by outbox), placed on that worker. Never cached; no audit row (the request log is the record).
-  createAdminPhotoTicket: {
-    method: 'POST',
-    path: '/v1/admin/photos/tickets',
-    summary: "A ticket to upload one photo straight to the bucket, for a worker's extra photos (the sign-up's rules).",
-    body: json(photoTicketRequestSchema),
-    responses: { 201: photoTicketResponseSchema },
-    meta: adminWrite(ADMIN_PHOTO_LIMITS),
-  },
-
-  getWorkerPhotos: {
-    method: 'GET',
-    path: '/v1/admin/workers/:workerId/photos',
-    summary: "One worker's main photo and extra photos; 404 when no worker has that id. Never cached.",
-    pathParams: adminWorkerParamsSchema,
-    responses: { 200: workerPhotosSchema },
-    meta: adminWrite({ user: 120, ip: 300 }),
-  },
-
-  addWorkerAdditionalPhoto: {
-    method: 'POST',
-    path: '/v1/admin/workers/:workerId/photos/additional',
-    summary: 'Confirm an uploaded photo as one of the worker\'s extra photos (at most 2); 400 when the worker has no main photo yet; 404 when no worker has that id.',
-    pathParams: adminWorkerParamsSchema,
-    body: json(photoUploadBodySchema),
-    responses: { 201: workerPhotosSchema },
-    meta: adminWrite(ADMIN_PHOTO_LIMITS),
-  },
-
-  removeWorkerAdditionalPhoto: {
-    method: 'POST',
-    path: '/v1/admin/workers/:workerId/photos/additional/remove',
-    summary: "Remove one of the worker's extra photos, named by its URL; 404 when no worker has that id.",
-    pathParams: adminWorkerParamsSchema,
-    body: json(photoUrlBodySchema),
-    responses: { 200: workerPhotosSchema },
-    meta: adminWrite(ADMIN_PHOTO_LIMITS),
   },
 })

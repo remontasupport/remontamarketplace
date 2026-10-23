@@ -1,14 +1,11 @@
-// The extra photos on PostGIS (2026-10-23): the claim into additionalPhotos (limit, main-if-none for the worker, refused
-// for an admin, idempotent, never another's), the worker's read and removal (by the staging address too, the file deleted
-// only from the own folder), and the admin's read and removal. The bucket is never reached: uploads are seeded rows,
+// The extra photos on PostGIS (2026-10-23): the claim into additionalPhotos (limit, main-if-none, refused without a main
+// when asked, idempotent, never another's), the worker's read, removal and make-main (by the staging address too, a file
+// deleted only from the own folder). The admin entries were removed the same day. The bucket is never reached: uploads are seeded rows,
 // as in sections.int.test.ts. Runs only when TEST_DATABASE_URL points at localhost (CI's API Quality job).
-import { adminContract } from '@remonta/api-contract'
 import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
-import { adminHandlers } from '../../src/modules/admin/admin.handlers'
 import { claimAsAdditional } from '../../src/modules/worker/application/photos'
 import { writeTransaction } from '../../src/platform/persistence/db'
-import { testApp, type TestApp } from '../helpers'
 import { workerHarness, type WorkerHarness } from './harness'
 
 const url = process.env.TEST_DATABASE_URL
@@ -16,13 +13,11 @@ const local = !!url && /@(localhost|127\.0\.0\.1)[:/]/.test(url)
 
 describe.skipIf(!local)('the extra photos on PostGIS', () => {
   let h: WorkerHarness
-  let admin: TestApp
   const blobDeletes: string[] = []
   const blob = { delete: async (u: string) => void blobDeletes.push(u) }
   const photos = { bucket: {} as never, publicBaseUrl: 'https://storage.test', ipHashSecret: 'x'.repeat(32), blob }
   const uploads: string[] = []
   const as = (userId: string) => ({ 'x-test-principal': `${userId}:WORKER` })
-  const ADMIN = { 'x-test-principal': 'admin_1:ADMIN' }
   const stored = async (profileId: string) => h.db.workerProfile.findUniqueOrThrow({ where: { id: profileId }, select: { photos: true, additionalPhotos: true } })
   const upload = async () => {
     const id = randomUUID()
@@ -34,10 +29,8 @@ describe.skipIf(!local)('the extra photos on PostGIS', () => {
 
   beforeAll(async () => {
     h = await workerHarness('worker-additional-photos.test', { photos })
-    admin = await testApp({ contracts: [adminContract], handlerSets: [adminHandlers({ db: h.db, clock: () => new Date(), bucket: {} as never, photos: { publicBaseUrl: 'https://storage.test', ipHashSecret: 'x'.repeat(32), blob } })] })
   }, 60_000)
   afterAll(async () => {
-    await admin?.close()
     if (h) {
       await h.db.outboxEvent.deleteMany({ where: { type: 'PhotoUploaded', OR: uploads.map((id) => ({ payload: { path: ['photoUploadId'], equals: id } })) } })
       await h.db.registrationPhotoUpload.deleteMany({ where: { id: { in: uploads } } })
@@ -99,20 +92,9 @@ describe.skipIf(!local)('the extra photos on PostGIS', () => {
     expect(blobDeletes).toEqual([]) // no file touched
   })
 
-  it('the admin: no extra without a main photo; reads and removes a worker’s extras; 404 for an unknown worker', async () => {
+  it('without a main photo, an extra is refused when the caller asks (mainIfNone false) and the claim rolled back', async () => {
     const x = await upload()
     await expect(claim(h.b.profileId, x, false)).rejects.toMatchObject({ status: 400 })
-    await h.db.workerProfile.update({ where: { id: h.b.profileId }, data: { photos: 'https://store.public.blob.vercel-storage.com/m.jpg' } })
-    const added = await claim(h.b.profileId, x, false)
-    expect(added.additional).toEqual([`https://storage.test/staging/${x}`])
-    const read = await admin.fastify.inject({ method: 'GET', url: `/v1/admin/workers/${h.b.profileId}/photos`, headers: ADMIN })
-    expect(read.statusCode).toBe(200)
-    expect(read.json()).toEqual(added)
-    expect(read.headers['cache-control']).toBe('no-store')
-    const removed = await admin.fastify.inject({ method: 'POST', url: `/v1/admin/workers/${h.b.profileId}/photos/additional/remove`, headers: ADMIN, payload: { url: added.additional[0] } })
-    expect(removed.statusCode, removed.body).toBe(200)
-    expect(removed.json()).toEqual({ main: added.main, additional: [] })
-    expect((await admin.fastify.inject({ method: 'GET', url: '/v1/admin/workers/nope/photos', headers: ADMIN })).statusCode).toBe(404)
-    expect((await admin.fastify.inject({ method: 'GET', url: `/v1/admin/workers/${h.b.profileId}/photos`, headers: as(h.b.userId) })).statusCode).toBe(403)
+    expect((await h.db.registrationPhotoUpload.findUniqueOrThrow({ where: { id: x } })).claimedByWorkerProfileId).toBeNull()
   })
 })

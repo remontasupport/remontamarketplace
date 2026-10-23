@@ -15,10 +15,7 @@ import {
   type SuspendedListResponse,
   type UserListResponse,
   type UserSearchQuery,
-  type PhotoTicketRequest,
-  type PhotoTicketResponse,
   type WorkerActivation,
-  type WorkerPhotos,
   type WorkerSearchQuery,
   type WorkerSearchResponse,
   type WorkerSuspension,
@@ -44,11 +41,6 @@ export interface AdminApi {
   setWorkerActivation(workerId: string, activated: boolean): Promise<ApiOutcome<WorkerActivation>>
   /** worker-activation U2 (A4, A5): suspend the account (no sign-in) or restore it; the activation flag is untouched. */
   setWorkerSuspension(workerId: string, suspended: boolean): Promise<ApiOutcome<WorkerSuspension>>
-  /** A worker's extra photos (2026-10-23): a ticket for the direct upload, the read, add and remove. */
-  createPhotoTicket(body: PhotoTicketRequest): Promise<ApiOutcome<PhotoTicketResponse>>
-  getWorkerPhotos(workerId: string): Promise<ApiOutcome<WorkerPhotos>>
-  addWorkerAdditionalPhoto(workerId: string, uploadId: string): Promise<ApiOutcome<WorkerPhotos>>
-  removeWorkerAdditionalPhoto(workerId: string, url: string): Promise<ApiOutcome<WorkerPhotos>>
   /** The canonical query string of a search (R8.5): what the URL bar and the cache key carry. */
   canonicalSearch(query: WorkerSearchQuery): string
 }
@@ -60,7 +52,7 @@ export interface AdminApiDeps {
 }
 
 type QueryEntryName = 'searchWorkers' | 'listUsers' | 'listSuspendedWorkers'
-type EntryName = QueryEntryName | 'getWorkerServices' | 'setWorkerActivation' | 'setWorkerSuspension' | 'createAdminPhotoTicket' | 'getWorkerPhotos' | 'addWorkerAdditionalPhoto' | 'removeWorkerAdditionalPhoto'
+type EntryName = QueryEntryName | 'getWorkerServices' | 'setWorkerActivation' | 'setWorkerSuspension'
 const QUERY_ENTRIES: ReadonlySet<EntryName> = new Set<EntryName>(['searchWorkers', 'listUsers', 'listSuspendedWorkers'])
 
 export function createAdminApi(deps: AdminApiDeps): AdminApi {
@@ -130,10 +122,6 @@ export function createAdminApi(deps: AdminApiDeps): AdminApi {
     // Writes are never cached: the browser does not cache a PUT, and the api answers no-store.
     setWorkerActivation: (workerId, activated) => call('setWorkerActivation', undefined, undefined, { workerId }, { activated }),
     setWorkerSuspension: (workerId, suspended) => call('setWorkerSuspension', undefined, undefined, { workerId }, { suspended }),
-    createPhotoTicket: (body) => call('createAdminPhotoTicket', undefined, undefined, undefined, body),
-    getWorkerPhotos: (workerId) => call('getWorkerPhotos', undefined, { cache: 'reload' }, { workerId }),
-    addWorkerAdditionalPhoto: (workerId, uploadId) => call('addWorkerAdditionalPhoto', undefined, undefined, { workerId }, { uploadId }),
-    removeWorkerAdditionalPhoto: (workerId, url) => call('removeWorkerAdditionalPhoto', undefined, undefined, { workerId }, { url }),
     canonicalSearch: (query) => {
       const q = canonical('searchWorkers', query)
       return 'fields' in q && typeof q.fields === 'object' ? '' : new URLSearchParams(q as Record<string, string>).toString()
