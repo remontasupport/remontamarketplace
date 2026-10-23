@@ -5405,3 +5405,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-23):** "In the admin dashboard, do not make the opacity low, it is still on the same before even though they are Inactive"
 
 **AI action (2026-10-23):** design change A1: an inactive card is no longer faded (`opacity-50` removed); the badge (Active green / Inactive grey) and the switch carry the state. One line; type and lint baselines unchanged (55 / 277 known). Committed and pushed; Vercel rebuilds the preview.
+
+**User input (2026-10-23):** "I think it is good now, for the Workers dashboard, can you remove the banner?" -- asked which; **User input:** "The approval note"
+
+**AI action (2026-10-23):** FR-10 / A8 withdrawn by the user: `ActivationNote` and its test deleted, the home page back to `main`'s exactly, the worker README line updated. `GET /v1/worker/activation` (U1, live) and `workerApi.getActivation` kept, unused by the app. App gate green (55 / 277 known, 39 test files). Committed and pushed; the user took the preview as good.
