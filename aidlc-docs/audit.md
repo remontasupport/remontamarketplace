@@ -5313,3 +5313,17 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-22):** "I think the feature is done, can you close this ai dlc now"
 
 **AI action (2026-10-22, cycle close):** Vercel production deployment URLs read from GitHub's deployment statuses; docs branch `docs/rollback-rows-2026-10-22` pushed (CLAUDE.md: remonta-app and remontamarketplace rows = the `bf9b966` builds, before the cycle the `62e24f9` ones; api = `bf9b966` current, `c523f53` previous, `00014-wdv` before the cycle) for the user to merge. Build and Test summary written (gates, the deployment timeline, person-run checks, five deviations). The worker-tools record moved to `aidlc-docs/archive/worker-tools/` (README with #104-#107, `aidlc-state-at-close.md`); a fresh `aidlc-state.md`: no current cycle, the worker-tools facts carried (incl. the Vercel Prisma-generate lesson), follow-ups 32-34 added.
+
+## 2026-10-23 — New cycle: start
+
+**User input (2026-10-23):** "start ai dlc"
+
+**AI action (2026-10-23):** Workspace Detection: by refs `main` = `8943f93` (PR #107); the record branch `aidlc/worker-tools` at `a5993ed` (no cycle open); the docs branch `docs/rollback-rows-2026-10-22` (`27b31db`) is still unmerged; an untracked `apps/api/scripts/_u2-staging-writes.ts` in the main checkout. The rule set, the archives and the latest reverse engineering are present, so the cycle starts at a targeted inventory once its area is chosen. Asked the user for the cycle's area (candidates from follow-ups 17, 27, 1, 2).
+
+**User input (2026-10-23, the cycle's area):** "In the admin dashboard, I want to change the Active and Inactive status on how they works. The worker can be active if the admin only set it to active so by default they are not active"
+
+**AI action (2026-10-23, targeted inventory, first pass):** the card's Active switch is `users.status` (ACTIVE <-> SUSPENDED) via `PATCH /api/admin/contractors/[id]/status`; the api search returns `isActive = userStatus === 'ACTIVE'`; "Show Inactive Workers" reads `GET /v1/admin/workers/suspended`. A non-ACTIVE account cannot sign in (`apps/app/src/lib/auth.config.ts:58,150`), mint an api token (`lib/api/mint.ts:56`), set a password (`api/auth/setup-password/route.ts:62`) or be impersonated. A separate `worker_profiles.isPublished` is the compliance page's "Verify Compliance" (1 of 1,765 set). Asked: what "not active" means, and what happens to today's active workers.
+
+**User input (2026-10-23):** "New 'approved' flag (Recommended)" (a separate admin-set flag; sign-in unaffected; suspension stays its own action) and "Reset all to inactive" (every existing worker starts inactive too).
+
+**AI action (2026-10-23):** cycle `worker-activation` opened; record branch `aidlc/worker-activation` from `aidlc/worker-tools` `a5993ed`. Next: Requirements Analysis.
