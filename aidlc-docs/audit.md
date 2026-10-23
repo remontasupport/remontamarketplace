@@ -5491,3 +5491,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-23):** "Remove the admin photo actions from the api. They're unused by the app since the "Worker photos" block was removed"
 
 **AI action (2026-10-23):** branch `chore/remove-admin-photo-api` (from `main` `adf7285`): the four admin entries removed (contract, handlers, `main.ts` wiring, the app's admin client and its tests, docs); `admin.contract.ts` and `admin.handlers.ts` byte-identical to before `73583d41`; openapi: 4 operations removed, none changed or added; the database test keeps the worker paths and a mainIfNone=false refusal. Gates green: contract 15, api 48, app (55 / 277 known, 40 files). Pushed. Order: merge (the app on prod calls none of them) -> staging -> promote.
+
+**User input (2026-10-23):** "merged"
+
+**AI action (2026-10-23):** by refs `main` = `ea66ac0` (merge of PR #119). deploy-api run 39921305313 (push) watched; route checks after it.
