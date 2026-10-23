@@ -5477,3 +5477,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-23):** "I noticed in the workers dashboard, the button Replace Photo function is asking to upload a new photo, it should select the 2 photos already existed instead" -- asked; **User input:** "Pick from photos + upload (Recommended)"
 
 **AI action (2026-10-23):** api branch `feat/photo-make-main-api` (`012bf25`, from `main` `8aaa5bd`): `makeAdditionalMain` `POST /v1/worker/photos/additional/make-main {url}` (swapMain: the extra becomes the main, the old main takes its slot; the staging address names its clean copy; completion counted; no file touched); openapi: one operation added, none changed; property + database tests; contract 15, api 48 files green. App branch `feat/photo-make-main-app` (from the api branch): Replace opens a picker of the worker's shown extra photos plus "Upload a new photo" (no extras: uploads as before); the extras list re-reads after the swap; app gate green (55 / 277 known, 40 files). Order: api PR -> merge -> staging -> promote -> app PR. Still open: `fix/admin-worker-page-tidy` (app-only).
+
+**User input (2026-10-23):** "Merged"
+
+**AI action (2026-10-23):** by refs `main` = `e0d7ec8`: PR #116 (`fix/admin-worker-page-tidy`, app-only, live with Vercel's build) and PR #117 (the make-main api, `012bf25`); the app commit `64cf19e` not in `main` (correct: after the promotion). deploy-api run 39918177826 (push) watched.
