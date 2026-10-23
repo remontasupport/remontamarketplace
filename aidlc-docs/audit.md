@@ -5337,3 +5337,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-23, F1):** "Yes, apply as now (Recommended)"
 
 **AI action (2026-10-23):** `inception/requirements/requirements.md` written: FR-1..FR-11 (new flag; inactive by default; everyone reset at release, no bulk activation, empty client/public lists accepted; card switch; hidden from client search and public list; admin search all + Status filter; suspend/restore moved to the worker's admin page, "Suspended accounts"; suspended stay suspended; independent of Verify Compliance; dashboard note, no email; no stored record), NFR-1..NFR-5, out of scope, risks R-1/R-2. Extensions recorded in `aidlc-state.md`. Awaiting approval.
+
+**User input (2026-10-23):** "approved" (the requirements)
+
+**AI action (2026-10-23, Workflow Planning):** `inception/plans/execution-plan.md` written: User Stories, Application Design, Units Generation, NFR Requirements and Infrastructure Design skipped; Functional Design (per unit), NFR Design (one shared), Code Generation, Build and Test executed. Two units: U1 `activation-api` (migration: a `worker_profiles` boolean `NOT NULL DEFAULT false`, which is itself the FR-3 reset; the activation and suspend/restore entries; the Status filter; a new response field, the existing `isActive` keeping its meaning until U2 so the production app is unaffected between promotion and merge; the flag on the profile read) and U2 `activation-app` (the release moment: merged when admins are ready). Awaiting approval.
