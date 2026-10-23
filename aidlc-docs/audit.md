@@ -5415,3 +5415,5 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-23):** "merged"
 
 **AI action (2026-10-23, the release):** verified by refs: `main` = `8b8a82d` (merge of PR #109), contains `b6ad9cd`. The api was already on prod (`746a60d`, merge order guard satisfied). Vercel production builds of `8b8a82d` pending; watched, then live checks.
+
+**AI action (2026-10-23, production):** Vercel production builds of `8b8a82d` success (remonta-app `remonta-jpysjm62s-remontas-projects.vercel.app`, remontamarketplace `remontamarketplace-jbbjl5fnj-remontas-projects.vercel.app`). Live: `app.remontaservices.com.au/login` 200; `www` 200; `GET /api/public/workers` answers `data: []`, total 0 (every worker inactive, FR-3, as accepted); the old `PATCH /api/admin/contractors/[id]/status` 404 (removed). Rollback point (before the release): the `746a60d` production builds (remonta-app `remonta-jxv2na3ib-remontas-projects.vercel.app`, remontamarketplace `remontamarketplace-a1x249nsw-remontas-projects.vercel.app`) by Vercel promote. Signed-in production checks are the user's.
