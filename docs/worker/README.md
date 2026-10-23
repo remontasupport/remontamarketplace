@@ -175,7 +175,7 @@ parses `GET /v1/worker/profile` strictly, so a new field there would break it. D
 
 | Entry | Body | Rules |
 |---|---|---|
-| `GET /v1/worker/activation` | -- | `{activated}`: whether an admin has switched the worker on (`worker_profiles."isActivated"`, false until then), for the dashboard's "awaiting approval" note. Its own read, as the tour's (the profile read is parsed strictly). **Never cached** (`no-store`), so the note goes on the next load after activation. 404 for a worker without a profile row. Read only: no worker entry writes the flag (an unknown key in any worker body is 400); the admin's `PUT /v1/admin/workers/:workerId/activation` does (`docs/admin/README.md`). The dashboard home shows one line, "Your profile is awaiting approval by Remonta.", only on `activated: false` (`components/dashboard/ActivationNote.tsx`; nothing while loading or on an error) |
+| `GET /v1/worker/activation` | -- | `{activated}`: whether an admin has switched the worker on (`worker_profiles."isActivated"`, false until then), for the dashboard's "awaiting approval" note. Its own read, as the tour's (the profile read is parsed strictly). **Never cached** (`no-store`), so the note goes on the next load after activation. 404 for a worker without a profile row. Read only: no worker entry writes the flag (an unknown key in any worker body is 400); the admin's `PUT /v1/admin/workers/:workerId/activation` does (`docs/admin/README.md`). Not shown in the app since 2026-10-23 (the dashboard note was removed by the user); kept for a later use |
 
 To show a worker the tour again: `UPDATE worker_profiles SET "tourSeenAt" = NULL WHERE "userId" = '<id>';` (staging
 or by hand; there is no entry for it).

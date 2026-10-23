@@ -13,7 +13,6 @@ import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import NewsSlider from "@/components/dashboard/NewsSlider";
 import NewsSliderAsync from "@/components/dashboard/NewsSliderAsync";
 import ProfileCompletionReminder from "@/components/dashboard/ProfileCompletionReminder";
-import ActivationNote from "@/components/dashboard/ActivationNote";
 
 // Disable caching for this page - CRITICAL for security
 export const dynamic = 'force-dynamic';
@@ -86,9 +85,6 @@ export default async function WorkerDashboard() {
         <div className="hero-decoration hero-decoration-1"></div>
         <div className="hero-decoration hero-decoration-2"></div>
       </div>
-
-      {/* worker-activation (A8): "awaiting approval" while an admin has not switched the worker on */}
-      <ActivationNote />
 
       {/* Jobs Section - Streaming with Suspense */}
       <div style={{ marginTop: '0' }}>
