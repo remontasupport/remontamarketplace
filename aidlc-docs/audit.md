@@ -5461,3 +5461,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-23):** "Merged" (the extra photos api PR)
 
 **AI action (2026-10-23):** by refs `main` = `0275574` (merge of PR #114), api commit only. deploy-api run 39913360185 (push) success; staging health 200; the new routes answer 401 without a token. Signed read-only staging check: worker `GET /v1/worker/photos` 200 (2 extras = stored 2, `no-store`); the profile read's `photos` keys still `["main"]`; admin `GET .../photos` equals the worker's read; worker token on it 403; unknown worker 404 (40 staging workers hold stored extra photos). Promotion image handed over: `02755748ac930d0b317066bd3e7be61475036b02`.
+
+**User input (2026-10-23):** "promotion is done"
+
+**AI action (2026-10-23):** verified: deploy-api run 39914398244 (workflow_dispatch) "Promote 0275574..." success 06:56Z; prod revision `remonta-api-00019-p5m` serves 100 % (previous `00018-nl4` = `8daec55`); prod health 200; `/v1/worker/photos` and `/v1/admin/photos/tickets` answer 401 without a token (present). `main` still `0275574`: the app PR `feat/additional-photos-app` not merged yet (safe to merge now).
