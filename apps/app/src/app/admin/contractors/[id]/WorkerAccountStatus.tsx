@@ -9,7 +9,7 @@ import { adminApi } from '@/lib/api/admin'
 export interface AccountState {
   /** users.status: ACTIVE, SUSPENDED, LOCKED or PENDING_VERIFICATION. */
   status: string
-  /** worker_profiles.isActivated: shown to clients and in the public list. */
+  /** worker_profiles.isActivated: shown in the public worker list (signed-in clients see every unsuspended worker). */
   isActivated: boolean
 }
 
@@ -49,7 +49,7 @@ export default function WorkerAccountStatus({ workerId, initial }: { workerId: s
             <span className={`font-medium ${view.account === 'Active' ? 'text-green-700' : 'text-red-700'}`}>{view.account}</span>
           </p>
           <p>
-            <span className="text-gray-500">Visible to clients: </span>
+            <span className="text-gray-500">In the public worker list: </span>
             <span className="font-medium text-gray-900">{view.visible}</span>
             <span className="ml-1 text-xs text-gray-500">(the Active switch on the search card)</span>
           </p>
