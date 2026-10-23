@@ -1561,6 +1561,18 @@
             }
           },
           {
+            "name": "nursingType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "registered",
+                "enrolled"
+              ]
+            }
+          },
+          {
             "name": "withActivation",
             "in": "query",
             "required": false,
@@ -1893,6 +1905,13 @@
                           "enum": [
                             "active",
                             "inactive"
+                          ]
+                        },
+                        "nursingType": {
+                          "type": "string",
+                          "enum": [
+                            "registered",
+                            "enrolled"
                           ]
                         }
                       },
