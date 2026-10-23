@@ -5495,3 +5495,5 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-23):** "merged"
 
 **AI action (2026-10-23):** by refs `main` = `ea66ac0` (merge of PR #119). deploy-api run 39921305313 (push) watched; route checks after it.
+
+**AI action (2026-10-23):** deploy-api run 39921305313 success; staging health 200; `/v1/admin/photos/tickets` and `/v1/admin/workers/x/photos` 404 (removed); `/v1/worker/photos` and `.../make-main` 401 (kept). Vercel production builds of `ea66ac0` success. Promotion image handed over: `ea66ac00e11c2f5fe1204390a4c71dbeaeba5039`.
