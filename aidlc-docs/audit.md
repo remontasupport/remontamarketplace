@@ -5357,3 +5357,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-23):** "Separate column (Recommended)"
 
 **AI action (2026-10-23):** U1 Functional Design unchanged (separate `isActivated`); its approval awaited.
+
+**User input (2026-10-23):** "approved" (U1 Functional Design)
+
+**AI action (2026-10-23):** NFR Design written (`construction/shared/nfr-design/nfr-design.md`, N1-N7: the strict-parse compatibility snapshot test; expand-only + rollback; access, limits, WORKER-only suspension, logs; freshness by `Cache-Control: no-cache` on the search after a switch, which supersedes BR-11's memo clearing; performance; P1-P6; no new alert) and the U1 code generation plan (`construction/plans/activation-api-code-generation-plan.md`, 7 steps, branch `feat/worker-activation-api` from `main` `8943f93`). Both presented together for approval.

@@ -7,7 +7,8 @@
   flag, separate from `users.status`; every worker starts inactive. Record branch `aidlc/worker-activation`.
 - **Current Stage**: INCEPTION. Workspace Detection done; targeted inventory done (in `requirements.md`, "Today");
   Requirements Analysis approved 2026-10-23; Workflow Planning approved (`inception/plans/execution-plan.md`: U1
-  `activation-api`, U2 `activation-app`). CONSTRUCTION U1: Functional Design written, awaiting approval. Still open from worker-tools: the docs PR `docs/rollback-rows-2026-10-22`.
+  `activation-api`, U2 `activation-app`). CONSTRUCTION U1: Functional Design approved; NFR Design (shared) and the U1 code
+  generation plan written, awaiting approval. Still open from worker-tools: the docs PR `docs/rollback-rows-2026-10-22`.
 
 ## Previous cycles (archived, read-only)
 
