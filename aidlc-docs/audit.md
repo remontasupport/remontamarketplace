@@ -5395,3 +5395,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-23):** "approved" (U2 Functional Design, BR-U4 as written: assigned workers stay visible to their client)
 
 **AI action (2026-10-23):** U2 code generation plan written (`construction/plans/activation-app-code-generation-plan.md`, 8 steps, branch `feat/worker-activation-app` from `main` `746a60d`; merge = release, when admins are ready). Awaiting approval.
+
+**User input (2026-10-23):** "approved" (U2 code generation plan)
+
+**AI action (2026-10-23, U2 Code Generation):** branch `feat/worker-activation-app` from `main` `746a60d`: `f73dbcc` (admin client `setWorkerActivation`/`setWorkerSuspension`, worker `getActivation`, the auth-client regenerated for the column, the old `PATCH /api/admin/contractors/[id]/status` deleted after a caller search incl. template URLs), `c10d50d` (card switch on the flag, tabs All/Active/Inactive, "Suspended accounts" + Restore), `89d9854` (Suspend with confirm / Restore on the worker's admin page; the route returns `account`), `e14b8c6` (`LISTABLE_WORKER` for the client search and the public list; by-ids unfiltered), `03518d9` (the home page line; docs). Gates green (app types 55 known, eslint 277 known, 40 test files; web; build). Pushed; the compare link handed over. Merge = release.

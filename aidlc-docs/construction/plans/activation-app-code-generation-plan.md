@@ -7,48 +7,59 @@ prod); one PR; "Merge pull request" **only when admins are ready to start activa
 ## Steps
 
 ### Step 1 -- The api clients (`apps/app/src/lib/api/admin.ts`, `features/worker/api.ts`)
-- [ ] `AdminApi`: `setWorkerActivation(workerId, activated)` and `setWorkerSuspension(workerId, suspended)`; `call()`
+- [x] `AdminApi`: `setWorkerActivation(workerId, activated)` and `setWorkerSuspension(workerId, suspended)`; `call()`
       learns a JSON body beside path params (never cached). Tests in `lib/api/admin.test.ts` with the fake fetch (path,
       method, body, bearer, the 401 retry, a 404 as `failed`).
-- [ ] `WorkerApi.getActivation()` (as `getTour`), never cached.
+- [x] `WorkerApi.getActivation()` (as `getTour`), never cached.
 
 ### Step 2 -- The search query (`features/admin-search/query.ts`) [A2, A3]
-- [ ] `AdminFilters.activation: 'all' | 'active' | 'inactive'` (default `all`); `toQuery` sends `activation` unless all
+- [x] `AdminFilters.activation: 'all' | 'active' | 'inactive'` (default `all`); `toQuery` sends `activation` unless all
       and **always** `withActivation: true`; `filtersFromURL` / `urlFromFilters` carry it; "Clear filters" resets it.
-- [ ] Tests: the mapping, the URL round trip (property), `withActivation` always present.
+- [x] Tests: the mapping, the URL round trip (property), `withActivation` always present.
 
 ### Step 3 -- The admin dashboard (`app/admin/AdminDashboardClient.tsx`) [A1, A3, A4]
-- [ ] The card switch reads `contractor.activated` and calls `adminApi.setWorkerActivation`; optimistic card state from
+- [x] The card switch reads `contractor.activated` and calls `adminApi.setWorkerActivation`; optimistic card state from
       the answer, then the existing reload past the caches; the api notice on failure.
-- [ ] The tabs All · Active · Inactive above the results (instant; page 1; URL).
-- [ ] "Show Inactive Workers" -> "Suspended accounts" (button, modal title, empty text); Restore via
+- [x] The tabs All · Active · Inactive above the results (instant; page 1; URL).
+- [x] "Show Inactive Workers" -> "Suspended accounts" (button, modal title, empty text); Restore via
       `adminApi.setWorkerSuspension(id, false)`.
 
 ### Step 4 -- The worker's admin page [A5]
-- [ ] `/api/admin/contractors/[id]/route.ts`: add `user.status` and `isActivated` to the select and the answer.
-- [ ] `app/admin/contractors/[id]/page.tsx` + `WorkerAccountStatus.tsx`: "Account: Active/Suspended", "Visible to
+- [x] `/api/admin/contractors/[id]/route.ts`: add `user.status` and `isActivated` to the select and the answer.
+- [x] `app/admin/contractors/[id]/page.tsx` + `WorkerAccountStatus.tsx`: "Account: Active/Suspended", "Visible to
       clients: Yes/No", Suspend (in-page confirm) / Restore via `adminApi.setWorkerSuspension`; not in the JPEG.
       A small pure helper for the labels and the button, tested.
 
 ### Step 5 -- The client search and the public list [A6, A7, BR-U3, BR-U4, P6]
-- [ ] `/api/client/workers/route.ts` and `/api/public/workers/route.ts`: `isActivated: true` in the base condition.
+- [x] `/api/client/workers/route.ts` and `/api/public/workers/route.ts`: `isActivated: true` in the base condition.
       `/by-ids` unchanged (BR-U4).
-- [ ] P6: the two `buildWhereClause` base conditions asserted to contain both conditions, and a property over generated
+- [x] P6: the two `buildWhereClause` base conditions asserted to contain both conditions, and a property over generated
       workers evaluated against an in-memory reading of the base condition (listed iff activated and ACTIVE).
 
 ### Step 6 -- The worker's note [A8, BR-U5]
-- [ ] `components/dashboard/ActivationNote.tsx` (client): one line "Your profile is awaiting approval by Remonta." only
+- [x] `components/dashboard/ActivationNote.tsx` (client): one line "Your profile is awaiting approval by Remonta." only
       on `activated: false`; nothing on loading or error. Placed under the welcome banner of `(home)/page.tsx`.
-- [ ] Test: the decision function (show / hide per outcome).
+- [x] Test: the decision function (show / hide per outcome).
 
 ### Step 7 -- Remove the old route [A9]
-- [ ] Search every caller of `contractors/${...}/status` and `/status'` (template URLs too, with `MSYS_NO_PATHCONV=1`);
+- [x] Search every caller of `contractors/${...}/status` and `/status'` (template URLs too, with `MSYS_NO_PATHCONV=1`);
       delete `app/api/admin/contractors/[id]/status/route.ts` when none remain.
 
 ### Step 8 -- Docs, gates, PR
-- [ ] `docs/admin/README.md` §5 (the app side: switch, tabs, Suspended accounts, the status block); `docs/worker/` (the
+- [x] `docs/admin/README.md` §5 (the app side: switch, tabs, Suspended accounts, the status block); `docs/worker/` (the
       note).
-- [ ] App quality (type/lint baselines unchanged or better; tests), web, `turbo run build`; generated Prisma clients not
+- [x] App quality (type/lint baselines unchanged or better; tests), web, `turbo run build`; generated Prisma clients not
       committed; push; compare link; CI.
 - [ ] The preview run (the design's "Release" list) by the user; then the merge, when admins are ready; production
       checks; the rollback row.
+
+## Done (2026-10-23)
+
+Branch `feat/worker-activation-app` (5 commits, 29 files, from `main` `746a60d`). Deviations:
+- `withActivation` is added by `searchRequestOf` (the request), not `toQuery`, so the URL bar holds filters only.
+- The client/public base condition is one declaration, `src/lib/workers/listable.ts` (`LISTABLE_WORKER`), with P6 and a
+  source check that both routes use it and `/by-ids` does not.
+- The committed `auth-client` regenerated for `isActivated` (content-changed files only); `generated/client` and the
+  web client left as on main (machine paths only).
+- The route deletion landed in the first commit (it was staged then).
+Gates: app types 55 known (one fewer), eslint 277 known, 40 test files; web; `turbo run build`.
