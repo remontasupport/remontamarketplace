@@ -93,6 +93,32 @@ export function withoutAdditional(current: WorkerPhotos, url: string): WorkerPho
   return current.additional.includes(url) ? { main: current.main, additional: current.additional.filter((u) => u !== url) } : { refused: 'Not one of the extra photos' }
 }
 
+/** Pure: the extra photo `url` becomes the main; the old main takes its place (none: the extra just moves up). */
+export function swapMain(current: WorkerPhotos, url: string): WorkerPhotos | { refused: string } {
+  const i = current.additional.indexOf(url)
+  if (i === -1) return { refused: 'Not one of the extra photos' }
+  const additional = [...current.additional]
+  if (current.main) additional[i] = current.main
+  else additional.splice(i, 1)
+  return { main: url, additional }
+}
+
+/** The extra photo a URL names: itself, or the clean copy made from an upload this profile claimed (the staging address). */
+async function extraNamedBy(tx: Tx, profileId: string, current: WorkerPhotos, url: string): Promise<string> {
+  if (current.additional.includes(url)) return url
+  const own = await tx.registrationPhotoUpload.findFirst({ where: { url, claimedByWorkerProfileId: profileId }, select: { id: true } })
+  return (own && current.additional.find((u) => u.includes(`/${PROCESSED_PREFIX}${profileId}/${own.id}`))) || url
+}
+
+/** "Replace photo" with an existing extra photo (2026-10-23): swapMain on the stored columns; no file is touched. */
+export async function makeAdditionalMain(tx: Tx, profileId: string, url: string): Promise<WorkerPhotos> {
+  const current = workerPhotosOf(await tx.workerProfile.findUniqueOrThrow({ where: { id: profileId }, select: { photos: true, additionalPhotos: true } }))
+  const next = swapMain(current, await extraNamedBy(tx, profileId, current, url))
+  if ('refused' in next) throw new ApiError(400, next.refused, { url: [next.refused] })
+  await tx.workerProfile.update({ where: { id: profileId }, data: toColumns(next), select: { id: true } })
+  return next
+}
+
 /** Claims a confirmed upload for this profile as an extra photo (placeAdditional's rule). Idempotent for the same profile. */
 export async function claimAsAdditional(tx: Tx, profileId: string, uploadId: string, now: Date, mainIfNone: boolean): Promise<WorkerPhotos> {
   const current = workerPhotosOf(await tx.workerProfile.findUniqueOrThrow({ where: { id: profileId }, select: { photos: true, additionalPhotos: true } }))
@@ -120,12 +146,7 @@ export async function claimAsAdditional(tx: Tx, profileId: string, uploadId: str
  */
 export async function removeAdditional(tx: Tx, profileId: string, url: string): Promise<{ photos: WorkerPhotos; removed: string }> {
   const current = workerPhotosOf(await tx.workerProfile.findUniqueOrThrow({ where: { id: profileId }, select: { photos: true, additionalPhotos: true } }))
-  let target = url
-  if (!current.additional.includes(url)) {
-    const own = await tx.registrationPhotoUpload.findFirst({ where: { url, claimedByWorkerProfileId: profileId }, select: { id: true } })
-    const made = own ? current.additional.find((u) => u.includes(`/${PROCESSED_PREFIX}${profileId}/${own.id}`)) : undefined
-    if (made) target = made
-  }
+  const target = await extraNamedBy(tx, profileId, current, url)
   const next = withoutAdditional(current, target)
   if ('refused' in next) throw new ApiError(400, next.refused, { url: [next.refused] })
   await tx.workerProfile.update({ where: { id: profileId }, data: toColumns(next), select: { id: true } })

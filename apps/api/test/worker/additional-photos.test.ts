@@ -1,7 +1,7 @@
 // The extra photos (2026-10-23): the pure rules -- reading the stored JSON array, placing an upload, removing one.
 import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
-import { parseAdditionalPhotos, placeAdditional, withoutAdditional } from '../../src/modules/worker/application/photos'
+import { parseAdditionalPhotos, placeAdditional, swapMain, withoutAdditional } from '../../src/modules/worker/application/photos'
 
 const url = fc.webUrl()
 const photosArb = fc.record({ main: fc.option(url, { nil: null }), additional: fc.uniqueArray(url, { maxLength: 4 }) })
@@ -40,6 +40,24 @@ describe('withoutAdditional', () => {
           expect(next).toEqual({ main: current.main, additional: current.additional.filter((x) => x !== u) })
         }
         if (current.main && !current.additional.includes(current.main)) expect(withoutAdditional(current, current.main)).toHaveProperty('refused')
+      }),
+    )
+  })
+})
+
+describe('swapMain (Replace photo with an extra photo)', () => {
+  it('the chosen extra becomes the main, the old main takes its slot; the set of photos is unchanged; anything else is refused', () => {
+    fc.assert(
+      fc.property(photosArb, (current) => {
+        for (const u of current.additional) {
+          const next = swapMain(current, u)
+          if ('refused' in next) throw new Error('refused an extra photo')
+          expect(next.main).toBe(u)
+          expect(next.additional.length).toBe(current.main ? current.additional.length : current.additional.length - 1)
+          expect([next.main, ...next.additional].sort()).toEqual([...(current.main ? [current.main] : []), ...current.additional].sort())
+          if (current.main) expect(next.additional[current.additional.indexOf(u)]).toBe(current.main)
+        }
+        if (current.main && !current.additional.includes(current.main)) expect(swapMain(current, current.main)).toHaveProperty('refused')
       }),
     )
   })
