@@ -53,12 +53,12 @@ describe('the contracts as committed', () => {
     expect(extra.success).toBe(false)
   })
 
-  it('declare the three admin lists, the document link (U3b) and the services of one worker (worker-tools U1) behind the ADMIN role, per-user limited, privately cacheable for a minute (U2)', () => {
-    expect(Object.keys(adminContract.entries).sort()).toEqual(['getDocumentLink', 'getWorkerServices', 'listSuspendedWorkers', 'listUsers', 'searchWorkers'])
+  it('declare the three admin lists, the document link (U3b) and the services of one worker (worker-tools U1) behind the ADMIN role, per-user limited, privately cacheable for a minute (U2); the two switches (worker-activation U1) never cached', () => {
+    expect(Object.keys(adminContract.entries).sort()).toEqual(['getDocumentLink', 'getWorkerServices', 'listSuspendedWorkers', 'listUsers', 'searchWorkers', 'setWorkerActivation', 'setWorkerSuspension'])
     for (const e of Object.values(adminContract.entries)) {
-      expect(e.method).toBe('GET')
+      expect(e.method).toBe(e.path.endsWith('/activation') || e.path.endsWith('/suspension') ? 'PUT' : 'GET')
       expect(e.meta.access).toEqual({ roles: ['ADMIN'] })
-      expect(e.meta.privateCacheSeconds).toBe(60)
+      expect((e.meta as { privateCacheSeconds?: number }).privateCacheSeconds).toBe(e.method === 'GET' ? 60 : undefined)
       expect((e.meta as { cacheSeconds?: number }).cacheSeconds).toBeUndefined()
       expect(e.meta.rateLimit.map((r) => r.per).sort()).toEqual(['ip', 'user'])
     }

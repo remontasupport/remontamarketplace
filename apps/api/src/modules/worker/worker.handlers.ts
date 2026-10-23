@@ -23,6 +23,7 @@ import { readServiceTools, writeServiceTools } from './application/sections/serv
 import { complianceAlreadyRecorded, complianceTargetOf, ownComplianceBlobUrl, recordComplianceDocument, removeComplianceDocument, writeCitizenship } from './application/compliance-documents'
 import { alreadyRecorded, confirmTargetOf, createDocumentTicket, deleteDocumentFiles, DOCUMENT_UPLOAD_INCOMPLETE, linkFor, recordDocument, removeDocument, stageDocument, type DocumentFile } from './application/service-documents'
 import { writeAbn, writeSignedEngagement, writeBio, writeDateOfBirth, writeGender, writeName, writeVehicle } from './application/sections/profile'
+import { readActivation } from './application/sections/activation'
 import { assertNotImpersonating, markTourSeen, readTour } from './application/sections/tour'
 import { getCompletion, type CompletionModel } from './application/completion-items'
 
@@ -282,6 +283,12 @@ export function workerHandlers(deps: WorkerModuleDeps) {
       const started = Date.now()
       const body = await readTour(deps.db, ctx.principal!, ctx.log)
       ctx.log.info({ entry: 'worker.getTour', durationMs: Date.now() - started, userId: ctx.principal!.userId, seen: body.seenAt !== null }, 'worker tour read')
+      return { status: 200, body }
+    },
+    // worker-activation U1 (BR-9): never cached, so the note goes on the first load after an admin switches the worker on.
+    getActivation: async (_req, ctx) => {
+      const body = await readActivation(deps.db, ctx.principal!, ctx.log)
+      ctx.log.info({ entry: 'worker.getActivation', userId: ctx.principal!.userId, activated: body.activated }, 'worker activation read')
       return { status: 200, body }
     },
     putTourSeen: async (_req, ctx) => {

@@ -93,6 +93,8 @@ parameters are refused (400). Limits: 120 per minute per admin, 300 per minute p
 | `experienceAreas` | comma-separated `DOMAIN:Area` pairs from the shared vocabulary (`packages/schemas/src/data/experienceAreas.ts`, the labels the edit-profile page offers and `worker_experience.specificAreas` stores), e.g. `AGED_CARE:Dementia` | within a domain **any** of its areas on that worker's domain row; across domains **all** of. Each pair's domain must also be in `experienceWith`, else 400 `fields.experienceAreas` |
 | `tools` | comma-separated tool ids from `packages/schemas/src/data/serviceTools.ts` (Cleaning Services and Home and Yard Maintenance), e.g. `ladder,vacuum-cleaner` | **all** of, each on the worker's row of its own service (`worker_services."toolIds" @> ...`, one `EXISTS` per service). The worker's own free-text tools are never searched. An unknown id is 400. Echoed as `appliedFilters.tools` only when given (worker-tools U1) |
 | `toolSearch` | plain text, 1-60 characters, e.g. `gurney`, `pressure washer` | the shared matcher (`toolSearchOf` in `packages/schemas/src/data/serviceTools.ts`, also used by the page): lower case, punctuation as spaces, plurals singular, one-letter words dropped, at most 5 words; a listed tool matches when its label or another name (`TOOL_SYNONYMS`, approved 2026-10-22) holds **every** word **anywhere**; a worker matches when, on the type of support's row (both tool services when the type has no list), they ticked a matching tool or have an own tool holding every word of the query or a whole name of a matched tool ("pressure washer" finds an own "Gurney 2000"). Text with no word left is ignored. Echoed as `appliedFilters.toolSearch` (tool search) |
+| `activation` | `active`, `inactive` | the admin-set flag `worker_profiles."isActivated"` (absent: both). Echoed as `appliedFilters.activation` only when given (worker-activation U1) |
+| `withActivation` | `true`, `false` | each row carries `activated` (the flag). **Opt-in** because the app before worker-activation U2 parses rows strictly and would refuse the new key; it becomes unconditional once no such build can be promoted (worker-activation U1, BR-6) |
 
 Every filter combines with the others and with the suburb by AND. Only active accounts are listed.
 
@@ -108,6 +110,22 @@ For the worker's admin page: `{services: [{categoryId, categoryName, subcategory
 chosen service in the worker's order; `toolIds` (list order, ids no longer listed left out) and `otherTools` are empty
 for a service without a tool list. `:workerId` is the worker **profile** id (the admin page's `[id]`); 404 when none.
 Limits 120 / 300 per minute; privately cacheable for a minute. Logged with the profile id.
+
+### `PUT /v1/admin/workers/:workerId/activation` and `.../suspension` -- the two switches (worker-activation U1)
+
+Two separate admin decisions on one worker (`:workerId` = the worker **profile** id), each writing its own column only;
+the target state is in the body, so a repeat answers the same. Never cached; one log line each (`entry`,
+`adminUserId`, `workerProfileId`, the new state) is the record: no audit row, by decision (Q8 c).
+
+| Entry | Body | Rules |
+|---|---|---|
+| `PUT .../activation` | `{activated: boolean}` | sets `worker_profiles."isActivated"` and answers `{workerId, activated}`. Never touches sign-in (`users.status`), Verify Compliance (`isPublished`) or `updatedAt`; a suspended worker can be switched too. 404 when no worker has the id. Limits 120 / 300 per minute |
+| `PUT .../suspension` | `{suspended: boolean}` | `users.status` SUSPENDED (no sign-in) or ACTIVE (from any other state, as the app's old `PATCH /api/admin/contractors/[id]/status`), `users.updatedAt` set; no write when already so; answers `{workerId, suspended}`. **Worker accounts only**: 404 when no worker has the id or its account is not a WORKER. Never changes `isActivated`. Limits 30 / 120 per minute |
+
+**The flag** (`isActivated BOOLEAN NOT NULL DEFAULT false`, migration `20261023120000_worker_profiles_is_activated`):
+false for every worker that existed on 2026-10-23 (the reset the user asked for) and for every new profile; only
+`PUT .../activation` sets it. From worker-activation U2, clients and the public list show only workers with the flag
+on and the account ACTIVE.
 
 ### `GET /v1/admin/users?search=<2..100 chars>[&role=WORKER|CLIENT|COORDINATOR|ADMIN]`
 

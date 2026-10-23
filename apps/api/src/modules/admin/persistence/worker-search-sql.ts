@@ -30,6 +30,8 @@ export interface RawWorkerRow {
   updatedAt: Date
   email: string
   userStatus: string
+  /** worker-activation U1: the admin-set flag (absent where a caller builds the row without it, e.g. the suspended list). */
+  activated?: boolean
   infoLanguages: string[] | null
   serviceNames: string[] | null
   serviceIds: string[] | null
@@ -75,7 +77,7 @@ export function searchStatement(q: SearchQuery, localityId: number | undefined):
     SELECT p.id, p."userId", p."firstName", p."lastName", p.mobile, p.gender, p.age, p."dateOfBirth",
            p.languages, p.city, p.state, p."postalCode", p.photos, p.experience, p.introduction,
            p."createdAt", p."updatedAt",
-           u.email, u.status AS "userStatus",
+           u.email, u.status AS "userStatus", p."isActivated" AS activated,
            wai.languages AS "infoLanguages",
            (SELECT array_agg(DISTINCT ws."categoryName") FROM worker_services ws WHERE ws."workerProfileId" = p.id) AS "serviceNames",
            (SELECT array_agg(DISTINCT ws."categoryId") FROM worker_services ws WHERE ws."workerProfileId" = p.id) AS "serviceIds",

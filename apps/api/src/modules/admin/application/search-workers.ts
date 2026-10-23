@@ -28,7 +28,7 @@ export async function searchWorkers(deps: SearchDeps, raw: WorkerSearchQueryPars
   }
 
   const { rows, total, unplacedCount } = await (deps.run ?? runSearch)(deps.db, q, locality?.id)
-  const data = rows.map((r) => shapeRow(r, now, locality !== undefined))
+  const data = rows.map((r) => shapeRow(r, now, locality !== undefined, q.withActivation))
   const totalPages = Math.ceil(total / q.pageSize)
   return {
     data,
@@ -38,8 +38,8 @@ export async function searchWorkers(deps: SearchDeps, raw: WorkerSearchQueryPars
   }
 }
 
-/** R6: today's row plus the distance and the home suburb; nothing else leaves (G10). */
-export function shapeRow(raw: RawWorkerRow, now: Date, withDistance: boolean): WorkerRow {
+/** R6: today's row plus the distance and the home suburb; nothing else leaves (G10). `activated` only on request (BR-6). */
+export function shapeRow(raw: RawWorkerRow, now: Date, withDistance: boolean, withActivation = false): WorkerRow {
   const computedAge = raw.dateOfBirth ? calculateAge(raw.dateOfBirth, now) : null
   const languages = raw.infoLanguages && raw.infoLanguages.length > 0 ? raw.infoLanguages : (raw.languages ?? [])
   const row: WorkerRow = {
@@ -64,6 +64,7 @@ export function shapeRow(raw: RawWorkerRow, now: Date, withDistance: boolean): W
     updatedAt: raw.updatedAt.toISOString(),
     isActive: raw.userStatus === 'ACTIVE',
   }
+  if (withActivation) row.activated = raw.activated === true
   if (withDistance && raw.distance_m !== null && raw.distance_m !== undefined) row.distanceKm = Math.round(raw.distance_m / 100) / 10
   if (raw.homeSuburb && raw.homeState && raw.homePostcode && raw.precision && raw.travelRadiusKm !== null) {
     row.location = { localityLabel: `${raw.homeSuburb} ${raw.homeState} ${raw.homePostcode}`, precision: raw.precision, travelRadiusKm: raw.travelRadiusKm }

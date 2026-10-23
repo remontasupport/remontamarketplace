@@ -171,6 +171,12 @@ parses `GET /v1/worker/profile` strictly, so a new field there would break it. D
 | `GET /v1/worker/tour` | -- | `{seenAt}`: the stored time (ISO 8601) or `null` when not seen. **Never cached**: `Cache-Control: no-store`, no ETag (`workerRead({ noCache: true })`), so a reload after the save reads the new value. 404 for a worker without a profile row |
 | `PUT /v1/worker/tour/seen` | none (a body is 400) | stores the api's clock **only when the column is null** (`COALESCE` in one statement: two saves at once keep one time) and answers `{seenAt}` with the stored time; `updatedAt` is left alone. Audit `PROFILE_UPDATE` with section `putTourSeen`, as every section write. **403 while an admin impersonates the worker** (the tour is the worker's own first visit), with the reason in `fields.general`; nothing written. The write limits (60 / 120 per minute), `maxBodyKb 1` |
 
+### Activation (worker-activation U1)
+
+| Entry | Body | Rules |
+|---|---|---|
+| `GET /v1/worker/activation` | -- | `{activated}`: whether an admin has switched the worker on (`worker_profiles."isActivated"`, false until then), for the dashboard's "awaiting approval" note. Its own read, as the tour's (the profile read is parsed strictly). **Never cached** (`no-store`), so the note goes on the next load after activation. 404 for a worker without a profile row. Read only: no worker entry writes the flag (an unknown key in any worker body is 400); the admin's `PUT /v1/admin/workers/:workerId/activation` does (`docs/admin/README.md`) |
+
 To show a worker the tour again: `UPDATE worker_profiles SET "tourSeenAt" = NULL WHERE "userId" = '<id>';` (staging
 or by hand; there is no entry for it).
 
