@@ -159,6 +159,8 @@ describe.skipIf(!local)('worker-activation U1: the flag, the filter and the swit
   })
 
   it('N3: a worker cannot call either switch', async () => {
+    // The flags are left random by P1/P2; start this one from a known value.
+    await db.workerProfile.update({ where: { id: ids[5]! }, data: { isActivated: false } })
     const res = await t.fastify.inject({ method: 'PUT', url: `/v1/admin/workers/${ids[5]}/activation`, headers: { 'x-test-principal': `${userIds[5]}:WORKER` }, payload: { activated: true } })
     expect(res.statusCode).toBe(403)
     expect((await db.workerProfile.findUniqueOrThrow({ where: { id: ids[5]! } })).isActivated).toBe(false)
