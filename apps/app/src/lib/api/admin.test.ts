@@ -164,3 +164,29 @@ describe('the two switches (worker-activation U2, A1/A4/A5)', () => {
     expect(await missing.api.setWorkerActivation('nope', true)).toMatchObject({ kind: 'failed', status: 404 })
   })
 })
+
+describe("a worker's extra photos (2026-10-23)", () => {
+  const photos = { main: 'https://x.test/m.jpg', additional: ['https://x.test/a.jpg'] }
+
+  it('the ticket POSTs its body with no path parameters; the read is fresh', async () => {
+    const t = harness([{ status: 201, body: { photoUploadId: '00000000-0000-4000-8000-000000000000', upload: { url: 'https://b.test', method: 'POST', fields: {}, fileField: 'file' }, expiresAt: '2026-10-23T00:00:00.000Z' } }])
+    expect((await t.api.createPhotoTicket({ contentType: 'image/jpeg', sizeBytes: 10 })).kind).toBe('ok')
+    expect(t.seen[0]!.url).toBe('https://api.example/v1/admin/photos/tickets')
+    expect(JSON.parse(String(t.seen[0]!.init.body))).toEqual({ contentType: 'image/jpeg', sizeBytes: 10 })
+    const r = harness([{ status: 200, body: photos }])
+    expect(await r.api.getWorkerPhotos('w1')).toEqual({ kind: 'ok', body: photos })
+    expect(r.seen[0]!.url).toBe('https://api.example/v1/admin/workers/w1/photos')
+    expect(r.seen[0]!.init.cache).toBe('reload')
+  })
+
+  it('add and remove carry the worker in the path and one field in the body', async () => {
+    const a = harness([{ status: 201, body: photos }])
+    expect((await a.api.addWorkerAdditionalPhoto('w1', 'u1')).kind).toBe('ok')
+    expect(a.seen[0]!.url).toBe('https://api.example/v1/admin/workers/w1/photos/additional')
+    expect(JSON.parse(String(a.seen[0]!.init.body))).toEqual({ uploadId: 'u1' })
+    const d = harness([{ status: 200, body: photos }])
+    expect((await d.api.removeWorkerAdditionalPhoto('w1', 'https://x.test/a.jpg')).kind).toBe('ok')
+    expect(d.seen[0]!.url).toBe('https://api.example/v1/admin/workers/w1/photos/additional/remove')
+    expect(JSON.parse(String(d.seen[0]!.init.body))).toEqual({ url: 'https://x.test/a.jpg' })
+  })
+})

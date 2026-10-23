@@ -1,7 +1,7 @@
 "use client";
 
-// The profile photo page (U2 H2, US-WP-02): one photo per worker (user, 2026-10-14: the
-// additional photos removed). A photo goes shrink on the device -> a ticket -> straight to the
+// The profile photo page (U2 H2, US-WP-02): the main photo, and up to 2 extra photos below it (back on 2026-10-23;
+// ExtraPhotos, their own api entries). A photo goes shrink on the device -> a ticket -> straight to the
 // bucket -> confirmed as the profile photo, replacing the current one (the sign-up's flow and
 // rules); the clean copy replaces the staged one by outbox within a minute, which the profile
 // read picks up on focus. Remove calls its entry.
@@ -10,6 +10,7 @@ import { Loader2, Upload } from "lucide-react";
 import { SIGNUP_PHOTO_ACCEPT } from "@/components/ui/form-wizard/fields";
 import type { ApiOutcome } from "@/lib/api/outcome";
 import { workerApi, type Photos } from "./api";
+import ExtraPhotos from "./ExtraPhotos";
 import { isShownPhoto, photoMessageOf as messageOf, uploadProfilePhoto } from "./photo";
 import { useWorkerProfile } from "./profile";
 import { Notice, SectionSkeleton } from "./SectionPage";
@@ -103,6 +104,16 @@ export default function PhotoSection() {
           <div role="status" aria-live="polite">
             {message && <p className="text-sm font-poppins text-red-600">{message}</p>}
           </div>
+
+          <ExtraPhotos
+            title="More photos"
+            hint="Up to 2 more photos, such as you at work or a hobby. Clients may see them on your profile."
+            load={() => workerApi.getPhotos()}
+            ticket={(body) => workerApi.createPhotoTicket(body)}
+            add={(uploadId) => workerApi.addAdditionalPhoto({ uploadId })}
+            remove={(url) => workerApi.removeAdditionalPhoto(url)}
+            refreshKey={photos.main}
+          />
         </>
       )}
     </section>
