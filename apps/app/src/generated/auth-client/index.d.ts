@@ -14874,6 +14874,7 @@ export namespace Prisma {
     consentWordingVersion: string | null
     zohoLeadId: string | null
     tourSeenAt: Date | null
+    isActivated: boolean | null
     homeStreetLine: string | null
     homeLocalityId: number | null
   }
@@ -14912,6 +14913,7 @@ export namespace Prisma {
     consentWordingVersion: string | null
     zohoLeadId: string | null
     tourSeenAt: Date | null
+    isActivated: boolean | null
     homeStreetLine: string | null
     homeLocalityId: number | null
   }
@@ -14953,6 +14955,7 @@ export namespace Prisma {
     consentWordingVersion: number
     zohoLeadId: number
     tourSeenAt: number
+    isActivated: number
     homeStreetLine: number
     homeLocalityId: number
     _all: number
@@ -15007,6 +15010,7 @@ export namespace Prisma {
     consentWordingVersion?: true
     zohoLeadId?: true
     tourSeenAt?: true
+    isActivated?: true
     homeStreetLine?: true
     homeLocalityId?: true
   }
@@ -15045,6 +15049,7 @@ export namespace Prisma {
     consentWordingVersion?: true
     zohoLeadId?: true
     tourSeenAt?: true
+    isActivated?: true
     homeStreetLine?: true
     homeLocalityId?: true
   }
@@ -15086,6 +15091,7 @@ export namespace Prisma {
     consentWordingVersion?: true
     zohoLeadId?: true
     tourSeenAt?: true
+    isActivated?: true
     homeStreetLine?: true
     homeLocalityId?: true
     _all?: true
@@ -15214,6 +15220,7 @@ export namespace Prisma {
     consentWordingVersion: string | null
     zohoLeadId: string | null
     tourSeenAt: Date | null
+    isActivated: boolean
     homeStreetLine: string | null
     homeLocalityId: number | null
     _count: WorkerProfileCountAggregateOutputType | null
@@ -15274,6 +15281,7 @@ export namespace Prisma {
     consentWordingVersion?: boolean
     zohoLeadId?: boolean
     tourSeenAt?: boolean
+    isActivated?: boolean
     homeStreetLine?: boolean
     homeLocalityId?: boolean
     verificationRequirements?: boolean | WorkerProfile$verificationRequirementsArgs<ExtArgs>
@@ -15329,6 +15337,7 @@ export namespace Prisma {
     consentWordingVersion?: boolean
     zohoLeadId?: boolean
     tourSeenAt?: boolean
+    isActivated?: boolean
     homeStreetLine?: boolean
     homeLocalityId?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -15372,6 +15381,7 @@ export namespace Prisma {
     consentWordingVersion?: boolean
     zohoLeadId?: boolean
     tourSeenAt?: boolean
+    isActivated?: boolean
     homeStreetLine?: boolean
     homeLocalityId?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -15415,11 +15425,12 @@ export namespace Prisma {
     consentWordingVersion?: boolean
     zohoLeadId?: boolean
     tourSeenAt?: boolean
+    isActivated?: boolean
     homeStreetLine?: boolean
     homeLocalityId?: boolean
   }
 
-  export type WorkerProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "firstName" | "middleName" | "lastName" | "mobile" | "location" | "city" | "state" | "postalCode" | "age" | "dateOfBirth" | "gender" | "languages" | "experience" | "introduction" | "qualifications" | "hasVehicle" | "funFact" | "hobbies" | "uniqueService" | "photos" | "additionalPhotos" | "latitude" | "longitude" | "abn" | "setupProgress" | "profileCompleted" | "isPublished" | "verificationStatus" | "createdAt" | "updatedAt" | "consentProfileShareAt" | "consentWordingVersion" | "zohoLeadId" | "tourSeenAt" | "homeStreetLine" | "homeLocalityId", ExtArgs["result"]["workerProfile"]>
+  export type WorkerProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "firstName" | "middleName" | "lastName" | "mobile" | "location" | "city" | "state" | "postalCode" | "age" | "dateOfBirth" | "gender" | "languages" | "experience" | "introduction" | "qualifications" | "hasVehicle" | "funFact" | "hobbies" | "uniqueService" | "photos" | "additionalPhotos" | "latitude" | "longitude" | "abn" | "setupProgress" | "profileCompleted" | "isPublished" | "verificationStatus" | "createdAt" | "updatedAt" | "consentProfileShareAt" | "consentWordingVersion" | "zohoLeadId" | "tourSeenAt" | "isActivated" | "homeStreetLine" | "homeLocalityId", ExtArgs["result"]["workerProfile"]>
   export type WorkerProfileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     verificationRequirements?: boolean | WorkerProfile$verificationRequirementsArgs<ExtArgs>
     workerAdditionalInfo?: boolean | WorkerProfile$workerAdditionalInfoArgs<ExtArgs>
@@ -15499,6 +15510,7 @@ export namespace Prisma {
       consentWordingVersion: string | null
       zohoLeadId: string | null
       tourSeenAt: Date | null
+      isActivated: boolean
       homeStreetLine: string | null
       homeLocalityId: number | null
     }, ExtArgs["result"]["workerProfile"]>
@@ -15973,6 +15985,7 @@ export namespace Prisma {
     readonly consentWordingVersion: FieldRef<"WorkerProfile", 'String'>
     readonly zohoLeadId: FieldRef<"WorkerProfile", 'String'>
     readonly tourSeenAt: FieldRef<"WorkerProfile", 'DateTime'>
+    readonly isActivated: FieldRef<"WorkerProfile", 'Boolean'>
     readonly homeStreetLine: FieldRef<"WorkerProfile", 'String'>
     readonly homeLocalityId: FieldRef<"WorkerProfile", 'Int'>
   }
@@ -42995,6 +43008,7 @@ export namespace Prisma {
     consentWordingVersion: 'consentWordingVersion',
     zohoLeadId: 'zohoLeadId',
     tourSeenAt: 'tourSeenAt',
+    isActivated: 'isActivated',
     homeStreetLine: 'homeStreetLine',
     homeLocalityId: 'homeLocalityId'
   };
@@ -44531,6 +44545,7 @@ export namespace Prisma {
     consentWordingVersion?: StringNullableFilter<"WorkerProfile"> | string | null
     zohoLeadId?: StringNullableFilter<"WorkerProfile"> | string | null
     tourSeenAt?: DateTimeNullableFilter<"WorkerProfile"> | Date | string | null
+    isActivated?: BoolFilter<"WorkerProfile"> | boolean
     homeStreetLine?: StringNullableFilter<"WorkerProfile"> | string | null
     homeLocalityId?: IntNullableFilter<"WorkerProfile"> | number | null
     verificationRequirements?: VerificationRequirementListRelationFilter
@@ -44585,6 +44600,7 @@ export namespace Prisma {
     consentWordingVersion?: SortOrderInput | SortOrder
     zohoLeadId?: SortOrderInput | SortOrder
     tourSeenAt?: SortOrderInput | SortOrder
+    isActivated?: SortOrder
     homeStreetLine?: SortOrderInput | SortOrder
     homeLocalityId?: SortOrderInput | SortOrder
     verificationRequirements?: VerificationRequirementOrderByRelationAggregateInput
@@ -44642,6 +44658,7 @@ export namespace Prisma {
     consentWordingVersion?: StringNullableFilter<"WorkerProfile"> | string | null
     zohoLeadId?: StringNullableFilter<"WorkerProfile"> | string | null
     tourSeenAt?: DateTimeNullableFilter<"WorkerProfile"> | Date | string | null
+    isActivated?: BoolFilter<"WorkerProfile"> | boolean
     homeStreetLine?: StringNullableFilter<"WorkerProfile"> | string | null
     homeLocalityId?: IntNullableFilter<"WorkerProfile"> | number | null
     verificationRequirements?: VerificationRequirementListRelationFilter
@@ -44696,6 +44713,7 @@ export namespace Prisma {
     consentWordingVersion?: SortOrderInput | SortOrder
     zohoLeadId?: SortOrderInput | SortOrder
     tourSeenAt?: SortOrderInput | SortOrder
+    isActivated?: SortOrder
     homeStreetLine?: SortOrderInput | SortOrder
     homeLocalityId?: SortOrderInput | SortOrder
     _count?: WorkerProfileCountOrderByAggregateInput
@@ -44745,6 +44763,7 @@ export namespace Prisma {
     consentWordingVersion?: StringNullableWithAggregatesFilter<"WorkerProfile"> | string | null
     zohoLeadId?: StringNullableWithAggregatesFilter<"WorkerProfile"> | string | null
     tourSeenAt?: DateTimeNullableWithAggregatesFilter<"WorkerProfile"> | Date | string | null
+    isActivated?: BoolWithAggregatesFilter<"WorkerProfile"> | boolean
     homeStreetLine?: StringNullableWithAggregatesFilter<"WorkerProfile"> | string | null
     homeLocalityId?: IntNullableWithAggregatesFilter<"WorkerProfile"> | number | null
   }
@@ -47490,6 +47509,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
@@ -47543,6 +47563,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -47594,6 +47615,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
@@ -47647,6 +47669,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -47699,6 +47722,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     homeLocalityId?: number | null
   }
@@ -47739,6 +47763,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
@@ -47779,6 +47804,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
   }
@@ -50780,6 +50806,7 @@ export namespace Prisma {
     consentWordingVersion?: SortOrder
     zohoLeadId?: SortOrder
     tourSeenAt?: SortOrder
+    isActivated?: SortOrder
     homeStreetLine?: SortOrder
     homeLocalityId?: SortOrder
   }
@@ -50825,6 +50852,7 @@ export namespace Prisma {
     consentWordingVersion?: SortOrder
     zohoLeadId?: SortOrder
     tourSeenAt?: SortOrder
+    isActivated?: SortOrder
     homeStreetLine?: SortOrder
     homeLocalityId?: SortOrder
   }
@@ -50863,6 +50891,7 @@ export namespace Prisma {
     consentWordingVersion?: SortOrder
     zohoLeadId?: SortOrder
     tourSeenAt?: SortOrder
+    isActivated?: SortOrder
     homeStreetLine?: SortOrder
     homeLocalityId?: SortOrder
   }
@@ -55595,6 +55624,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
@@ -55646,6 +55676,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -55901,6 +55932,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
@@ -55952,6 +55984,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -56104,6 +56137,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
@@ -56156,6 +56190,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
@@ -56222,6 +56257,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
@@ -56274,6 +56310,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
@@ -57844,6 +57881,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
@@ -57896,6 +57934,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -57962,6 +58001,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
@@ -58014,6 +58054,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -58210,6 +58251,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
@@ -58262,6 +58304,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -58328,6 +58371,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
@@ -58380,6 +58424,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -58518,6 +58563,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
@@ -58570,6 +58616,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -58636,6 +58683,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
@@ -58688,6 +58736,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -58738,6 +58787,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
@@ -58790,6 +58840,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -58856,6 +58907,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
@@ -58908,6 +58960,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -58958,6 +59011,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
@@ -59010,6 +59064,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -59076,6 +59131,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
@@ -59128,6 +59184,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -59178,6 +59235,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
@@ -59230,6 +59288,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -59296,6 +59355,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
@@ -59348,6 +59408,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -59519,6 +59580,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
@@ -59571,6 +59633,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
@@ -59748,6 +59811,7 @@ export namespace Prisma {
     consentWordingVersion?: StringNullableFilter<"WorkerProfile"> | string | null
     zohoLeadId?: StringNullableFilter<"WorkerProfile"> | string | null
     tourSeenAt?: DateTimeNullableFilter<"WorkerProfile"> | Date | string | null
+    isActivated?: BoolFilter<"WorkerProfile"> | boolean
     homeStreetLine?: StringNullableFilter<"WorkerProfile"> | string | null
     homeLocalityId?: IntNullableFilter<"WorkerProfile"> | number | null
   }
@@ -59788,6 +59852,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
@@ -59840,6 +59905,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -59946,6 +60012,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
@@ -59998,6 +60065,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -60094,6 +60162,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
@@ -60146,6 +60215,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -60212,6 +60282,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
@@ -60264,6 +60335,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -60314,6 +60386,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
@@ -60366,6 +60439,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -60432,6 +60506,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
@@ -60484,6 +60559,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -60534,6 +60610,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
@@ -60586,6 +60663,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -60652,6 +60730,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
@@ -60704,6 +60783,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -61691,6 +61771,7 @@ export namespace Prisma {
     consentWordingVersion?: string | null
     zohoLeadId?: string | null
     tourSeenAt?: Date | string | null
+    isActivated?: boolean
     homeStreetLine?: string | null
   }
 
@@ -61819,6 +61900,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
@@ -61871,6 +61953,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
@@ -61922,6 +62005,7 @@ export namespace Prisma {
     consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
     zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
   }
 

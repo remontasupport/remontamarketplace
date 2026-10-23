@@ -278,6 +278,7 @@ exports.Prisma.WorkerProfileScalarFieldEnum = {
   consentWordingVersion: 'consentWordingVersion',
   zohoLeadId: 'zohoLeadId',
   tourSeenAt: 'tourSeenAt',
+  isActivated: 'isActivated',
   homeStreetLine: 'homeStreetLine',
   homeLocalityId: 'homeLocalityId'
 };

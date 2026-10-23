@@ -15,8 +15,10 @@ import {
   type SuspendedListResponse,
   type UserListResponse,
   type UserSearchQuery,
+  type WorkerActivation,
   type WorkerSearchQuery,
   type WorkerSearchResponse,
+  type WorkerSuspension,
 } from '@remonta/api-contract'
 import { failure, type ApiOutcome } from './outcome'
 import { createTokenSource, Unauthenticated, type TokenSource } from './token'
@@ -35,6 +37,10 @@ export interface AdminApi {
   listSuspendedWorkers(query: SuspendedListQuery, opts?: CallOptions): Promise<ApiOutcome<SuspendedListResponse>>
   /** worker-tools (UR-9): one worker's services and their tools, by the worker profile id. */
   getWorkerServices(workerId: string, opts?: CallOptions): Promise<ApiOutcome<AdminWorkerServices>>
+  /** worker-activation U2 (A1): switch a worker on or off for clients and the public list; sign-in is untouched. */
+  setWorkerActivation(workerId: string, activated: boolean): Promise<ApiOutcome<WorkerActivation>>
+  /** worker-activation U2 (A4, A5): suspend the account (no sign-in) or restore it; the activation flag is untouched. */
+  setWorkerSuspension(workerId: string, suspended: boolean): Promise<ApiOutcome<WorkerSuspension>>
   /** The canonical query string of a search (R8.5): what the URL bar and the cache key carry. */
   canonicalSearch(query: WorkerSearchQuery): string
 }
@@ -46,7 +52,7 @@ export interface AdminApiDeps {
 }
 
 type QueryEntryName = 'searchWorkers' | 'listUsers' | 'listSuspendedWorkers'
-type EntryName = QueryEntryName | 'getWorkerServices'
+type EntryName = QueryEntryName | 'getWorkerServices' | 'setWorkerActivation' | 'setWorkerSuspension'
 
 export function createAdminApi(deps: AdminApiDeps): AdminApi {
   const doFetch = deps.fetch ?? ((input: RequestInfo | URL, init?: RequestInit) => globalThis.fetch(input, init))
@@ -66,7 +72,7 @@ export function createAdminApi(deps: AdminApiDeps): AdminApi {
     return Object.fromEntries(new URLSearchParams(serializeCanonical(parsed.data as Record<string, unknown>)))
   }
 
-  async function call<T>(name: EntryName, query: unknown, opts?: CallOptions, params?: Record<string, string>): Promise<ApiOutcome<T>> {
+  async function call<T>(name: EntryName, query: unknown, opts?: CallOptions, params?: Record<string, string>, body?: unknown): Promise<ApiOutcome<T>> {
     if (!deps.baseUrl) {
       if (!warned) {
         warned = true
@@ -74,8 +80,8 @@ export function createAdminApi(deps: AdminApiDeps): AdminApi {
       }
       return { kind: 'unavailable' }
     }
-    // An entry with path parameters (getWorkerServices) has no query to make canonical.
-    const q = name === 'getWorkerServices' ? undefined : canonical(name, query)
+    // An entry with path parameters (getWorkerServices, the two switches) has no query to make canonical.
+    const q = params ? undefined : canonical(name as QueryEntryName, query)
     if (q && 'fields' in q && typeof q.fields === 'object') return { kind: 'failed', status: 400, fields: q.fields as Record<string, string[]> }
     const reload = opts?.cache === 'reload'
     const client = createClient(adminContract, {
@@ -92,7 +98,7 @@ export function createAdminApi(deps: AdminApiDeps): AdminApi {
       }
       let res: Awaited<ReturnType<(typeof client)[EntryName]>>
       try {
-        res = await client[name]((params ? { params } : { query: q }) as never, { signal: opts?.signal, headers: { authorization: `Bearer ${token}` } })
+        res = await client[name]((params ? { params, ...(body !== undefined ? { body } : {}) } : { query: q }) as never, { signal: opts?.signal, headers: { authorization: `Bearer ${token}` } })
       } catch (err) {
         if (opts?.signal?.aborted) throw err
         return { kind: 'unavailable' }
@@ -112,6 +118,9 @@ export function createAdminApi(deps: AdminApiDeps): AdminApi {
     listUsers: (query, opts) => call('listUsers', query, opts),
     listSuspendedWorkers: (query, opts) => call('listSuspendedWorkers', query, opts),
     getWorkerServices: (workerId, opts) => call('getWorkerServices', undefined, opts, { workerId }),
+    // Writes are never cached: the browser does not cache a PUT, and the api answers no-store.
+    setWorkerActivation: (workerId, activated) => call('setWorkerActivation', undefined, undefined, { workerId }, { activated }),
+    setWorkerSuspension: (workerId, suspended) => call('setWorkerSuspension', undefined, undefined, { workerId }, { suspended }),
     canonicalSearch: (query) => {
       const q = canonical('searchWorkers', query)
       return 'fields' in q && typeof q.fields === 'object' ? '' : new URLSearchParams(q as Record<string, string>).toString()
