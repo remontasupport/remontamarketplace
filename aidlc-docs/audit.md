@@ -5327,3 +5327,5 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-23):** "New 'approved' flag (Recommended)" (a separate admin-set flag; sign-in unaffected; suspension stays its own action) and "Reset all to inactive" (every existing worker starts inactive too).
 
 **AI action (2026-10-23):** cycle `worker-activation` opened; record branch `aidlc/worker-activation` from `aidlc/worker-tools` `a5993ed`. Next: Requirements Analysis.
+
+**AI action (2026-10-23, Requirements Analysis):** inventory extended: the admin search (`filters.ts` `ACTIVE`), the client search (`api/client/workers/route.ts:354`) and the public list (`api/public/workers/route.ts:112`) all filter on `users.status = 'ACTIVE'`. `inception/requirements/requirement-verification-questions.md` written: 9 questions (where inactive hides a worker, the reset's effect on the client and public lists, the admin default view, suspension, today's suspended accounts, Verify Compliance, what the worker sees, the record, who may switch) plus the three extension opt-ins. Awaiting answers; no code written.
