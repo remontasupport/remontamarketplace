@@ -1,5 +1,5 @@
-// worker-activation U2 (P6): a worker is listed to clients and the public iff activated and not suspended, and both
-// list routes build their base condition from that one declaration.
+// worker-activation U2 (P6): a worker is in the public list iff activated and not suspended; the signed-in client
+// search shows every unsuspended worker (user, 2026-10-23).
 import fc from 'fast-check'
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
@@ -21,14 +21,15 @@ describe('LISTABLE_WORKER', () => {
     )
   })
 
-  it('both list routes use it; the assigned-workers route does not (BR-U4)', () => {
+  it('the public list uses it; the client search and the assigned workers do not', () => {
     const src = (p: string) => readFileSync(new URL(p, import.meta.url), 'utf8')
-    for (const route of ['../../app/api/client/workers/route.ts', '../../app/api/public/workers/route.ts']) {
-      const s = src(route)
-      expect(s, route).toContain("from '@/lib/workers/listable'")
-      expect(s, route).toContain('...LISTABLE_WORKER')
-      expect(s, route).not.toMatch(/user:\s*\{\s*status:\s*'ACTIVE'\s*\}/)
-    }
+    const pub = src('../../app/api/public/workers/route.ts')
+    expect(pub).toContain("from '@/lib/workers/listable'")
+    expect(pub).toContain('...LISTABLE_WORKER')
+    const client = src('../../app/api/client/workers/route.ts')
+    expect(client).not.toContain('LISTABLE_WORKER')
+    expect(client).not.toContain('isActivated')
+    expect(client).toMatch(/user:\s*\{\s*status:\s*'ACTIVE'\s*\}/)
     expect(src('../../app/api/client/workers/by-ids/route.ts')).not.toContain('LISTABLE_WORKER')
   })
 })
