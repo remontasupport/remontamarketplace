@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authPrisma as prisma } from '@/lib/auth-prisma'
+import { LISTABLE_WORKER } from '@/lib/workers/listable'
 import { Prisma } from '@/generated/auth-client'
 import { geocodeAddress } from '@/lib/geocoding'
 import { getCached, setCached } from '@/lib/redis'
@@ -109,7 +110,8 @@ async function geocodeLocation(location: string): Promise<{ lat: number; lng: nu
 
 function buildWhereClause(params: PublicFilterParams): Prisma.WorkerProfileWhereInput {
   const conditions: Prisma.WorkerProfileWhereInput[] = [
-    { user: { status: 'ACTIVE' } },
+    // Activated by an admin, not suspended (worker-activation FR-5).
+    { ...LISTABLE_WORKER },
   ]
 
   if (params.typeOfSupport && params.typeOfSupport !== 'all') {
