@@ -5429,3 +5429,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-23):** "merged" (the nurse type api PR)
 
 **AI action (2026-10-23):** by refs `main` = `8daec55` (merge of PR #110), contains `3e5f4f3` only (not the app commit). deploy-api run 39900544992 (push) success; staging health 200. Staging check (read-only, `_nursing-staging-check.ts`, untracked): `nursingType=registered` 11 = database 11, `enrolled` 6 = 6, both echoed; without it 158 nursing workers, not echoed; without Nursing Services 400. Promotion image handed over: `8daec55ce84e2dd06d902e481710b43c8292e50a`.
+
+**User input (2026-10-23):** "Deployed the api, and merged"
+
+**AI action (2026-10-23):** verified: deploy-api run 39903726014 (workflow_dispatch) "Promote 8daec55..." success 05:05:45Z; prod revision `remonta-api-00018-nl4` serves 100 % (previous `00017-4bz` = `746a60d`); prod health 200. PR #111 merged after it (`main` `3a2b2a6`, 05:14:13Z): the order held. Vercel production builds of `3a2b2a6` success; `app.remontaservices.com.au/login` 200. The nurse type filter is live; signed-in check is the user's. The session's one-off staging scripts deleted (the user's `_u2-staging-writes.ts` left).
