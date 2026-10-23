@@ -5487,3 +5487,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-23):** "promotion is done and done merged"
 
 **AI action (2026-10-23):** verified: deploy-api run 39919066819 (workflow_dispatch) "Promote e0d7ec8..." success 07:39:33Z; prod revision `remonta-api-00020-s7c` serves 100 % (previous `00019-p5m` = `0275574`); prod health 200; `make-main` 401 without a token. PR #118 merged after it (`main` `adf7285`, 07:43:32Z): the order held. Vercel production builds success; login 200. Replace photo picks existing photos, live.
+
+**User input (2026-10-23):** "Remove the admin photo actions from the api. They're unused by the app since the "Worker photos" block was removed"
+
+**AI action (2026-10-23):** branch `chore/remove-admin-photo-api` (from `main` `adf7285`): the four admin entries removed (contract, handlers, `main.ts` wiring, the app's admin client and its tests, docs); `admin.contract.ts` and `admin.handlers.ts` byte-identical to before `73583d41`; openapi: 4 operations removed, none changed or added; the database test keeps the worker paths and a mainIfNone=false refusal. Gates green: contract 15, api 48, app (55 / 277 known, 40 files). Pushed. Order: merge (the app on prod calls none of them) -> staging -> promote.
