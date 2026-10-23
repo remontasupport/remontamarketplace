@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import * as fc from 'fast-check'
 import { AGE_RANGES, workerSearchQuerySchema } from '@remonta/api-contract'
 import { SERVICE_TOOLS, TOOL_IDS, TOOL_SERVICES, toolSearchOf } from '@remonta/schemas/data/serviceTools'
-import { canonicalOf, DEFAULT_FILTERS, TOOL_GROUPS, toolGroupFor, toolSearchView, EXPERIENCE_OPTIONS, experienceAreasOfLabel, filtersFromURL, toQuery, urlFromFilters, type AdminFilters } from './query'
+import { canonicalOf, DEFAULT_FILTERS, searchRequestOf, TOOL_GROUPS, toolGroupFor, toolSearchView, EXPERIENCE_OPTIONS, experienceAreasOfLabel, filtersFromURL, toQuery, urlFromFilters, type AdminFilters } from './query'
 
 describe('toQuery (R11.1)', () => {
   it('maps display values to canonical ones and omits all/none', () => {
@@ -115,6 +115,7 @@ describe('the URL state (R11.2)', () => {
       ),
       tools: fc.uniqueArray(fc.constantFrom(...TOOL_IDS), { maxLength: 4 }),
       toolSearch: fc.constantFrom('', 'gurney', 'pressure washer', 'mowers', '&', 'Saw'),
+      activation: fc.constantFrom('all' as const, 'active' as const, 'inactive' as const),
     })
     .map((f) => ({ ...f, pageSize: 6 }))
 
@@ -203,3 +204,22 @@ describe('the tool search box (tool search TS-5)', () => {
   })
 })
 
+
+describe('the activation tab (worker-activation A2, A3)', () => {
+  it('All sends nothing; Active and Inactive send the flag; the URL keeps it', () => {
+    expect(toQuery(DEFAULT_FILTERS)).not.toHaveProperty('activation')
+    expect(toQuery({ ...DEFAULT_FILTERS, activation: 'inactive' }).activation).toBe('inactive')
+    expect(filtersFromURL(new URLSearchParams(urlFromFilters({ ...DEFAULT_FILTERS, activation: 'active' }))).activation).toBe('active')
+    expect(filtersFromURL(new URLSearchParams('activation=bogus')).activation).toBe('all')
+  })
+
+  it('every request asks for the row flag, and the URL bar never carries it', () => {
+    fc.assert(
+      fc.property(fc.constantFrom('all' as const, 'active' as const, 'inactive' as const), (activation) => {
+        const f = { ...DEFAULT_FILTERS, activation }
+        expect(searchRequestOf(f)).toEqual({ ...toQuery(f), withActivation: true })
+        expect(urlFromFilters(f)).not.toContain('withActivation')
+      }),
+    )
+  })
+})
