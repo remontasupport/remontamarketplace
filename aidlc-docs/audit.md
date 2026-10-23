@@ -5399,3 +5399,9 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-23):** "approved" (U2 code generation plan)
 
 **AI action (2026-10-23, U2 Code Generation):** branch `feat/worker-activation-app` from `main` `746a60d`: `f73dbcc` (admin client `setWorkerActivation`/`setWorkerSuspension`, worker `getActivation`, the auth-client regenerated for the column, the old `PATCH /api/admin/contractors/[id]/status` deleted after a caller search incl. template URLs), `c10d50d` (card switch on the flag, tabs All/Active/Inactive, "Suspended accounts" + Restore), `89d9854` (Suspend with confirm / Restore on the worker's admin page; the route returns `account`), `e14b8c6` (`LISTABLE_WORKER` for the client search and the public list; by-ids unfiltered), `03518d9` (the home page line; docs). Gates green (app types 55 known, eslint 277 known, 40 test files; web; build). Pushed; the compare link handed over. Merge = release.
+
+**User input (2026-10-23):** "what is the preview link?" -- **AI action:** the U2 previews of `03518d9` handed over (app `remonta-q9qa4x4rp-remontas-projects.vercel.app`, marketing `remontamarketplace-8wu7f85q0-remontas-projects.vercel.app`).
+
+**User input (2026-10-23):** "In the admin dashboard, do not make the opacity low, it is still on the same before even though they are Inactive"
+
+**AI action (2026-10-23):** design change A1: an inactive card is no longer faded (`opacity-50` removed); the badge (Active green / Inactive grey) and the switch carry the state. One line; type and lint baselines unchanged (55 / 277 known). Committed and pushed; Vercel rebuilds the preview.
