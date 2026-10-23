@@ -24,7 +24,7 @@ B) Everywhere: also hidden from the admin search (found only through an "inactiv
 C) Admin only: a label in the admin dashboard; clients and the public still see every worker
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: a
 
 ## Question 2: Impact of the reset
 With Question 1 = A or B and every worker reset to inactive, the **client search and the public list show no workers
@@ -34,7 +34,7 @@ B) Reset everyone, but first give admins a way to activate many at once (e.g. ti
 C) Reset everyone except the workers already marked Verify Compliance (isPublished)
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: Just set them to Inactive, the workers can still sign in, admins can still search but they need to tick the worker whether they are active or not.
 
 ## Question 3: The admin search's default view
 A) Show all workers, with a filter "Status: All / Active / Inactive" (default All) and the switch on each card
@@ -42,7 +42,7 @@ B) Show active only by default; the filter reveals inactive ones
 C) Show inactive only by default (a review queue), with the filter for the others
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: a
 
 ## Question 4: Suspension (blocking sign-in)
 The switch will no longer suspend accounts. What happens to suspension?
@@ -51,14 +51,14 @@ A) Keep it as a separate action on the worker's admin page ("Suspend account" / 
 B) Remove suspension from the admin dashboard (no one needs it)
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: a
 
 ## Question 5: Today's suspended accounts
 A) They stay suspended (can't sign in) and also become inactive
 B) Un-suspend them: they become ordinary inactive workers who can sign in
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: a
 
 ## Question 6: Activation and Verify Compliance (isPublished)
 A) Independent: Active and Verify Compliance are two separate admin decisions
@@ -66,7 +66,7 @@ B) Activation requires Verify Compliance first (the switch is disabled until com
 C) Merge them: Verify Compliance becomes the same flag as Active
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: a
 
 ## Question 7: What the worker sees
 A) Nothing changes for the worker
@@ -74,7 +74,7 @@ B) A note on their dashboard while inactive ("Your profile is awaiting approval 
 C) B, plus an email when an admin activates them
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: B
 
 ## Question 8: Record of who changed it
 A) Store who activated/deactivated and when (shown on the worker's admin page), plus an audit row
@@ -82,14 +82,14 @@ B) An audit row only
 C) No record needed
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: C
 
 ## Question 9: Who can switch it
 A) ADMIN and SUPER_ADMIN (as today's switch)
 B) SUPER_ADMIN only
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]:A
 
 ---
 
@@ -100,7 +100,7 @@ A) Yes — enforce all SECURITY rules as blocking constraints (recommended for p
 B) No — skip all SECURITY rules (suitable for PoCs, prototypes, and experimental projects)
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A
 
 ## Question: Resiliency Extensions
 Should the resiliency baseline be applied? (Last cycle: A, SLA 99.9 %, RTO ≤ 30 min, RPO ≤ 5 min, single region)
@@ -111,7 +111,7 @@ A) Yes — apply the resiliency baseline as directional best practices and desig
 B) No — skip the resiliency baseline
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A
 
 ## Question: Property-Based Testing Extension
 Should property-based testing (PBT) rules be enforced? (Last cycle: A)
@@ -121,4 +121,4 @@ B) Partial — PBT only for pure functions and serialization round-trips
 C) No — skip all PBT rules
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A

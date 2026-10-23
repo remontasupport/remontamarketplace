@@ -5329,3 +5329,11 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **AI action (2026-10-23):** cycle `worker-activation` opened; record branch `aidlc/worker-activation` from `aidlc/worker-tools` `a5993ed`. Next: Requirements Analysis.
 
 **AI action (2026-10-23, Requirements Analysis):** inventory extended: the admin search (`filters.ts` `ACTIVE`), the client search (`api/client/workers/route.ts:354`) and the public list (`api/public/workers/route.ts:112`) all filter on `users.status = 'ACTIVE'`. `inception/requirements/requirement-verification-questions.md` written: 9 questions (where inactive hides a worker, the reset's effect on the client and public lists, the admin default view, suspension, today's suspended accounts, Verify Compliance, what the worker sees, the record, who may switch) plus the three extension opt-ins. Awaiting answers; no code written.
+
+**User input (2026-10-23):** "ANSWERED" (in `requirement-verification-questions.md`: Q1 a; Q2 "Just set them to Inactive, the workers can still sign in, admins can still search but they need to tick the worker whether they are active or not."; Q3 a; Q4 a; Q5 a; Q6 a; Q7 B; Q8 C; Q9 A; Security A; Resiliency A; PBT A)
+
+**AI action (2026-10-23):** answers analysed; Q8 c (no record) checked against the Security baseline: no rule requires a stored who/when, SECURITY-03's request log covers the call. One follow-up asked in chat: can an inactive worker apply to jobs.
+
+**User input (2026-10-23, F1):** "Yes, apply as now (Recommended)"
+
+**AI action (2026-10-23):** `inception/requirements/requirements.md` written: FR-1..FR-11 (new flag; inactive by default; everyone reset at release, no bulk activation, empty client/public lists accepted; card switch; hidden from client search and public list; admin search all + Status filter; suspend/restore moved to the worker's admin page, "Suspended accounts"; suspended stay suspended; independent of Verify Compliance; dashboard note, no email; no stored record), NFR-1..NFR-5, out of scope, risks R-1/R-2. Extensions recorded in `aidlc-state.md`. Awaiting approval.

@@ -3,11 +3,11 @@
 ## Project Information
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
-- **Current Cycle**: none. The worker-tools cycle closed 2026-10-22 (`aidlc-docs/archive/worker-tools/`).
-- **Current Stage**: between cycles. "continue the AI-DLC" starts a new cycle: a targeted inventory of the area, then
-  INCEPTION, then CONSTRUCTION per unit, on a branch `aidlc/<cycle>` for the record and `feat/...` branches for the code.
-  Open now: the docs PR `docs/rollback-rows-2026-10-22` (CLAUDE.md's rollback rows) to merge; the signed-in production
-  check of the tool search (user).
+- **Current Cycle**: **worker-activation** (opened 2026-10-23): the admin card's Active switch becomes a new admin-set
+  flag, separate from `users.status`; every worker starts inactive. Record branch `aidlc/worker-activation`.
+- **Current Stage**: INCEPTION. Workspace Detection done; targeted inventory done (in `requirements.md`, "Today");
+  Requirements Analysis done 2026-10-23 (`inception/requirements/requirements.md`, awaiting approval). Next: Workflow
+  Planning. Still open from worker-tools: the docs PR `docs/rollback-rows-2026-10-22`.
 
 ## Previous cycles (archived, read-only)
 
@@ -158,9 +158,9 @@
 - **Documentation**: aidlc-docs/ only
 - **Structure patterns**: CLAUDE.md "Dynamic by default" (contract entries + handlers; form definitions)
 
-## Extension Configuration (worker-tools's values; re-asked next cycle)
+## Extension Configuration (worker-activation)
 | Extension | Enabled | Decided At |
 |---|---|---|
-| Security Baseline | Yes, blocking | worker-tools, Requirements Analysis 2026-10-22 (Security A) |
-| Resiliency Baseline | Yes; SLA 99.9 %, RTO ≤ 30 min, RPO ≤ 5 min, single region (carried) | worker-tools, 2026-10-22 (Resiliency A) |
-| Property-Based Testing | Yes, full | worker-tools, 2026-10-22 (PBT A) |
+| Security Baseline | Yes, blocking | worker-activation, Requirements Analysis 2026-10-23 (Security A) |
+| Resiliency Baseline | Yes; SLA 99.9 %, RTO ≤ 30 min, RPO ≤ 5 min, single region (carried) | worker-activation, 2026-10-23 (Resiliency A) |
+| Property-Based Testing | Yes, full | worker-activation, 2026-10-23 (PBT A) |
