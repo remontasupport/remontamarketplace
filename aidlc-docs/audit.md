@@ -5409,3 +5409,9 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-23):** "I think it is good now, for the Workers dashboard, can you remove the banner?" -- asked which; **User input:** "The approval note"
 
 **AI action (2026-10-23):** FR-10 / A8 withdrawn by the user: `ActivationNote` and its test deleted, the home page back to `main`'s exactly, the worker README line updated. `GET /v1/worker/activation` (U1, live) and `workerApi.getActivation` kept, unused by the app. App gate green (55 / 277 known, 39 test files). Committed and pushed; the user took the preview as good.
+
+**User input (2026-10-23):** "what is the PR link" -- **AI action:** no PR existed for the branch; the compare link handed over (7 commits, 27 files).
+
+**User input (2026-10-23):** "merged"
+
+**AI action (2026-10-23, the release):** verified by refs: `main` = `8b8a82d` (merge of PR #109), contains `b6ad9cd`. The api was already on prod (`746a60d`, merge order guard satisfied). Vercel production builds of `8b8a82d` pending; watched, then live checks.
