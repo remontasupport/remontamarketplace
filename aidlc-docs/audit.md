@@ -5391,3 +5391,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-23):** note "Short line, home page"; card switch "No confirm (Recommended)"; Suspend "Confirm first (Recommended)"; Status filter "Tabs above the results".
 
 **AI action (2026-10-23):** `construction/activation-app/functional-design/functional-design.md` written: A1-A9 (switch on `setWorkerActivation`; `withActivation` always; tabs All/Active/Inactive in the URL; "Suspended accounts" + Restore on the api; status block with Suspend (confirm) / Restore on the worker's admin page; the client search and public list add `isActivated`; `ActivationNote` one line on the home page; the old status route deleted), BR-U1..BR-U6 (incl. BR-U4: assigned workers stay visible to their client, by-ids unfiltered), tests, release. Awaiting approval.
+
+**User input (2026-10-23):** "approved" (U2 Functional Design, BR-U4 as written: assigned workers stay visible to their client)
+
+**AI action (2026-10-23):** U2 code generation plan written (`construction/plans/activation-app-code-generation-plan.md`, 8 steps, branch `feat/worker-activation-app` from `main` `746a60d`; merge = release, when admins are ready). Awaiting approval.
