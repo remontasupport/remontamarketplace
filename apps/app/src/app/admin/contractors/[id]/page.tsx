@@ -1,7 +1,7 @@
 'use client'
 
 import { useParams, useRouter } from 'next/navigation'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { ArrowLeft, Download, Phone, Mail, Globe, MessageSquare, Calendar, Car, MapPin, Edit3, Upload } from 'lucide-react'
 import ImageCropModal from '@/components/modals/ImageCropModal'
 import AdminPhotoPickerModal from '@/components/modals/AdminPhotoPickerModal'
@@ -13,7 +13,6 @@ import { Fragment, useState, useCallback, useEffect } from 'react'
 import type { MaskedBankAccount } from '@/lib/bankAccount'
 import { adminApi } from '@/lib/api/admin'
 import WorkerAccountStatus, { type AccountState } from './WorkerAccountStatus'
-import ExtraPhotos from '@/features/worker/ExtraPhotos'
 import WorkerToolsLine, { toolServiceNamed } from './WorkerToolsLine'
 import './contractor-profile.css'
 
@@ -67,7 +66,6 @@ export default function WorkerDetailPage() {
   const router = useRouter()
   const workerId = params.id as string
 
-  const queryClient = useQueryClient()
   const { data, isLoading, error } = useQuery<ApiResponse>({
     queryKey: ['worker', workerId],
     queryFn: async () => {
@@ -397,6 +395,9 @@ export default function WorkerDetailPage() {
           </button>
 
           <div className="flex items-center gap-3">
+            {/* worker-activation U2 (A5): Suspend / Restore account, at the top (user, 2026-10-23) */}
+            {worker.account && <WorkerAccountStatus workerId={worker.id} initial={worker.account} />}
+
             {/* Edit Toggle Button */}
             <button
               onClick={() => setIsEditMode(!isEditMode)}
@@ -431,23 +432,6 @@ export default function WorkerDetailPage() {
             download captures only the card, which is sent to clients. */}
         <PrivateDetails homeAddress={worker.homeAddress ?? null} bankAccount={worker.bankAccount ?? null} />
 
-        {/* worker-activation U2 (A5): sign-in and visibility; outside .profile-card, so not in the JPEG either. */}
-        {worker.account && <WorkerAccountStatus workerId={worker.id} initial={worker.account} />}
-
-        {/* A worker's extra photos (2026-10-23): added and removed by an admin; outside .profile-card, so not in the
-            JPEG. The picker on the card offers them once the page data is re-read. */}
-        <div className="mb-6 rounded-lg border border-gray-200 bg-white p-4">
-          <ExtraPhotos
-            title="Worker photos"
-            hint="Up to 2 extra photos beside the worker's main photo. They can then be picked for the profile card."
-            load={() => adminApi.getWorkerPhotos(worker.id)}
-            ticket={(body) => adminApi.createPhotoTicket(body)}
-            add={(uploadId) => adminApi.addWorkerAdditionalPhoto(worker.id, uploadId)}
-            remove={(url) => adminApi.removeWorkerAdditionalPhoto(worker.id, url)}
-            requireMain
-            onChange={() => void queryClient.invalidateQueries({ queryKey: ['worker', workerId] })}
-          />
-        </div>
 
         {/* CANVA-STYLE PROFILE CARD */}
         <div className="profile-card">
