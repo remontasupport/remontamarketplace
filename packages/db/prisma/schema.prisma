@@ -285,6 +285,11 @@ model WorkerProfile {
   // Null: not seen yet (every worker before the tour). Written only by PUT /v1/worker/tour/seen.
   tourSeenAt DateTime?
 
+  // worker-activation U1 — set only by an admin (PUT /v1/admin/workers/:workerId/activation). False until then,
+  // for every worker: the default is the reset of 2026-10-23 and every new profile's starting state. Separate
+  // from users.status (sign-in) and isPublished (Verify Compliance).
+  isActivated Boolean @default(false)
+
   // worker-profile-api U2 (D8, FR-PI-04) — the private home address: a street line and a
   // suburb of ours. Never a client-facing column; never geocoded; never written to the
   // legacy location columns above (those stay the service area's).
