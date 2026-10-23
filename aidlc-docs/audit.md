@@ -5481,3 +5481,5 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-23):** "Merged"
 
 **AI action (2026-10-23):** by refs `main` = `e0d7ec8`: PR #116 (`fix/admin-worker-page-tidy`, app-only, live with Vercel's build) and PR #117 (the make-main api, `012bf25`); the app commit `64cf19e` not in `main` (correct: after the promotion). deploy-api run 39918177826 (push) watched.
+
+**AI action (2026-10-23):** deploy-api run 39918177826 success (`e0d7ec8`): staging health 200; `make-main` answers 401 without a token (present). Vercel production builds of `e0d7ec8` success (the admin page tidy live); app login 200. Promotion image handed over: `e0d7ec8a8f34b47eabc909cc68eb19d72f7ae30d`.
