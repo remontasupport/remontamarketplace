@@ -1,0 +1,104 @@
+// The extra photos on PostGIS (2026-10-23): the claim into additionalPhotos (limit, main-if-none for the worker, refused
+// for an admin, idempotent, never another's), the worker's read and removal (by the staging address too, the file deleted
+// only from the own folder), and the admin's read and removal. The bucket is never reached: uploads are seeded rows,
+// as in sections.int.test.ts. Runs only when TEST_DATABASE_URL points at localhost (CI's API Quality job).
+import { adminContract } from '@remonta/api-contract'
+import { randomUUID } from 'node:crypto'
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest'
+import { adminHandlers } from '../../src/modules/admin/admin.handlers'
+import { claimAsAdditional } from '../../src/modules/worker/application/photos'
+import { writeTransaction } from '../../src/platform/persistence/db'
+import { testApp, type TestApp } from '../helpers'
+import { workerHarness, type WorkerHarness } from './harness'
+
+const url = process.env.TEST_DATABASE_URL
+const local = !!url && /@(localhost|127\.0\.0\.1)[:/]/.test(url)
+
+describe.skipIf(!local)('the extra photos on PostGIS', () => {
+  let h: WorkerHarness
+  let admin: TestApp
+  const blobDeletes: string[] = []
+  const blob = { delete: async (u: string) => void blobDeletes.push(u) }
+  const photos = { bucket: {} as never, publicBaseUrl: 'https://storage.test', ipHashSecret: 'x'.repeat(32), blob }
+  const uploads: string[] = []
+  const as = (userId: string) => ({ 'x-test-principal': `${userId}:WORKER` })
+  const ADMIN = { 'x-test-principal': 'admin_1:ADMIN' }
+  const stored = async (profileId: string) => h.db.workerProfile.findUniqueOrThrow({ where: { id: profileId }, select: { photos: true, additionalPhotos: true } })
+  const upload = async () => {
+    const id = randomUUID()
+    uploads.push(id)
+    await h.db.registrationPhotoUpload.create({ data: { id, blobKey: `staging/${id}`, url: `https://storage.test/staging/${id}`, contentType: 'image/jpeg', sizeBytes: 10, ipHash: 'x' } })
+    return id
+  }
+  const claim = (profileId: string, id: string, mainIfNone: boolean) => writeTransaction(h.db, (tx) => claimAsAdditional(tx, profileId, id, new Date(), mainIfNone))
+
+  beforeAll(async () => {
+    h = await workerHarness('worker-additional-photos.test', { photos })
+    admin = await testApp({ contracts: [adminContract], handlerSets: [adminHandlers({ db: h.db, clock: () => new Date(), bucket: {} as never, photos: { publicBaseUrl: 'https://storage.test', ipHashSecret: 'x'.repeat(32), blob } })] })
+  }, 60_000)
+  afterAll(async () => {
+    await admin?.close()
+    if (h) {
+      await h.db.outboxEvent.deleteMany({ where: { type: 'PhotoUploaded', OR: uploads.map((id) => ({ payload: { path: ['photoUploadId'], equals: id } })) } })
+      await h.db.registrationPhotoUpload.deleteMany({ where: { id: { in: uploads } } })
+      await h.close()
+    }
+  })
+  beforeEach(async () => {
+    blobDeletes.length = 0
+    await h.db.workerProfile.updateMany({ where: { id: { in: [h.a.profileId, h.b.profileId] } }, data: { photos: null, additionalPhotos: null } })
+  })
+
+  it('the worker: with no main the first upload becomes the main; then two extras; a third is refused and not claimed', async () => {
+    const [m, x1, x2, x3] = [await upload(), await upload(), await upload(), await upload()]
+    expect(await claim(h.a.profileId, m, true)).toEqual({ main: `https://storage.test/staging/${m}`, additional: [] })
+    await claim(h.a.profileId, x1, true)
+    const two = await claim(h.a.profileId, x2, true)
+    expect(two.additional).toEqual([`https://storage.test/staging/${x1}`, `https://storage.test/staging/${x2}`])
+    await expect(claim(h.a.profileId, x3, true)).rejects.toMatchObject({ status: 400 })
+    expect((await h.db.registrationPhotoUpload.findUniqueOrThrow({ where: { id: x3 } })).claimedByWorkerProfileId).toBeNull() // rolled back
+    expect(await stored(h.a.profileId)).toEqual({ photos: two.main, additionalPhotos: JSON.stringify(two.additional) })
+    expect(await claim(h.a.profileId, x2, true)).toEqual(two) // a repeat
+    await expect(claim(h.b.profileId, x2, true)).rejects.toMatchObject({ status: 404 }) // never another's
+    expect(await h.db.outboxEvent.count({ where: { type: 'PhotoUploaded', OR: [m, x1, x2].map((id) => ({ payload: { path: ['photoUploadId'], equals: id } })) } })).toBe(3)
+
+    const read = await h.t.fastify.inject({ method: 'GET', url: '/v1/worker/photos', headers: as(h.a.userId) })
+    expect(read.statusCode).toBe(200)
+    expect(read.json()).toEqual(two)
+    expect(read.headers['cache-control']).toBe('no-store')
+    // The profile read's photos keep their shape.
+    expect((await h.get(h.a.userId)).json().photos).toEqual({ main: two.main })
+  })
+
+  it('the worker removes an extra photo, by the staging address after the clean copy too; only an own-folder file is deleted', async () => {
+    const [m, x] = [await upload(), await upload()]
+    await claim(h.a.profileId, m, true)
+    await claim(h.a.profileId, x, true)
+    const clean = `https://store.public.blob.vercel-storage.com/workers/${h.a.profileId}/${x}.jpg`
+    const s = await stored(h.a.profileId)
+    await h.db.workerProfile.update({ where: { id: h.a.profileId }, data: { additionalPhotos: JSON.stringify([clean]) } }) // the handler's repoint
+    expect((await h.t.fastify.inject({ method: 'POST', url: '/v1/worker/photos/additional/remove', headers: as(h.b.userId), payload: { url: `https://storage.test/staging/${x}` } })).statusCode).toBe(400)
+    const res = await h.t.fastify.inject({ method: 'POST', url: '/v1/worker/photos/additional/remove', headers: as(h.a.userId), payload: { url: `https://storage.test/staging/${x}` } })
+    expect(res.statusCode, res.body).toBe(200)
+    expect(res.json()).toEqual({ main: s.photos, additional: [] })
+    expect(blobDeletes).toEqual([clean, clean.replace(/\.jpg$/, '-256.jpg')])
+    expect((await h.t.fastify.inject({ method: 'POST', url: '/v1/worker/photos/additional/remove', headers: as(h.a.userId), payload: { url: s.photos! } })).statusCode).toBe(400) // never the main
+  })
+
+  it('the admin: no extra without a main photo; reads and removes a worker’s extras; 404 for an unknown worker', async () => {
+    const x = await upload()
+    await expect(claim(h.b.profileId, x, false)).rejects.toMatchObject({ status: 400 })
+    await h.db.workerProfile.update({ where: { id: h.b.profileId }, data: { photos: 'https://store.public.blob.vercel-storage.com/m.jpg' } })
+    const added = await claim(h.b.profileId, x, false)
+    expect(added.additional).toEqual([`https://storage.test/staging/${x}`])
+    const read = await admin.fastify.inject({ method: 'GET', url: `/v1/admin/workers/${h.b.profileId}/photos`, headers: ADMIN })
+    expect(read.statusCode).toBe(200)
+    expect(read.json()).toEqual(added)
+    expect(read.headers['cache-control']).toBe('no-store')
+    const removed = await admin.fastify.inject({ method: 'POST', url: `/v1/admin/workers/${h.b.profileId}/photos/additional/remove`, headers: ADMIN, payload: { url: added.additional[0] } })
+    expect(removed.statusCode, removed.body).toBe(200)
+    expect(removed.json()).toEqual({ main: added.main, additional: [] })
+    expect((await admin.fastify.inject({ method: 'GET', url: '/v1/admin/workers/nope/photos', headers: ADMIN })).statusCode).toBe(404)
+    expect((await admin.fastify.inject({ method: 'GET', url: `/v1/admin/workers/${h.b.profileId}/photos`, headers: as(h.b.userId) })).statusCode).toBe(403)
+  })
+})

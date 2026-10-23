@@ -3234,6 +3234,696 @@
         }
       }
     },
+    "/v1/admin/photos/tickets": {
+      "post": {
+        "operationId": "admin.createAdminPhotoTicket",
+        "summary": "A ticket to upload one photo straight to the bucket, for a worker's extra photos (the sign-up's rules).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "contentType": {
+                    "type": "string",
+                    "enum": [
+                      "image/jpeg",
+                      "image/png",
+                      "image/webp"
+                    ]
+                  },
+                  "sizeBytes": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5242880
+                  }
+                },
+                "required": [
+                  "contentType",
+                  "sizeBytes"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "photoUploadId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "upload": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string",
+                          "format": "uri"
+                        },
+                        "method": {
+                          "type": "string",
+                          "const": "POST"
+                        },
+                        "fields": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {
+                            "type": "string"
+                          }
+                        },
+                        "fileField": {
+                          "type": "string",
+                          "const": "file"
+                        }
+                      },
+                      "required": [
+                        "url",
+                        "method",
+                        "fields",
+                        "fileField"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                    }
+                  },
+                  "required": [
+                    "photoUploadId",
+                    "upload",
+                    "expiresAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "ADMIN"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 30,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 1
+        }
+      }
+    },
+    "/v1/admin/workers/{workerId}/photos": {
+      "get": {
+        "operationId": "admin.getWorkerPhotos",
+        "summary": "One worker's main photo and extra photos; 404 when no worker has that id. Never cached.",
+        "parameters": [
+          {
+            "name": "workerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,40}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "main": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 2048
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "additional": {
+                      "maxItems": 10,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 2048
+                      }
+                    }
+                  },
+                  "required": [
+                    "main",
+                    "additional"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "ADMIN"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 120,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 300,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 1
+        }
+      }
+    },
+    "/v1/admin/workers/{workerId}/photos/additional": {
+      "post": {
+        "operationId": "admin.addWorkerAdditionalPhoto",
+        "summary": "Confirm an uploaded photo as one of the worker's extra photos (at most 2); 400 when the worker has no main photo yet; 404 when no worker has that id.",
+        "parameters": [
+          {
+            "name": "workerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,40}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "uploadId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  }
+                },
+                "required": [
+                  "uploadId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "main": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 2048
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "additional": {
+                      "maxItems": 10,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 2048
+                      }
+                    }
+                  },
+                  "required": [
+                    "main",
+                    "additional"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "ADMIN"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 30,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 1
+        }
+      }
+    },
+    "/v1/admin/workers/{workerId}/photos/additional/remove": {
+      "post": {
+        "operationId": "admin.removeWorkerAdditionalPhoto",
+        "summary": "Remove one of the worker's extra photos, named by its URL; 404 when no worker has that id.",
+        "parameters": [
+          {
+            "name": "workerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{1,40}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "format": "uri"
+                  }
+                },
+                "required": [
+                  "url"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "main": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 2048
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "additional": {
+                      "maxItems": 10,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 2048
+                      }
+                    }
+                  },
+                  "required": [
+                    "main",
+                    "additional"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "ADMIN"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 30,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 1
+        }
+      }
+    },
     "/v1/worker/profile": {
       "get": {
         "operationId": "worker.getProfile",
@@ -6167,6 +6857,433 @@
             }
           ],
           "maxBodyKb": 1,
+          "audit": "PROFILE_UPDATE"
+        }
+      },
+      "get": {
+        "operationId": "worker.getPhotos",
+        "summary": "The main photo and the extra ones. Never cached.",
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "main": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 2048
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "additional": {
+                      "maxItems": 10,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 2048
+                      }
+                    }
+                  },
+                  "required": [
+                    "main",
+                    "additional"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 120,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 300,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 1
+        }
+      }
+    },
+    "/v1/worker/photos/additional": {
+      "post": {
+        "operationId": "worker.addAdditionalPhoto",
+        "summary": "Confirm an uploaded photo as an extra photo (at most 2 beside the main one); with no main photo yet it becomes the main. The clean copy follows by outbox.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "uploadId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  }
+                },
+                "required": [
+                  "uploadId"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "main": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 2048
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "additional": {
+                      "maxItems": 10,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 2048
+                      }
+                    }
+                  },
+                  "required": [
+                    "main",
+                    "additional"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 1,
+          "audit": "PROFILE_UPDATE"
+        }
+      }
+    },
+    "/v1/worker/photos/additional/remove": {
+      "post": {
+        "operationId": "worker.removeAdditionalPhoto",
+        "summary": "Remove one of the extra photos, named by its URL.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "maxLength": 2048,
+                    "format": "uri"
+                  }
+                },
+                "required": [
+                  "url"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "main": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 2048
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "additional": {
+                      "maxItems": 10,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "maxLength": 2048
+                      }
+                    }
+                  },
+                  "required": [
+                    "main",
+                    "additional"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "INVALID_REQUEST",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "UNAUTHENTICATED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "FORBIDDEN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "PAYLOAD_TOO_LARGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "RATE_LIMITED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "INTERNAL",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "UNAVAILABLE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "x-remonta-security": {
+          "access": {
+            "roles": [
+              "WORKER"
+            ]
+          },
+          "bot": "none",
+          "rateLimit": [
+            {
+              "per": "user",
+              "limit": 60,
+              "window": "1m"
+            },
+            {
+              "per": "ip",
+              "limit": 120,
+              "window": "1m"
+            }
+          ],
+          "maxBodyKb": 4,
           "audit": "PROFILE_UPDATE"
         }
       }

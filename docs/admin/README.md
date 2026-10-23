@@ -112,6 +112,17 @@ chosen service in the worker's order; `toolIds` (list order, ids no longer liste
 for a service without a tool list. `:workerId` is the worker **profile** id (the admin page's `[id]`); 404 when none.
 Limits 120 / 300 per minute; privately cacheable for a minute. Logged with the profile id.
 
+### A worker's extra photos (2026-10-23)
+
+| Entry | Body | Rules |
+|---|---|---|
+| `POST /v1/admin/photos/tickets` | `{contentType, sizeBytes}` | a ticket to upload one photo straight to the bucket (the worker's own direct upload and rules) |
+| `GET /v1/admin/workers/:workerId/photos` | -- | `{main, additional}`; 404 when no worker has the id. Never cached |
+| `POST /v1/admin/workers/:workerId/photos/additional` | `{uploadId}` | the upload as one of the worker's extra photos, at most 2; **400 when the worker has no main photo** (an admin never sets the main); 404 unknown worker. The clean copy follows by outbox |
+| `POST /v1/admin/workers/:workerId/photos/additional/remove` | `{url}` | one extra photo (never the main); the file is deleted only from the worker's own folder |
+
+Limits 30 / 120 per minute (the read 120 / 300); one log line per write with the admin and the worker; no audit row.
+
 ### `PUT /v1/admin/workers/:workerId/activation` and `.../suspension` -- the two switches (worker-activation U1)
 
 Two separate admin decisions on one worker (`:workerId` = the worker **profile** id), each writing its own column only;

@@ -53,12 +53,13 @@ describe('the contracts as committed', () => {
     expect(extra.success).toBe(false)
   })
 
-  it('declare the three admin lists, the document link (U3b) and the services of one worker (worker-tools U1) behind the ADMIN role, per-user limited, privately cacheable for a minute (U2); the two switches (worker-activation U1) never cached', () => {
-    expect(Object.keys(adminContract.entries).sort()).toEqual(['getDocumentLink', 'getWorkerServices', 'listSuspendedWorkers', 'listUsers', 'searchWorkers', 'setWorkerActivation', 'setWorkerSuspension'])
-    for (const e of Object.values(adminContract.entries)) {
-      expect(e.method).toBe(e.path.endsWith('/activation') || e.path.endsWith('/suspension') ? 'PUT' : 'GET')
+  it('declare the three admin lists, the document link (U3b) and the services of one worker (worker-tools U1) behind the ADMIN role, per-user limited, privately cacheable for a minute (U2); the two switches (worker-activation U1) and the photo entries (2026-10-23) never cached', () => {
+    expect(Object.keys(adminContract.entries).sort()).toEqual(['addWorkerAdditionalPhoto', 'createAdminPhotoTicket', 'getDocumentLink', 'getWorkerPhotos', 'getWorkerServices', 'listSuspendedWorkers', 'listUsers', 'removeWorkerAdditionalPhoto', 'searchWorkers', 'setWorkerActivation', 'setWorkerSuspension'])
+    const fresh = new Set(['setWorkerActivation', 'setWorkerSuspension', 'createAdminPhotoTicket', 'getWorkerPhotos', 'addWorkerAdditionalPhoto', 'removeWorkerAdditionalPhoto'])
+    for (const [name, e] of Object.entries(adminContract.entries)) {
+      expect(e.method, name).toBe(name.startsWith('set') ? 'PUT' : name.startsWith('get') || name.startsWith('list') || name === 'searchWorkers' ? 'GET' : 'POST')
       expect(e.meta.access).toEqual({ roles: ['ADMIN'] })
-      expect((e.meta as { privateCacheSeconds?: number }).privateCacheSeconds).toBe(e.method === 'GET' ? 60 : undefined)
+      expect((e.meta as { privateCacheSeconds?: number }).privateCacheSeconds, name).toBe(fresh.has(name) ? undefined : 60)
       expect((e.meta as { cacheSeconds?: number }).cacheSeconds).toBeUndefined()
       expect(e.meta.rateLimit.map((r) => r.per).sort()).toEqual(['ip', 'user'])
     }

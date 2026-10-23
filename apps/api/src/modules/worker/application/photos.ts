@@ -1,9 +1,9 @@
 // Photos (U2 R4, L5): the sign-up's direct upload reused -- a ticket for the bucket, the
 // confirm that inspects what landed, then a claim by this worker's profile as its one photo,
 // and the PhotoUploaded event whose handler writes the clean copy to Vercel Blob and repoints
-// the column. One photo per worker (user, 2026-10-14): `worker_profiles.photos` only; the
-// legacy `additionalPhotos` column is neither read nor written here (its data is kept).
-import type { Photos } from '@remonta/api-contract'
+// the column. The main photo is `worker_profiles.photos`; the extra photos (back on 2026-10-23, for workers and
+// admins, at most 2) are the JSON array `worker_profiles.additionalPhotos`, which the clean-copy handler repoints too.
+import { MAX_ADDITIONAL_PHOTOS, STORED_ADDITIONAL_PHOTOS_MAX, type Photos, type WorkerPhotos } from '@remonta/api-contract'
 import { ApiError } from '../../../platform/errors'
 import { enqueue } from '../../../platform/outbox/outbox'
 import type { Tx } from '../../../platform/persistence/db'
@@ -59,6 +59,77 @@ export async function removeOne(tx: Tx, profileId: string, url: string): Promise
   if ('refused' in next) throw new ApiError(400, next.refused, { url: [next.refused] })
   await tx.workerProfile.update({ where: { id: profileId }, data: { photos: null }, select: { id: true } })
   return { photos: next, removed: current.main }
+}
+
+/** The stored JSON array, read defensively: anything that is not an array of strings reads as none. */
+export function parseAdditionalPhotos(stored: string | null): string[] {
+  if (!stored) return []
+  try {
+    const v: unknown = JSON.parse(stored)
+    return Array.isArray(v) ? v.filter((u): u is string => typeof u === 'string' && u.length > 0).slice(0, STORED_ADDITIONAL_PHOTOS_MAX) : []
+  } catch {
+    return []
+  }
+}
+
+export function workerPhotosOf(row: { photos: string | null; additionalPhotos: string | null }): WorkerPhotos {
+  return { main: row.photos || null, additional: parseAdditionalPhotos(row.additionalPhotos) }
+}
+
+const toColumns = (p: WorkerPhotos) => ({ photos: p.main, additionalPhotos: p.additional.length ? JSON.stringify(p.additional) : null })
+
+/**
+ * Pure: the photos after adding `url` as an extra photo, or the refusal. With no main photo the upload becomes the main
+ * when `mainIfNone` (the worker: extra photos never stand without one), else it is refused (an admin adds extras only).
+ */
+export function placeAdditional(current: WorkerPhotos, url: string, mainIfNone: boolean): WorkerPhotos | { refused: string } {
+  if (current.main === null) return mainIfNone ? { main: url, additional: current.additional } : { refused: 'The worker has no main photo yet' }
+  if (current.additional.length >= MAX_ADDITIONAL_PHOTOS) return { refused: `At most ${MAX_ADDITIONAL_PHOTOS} extra photos` }
+  return { main: current.main, additional: [...current.additional, url] }
+}
+
+/** Pure: the photos without the extra photo `url`, or the refusal. The main photo is never removed here. */
+export function withoutAdditional(current: WorkerPhotos, url: string): WorkerPhotos | { refused: string } {
+  return current.additional.includes(url) ? { main: current.main, additional: current.additional.filter((u) => u !== url) } : { refused: 'Not one of the extra photos' }
+}
+
+/** Claims a confirmed upload for this profile as an extra photo (placeAdditional's rule). Idempotent for the same profile. */
+export async function claimAsAdditional(tx: Tx, profileId: string, uploadId: string, now: Date, mainIfNone: boolean): Promise<WorkerPhotos> {
+  const current = workerPhotosOf(await tx.workerProfile.findUniqueOrThrow({ where: { id: profileId }, select: { photos: true, additionalPhotos: true } }))
+  const claimed = await claimPhotoFor(tx, uploadId, profileId, now)
+  if (!claimed) {
+    const row = await tx.registrationPhotoUpload.findUnique({ where: { id: uploadId }, select: { claimedByWorkerProfileId: true } })
+    if (!row) throw new ApiError(404, 'photo upload not found')
+    if (row.claimedByWorkerProfileId === profileId) return current // a repeat of this confirm
+    if (row.claimedByWorkerProfileId) throw new ApiError(404, 'photo upload not owned') // never reveal another's
+    throw new ApiError(404, 'photo upload expired or already used')
+  }
+  // Refused after the claim: the transaction rolls the claim back with it.
+  const next = placeAdditional(current, claimed.url, mainIfNone)
+  if ('refused' in next) throw new ApiError(400, next.refused, { uploadId: [next.refused] })
+  await tx.workerProfile.update({ where: { id: profileId }, data: toColumns(next), select: { id: true } })
+  const payload: PhotoUploadedPayload = { photoUploadId: uploadId, workerProfileId: profileId }
+  await enqueue(tx, { type: PHOTO_UPLOADED, payload }, now)
+  return next
+}
+
+/**
+ * Removes one extra photo. The page may still hold the address the confirm answered (the staging copy) after the clean
+ * copy replaced it: an upload this profile claimed counts as naming the extra photo made from it. Answers the photos
+ * left and the address actually removed (its file is deleted after the commit, own folder only).
+ */
+export async function removeAdditional(tx: Tx, profileId: string, url: string): Promise<{ photos: WorkerPhotos; removed: string }> {
+  const current = workerPhotosOf(await tx.workerProfile.findUniqueOrThrow({ where: { id: profileId }, select: { photos: true, additionalPhotos: true } }))
+  let target = url
+  if (!current.additional.includes(url)) {
+    const own = await tx.registrationPhotoUpload.findFirst({ where: { url, claimedByWorkerProfileId: profileId }, select: { id: true } })
+    const made = own ? current.additional.find((u) => u.includes(`/${PROCESSED_PREFIX}${profileId}/${own.id}`)) : undefined
+    if (made) target = made
+  }
+  const next = withoutAdditional(current, target)
+  if ('refused' in next) throw new ApiError(400, next.refused, { url: [next.refused] })
+  await tx.workerProfile.update({ where: { id: profileId }, data: toColumns(next), select: { id: true } })
+  return { photos: next, removed: target }
 }
 
 /** An https URL on Vercel Blob's public host (`<store>.public.blob.vercel-storage.com`), by its parsed host, never a substring. */

@@ -14,6 +14,7 @@
 import * as z from 'zod'
 import { CARE_DOMAINS } from './admin.contract'
 import { defineContract } from './define'
+import { workerPhotosSchema } from './photos'
 import { meta } from './meta'
 import { photoTicketRequestSchema, photoTicketResponseSchema } from './registration.contract'
 import {
@@ -380,6 +381,10 @@ export const workerContract = defineContract('worker', {
   putServiceArea: { method: 'PUT', path: '/v1/worker/profile/service-area', summary: 'Move the service area: the suburb clients find the worker at, and the travel radius.', body: json(serviceAreaInputSchema), responses: { 200: serviceAreaSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
   createPhotoTicket: { method: 'POST', path: '/v1/worker/photos/tickets', summary: 'A ticket to upload one photo straight to the bucket (the sign-up\'s rules).', body: json(photoTicketRequestSchema), responses: { 201: photoTicketResponseSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1, limit: 10 }) },
   confirmPhoto: { method: 'POST', path: '/v1/worker/photos', summary: 'Confirm an uploaded photo as the profile photo (it replaces the current one); the clean copy follows by outbox.', body: json(confirmPhotoSchema), responses: { 201: photosSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1 }) },
+  // The extra photos (2026-10-23): their own entries, so the main photo's answers keep the shape the deployed app parses.
+  getPhotos: { method: 'GET', path: '/v1/worker/photos', summary: 'The main photo and the extra ones. Never cached.', responses: { 200: workerPhotosSchema }, meta: workerRead({ noCache: true }) },
+  addAdditionalPhoto: { method: 'POST', path: '/v1/worker/photos/additional', summary: 'Confirm an uploaded photo as an extra photo (at most 2 beside the main one); with no main photo yet it becomes the main. The clean copy follows by outbox.', body: json(confirmPhotoSchema), responses: { 201: workerPhotosSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 1 }) },
+  removeAdditionalPhoto: { method: 'POST', path: '/v1/worker/photos/additional/remove', summary: 'Remove one of the extra photos, named by its URL.', body: json(photoUrlSchema), responses: { 200: workerPhotosSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
   removePhoto: { method: 'POST', path: '/v1/worker/photos/remove', summary: 'Remove the profile photo, named by its URL.', body: json(photoUrlSchema), responses: { 200: photosSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
   putAvailability: { method: 'PUT', path: '/v1/worker/availability', summary: 'Replace the week\'s preferred hours (no overlaps, at most 4 slots a day).', body: json(availabilitySchema), responses: { 200: availabilitySchema }, meta: workerWrite(PROFILE_UPDATE) },
   putExperience: { method: 'PUT', path: '/v1/worker/experience', summary: 'Replace the experience per care area.', body: json(experienceSchema), responses: { 200: experienceSchema }, meta: workerWrite(PROFILE_UPDATE) },
