@@ -1196,7 +1196,7 @@ export default function AdminDashboard() {
                   {results.data.map((contractor) => (
                     <div
                       key={contractor.id}
-                      className={`bg-white rounded-lg border-2 border-amber-400 p-4 hover:shadow-md transition-shadow ${contractor.activated !== true ? 'opacity-50' : ''}`}
+                      className="bg-white rounded-lg border-2 border-amber-400 p-4 hover:shadow-md transition-shadow"
                     >
                       <div className="flex gap-4">
                         {/* Profile Photo */}
