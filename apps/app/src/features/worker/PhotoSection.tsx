@@ -6,6 +6,7 @@
 // rules); the clean copy replaces the staged one by outbox within a minute, which the profile
 // read picks up on focus. Remove calls its entry.
 import { useRef, useState } from "react";
+import type { WorkerPhotos } from "@remonta/api-contract";
 import { Loader2, Upload } from "lucide-react";
 import { SIGNUP_PHOTO_ACCEPT } from "@/components/ui/form-wizard/fields";
 import type { ApiOutcome } from "@/lib/api/outcome";
@@ -57,6 +58,27 @@ export default function PhotoSection() {
 
   const pick = () => input.current?.click();
 
+  // "Replace photo" (user, 2026-10-23): with extra photos, a picker offers them (one becomes the main, the old main
+  // takes its place) and "Upload a new photo"; without any, it uploads as before.
+  const [choices, setChoices] = useState<string[] | null>(null);
+  async function replace() {
+    setMessage(null);
+    const r = await workerApi.getPhotos();
+    const shown = r.kind === "ok" ? r.body.additional.filter((u) => isShownPhoto(u)) : [];
+    if (shown.length) setChoices(shown);
+    else pick();
+  }
+  async function makeMain(url: string) {
+    setChoices(null);
+    setBusy({ kind: "working" });
+    try {
+      const r: ApiOutcome<WorkerPhotos> = await workerApi.makeAdditionalMain(url);
+      applied(r.kind === "ok" ? { kind: "ok", body: { main: r.body.main } } : r);
+    } finally {
+      setBusy({ kind: "idle" });
+    }
+  }
+
   const photos = profile?.photos;
   const idle = busy.kind === "idle";
 
@@ -89,7 +111,7 @@ export default function PhotoSection() {
               {photos.main && isShownPhoto(photos.main) ? <img src={photos.main} alt="Your profile photo" className="w-full h-full object-cover" /> : <span className="text-sm text-gray-500 font-poppins text-center px-2">{photos.main ? "Preparing your photo…" : "No photo"}</span>}
             </div>
             <div className="space-y-2">
-              <button type="button" disabled={!idle} onClick={pick} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0C1628] text-white font-poppins text-sm disabled:opacity-50">
+              <button type="button" disabled={!idle} onClick={() => (photos.main ? void replace() : pick())} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0C1628] text-white font-poppins text-sm disabled:opacity-50">
                 {busy.kind === "uploading" || busy.kind === "processing" ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                 {busy.kind === "uploading" ? `Uploading ${busy.percent}%` : busy.kind === "processing" ? "Preparing your photo…" : photos.main ? "Replace photo" : "Upload a photo"}
               </button>
@@ -100,6 +122,28 @@ export default function PhotoSection() {
               )}
             </div>
           </div>
+
+          {choices && (
+            <div role="dialog" aria-label="Choose your main photo" className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm space-y-3">
+              <p className="text-sm font-poppins text-gray-900">Choose one of your photos as your main photo, or upload a new one.</p>
+              <div className="flex flex-wrap gap-3">
+                {choices.map((url) => (
+                  <button key={url} type="button" onClick={() => void makeMain(url)} className="w-24 h-24 rounded-lg overflow-hidden border-2 border-transparent hover:border-[#0C1628] focus:border-[#0C1628]" aria-label="Use this photo as my main photo">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- photos live on Vercel Blob, outside next/image's domains */}
+                    <img src={url} alt="One of your photos" className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-3">
+                <button type="button" onClick={() => { setChoices(null); pick(); }} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 font-poppins text-sm text-gray-800 hover:bg-gray-50">
+                  <Upload className="w-4 h-4" /> Upload a new photo
+                </button>
+                <button type="button" onClick={() => setChoices(null)} className="px-4 py-2 font-poppins text-sm text-gray-600 hover:underline">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
 
           <div role="status" aria-live="polite">
             {message && <p className="text-sm font-poppins text-red-600">{message}</p>}

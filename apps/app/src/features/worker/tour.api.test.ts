@@ -39,6 +39,14 @@ describe("workerApi.getActivation (worker-activation U2)", () => {
   });
 });
 
+describe("workerApi.makeAdditionalMain (Replace photo, 2026-10-23)", () => {
+  it("POSTs the chosen photo's URL to make-main with the token", async () => {
+    const { client, seen } = api(() => json(200, { main: "https://x.test/a.jpg", additional: ["https://x.test/m.jpg"] }));
+    expect(await client.makeAdditionalMain("https://x.test/a.jpg")).toEqual({ kind: "ok", body: { main: "https://x.test/a.jpg", additional: ["https://x.test/m.jpg"] } });
+    expect(seen).toEqual([{ line: "POST https://api.test/v1/worker/photos/additional/make-main", auth: "Bearer tkn", body: JSON.stringify({ url: "https://x.test/a.jpg" }) }]);
+  });
+});
+
 describe("workerApi.putTourSeen", () => {
   it("PUTs /v1/worker/tour/seen with the token and no body", async () => {
     const { client, seen } = api(() => json(200, { seenAt: "2026-10-21T02:14:05.972Z" }));
