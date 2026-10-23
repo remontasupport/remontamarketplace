@@ -52,7 +52,7 @@ async function main() {
   const handlerSets = [
     platformHandlers({ db, clock: systemClock }),
     // The admin lists (U2): behind the api token; the search is memoised per instance.
-    adminHandlers({ db, clock: systemClock, bucket, photos: { publicBaseUrl: config.PHOTO_PUBLIC_BASE_URL, ipHashSecret: config.IP_HASH_SECRET, blob: blobStore } }),
+    adminHandlers({ db, clock: systemClock, bucket }),
     // The worker's own profile (worker-profile-api U1): per-user bodies, never memoised.
     workerHandlers({ db, clock: systemClock, completionModel: config.COMPLETION_MODEL, photos: { bucket, publicBaseUrl: config.PHOTO_PUBLIC_BASE_URL, ipHashSecret: config.IP_HASH_SECRET, blob: blobStore } }),
     // The signed-in user's own sign-in details (api-review U5d): email and password.

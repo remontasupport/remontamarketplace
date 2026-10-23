@@ -11,14 +11,11 @@ describe('the extra photos', () => {
     for (const n of ['confirmPhoto', 'removePhoto'] as const) expect(workerContract.entries[n].responses).toHaveProperty('201' in workerContract.entries[n].responses ? '201' : '200', photosSchema)
   })
 
-  it('the new entries: worker and admin, paths and access', () => {
+  it('the worker entries, paths and access; none for admins (removed 2026-10-23)', () => {
     expect(workerContract.entries.getPhotos).toMatchObject({ method: 'GET', path: '/v1/worker/photos' })
     expect(workerContract.entries.addAdditionalPhoto).toMatchObject({ method: 'POST', path: '/v1/worker/photos/additional' })
     expect(workerContract.entries.removeAdditionalPhoto).toMatchObject({ method: 'POST', path: '/v1/worker/photos/additional/remove' })
-    expect(adminContract.entries.createAdminPhotoTicket).toMatchObject({ method: 'POST', path: '/v1/admin/photos/tickets' })
-    expect(adminContract.entries.getWorkerPhotos).toMatchObject({ method: 'GET', path: '/v1/admin/workers/:workerId/photos' })
-    expect(adminContract.entries.addWorkerAdditionalPhoto).toMatchObject({ method: 'POST', path: '/v1/admin/workers/:workerId/photos/additional' })
-    expect(adminContract.entries.removeWorkerAdditionalPhoto).toMatchObject({ method: 'POST', path: '/v1/admin/workers/:workerId/photos/additional/remove' })
+    expect(Object.values(adminContract.entries).some((e) => e.path.includes('photo'))).toBe(false)
     for (const n of ['getPhotos', 'addAdditionalPhoto', 'removeAdditionalPhoto'] as const) expect(workerContract.entries[n].meta.access).toEqual({ roles: ['WORKER'] })
   })
 
