@@ -23,6 +23,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth.config';
 import { authPrisma as prisma } from '@/lib/auth-prisma';
+import { LISTABLE_WORKER } from '@/lib/workers/listable';
 import { Prisma } from '@/generated/auth-client';
 import { UserRole } from '@/types/auth';
 import redis from '@/lib/redis';
@@ -349,9 +350,9 @@ function buildWhereClause(
 ): Prisma.WorkerProfileWhereInput {
   const conditions: Prisma.WorkerProfileWhereInput[] = []
 
-  // Base condition: only ACTIVE users with completed profiles
+  // Base condition: activated by an admin, not suspended (worker-activation FR-5), with completed profiles
   conditions.push({
-    user:      { status: 'ACTIVE' },
+    ...LISTABLE_WORKER,
     firstName: { not: '' },
     lastName:  { not: '' },
   })

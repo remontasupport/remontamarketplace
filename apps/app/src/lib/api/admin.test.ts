@@ -143,3 +143,24 @@ describe('getWorkerServices (worker-tools UR-9)', () => {
   })
 })
 
+
+describe('the two switches (worker-activation U2, A1/A4/A5)', () => {
+  it('PUT the activation with a JSON body and the bearer token; the answer passes through', async () => {
+    const h = harness([{ status: 200, body: { workerId: 'w1', activated: true } }])
+    expect(await h.api.setWorkerActivation('w1', true)).toEqual({ kind: 'ok', body: { workerId: 'w1', activated: true } })
+    expect(h.seen[0]!.url).toBe('https://api.example/v1/admin/workers/w1/activation')
+    expect(h.seen[0]!.init.method).toBe('PUT')
+    expect(JSON.parse(String(h.seen[0]!.init.body))).toEqual({ activated: true })
+    expect(new Headers(h.seen[0]!.init.headers).get('authorization')).toBe('Bearer tok1')
+  })
+
+  it('PUT the suspension; a 401 retries once; a 404 is a failure', async () => {
+    const h = harness([{ status: 401 }, { status: 200, body: { workerId: 'w1', suspended: false } }])
+    expect(await h.api.setWorkerSuspension('w1', false)).toEqual({ kind: 'ok', body: { workerId: 'w1', suspended: false } })
+    expect(h.seen[1]!.url).toBe('https://api.example/v1/admin/workers/w1/suspension')
+    expect(JSON.parse(String(h.seen[1]!.init.body))).toEqual({ suspended: false })
+    expect(h.invalidations()).toBe(1)
+    const missing = harness([{ status: 404, body: { error: { code: 'NOT_FOUND', message: 'x', requestId: 'r' } } }])
+    expect(await missing.api.setWorkerActivation('nope', true)).toMatchObject({ kind: 'failed', status: 404 })
+  })
+})

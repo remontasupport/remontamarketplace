@@ -31,6 +31,14 @@ describe("workerApi.getTour", () => {
   });
 });
 
+describe("workerApi.getActivation (worker-activation U2)", () => {
+  it("GETs /v1/worker/activation with the token and passes the flag through", async () => {
+    const { client, seen } = api(() => json(200, { activated: false }));
+    expect(await client.getActivation()).toEqual({ kind: "ok", body: { activated: false } });
+    expect(seen).toEqual([{ line: "GET https://api.test/v1/worker/activation", auth: "Bearer tkn", body: null }]);
+  });
+});
+
 describe("workerApi.putTourSeen", () => {
   it("PUTs /v1/worker/tour/seen with the token and no body", async () => {
     const { client, seen } = api(() => json(200, { seenAt: "2026-10-21T02:14:05.972Z" }));

@@ -54,6 +54,8 @@ export interface AdminFilters {
   tools: string[]
   /** Tool search (TS-5): the text typed in the Tools box; sent only with a type of support that has a tool list. */
   toolSearch: string
+  /** worker-activation (A3): the tab above the results; the admin-set flag. */
+  activation: 'all' | 'active' | 'inactive'
 }
 
 export const PAGE_SIZE = 6
@@ -86,6 +88,7 @@ export const DEFAULT_FILTERS: AdminFilters = {
   experienceAreas: {},
   tools: [],
   toolSearch: '',
+  activation: 'all',
 }
 
 /** The Tools filter's groups (UR-8): each service with a list, its name and its tools, in list order. */
@@ -161,7 +164,16 @@ export function toQuery(f: AdminFilters): WorkerSearchQuery {
   // Tool search (TS-5): only with a type of support that has a list, and only when a word is kept (TS-2).
   const toolSearch = f.toolSearch.trim().slice(0, TOOL_SEARCH_MAX_CHARS)
   if (toolGroupFor(f.typeOfSupport) && toolSearchOf(toolSearch)) q.toolSearch = toolSearch
+  if (f.activation !== 'all') q.activation = f.activation
   return q
+}
+
+/**
+ * What the dashboard sends (A2): the filters plus `withActivation`, so every row carries the flag the card's switch
+ * shows. Kept out of toQuery so the URL bar holds filters only.
+ */
+export function searchRequestOf(f: AdminFilters): WorkerSearchQuery {
+  return { ...toQuery(f), withActivation: true }
 }
 
 /** The canonical query string of the state (R11.2). */
@@ -220,5 +232,6 @@ export function filtersFromURL(params: URLSearchParams): AdminFilters {
   if (q.age) f.age = q.age
   f.tools = toolsFor(f.typeOfSupport, f.tools)
   f.toolSearch = toolGroupFor(f.typeOfSupport) ? (q.toolSearch ?? '') : ''
+  if (q.activation) f.activation = q.activation
   return f
 }

@@ -28,7 +28,7 @@ import {
   domainOf,
   experienceAreasOfLabel,
   filtersFromURL,
-  toQuery,
+  searchRequestOf,
   urlFromFilters,
   type AdminFilters,
 } from '@/features/admin-search/query'
@@ -53,6 +53,12 @@ type PendingFilters = Pick<
   AdminFilters,
   'locality' | 'withinKm' | 'state' | 'typeOfSupport' | 'gender' | 'hasVehicle' | 'workerType' | 'languages' | 'age' | 'therapeuticSubcategories' | 'experienceWith' | 'experienceAreas' | 'tools' | 'toolSearch'
 >
+
+const ACTIVATION_TABS: ReadonlyArray<{ value: AdminFilters['activation']; label: string }> = [
+  { value: 'all', label: 'All' },
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+]
 
 const pendingOf = (f: AdminFilters): PendingFilters => ({
   locality: f.locality,
@@ -255,7 +261,7 @@ export default function AdminDashboard() {
     queryFn: async () => {
       const reload = reloadRef.current
       reloadRef.current = false
-      return adminApi.searchWorkers(toQuery(filters), { cache: reload ? 'reload' : 'default' })
+      return adminApi.searchWorkers(searchRequestOf(filters), { cache: reload ? 'reload' : 'default' })
     },
     placeholderData: keepPreviousData,
     staleTime: 60000, // the api's private cache and memo horizon (60 s)
@@ -288,27 +294,26 @@ export default function AdminDashboard() {
     }
   }, [outcome, router, refetch])
 
-  // Mutation for toggling worker status; the list is reloaded past both caches afterwards (R11.7)
-  const toggleStatusMutation = useMutation({
-    mutationFn: async ({ contractorId, isActive }: { contractorId: string; isActive: boolean }) => {
-      const response = await fetch(`/api/admin/contractors/${contractorId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive })
-      })
-      const data = await response.json()
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update status')
-      }
-      return data
+  // worker-activation (A1): the card's switch is the admin-set activation flag, never the account's sign-in. The card
+  // shows the api's answer at once; the list is then reloaded past both caches (R11.7, N4).
+  const toggleActivationMutation = useMutation({
+    mutationFn: async ({ contractorId, activated }: { contractorId: string; activated: boolean }) => {
+      const result = await adminApi.setWorkerActivation(contractorId, activated)
+      if (result.kind !== 'ok') throw new Error(noticeText(result))
+      return result.body
     },
-    onSuccess: () => {
+    onSuccess: (answer) => {
+      queryClient.setQueryData<ApiOutcome<WorkerSearchResponse>>([QUERY_KEY, canonical], (prev) =>
+        prev?.kind === 'ok'
+          ? { ...prev, body: { ...prev.body, data: prev.body.data.map((w) => (w.id === answer.workerId ? { ...w, activated: answer.activated } : w)) } }
+          : prev,
+      )
       reloadRef.current = true
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] })
     },
     onError: (error) => {
-      console.error('[Toggle Status] Error:', error)
-      alert('Failed to update worker status: ' + error.message)
+      console.error('[Toggle Activation] Error:', error)
+      alert('Failed to update the worker: ' + error.message)
     }
   })
 
@@ -378,35 +383,25 @@ export default function AdminDashboard() {
       if (result.kind === 'unauthenticated') {
         router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`)
       } else {
-        alert('Failed to fetch inactive workers: ' + noticeText(result))
+        alert('Failed to fetch suspended accounts: ' + noticeText(result))
       }
     }
   }
 
+  // worker-activation (A4): Restore in "Suspended accounts" gives the sign-in back; the activation flag is untouched.
   const reactivateWorker = async (contractorId: string) => {
-    try {
-      const response = await fetch(`/api/admin/contractors/${contractorId}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive: true })
-      })
-      const result = await response.json()
-      if (result.success) {
-        // Remove from inactive list
-        setInactiveWorkersState(prev => ({
-          ...prev,
-          workers: prev.workers.filter(w => w.id !== contractorId),
-          total: Math.max(0, prev.total - 1),
-        }))
-        // Refresh main list past the caches (R11.7)
-        reloadRef.current = true
-        queryClient.invalidateQueries({ queryKey: [QUERY_KEY] })
-      } else {
-        alert('Failed to reactivate worker: ' + result.error)
-      }
-    } catch (error) {
-      console.error('Error reactivating worker:', error)
-      alert('Failed to reactivate worker')
+    const result = await adminApi.setWorkerSuspension(contractorId, false)
+    if (result.kind === 'ok') {
+      setInactiveWorkersState(prev => ({
+        ...prev,
+        workers: prev.workers.filter(w => w.id !== contractorId),
+        total: Math.max(0, prev.total - 1),
+      }))
+      // Refresh main list past the caches (R11.7)
+      reloadRef.current = true
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] })
+    } else {
+      alert('Failed to restore the account: ' + noticeText(result))
     }
   }
 
@@ -1059,14 +1054,14 @@ export default function AdminDashboard() {
               </select>
             </div>
 
-            {/* Show Inactive Workers */}
+            {/* Suspended accounts (worker-activation A4: was "Show Inactive Workers") */}
             <div className="pt-4 border-t border-gray-200">
               <button
                 onClick={fetchInactiveWorkers}
                 disabled={inactiveWorkersState.isLoading}
                 className="w-full text-sm text-gray-500 hover:text-indigo-600 hover:underline cursor-pointer disabled:opacity-50 disabled:cursor-wait py-2"
               >
-                {inactiveWorkersState.isLoading ? 'Loading...' : 'Show Inactive Workers'}
+                {inactiveWorkersState.isLoading ? 'Loading...' : 'Suspended accounts'}
               </button>
             </div>
           </div>
@@ -1095,6 +1090,22 @@ export default function AdminDashboard() {
                 Search
               </button>
             </form>
+
+            {/* worker-activation (A3): the admin-set flag, instant (no Apply), page 1, in the URL */}
+            <div role="tablist" aria-label="Activation" className="mt-4 inline-flex rounded-md border border-gray-300 bg-white p-0.5">
+              {ACTIVATION_TABS.map((tab) => (
+                <button
+                  key={tab.value}
+                  type="button"
+                  role="tab"
+                  aria-selected={filters.activation === tab.value}
+                  onClick={() => setFilters(prev => (prev.activation === tab.value ? prev : { ...prev, activation: tab.value, page: 1 }))}
+                  className={`px-4 py-1.5 text-sm font-medium rounded ${filters.activation === tab.value ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Loading State (first load only; later fetches keep the last results on screen) */}
@@ -1185,7 +1196,7 @@ export default function AdminDashboard() {
                   {results.data.map((contractor) => (
                     <div
                       key={contractor.id}
-                      className={`bg-white rounded-lg border-2 border-amber-400 p-4 hover:shadow-md transition-shadow ${!contractor.isActive ? 'opacity-50' : ''}`}
+                      className="bg-white rounded-lg border-2 border-amber-400 p-4 hover:shadow-md transition-shadow"
                     >
                       <div className="flex gap-4">
                         {/* Profile Photo */}
@@ -1212,32 +1223,34 @@ export default function AdminDashboard() {
                                     showToggleForContractor === contractor.id ? null : contractor.id
                                   );
                                 }}
-                                className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 border border-green-200 px-2 py-1 rounded-full cursor-pointer hover:bg-green-100 transition-colors"
+                                className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full cursor-pointer transition-colors border ${contractor.activated === true ? 'text-green-700 bg-green-50 border-green-200 hover:bg-green-100' : 'text-gray-600 bg-gray-50 border-gray-200 hover:bg-gray-100'}`}
+                                title={contractor.activated === true ? 'Shown to clients and in the public list' : 'Hidden from clients until switched on'}
                               >
-                                <svg className="w-3.5 h-3.5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                <svg className={`w-3.5 h-3.5 ${contractor.activated === true ? 'text-green-600' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 20 20">
                                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                 </svg>
-                                Active
+                                {contractor.activated === true ? 'Active' : 'Inactive'}
                               </span>
                               {showToggleForContractor === contractor.id && (
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    toggleStatusMutation.mutate({
+                                    toggleActivationMutation.mutate({
                                       contractorId: contractor.id,
-                                      isActive: !contractor.isActive
+                                      activated: contractor.activated !== true
                                     })
                                   }}
-                                  disabled={toggleStatusMutation.isPending}
+                                  disabled={toggleActivationMutation.isPending}
                                   className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                                    contractor.isActive ? 'bg-green-500' : 'bg-gray-300'
-                                  } ${toggleStatusMutation.isPending ? 'opacity-50 cursor-wait' : ''}`}
+                                    contractor.activated === true ? 'bg-green-500' : 'bg-gray-300'
+                                  } ${toggleActivationMutation.isPending ? 'opacity-50 cursor-wait' : ''}`}
                                   role="switch"
-                                  aria-checked={contractor.isActive}
+                                  aria-checked={contractor.activated === true}
+                                  aria-label="Visible to clients"
                                 >
                                   <span
                                     className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                                      contractor.isActive ? 'translate-x-4' : 'translate-x-0'
+                                      contractor.activated === true ? 'translate-x-4' : 'translate-x-0'
                                     }`}
                                   />
                                 </button>
@@ -1401,7 +1414,7 @@ export default function AdminDashboard() {
         </main>
       </div>
 
-      {/* Inactive Workers Modal */}
+      {/* Suspended accounts modal */}
       {inactiveWorkersState.isOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           {/* Backdrop */}
@@ -1419,7 +1432,7 @@ export default function AdminDashboard() {
               {/* Header */}
               <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Inactive Workers ({inactiveWorkersState.total})
+                  Suspended accounts ({inactiveWorkersState.total})
                 </h3>
                 <button
                   onClick={() => setInactiveWorkersState(prev => ({ ...prev, isOpen: false }))}
@@ -1435,7 +1448,7 @@ export default function AdminDashboard() {
               <div className="overflow-y-auto max-h-[60vh] p-6">
                 {inactiveWorkersState.workers.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
-                    No inactive workers found
+                    No suspended accounts
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -1464,7 +1477,7 @@ export default function AdminDashboard() {
                           onClick={() => reactivateWorker(worker.id)}
                           className="px-3 py-1.5 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-full hover:bg-green-100 hover:border-green-300 transition-colors"
                         >
-                          Reactivate
+                          Restore
                         </button>
                       </div>
                     ))}
