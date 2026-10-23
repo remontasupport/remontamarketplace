@@ -5369,3 +5369,5 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-23):** "there is an error CI (api) / API Quality (Node 20.x) (pull_request)"
 
 **AI action (2026-10-23):** by the check-run annotations of `7884ed3`: API Quality Node 20 failed at `apps/api/test/admin/activation.int.test.ts:164` (expected false, got true), Node 22 green, every other check green. Cause, in the test: the N3 role check read worker 5's flag, which the P1/P2 property leaves at its last random draw; it passed or failed by chance. Fixed in `603fd4f` (the check sets the flag to false first); typecheck and lint clean; pushed; CI watched.
+
+**AI action (2026-10-23):** CI on `603fd4f`: both API Quality jobs (Node 20 and 22, with the database tests) success; App, Web, CodeQL, Semgrep, both Vercel previews success; Supply chain still in progress when reported. The user to merge with "Merge pull request" once Supply chain is green.
