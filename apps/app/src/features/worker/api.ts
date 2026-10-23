@@ -27,6 +27,8 @@ export interface WorkerApi {
   getPhotos(opts?: { signal?: AbortSignal }): Promise<ApiOutcome<WorkerPhotos>>;
   addAdditionalPhoto(body: { uploadId: string }): Promise<ApiOutcome<WorkerPhotos>>;
   removeAdditionalPhoto(url: string): Promise<ApiOutcome<WorkerPhotos>>;
+  /** "Replace photo" with an existing extra photo: it becomes the main, the old main takes its place. */
+  makeAdditionalMain(url: string): Promise<ApiOutcome<WorkerPhotos>>;
   /** DELETE /v1/worker/experience/:domain (2026-10-14): one care area; the answer is the areas left. */
   deleteExperience(domain: Profile["sections"]["experience"][number]["domain"]): Promise<ApiOutcome<{ domains: Profile["sections"]["experience"] }>>;
   /** DELETE /v1/worker/job-history/:entryId (2026-10-14): one job; the answer is the jobs left. 404: not the caller's or already gone. */
@@ -79,6 +81,7 @@ type EntryName =
   | "getPhotos"
   | "addAdditionalPhoto"
   | "removeAdditionalPhoto"
+  | "makeAdditionalMain"
   | "deleteExperience"
   | "deleteJobHistoryEntry"
   | "deleteEducationEntry"
@@ -150,6 +153,7 @@ export function createWorkerApi(deps: WorkerApiDeps): WorkerApi {
     getPhotos: (opts) => call("getPhotos", {}, opts),
     addAdditionalPhoto: (body) => call("addAdditionalPhoto", { body }),
     removeAdditionalPhoto: (url) => call("removeAdditionalPhoto", { body: { url } }),
+    makeAdditionalMain: (url) => call("makeAdditionalMain", { body: { url } }),
     deleteExperience: (domain) => call("deleteExperience", { params: { domain } }),
     deleteJobHistoryEntry: (entryId) => call("deleteJobHistoryEntry", { params: { entryId } }),
     deleteEducationEntry: (entryId) => call("deleteEducationEntry", { params: { entryId } }),
