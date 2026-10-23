@@ -46,6 +46,9 @@ export async function GET(
         homeStreetLine: true,
         homeLocality: { select: { suburb: true, state: true, postcode: true } },
         workerAdditionalInfo: { select: { bankAccount: true } },
+        // worker-activation U2 (A5): the account's sign-in and the admin-set flag, for the page's status block.
+        isActivated: true,
+        user: { select: { status: true } },
         workerServices: {
           select: {
             categoryName: true,
@@ -89,6 +92,7 @@ export async function GET(
         homeAddress: worker.homeLocality ? { streetLine: worker.homeStreetLine || null, ...worker.homeLocality } : null,
         // Masked here, so the stored BSB and account number never reach the browser.
         bankAccount: maskBankAccount(worker.workerAdditionalInfo?.bankAccount ?? null),
+        account: { status: worker.user.status, isActivated: worker.isActivated },
       }
     })
 

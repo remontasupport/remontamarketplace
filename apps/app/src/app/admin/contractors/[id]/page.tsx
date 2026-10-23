@@ -12,10 +12,13 @@ import NextImage from 'next/image'
 import { Fragment, useState, useCallback, useEffect } from 'react'
 import type { MaskedBankAccount } from '@/lib/bankAccount'
 import { adminApi } from '@/lib/api/admin'
+import WorkerAccountStatus, { type AccountState } from './WorkerAccountStatus'
 import WorkerToolsLine, { toolServiceNamed } from './WorkerToolsLine'
 import './contractor-profile.css'
 
 interface WorkerProfile {
+  /** worker-activation U2 (A5). */
+  account?: AccountState
   id: string
   firstName: string
   lastName: string
@@ -425,6 +428,9 @@ export default function WorkerDetailPage() {
         {/* U2 (C21): private, for Remonta only. Outside .profile-card on purpose: the JPEG
             download captures only the card, which is sent to clients. */}
         <PrivateDetails homeAddress={worker.homeAddress ?? null} bankAccount={worker.bankAccount ?? null} />
+
+        {/* worker-activation U2 (A5): sign-in and visibility; outside .profile-card, so not in the JPEG either. */}
+        {worker.account && <WorkerAccountStatus workerId={worker.id} initial={worker.account} />}
 
         {/* CANVA-STYLE PROFILE CARD */}
         <div className="profile-card">
