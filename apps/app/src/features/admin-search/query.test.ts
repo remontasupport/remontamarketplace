@@ -116,6 +116,7 @@ describe('the URL state (R11.2)', () => {
       tools: fc.uniqueArray(fc.constantFrom(...TOOL_IDS), { maxLength: 4 }),
       toolSearch: fc.constantFrom('', 'gurney', 'pressure washer', 'mowers', '&', 'Saw'),
       activation: fc.constantFrom('all' as const, 'active' as const, 'inactive' as const),
+      nursingType: fc.constantFrom('all' as const, 'registered' as const, 'enrolled' as const),
     })
     .map((f) => ({ ...f, pageSize: 6 }))
 
@@ -221,5 +222,20 @@ describe('the activation tab (worker-activation A2, A3)', () => {
         expect(urlFromFilters(f)).not.toContain('withActivation')
       }),
     )
+  })
+})
+
+describe('the nurse type (2026-10-23)', () => {
+  it('sent only with Nursing Services as the type of support, and kept in the URL with it', () => {
+    const nursing = { ...DEFAULT_FILTERS, typeOfSupport: 'nursing-services', nursingType: 'registered' as const }
+    expect(toQuery(nursing).nursingType).toBe('registered')
+    expect(filtersFromURL(new URLSearchParams(urlFromFilters(nursing))).nursingType).toBe('registered')
+    fc.assert(
+      fc.property(fc.option(fc.constantFrom('support-worker', 'therapeutic-supports', 'cleaning-services'), { nil: undefined }), fc.constantFrom('registered' as const, 'enrolled' as const), (typeOfSupport, nursingType) => {
+        expect(toQuery({ ...DEFAULT_FILTERS, typeOfSupport, nursingType })).not.toHaveProperty('nursingType')
+      }),
+    )
+    expect(filtersFromURL(new URLSearchParams('nursingType=enrolled')).nursingType).toBe('all')
+    expect(toQuery({ ...nursing, nursingType: 'all' })).not.toHaveProperty('nursingType')
   })
 })
