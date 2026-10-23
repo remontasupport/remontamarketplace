@@ -5425,3 +5425,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-23):** "Registered / Enrolled (Recommended)"
 
 **AI action (2026-10-23, outside the cycle):** api branch `feat/nursing-type-filter-api` (`3e5f4f3`, from `main` `8b8a82d`): `nursingType` (`registered`/`enrolled`) on `GET /v1/admin/workers`, one filter row on the nursing-services row's `metadata->>'nursingType'`, 400 unless `typeOfSupport=nursing-services`, echoed only when given (N1 test extended); unit tests + a database oracle (CI); openapi additions only; docs. Contract and api gates green. App branch `feat/nursing-type-filter-app` (from the api branch): the "Nurse type" select (All / Registered nurse / Enrolled nurse) only with Nursing Services, pending + Apply, in the URL, reset when the type of support changes; app gate green (55 / 277 known, 39 files). Order handed over: api PR -> merge -> staging -> promote the merge sha -> app PR -> merge.
+
+**User input (2026-10-23):** "merged" (the nurse type api PR)
+
+**AI action (2026-10-23):** by refs `main` = `8daec55` (merge of PR #110), contains `3e5f4f3` only (not the app commit). deploy-api run 39900544992 (push) success; staging health 200. Staging check (read-only, `_nursing-staging-check.ts`, untracked): `nursingType=registered` 11 = database 11, `enrolled` 6 = 6, both echoed; without it 158 nursing workers, not echoed; without Nursing Services 400. Promotion image handed over: `8daec55ce84e2dd06d902e481710b43c8292e50a`.
