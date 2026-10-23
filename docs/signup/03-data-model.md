@@ -70,6 +70,7 @@ Email look-ups use the index `users_lower_email_idx` on `lower(email)`.
 | `languages` | text[] | `[]` |
 | `profileCompleted` | bool | false |
 | `isPublished` | bool | false |
+| `isActivated` | bool | false (the column default, worker-activation U1): the worker is hidden from clients and the public list until an admin switches them on |
 | `verificationStatus` | text (not a DB enum) | `NOT_STARTED` — see [04 §10](04-enums.md#10-worker_profilesverificationstatus-text-not-a-db-enum) |
 | `consentProfileShareAt` | timestamp | now (S1 column) |
 | `consentWordingVersion` | text | `worker-profile-share-v1` (S1 column) |

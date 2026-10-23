@@ -54,6 +54,10 @@ export interface SearchQuery {
   toolsByService: Partial<Record<ToolService, string[]>>
   /** Tool search (TS-4): the text as given (echoed) and what it matches; absent when no text or no word kept (TS-2). */
   toolSearch?: { text: string; match: ToolSearch }
+  /** worker-activation U1 (BR-5): the admin-set flag; absent = both. */
+  activation?: 'active' | 'inactive'
+  /** BR-6: the rows carry `activated` (the app on production never asks, so its rows are unchanged). */
+  withActivation: boolean
 }
 
 export interface LocalityRef {
@@ -122,6 +126,8 @@ export function normaliseQuery(raw: WorkerSearchQueryParsed, now: Date): SearchQ
     tools,
     toolsByService,
     ...(toolSearchMatch ? { toolSearch: { text: raw.toolSearch!, match: toolSearchMatch } } : {}),
+    ...(raw.activation !== undefined ? { activation: raw.activation } : {}),
+    withActivation: raw.withActivation === true,
   }
 }
 
@@ -176,5 +182,6 @@ export function appliedFiltersOf(q: SearchQuery, locality?: LocalityRef): Applie
     ...(q.experienceAreas.length ? { experienceAreas: q.experienceAreas } : {}),
     ...(q.tools.length ? { tools: q.tools } : {}),
     ...(q.toolSearch ? { toolSearch: q.toolSearch.text } : {}),
+    ...(q.activation !== undefined ? { activation: q.activation } : {}),
   }
 }

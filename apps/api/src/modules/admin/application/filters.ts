@@ -151,6 +151,12 @@ export const FILTERS: readonly FilterSpec[] = [
       return Prisma.sql`EXISTS (SELECT 1 FROM worker_services ws WHERE ws."workerProfileId" = p.id AND ws."categoryId" = ANY(${m.services}::text[]) AND (ws."toolIds" && ${m.listedIds}::text[] OR EXISTS (SELECT 1 FROM unnest(ws."otherTools") o WHERE ${own})))`
     },
   },
+  {
+    // worker-activation U1 (BR-5): the admin-set flag; with the base condition, suspended accounts stay out either way.
+    name: 'activation',
+    applies: (q) => q.activation !== undefined,
+    sql: (q) => Prisma.sql`p."isActivated" = ${q.activation === 'active'}`,
+  },
 ]
 
 /** R3.10: the base condition every list shares. */

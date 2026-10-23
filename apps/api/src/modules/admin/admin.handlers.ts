@@ -11,6 +11,7 @@ import { linkFor } from '../worker/application/service-documents'
 import { listSuspendedWorkers, listUsers } from './application/lists'
 import { searchWorkers } from './application/search-workers'
 import { getWorkerServices } from './application/worker-services'
+import { setWorkerActivation, setWorkerSuspension } from './application/worker-status'
 
 export interface AdminModuleDeps {
   db: Db
@@ -45,6 +46,19 @@ export function adminHandlers(deps: AdminModuleDeps) {
     getWorkerServices: async (req, ctx) => {
       const body = await getWorkerServices(deps, req.params.workerId)
       ctx.log.info({ entry: 'admin.getWorkerServices', workerProfileId: req.params.workerId, services: body.services.length }, 'admin worker services')
+      return { status: 200, body }
+    },
+
+    // worker-activation U1 (BR-10): one line per switch is the record (Q8 c): the admin, the worker, the new state.
+    setWorkerActivation: async (req, ctx) => {
+      const body = await setWorkerActivation(deps, req.params.workerId, req.body.activated)
+      ctx.log.info({ entry: 'admin.setWorkerActivation', adminUserId: ctx.principal!.userId, workerProfileId: body.workerId, activated: body.activated }, 'admin worker activation')
+      return { status: 200, body }
+    },
+
+    setWorkerSuspension: async (req, ctx) => {
+      const body = await setWorkerSuspension(deps, req.params.workerId, req.body.suspended)
+      ctx.log.info({ entry: 'admin.setWorkerSuspension', adminUserId: ctx.principal!.userId, workerProfileId: body.workerId, suspended: body.suspended }, 'admin worker suspension')
       return { status: 200, body }
     },
   })
