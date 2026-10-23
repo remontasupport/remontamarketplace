@@ -8,8 +8,8 @@
 - **Current Stage**: INCEPTION. Workspace Detection done; targeted inventory done (in `requirements.md`, "Today");
   Requirements Analysis approved 2026-10-23; Workflow Planning approved (`inception/plans/execution-plan.md`: U1
   `activation-api`, U2 `activation-app`). CONSTRUCTION U1: FD, NFR Design and the code plan approved; U1 **live**: PR #108 merged (`main` `746a60d`), promoted
-  2026-10-23 02:30Z (prod revision `remonta-api-00017-4bz`; previous `00016-kzz` = `bf9b966`). Next: U2 `activation-app`
-  Functional Design. Still open from worker-tools: the docs PR `docs/rollback-rows-2026-10-22`.
+  2026-10-23 02:30Z (prod revision `remonta-api-00017-4bz`; previous `00016-kzz` = `bf9b966`). U2 `activation-app`: Functional
+  Design written, awaiting approval. Still open from worker-tools: the docs PR `docs/rollback-rows-2026-10-22`.
 
 ## Previous cycles (archived, read-only)
 
