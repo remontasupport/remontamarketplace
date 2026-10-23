@@ -152,6 +152,13 @@ export const FILTERS: readonly FilterSpec[] = [
     },
   },
   {
+    // The nursing answer (2026-10-23): the worker's nursing-services row says registered or enrolled (the services
+    // page writes it to the row's metadata); a worker who never answered matches neither.
+    name: 'nursingType',
+    applies: (q) => q.nursingType !== undefined,
+    sql: (q) => Prisma.sql`EXISTS (SELECT 1 FROM worker_services ws WHERE ws."workerProfileId" = p.id AND ws."categoryId" = 'nursing-services' AND ws.metadata->>'nursingType' = ${q.nursingType})`,
+  },
+  {
     // worker-activation U1 (BR-5): the admin-set flag; with the base condition, suspended accounts stay out either way.
     name: 'activation',
     applies: (q) => q.activation !== undefined,

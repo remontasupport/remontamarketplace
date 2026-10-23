@@ -31,6 +31,8 @@ export const AU_STATE_NAMES: Record<AuState, string> = {
   VIC: 'Victoria',
   WA: 'Western Australia',
 }
+/** The nursing answer's values (worker.sections' NURSING_TYPES, spelled out: that file imports this one). */
+export const NURSING_TYPE_FILTERS = ['registered', 'enrolled'] as const
 /** worker-activation U1 (BR-5): the admin search's activation filter values. */
 export const ACTIVATION_FILTERS = ['active', 'inactive'] as const
 export const WORKER_SEARCH_LIMITS = { user: 120, ip: 300 } as const
@@ -97,6 +99,11 @@ export const workerSearchQuerySchema = z.strictObject({
   toolSearch: z.string().trim().min(1).max(TOOL_SEARCH_MAX_CHARS).regex(/^[^\p{Cc}]*$/u, 'Plain text only').optional(),
   /** worker-activation U1 (BR-5): the admin-set activation flag; absent = both. */
   activation: z.enum(ACTIVATION_FILTERS).optional(),
+  /**
+   * The nursing answer (2026-10-23): "I am a registered nurse" / "I am an enrolled nurse", stored on the worker's
+   * nursing-services row. Only with typeOfSupport=nursing-services (the api answers 400 otherwise).
+   */
+  nursingType: z.enum(NURSING_TYPE_FILTERS).optional(),
   /**
    * worker-activation U1 (BR-6): each row carries `activated`. Opt-in because the app on production parses rows
    * strictly and would refuse the new key; to become unconditional once no pre-activation build can be promoted.
@@ -179,6 +186,8 @@ export const appliedFiltersSchema = z.strictObject({
   toolSearch: z.string().optional(),
   /** Present only when the query had an activation filter (N1: today's app never sends it). */
   activation: z.enum(ACTIVATION_FILTERS).optional(),
+  /** Present only when the query had a nurse type (today's app never sends it). */
+  nursingType: z.enum(NURSING_TYPE_FILTERS).optional(),
 })
 export type AppliedFilters = z.output<typeof appliedFiltersSchema>
 

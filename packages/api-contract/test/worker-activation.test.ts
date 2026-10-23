@@ -42,6 +42,10 @@ describe('N1: the strictly parsed responses are unchanged', () => {
     expect(applied.properties.activation).toEqual({ type: 'string', enum: ['active', 'inactive'] })
     expect(applied.required ?? []).not.toContain('activation')
     delete applied.properties.activation
+    // The nurse type (2026-10-23): optional too, echoed only when queried.
+    expect(applied.properties.nursingType).toEqual({ type: 'string', enum: ['registered', 'enrolled'] })
+    expect(applied.required ?? []).not.toContain('nursingType')
+    delete applied.properties.nursingType
     expect(now).toEqual(compat.searchResponse)
   })
 

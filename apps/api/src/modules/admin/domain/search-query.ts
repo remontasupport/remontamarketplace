@@ -58,6 +58,8 @@ export interface SearchQuery {
   activation?: 'active' | 'inactive'
   /** BR-6: the rows carry `activated` (the app on production never asks, so its rows are unchanged). */
   withActivation: boolean
+  /** The nursing answer on the worker's nursing-services row (2026-10-23); only with that type of support. */
+  nursingType?: 'registered' | 'enrolled'
 }
 
 export interface LocalityRef {
@@ -66,6 +68,8 @@ export interface LocalityRef {
 }
 
 const WORKER_TYPE_CODES = { Employee: 'tfn', Contractor: 'abn' } as const
+/** The catalogue's id of the service whose row carries the nursing answer. */
+export const NURSING_SERVICE = 'nursing-services'
 
 export function normaliseQuery(raw: WorkerSearchQueryParsed, now: Date): SearchQuery {
   const unplaced = raw.unplaced === true
@@ -102,6 +106,9 @@ export function normaliseQuery(raw: WorkerSearchQueryParsed, now: Date): SearchQ
   // TS-3: on the type of support's service when it has a tool list, else on both.
   const toolSearchMatch = raw.toolSearch ? toolSearchOf(raw.toolSearch, raw.typeOfSupport && isToolService(raw.typeOfSupport) ? [raw.typeOfSupport] : undefined) : null
 
+  // The nurse type narrows Nursing Services; without it the meaning would be unclear, so one meaning has one URL.
+  if (raw.nursingType !== undefined && raw.typeOfSupport !== NURSING_SERVICE) throw new ApiError(400, 'nursingType without typeOfSupport=nursing-services', { nursingType: ['Choose Nursing Services first'] })
+
   return {
     page: raw.page,
     pageSize: raw.pageSize,
@@ -128,6 +135,7 @@ export function normaliseQuery(raw: WorkerSearchQueryParsed, now: Date): SearchQ
     ...(toolSearchMatch ? { toolSearch: { text: raw.toolSearch!, match: toolSearchMatch } } : {}),
     ...(raw.activation !== undefined ? { activation: raw.activation } : {}),
     withActivation: raw.withActivation === true,
+    ...(raw.nursingType !== undefined ? { nursingType: raw.nursingType } : {}),
   }
 }
 
@@ -183,5 +191,6 @@ export function appliedFiltersOf(q: SearchQuery, locality?: LocalityRef): Applie
     ...(q.tools.length ? { tools: q.tools } : {}),
     ...(q.toolSearch ? { toolSearch: q.toolSearch.text } : {}),
     ...(q.activation !== undefined ? { activation: q.activation } : {}),
+    ...(q.nursingType !== undefined ? { nursingType: q.nursingType } : {}),
   }
 }
