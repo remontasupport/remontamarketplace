@@ -98,15 +98,9 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
 
   // Cancel confirmation modal (ACTIVE requests only)
   const [cancelTarget, setCancelTarget] = useState<ServiceRequest | null>(null)
-  const [cancelStep, setCancelStep] = useState<1 | 2>(1)
-  const [cancelReason, setCancelReason] = useState('')
-  const [cancelDetails, setCancelDetails] = useState('')
 
   const closeCancelModal = () => {
     setCancelTarget(null)
-    setCancelStep(1)
-    setCancelReason('')
-    setCancelDetails('')
   }
 
   const handleCancel = (request: ServiceRequest) => {
@@ -125,13 +119,13 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
     }).catch(() => {})
   }
 
-  const submitCancel = async (requestId: string, reason?: { reason: string; details: string }) => {
+  const submitCancel = async (requestId: string) => {
     setIsCancellingRequest(requestId)
     try {
       const res = await fetch(`/api/client/service-request/${requestId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'CANCELLED', ...(reason ?? {}) }),
+        body: JSON.stringify({ status: 'CANCELLED' }),
       })
       const json = await res.json()
       if (json.success) {
@@ -401,113 +395,43 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
         </div>
       )}
 
-      {/* Cancel Confirmation Modal (ACTIVE requests only) */}
+      {/* Active request: cancelling goes through Remonta, so the modal only says whom to contact */}
       {cancelTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-black/50" onClick={closeCancelModal} />
 
           <div className="relative bg-white rounded-xl shadow-xl max-w-md w-full p-6">
-
-            {/* Step 1 — Confirmation */}
-            {cancelStep === 1 && (
-              <div>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                    <XCircleIcon className="w-5 h-5 text-red-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold font-poppins text-gray-900">Cancel Active Request?</h2>
-                    <p className="text-sm text-gray-500 font-poppins">For {cancelTarget.participantName}</p>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-600 font-poppins mb-6">
-                  This will cancel the active service request. The assigned workers will be notified. Are you sure you want to proceed?
-                </p>
-                <div className="flex gap-3 justify-end">
-                  <button
-                    onClick={closeCancelModal}
-                    className="px-4 py-2 text-sm font-medium font-poppins text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
-                  >
-                    Go Back
-                  </button>
-                  <button
-                    onClick={() => setCancelStep(2)}
-                    className="px-4 py-2 text-sm font-medium font-poppins text-white rounded-lg bg-red-500 hover:opacity-90 transition-colors"
-                  >
-                    Yes, Continue
-                  </button>
-                </div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+                <XCircleIcon className="w-5 h-5 text-red-600" />
               </div>
-            )}
-
-            {/* Step 2 — Reason Form */}
-            {cancelStep === 2 && (
               <div>
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
-                    <XCircleIcon className="w-5 h-5 text-red-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold font-poppins text-gray-900">Reason for Cancellation</h2>
-                    <p className="text-sm text-gray-500 font-poppins">Please provide more details</p>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-4 mb-6">
-                  {/* Primary reason */}
-                  <div>
-                    <label className="block text-sm font-medium font-poppins text-gray-700 mb-1">
-                      Primary Reason <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={cancelReason}
-                      onChange={(e) => setCancelReason(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-poppins text-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-0 focus:border-transparent"
-                      style={{ ['--tw-ring-color' as string]: BRAND_COLORS.PRIMARY }}
-                    >
-                      <option value="">Select a reason...</option>
-                      <option value="service_no_longer_needed">Service no longer needed</option>
-                      <option value="found_another_provider">Found another provider</option>
-                      <option value="worker_not_suitable">Worker not suitable</option>
-                      <option value="financial_reasons">Financial reasons</option>
-                      <option value="schedule_conflict">Schedule conflict</option>
-                      <option value="health_condition_changed">Health condition changed</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-
-                  {/* Additional details */}
-                  <div>
-                    <label className="block text-sm font-medium font-poppins text-gray-700 mb-1">
-                      Additional Details
-                    </label>
-                    <textarea
-                      value={cancelDetails}
-                      onChange={(e) => setCancelDetails(e.target.value)}
-                      rows={3}
-                      placeholder="Any additional information..."
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-poppins text-gray-700 focus:outline-none focus:ring-2 resize-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex gap-3 justify-end">
-                  <button
-                    onClick={() => setCancelStep(1)}
-                    className="px-4 py-2 text-sm font-medium font-poppins text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
-                  >
-                    Back
-                  </button>
-                  <button
-                    onClick={() => submitCancel(cancelTarget.id, { reason: cancelReason, details: cancelDetails })}
-                    disabled={!cancelReason || isCancellingRequest === cancelTarget.id}
-                    className="px-4 py-2 text-sm font-medium font-poppins text-white rounded-lg bg-red-500 hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isCancellingRequest === cancelTarget.id ? 'Cancelling...' : 'Confirm Cancellation'}
-                  </button>
-                </div>
+                <h2 className="text-lg font-semibold font-poppins text-gray-900">Cancel Active Request?</h2>
+                <p className="text-sm text-gray-500 font-poppins">For {cancelTarget.participantName}</p>
               </div>
-            )}
+            </div>
+            <p className="text-sm text-gray-600 font-poppins mb-6">
+              Please contact{' '}
+              <a href="mailto:jesse.b@remontaservices.com.au" className="font-medium underline" style={{ color: BRAND_COLORS.PRIMARY }}>
+                jesse.b@remontaservices.com.au
+              </a>{' '}
+              to proceed the cancellation
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={closeCancelModal}
+                className="px-4 py-2 text-sm font-medium font-poppins text-gray-700 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
+              >
+                Go Back
+              </button>
+              <button
+                onClick={closeCancelModal}
+                className="px-4 py-2 text-sm font-medium font-poppins text-white rounded-lg hover:opacity-90 transition-colors"
+                style={{ backgroundColor: BRAND_COLORS.PRIMARY }}
+              >
+                Ok
+              </button>
+            </div>
           </div>
         </div>
       )}
