@@ -220,8 +220,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       },
     }).catch(() => {})
 
-    // Fire-and-forget webhook — fetch fresh participant data after any updates
-    const webhookUrl = process.env.Request_Service_Webhook
+    // Fire-and-forget webhook — fetch fresh participant data after any updates.
+    // Edits (the Save Changes button) go to the same n8n workflow as Cancel/Archive/Renew, as action 'Edit'.
+    const webhookUrl = process.env.Cancel_Archive_Webhook
     if (webhookUrl) {
       ;(async () => {
         try {
@@ -236,7 +237,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              action:               'edit',
+              action:               'Edit',
               zohoRecordId:         updatedRequest.zohoRecordId ?? null,
               userId,
               serviceRequestId:     id,
