@@ -59,7 +59,7 @@ export async function GET() {
           p.id,
           p."firstName",
           p."lastName",
-          COALESCE(BOOL_OR(sr.status IN ('PENDING', 'MATCHED', 'ACTIVE')), false) AS "hasPendingRequest"
+          COALESCE(BOOL_OR(sr.status IN ('PENDING', 'MATCHING', 'MATCHED', 'ACTIVE')), false) AS "hasPendingRequest"
         FROM participants p
         LEFT JOIN service_requests sr ON sr."participantId" = p.id
         WHERE p."userId" = ${userId}

@@ -18,7 +18,7 @@ import { applyRateLimit, publicApiRateLimit } from '@/lib/ratelimit'
 import { createServiceRequestSchema, formatZodErrors } from '@/schema/serviceRequestSchema'
 
 const ALLOWED_ROLES = new Set([UserRole.CLIENT, UserRole.COORDINATOR])
-const VALID_STATUSES = ['PENDING', 'MATCHED', 'ACTIVE', 'COMPLETED', 'CANCELLED'] as const
+const VALID_STATUSES = ['PENDING', 'MATCHING', 'MATCHED', 'ACTIVE', 'COMPLETED', 'CANCELLED'] as const
 
 async function authorizeUser(request: NextRequest) {
   try {
