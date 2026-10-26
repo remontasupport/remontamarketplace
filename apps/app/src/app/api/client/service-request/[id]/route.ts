@@ -10,7 +10,7 @@
  * - Users can only access their own requests
  */
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth.config'
 import { authPrisma } from '@/lib/auth-prisma'
@@ -222,9 +222,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     // Fire-and-forget webhook — fetch fresh participant data after any updates.
     // Edits (the Save Changes button) go to the same n8n workflow as Cancel/Archive/Renew, as action 'Edit'.
+    // after() keeps the function alive until the webhook is sent; a bare promise is dropped once Vercel freezes it.
     const webhookUrl = process.env.Cancel_Archive_Webhook
     if (webhookUrl) {
-      ;(async () => {
+      after(async () => {
         try {
           const participant = await authPrisma.participant.findUnique({
             where: { id: existing.participantId },
@@ -233,7 +234,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
               relationshipToClient: true, fundingType: true, conditions: true, additionalInfo: true,
             },
           })
-          await fetch(webhookUrl, {
+          const res = await fetch(webhookUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -256,10 +257,11 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
               additionalInfo:       participant?.additionalInfo       ?? null,
             }),
           })
+          if (!res.ok) console.error('[Webhook] Edit service request webhook returned', res.status)
         } catch (err) {
           console.error('[Webhook] Edit service request webhook failed:', err)
         }
-      })()
+      })
     }
 
     return NextResponse.json({ success: true, message: 'Service request updated successfully', data: updatedRequest })
