@@ -158,6 +158,16 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     // Only PENDING (or hidden-archived) can be edited
     const isHiddenArchived = existing.status === 'ARCHIVED' && existing.hidden
+    if (existing.status === 'ACTIVE') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Cannot update request: this service is active. Please contact Remonta Support at support@remontaservices.com.au',
+          message: 'Active requests cannot be updated',
+        },
+        { status: 400 }
+      )
+    }
     if (existing.status !== 'PENDING' && !isHiddenArchived) {
       return NextResponse.json(
         { success: false, error: 'Cannot update request', message: 'Only pending requests can be updated' },
