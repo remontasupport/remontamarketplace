@@ -106,28 +106,33 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       })
       if (count === 0) return NextResponse.json({ success: false, error: 'Service request not found or forbidden' }, { status: 404 })
 
-      ;(async () => {
-        const sr = await authPrisma.serviceRequest.findUnique({ where: { id }, select: { zohoRecordId: true } })
-        const zohoRecordId = sr?.zohoRecordId ?? null
+      // after() keeps the function alive until the webhook is sent; a bare promise is dropped once Vercel freezes it.
+      after(async () => {
+        try {
+          const sr = await authPrisma.serviceRequest.findUnique({ where: { id }, select: { zohoRecordId: true } })
+          const zohoRecordId = sr?.zohoRecordId ?? null
 
-        if (body.reason) {
-          // ACTIVE cancel — fire Active_Request_Cancellation with full details
-          const url = process.env.Active_Request_Cancellation
-          if (url) fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ requestId: id, zohoRecordId, userId, reason: body.reason, details: body.details ?? null }),
-          }).catch(() => {})
-        } else {
-          // Non-ACTIVE cancel — fire Cancel_Archive_Webhook
-          const url = process.env.Cancel_Archive_Webhook
-          if (url) fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'Cancel', zohoRecordId }),
-          }).catch(() => {})
+          if (body.reason) {
+            // ACTIVE cancel — fire Active_Request_Cancellation with full details
+            const url = process.env.Active_Request_Cancellation
+            if (url) await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ requestId: id, zohoRecordId, userId, reason: body.reason, details: body.details ?? null }),
+            })
+          } else {
+            // Non-ACTIVE cancel — fire Cancel_Archive_Webhook
+            const url = process.env.Cancel_Archive_Webhook
+            if (url) await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'Cancel', zohoRecordId }),
+            })
+          }
+        } catch (err) {
+          console.error('[Webhook] Cancel service request webhook failed:', err)
         }
-      })()
+      })
 
       return NextResponse.json({ success: true, message: 'Request cancelled successfully' })
     }

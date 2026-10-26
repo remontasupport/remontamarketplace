@@ -9,7 +9,7 @@
  * - Rate limited to prevent abuse
  */
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth.config'
 import { authPrisma } from '@/lib/auth-prisma'
@@ -102,10 +102,11 @@ export async function POST(request: NextRequest) {
       },
     }).catch(() => {})
 
-    // Fire-and-forget — external latency must not block the response
+    // Fire-and-forget — external latency must not block the response. after() keeps the
+    // function alive until it is sent; a bare promise is dropped once Vercel freezes it.
     const webhookUrl = process.env.Request_Service_Webhook
     if (webhookUrl) {
-      fetch(webhookUrl, {
+      after(() => fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest) {
           conditions:           result.participant.conditions,
           additionalInfo:       result.participant.additionalInfo       ?? null,
         }),
-      }).catch((err) => console.error('[Webhook] Request service webhook failed:', err))
+      }).catch((err) => console.error('[Webhook] Request service webhook failed:', err)))
     }
 
     return NextResponse.json(

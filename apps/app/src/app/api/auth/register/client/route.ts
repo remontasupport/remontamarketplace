@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { authPrisma } from '@/lib/auth-prisma';
 import { hashPassword } from '@/lib/password';
 import { applyRateLimit, strictApiRateLimit } from '@/lib/ratelimit';
@@ -104,10 +104,11 @@ export async function POST(request: Request) {
       data: { userId: user.id, action: 'LOGIN_SUCCESS', metadata: { registrationType: 'CLIENT' } },
     }).catch(() => {});
 
-    // Webhook — fire and forget (do NOT await — external latency must not block the response)
+    // Webhook — fire and forget (do NOT await — external latency must not block the response).
+    // after() keeps the function alive until it is sent; a bare promise is dropped once Vercel freezes it.
     const webhookUrl = process.env.Client_Registration_Webhook;
     if (webhookUrl) {
-      fetch(webhookUrl, {
+      after(() => fetch(webhookUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -120,7 +121,7 @@ export async function POST(request: Request) {
           relationshipToClient: data.relationshipToClient ?? null,
           completingFormAs: data.completingFormAs,
         }),
-      }).catch((err) => console.error('[Webhook] Client registration failed:', err));
+      }).catch((err) => console.error('[Webhook] Client registration failed:', err)));
     }
 
     return NextResponse.json(
