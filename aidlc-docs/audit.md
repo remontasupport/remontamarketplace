@@ -5497,3 +5497,11 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **AI action (2026-10-23):** by refs `main` = `ea66ac0` (merge of PR #119). deploy-api run 39921305313 (push) watched; route checks after it.
 
 **AI action (2026-10-23):** deploy-api run 39921305313 success; staging health 200; `/v1/admin/photos/tickets` and `/v1/admin/workers/x/photos` 404 (removed); `/v1/worker/photos` and `.../make-main` 401 (kept). Vercel production builds of `ea66ac0` success. Promotion image handed over: `ea66ac00e11c2f5fe1204390a4c71dbeaeba5039`.
+
+**User input (2026-10-26):** "Hey claude, I want to fix the marketing website https://www.remontaservices.com.au/provide-support, I want to use the same api endpoint from the workers dashboard that shows the fake jobs"
+
+**AI action (2026-10-26):** found the dashboard reads `authPrisma.job` in `NewsSliderAsync` (no endpoint); the app's public `GET /api/jobs` read the same table without the `FAKE-` rule (104 rows: 100 FAKE, 4 real) and served participant `firstName`/`lastName` on 4 rows. Branch `feat/web-jobs-from-app` (from `main` `ea66ac0`): the dashboard query moved to `apps/app/src/lib/jobs.ts`, used by the dashboard and the app's `/api/jobs` (names dropped); the web's `/api/jobs` fetches the app's server-side (revalidate 300 s, no DB); the page's service dropdown derived from the jobs, exact match. Gates: web (tsc, 70 lint known), app (55 / 277 known, 320 tests). Local web dev: `/provide-support` 200, `/api/jobs` reshaped, no names.
+
+**User input (2026-10-26):** "SHOW_ONLY_FAKE_JOBS=true yes I want thi"
+
+**AI action (2026-10-26):** committed `99f0d2c` (5 files) and pushed `feat/web-jobs-from-app` (verified by `ls-remote`); no PR created (no gh), merge left to the user. No apps/api change, so no staging/promotion step.
