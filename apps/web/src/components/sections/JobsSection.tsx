@@ -9,13 +9,7 @@ import { Navigation } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/navigation'
 
-const SERVICE_OPTIONS = [
-  'Support Work',
-  'Cleaning',
-  'Yard Maintenance',
-]
-
-// Job type matching https://app.remontaservices.com.au/api/jobs
+// Job type matching this site's /api/jobs (the worker dashboard's list, read from the app)
 type Job = {
   id: string
   zohoId: string
@@ -38,6 +32,18 @@ const fetcher = async (url: string) => {
   }
 
   return data.jobs
+}
+
+// Service options from the jobs in hand, as the worker dashboard builds them
+// (NewsSlider's serviceOptions): a hardcoded list drifted from Zoho's
+// vocabulary and offered options that matched nothing.
+function serviceOptions(jobs: Job[]): string[] {
+  const seen = new Set<string>()
+  for (const job of jobs) {
+    const service = job.service?.trim()
+    if (service) seen.add(service)
+  }
+  return [...seen].sort((a, b) => a.localeCompare(b))
 }
 
 // Split array into chunks of n
@@ -146,9 +152,8 @@ export default function JobsSection() {
   // Filter + sort
   const filteredJobs = (jobs ?? [])
     .filter((job) => {
-      const matchesService = selectedService
-        ? job.service?.toLowerCase().includes(selectedService.toLowerCase())
-        : true
+      // Exact match: options are whole stored values (serviceOptions)
+      const matchesService = selectedService ? job.service === selectedService : true
       const matchesArea = searchArea
         ? job.city?.toLowerCase().includes(searchArea.toLowerCase()) ||
           job.state?.toLowerCase().includes(searchArea.toLowerCase()) ||
@@ -198,7 +203,7 @@ export default function JobsSection() {
                   className="jobs-filter-select"
                 >
                   <option value="">All Services</option>
-                  {SERVICE_OPTIONS.map((s) => (
+                  {serviceOptions(jobs ?? []).map((s) => (
                     <option key={s} value={s}>{s}</option>
                   ))}
                 </select>
