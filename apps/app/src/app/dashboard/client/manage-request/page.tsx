@@ -31,7 +31,7 @@ export default async function ManageRequestPage() {
       select: { firstName: true },
     })),
     withRetry(() => authPrisma.serviceRequest.findMany({
-      where: { requesterId: session.user.id, status: { in: ['PENDING', 'MATCHED', 'ACTIVE', 'COMPLETED', 'CANCELLED'] } },
+      where: { requesterId: session.user.id, status: { in: ['PENDING', 'MATCHING', 'MATCHED', 'ACTIVE', 'COMPLETED', 'CANCELLED'] } },
       orderBy: { createdAt: 'desc' },
       include: { participant: true },
     })),
