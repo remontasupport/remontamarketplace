@@ -1,70 +1,57 @@
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 
 /**
  * GET /api/jobs
  *
- * Reads active job listings from the local database (synced from Zoho
- * via /api/sync-jobs). Used by the provide-support page to display jobs.
+ * The job listings for the provide-support page: the same list the worker
+ * dashboard shows, read from the app's public GET /api/jobs (one query, one
+ * FAKE- rule, one cache; apps/app/src/lib/jobs.ts). Marketing holds no
+ * database access (P-1), so this route only fetches and reshapes.
  *
- * The recruitment title is built from the structured service and location
- * columns — never from dealName, which contains participant names. A job
- * with no service is not displayed. Capped at 20 listings, newest first.
+ * Fetched server-side, not from the browser, so the app needs no CORS for it.
+ * Next caches the response for five minutes; the app caches its query in
+ * Redis behind that.
  */
 
-/** e.g. "Support Work in Stirling, WA" — falls back to service alone. */
-function buildRecruitmentTitle(
-  service: string | null,
-  suburbs: string | null,
-  state: string | null
-): string | null {
-  const cleanService = service?.trim()
-  if (!cleanService) return null
+const APP_URL = process.env.APP_URL || 'https://app.remontaservices.com.au'
 
-  const location = [suburbs?.trim(), state?.trim()].filter(Boolean).join(', ')
-  return location ? `${cleanService} in ${location}` : cleanService
+type AppJob = {
+  id: string
+  zohoId: string
+  recruitmentTitle: string | null
+  service: string | null
+  jobDescription: string | null
+  city: string | null
+  state: string | null
+  postedAt: string | null
+  createdAt: string
+}
+
+/** The dashboard's title fallback (NewsSlider, JobCard): "Service - City, ST". */
+function title(job: AppJob): string {
+  const location = [job.city, job.state].filter(Boolean).join(', ')
+  return job.recruitmentTitle || [job.service, location].filter(Boolean).join(' - ') || 'Support Work'
 }
 
 export async function GET() {
   try {
-    const dbJobs = await prisma.job.findMany({
-      where: {
-        stage: 'Recruitment End',
-        AND: [
-          { description: { not: null } },
-          { description: { not: '' } },
-          // No service means no usable recruitment title
-          { serviceAvailed: { not: null } },
-          { serviceAvailed: { not: '' } },
-        ],
-      },
-      orderBy: [
-        { postedAt: { sort: 'desc', nulls: 'last' } },
-        { createdAt: 'desc' },
-      ],
-      take: 20,
-    })
+    const response = await fetch(`${APP_URL}/api/jobs`, { next: { revalidate: 300 } })
+    const data = await response.json()
+    if (!response.ok || !data.success) {
+      throw new Error(data.error || `app /api/jobs answered ${response.status}`)
+    }
 
-    const jobs = dbJobs
-      .map(job => ({
-        ...job,
-        recruitmentTitle: buildRecruitmentTitle(job.serviceAvailed, job.suburbs, job.state),
-      }))
-      // Guard against whitespace-only services the DB filter can't catch
-      .filter((job): job is typeof job & { recruitmentTitle: string } =>
-        job.recruitmentTitle !== null
-      )
-      .map(job => ({
-        id: job.id,
-        zohoId: job.zohoId,
-        recruitmentTitle: job.recruitmentTitle,
-        service: job.serviceAvailed || '',
-        jobDescription: job.description || '',
-        city: job.suburbs,
-        state: job.state,
-        postedAt: job.postedAt?.toISOString() ?? null,
-        createdAt: job.createdAt.toISOString(),
-      }))
+    const jobs = (data.jobs as AppJob[]).map(job => ({
+      id: job.id,
+      zohoId: job.zohoId,
+      recruitmentTitle: title(job),
+      service: job.service || '',
+      jobDescription: job.jobDescription || '',
+      city: job.city,
+      state: job.state,
+      postedAt: job.postedAt,
+      createdAt: job.createdAt,
+    }))
 
     return NextResponse.json({
       success: true,

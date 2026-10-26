@@ -1,11 +1,13 @@
 /**
  * GET /api/jobs
  *
- * Public endpoint — returns all active job listings from the database.
- * No authentication required (suitable for public website pages).
+ * Public endpoint — returns the active job listings the worker dashboard shows.
+ * No authentication required (suitable for public website pages): the marketing
+ * site's /provide-support page reads it through its own /api/jobs.
  *
- * Jobs are synced from Zoho CRM via POST /api/sync-jobs.
- * Results are served from Redis cache (2-hour TTL, invalidated on every sync).
+ * The list is fetchActiveJobs (lib/jobs.ts), the dashboard's own query, so the
+ * two can never disagree: same FAKE- rule, same Redis entry (2-hour TTL,
+ * invalidated on every sync), and no participant names.
  *
  * Optional query params:
  *   ?state=QLD          — filter by state
@@ -13,24 +15,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { authPrisma } from '@/lib/auth-prisma'
-import { getOrFetch, CACHE_KEYS, CACHE_TTL } from '@/lib/redis'
-
-type Job = {
-  id: string
-  zohoId: string
-  status: string
-  firstName: string | null
-  lastName: string | null
-  recruitmentTitle: string | null
-  service: string | null
-  description: string | null
-  jobDescription: string | null
-  city: string | null
-  state: string | null
-  postedAt: Date | null
-  createdAt: Date
-}
+import { fetchActiveJobs } from '@/lib/jobs'
 
 export async function GET(request: NextRequest) {
   try {
@@ -38,16 +23,10 @@ export async function GET(request: NextRequest) {
     const stateFilter = searchParams.get('state')
     const cityFilter  = searchParams.get('city')
 
-    // Use cache only when there are no filters (shared cache key covers unfiltered list)
-    const useCache = !stateFilter && !cityFilter
-
-    const jobs = await (useCache
-      ? getOrFetch<Job[]>(
-          CACHE_KEYS.activeJobs(),
-          () => fetchJobs(),
-          CACHE_TTL.ACTIVE_JOBS
-        )
-      : fetchJobs(stateFilter ?? undefined, cityFilter ?? undefined))
+    const jobs = (await fetchActiveJobs()).filter((job) =>
+      (!stateFilter || job.state === stateFilter) &&
+      (!cityFilter  || job.city  === cityFilter)
+    )
 
     return NextResponse.json({
       success: true,
@@ -61,30 +40,4 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     )
   }
-}
-
-function fetchJobs(state?: string, city?: string) {
-  return authPrisma.job.findMany({
-    where: {
-      active: true,
-      ...(state && { state }),
-      ...(city  && { city  }),
-    },
-    select: {
-      id:               true,
-      zohoId:           true,
-      status:           true,
-      firstName:        true,
-      lastName:         true,
-      recruitmentTitle: true,
-      service:          true,
-      description:      true,
-      jobDescription:   true,
-      city:             true,
-      state:            true,
-      postedAt:         true,
-      createdAt:        true,
-    },
-    orderBy: { postedAt: 'desc' },
-  })
 }
