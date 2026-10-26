@@ -229,19 +229,22 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                           {isCancellingRequest === request.id ? 'Cancelling…' : 'Cancel'}
                         </button>
 
-                        <div className="w-px h-5 bg-gray-200 flex-shrink-0" />
+                        {request.status !== 'ACTIVE' && <div className="w-px h-5 bg-gray-200 flex-shrink-0" />}
                       </>
                     )}
                   </>
                 )}
 
-                <button
-                  onClick={() => setArchiveTarget(request)}
-                  className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium font-poppins text-gray-500 hover:text-orange-500 rounded-lg transition-colors hover:bg-white"
-                >
-                  <ArchiveBoxArrowDownIcon className="w-4 h-4" />
-                  Archive
-                </button>
+                {/* An active request cannot be archived */}
+                {request.status !== 'ACTIVE' && (
+                  <button
+                    onClick={() => setArchiveTarget(request)}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium font-poppins text-gray-500 hover:text-orange-500 rounded-lg transition-colors hover:bg-white"
+                  >
+                    <ArchiveBoxArrowDownIcon className="w-4 h-4" />
+                    Archive
+                  </button>
+                )}
               </div>
             </div>
           )
@@ -305,13 +308,15 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                           Edit
                         </button>
                       )}
-                      <button
-                        onClick={() => setArchiveTarget(request)}
-                        className="inline-flex items-center gap-1.5 text-sm font-poppins text-gray-400 hover:text-orange-500 transition-colors"
-                      >
-                        <ArchiveBoxArrowDownIcon className="w-4 h-4" />
-                        Archive
-                      </button>
+                      {request.status !== 'ACTIVE' && (
+                        <button
+                          onClick={() => setArchiveTarget(request)}
+                          className="inline-flex items-center gap-1.5 text-sm font-poppins text-gray-400 hover:text-orange-500 transition-colors"
+                        >
+                          <ArchiveBoxArrowDownIcon className="w-4 h-4" />
+                          Archive
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

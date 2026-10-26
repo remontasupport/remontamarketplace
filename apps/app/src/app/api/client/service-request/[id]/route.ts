@@ -167,7 +167,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Cannot update request: this service is active. Please contact Remonta Support at support@remontaservices.com.au',
+          error: 'Cannot update request: this service is active. Please contact jesse.b@remontaservices.com.au',
           message: 'Active requests cannot be updated',
         },
         { status: 400 }
