@@ -5505,3 +5505,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-26):** "SHOW_ONLY_FAKE_JOBS=true yes I want thi"
 
 **AI action (2026-10-26):** committed `99f0d2c` (5 files) and pushed `feat/web-jobs-from-app` (verified by `ls-remote`); no PR created (no gh), merge left to the user. No apps/api change, so no staging/promotion step.
+
+**User input (2026-10-26):** "merged"
+
+**AI action (2026-10-26):** by refs `main` = `1a84674` (merge of PR #120, contains `99f0d2c`). Production: app `/api/jobs` 100 rows, all `FAKE-`, no `firstName`/`lastName`; www `/api/jobs` the same 100; `/provide-support` 200.
