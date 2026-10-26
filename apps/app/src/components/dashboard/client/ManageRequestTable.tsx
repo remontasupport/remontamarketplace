@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArchiveBoxArrowDownIcon, XCircleIcon, ArrowPathIcon, PencilSquareIcon } from '@heroicons/react/24/outline'
+import { ArchiveBoxArrowDownIcon, XCircleIcon, PencilSquareIcon } from '@heroicons/react/24/outline'
 import { BRAND_COLORS } from '@/lib/constants'
 
 type ServiceRequestStatus = 'PENDING' | 'MATCHING' | 'MATCHED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'ARCHIVED'
@@ -91,7 +91,6 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
   const [requests, setRequests] = useState(initialRequests)
   const [isArchiving, setIsArchiving] = useState<string | null>(null)
   const [isCancellingRequest, setIsCancellingRequest] = useState<string | null>(null)
-  const [isRenewing, setIsRenewing] = useState<string | null>(null)
 
   // Archive confirmation modal
   const [archiveTarget, setArchiveTarget] = useState<ServiceRequest | null>(null)
@@ -111,7 +110,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
     setCancelTarget(request)
   }
 
-  const fireActionWebhook = (action: 'Cancel' | 'Archive' | 'Renew', requestId: string) => {
+  const fireActionWebhook = (action: 'Cancel' | 'Archive', requestId: string) => {
     fetch('/api/client/service-request/action-webhook', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -139,26 +138,6 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
       // silently fail
     } finally {
       setIsCancellingRequest(null)
-    }
-  }
-
-  const handleRenew = async (requestId: string) => {
-    setIsRenewing(requestId)
-    try {
-      const res = await fetch(`/api/client/service-request/${requestId}/reactivate`, {
-        method: 'POST',
-      })
-      const json = await res.json()
-      if (json.success) {
-        fireActionWebhook('Renew', requestId)
-        setRequests((prev) =>
-          prev.map((r) => r.id === requestId ? { ...r, status: 'PENDING' as ServiceRequestStatus, selectedWorkers: [] } : r)
-        )
-      }
-    } catch {
-      // silently fail
-    } finally {
-      setIsRenewing(null)
     }
   }
 
@@ -239,27 +218,20 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
 
                     <div className="w-px h-5 bg-gray-200 flex-shrink-0" />
 
-                    {request.status === 'CANCELLED' ? (
-                      <button
-                        onClick={() => handleRenew(request.id)}
-                        disabled={isRenewing === request.id}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium font-poppins text-gray-500 hover:text-green-600 rounded-lg transition-colors hover:bg-white disabled:opacity-50"
-                      >
-                        <ArrowPathIcon className="w-4 h-4" />
-                        {isRenewing === request.id ? 'Renewing…' : 'Renew'}
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleCancel(request)}
-                        disabled={isCancellingRequest === request.id}
-                        className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium font-poppins text-gray-500 hover:text-red-500 rounded-lg transition-colors hover:bg-white disabled:opacity-50"
-                      >
-                        <XCircleIcon className="w-4 h-4" />
-                        {isCancellingRequest === request.id ? 'Cancelling…' : 'Cancel'}
-                      </button>
-                    )}
+                    {request.status !== 'CANCELLED' && (
+                      <>
+                        <button
+                          onClick={() => handleCancel(request)}
+                          disabled={isCancellingRequest === request.id}
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium font-poppins text-gray-500 hover:text-red-500 rounded-lg transition-colors hover:bg-white disabled:opacity-50"
+                        >
+                          <XCircleIcon className="w-4 h-4" />
+                          {isCancellingRequest === request.id ? 'Cancelling…' : 'Cancel'}
+                        </button>
 
-                    <div className="w-px h-5 bg-gray-200 flex-shrink-0" />
+                        <div className="w-px h-5 bg-gray-200 flex-shrink-0" />
+                      </>
+                    )}
                   </>
                 )}
 
@@ -314,16 +286,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
 
                   <td className="px-6 py-5 text-center">
                     <div className="flex items-center justify-center gap-4">
-                      {request.status === 'CANCELLED' ? (
-                        <button
-                          onClick={() => handleRenew(request.id)}
-                          disabled={isRenewing === request.id}
-                          className="inline-flex items-center gap-1.5 text-sm font-poppins text-gray-400 hover:text-green-600 transition-colors disabled:opacity-50"
-                        >
-                          <ArrowPathIcon className="w-4 h-4" />
-                          {isRenewing === request.id ? 'Renewing...' : 'Renew'}
-                        </button>
-                      ) : request.status !== 'COMPLETED' && (
+                      {request.status !== 'CANCELLED' && request.status !== 'COMPLETED' && (
                         <button
                           onClick={() => handleCancel(request)}
                           disabled={isCancellingRequest === request.id}
