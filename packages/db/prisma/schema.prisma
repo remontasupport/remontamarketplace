@@ -601,6 +601,7 @@ model ServiceRequest {
 
 enum ServiceRequestStatus {
   PENDING
+  MATCHING
   MATCHED
   ACTIVE
   COMPLETED

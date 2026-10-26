@@ -58,6 +58,7 @@ export type ServiceRequestAssignedWorker = {
 
 export type ServiceRequestStatus =
   | 'PENDING'
+  | 'MATCHING'
   | 'MATCHED'
   | 'ACTIVE'
   | 'COMPLETED'

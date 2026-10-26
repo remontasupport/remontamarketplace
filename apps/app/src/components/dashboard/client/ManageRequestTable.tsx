@@ -6,7 +6,7 @@ import { XMarkIcon, MapPinIcon, CheckIcon, ArchiveBoxArrowDownIcon, XCircleIcon,
 import { BRAND_COLORS } from '@/lib/constants'
 import Loader from '@/components/ui/Loader'
 
-type ServiceRequestStatus = 'PENDING' | 'MATCHED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'ARCHIVED'
+type ServiceRequestStatus = 'PENDING' | 'MATCHING' | 'MATCHED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'ARCHIVED'
 
 const SERVICE_LABEL_MAP: Record<string, string> = {
   'Support Worker': 'Support Work',
@@ -58,6 +58,12 @@ const statusConfig: Record<ServiceRequestStatus, { label: string; bgColor: strin
     bgColor: 'bg-yellow-50',
     textColor: 'text-yellow-700',
     dotColor: 'bg-yellow-500',
+  },
+  MATCHING: {
+    label: 'Matching',
+    bgColor: 'bg-indigo-50',
+    textColor: 'text-indigo-700',
+    dotColor: 'bg-indigo-500',
   },
   MATCHED: {
     label: 'Matched',
