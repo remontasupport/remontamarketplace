@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth.config'
 import { authPrisma } from '@/lib/auth-prisma'
@@ -18,11 +18,12 @@ export async function POST(req: NextRequest) {
     select: { zohoRecordId: true },
   })
 
-  fetch(webhookUrl, {
+  // after() keeps the function alive until the webhook is sent; a bare promise is dropped once Vercel freezes it.
+  after(() => fetch(webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ action, zohoRecordId: serviceRequest?.zohoRecordId ?? null }),
-  }).catch(() => {})
+  }).catch((err) => console.error('[Webhook] Cancel/Archive webhook failed:', err)))
 
   return NextResponse.json({ success: true })
 }
