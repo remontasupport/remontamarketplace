@@ -5583,3 +5583,5 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **AI action (2026-10-28):** U2 code generation plan written (`construction/plans/clients-app-code-generation-plan.md`, 8 steps, branch `feat/admin-clients-app` from `main` `59fd8cd`; shared pieces first with no visual change). Awaiting approval.
 
 **User input (2026-10-28):** "approved" (U2 code plan)
+
+**AI action (2026-10-28, U2 Code Generation):** branch `feat/admin-clients-app` from `main` `59fd8cd`: `8d6c61a` (shared pieces moved out with no visual change: Pagination, outcome notices + wording test, status styles, funding labels; the participant card's Edit optional) and `d9970a4` (admin client methods + tests; `features/admin-clients/` list, detail, request card, URL query + test, details rows + test; route `/admin/requesters/[userId]`; placeholders removed; docs). App gate green (55 / 277 known, 42 files, 329 tests); the app builds. Pushed (verified by `ls-remote`). Code summary `construction/clients-app/code/code-summary.md`.
