@@ -3,14 +3,8 @@
 ## Project Information
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
-- **Current Cycle**: **worker-activation** (opened 2026-10-23): the admin card's Active switch becomes a new admin-set
-  flag, separate from `users.status`; every worker starts inactive. Record branch `aidlc/worker-activation`.
-- **Current Stage**: INCEPTION. Workspace Detection done; targeted inventory done (in `requirements.md`, "Today");
-  Requirements Analysis approved 2026-10-23; Workflow Planning approved (`inception/plans/execution-plan.md`: U1
-  `activation-api`, U2 `activation-app`). CONSTRUCTION U1: FD, NFR Design and the code plan approved; U1 **live**: PR #108 merged (`main` `746a60d`), promoted
-  2026-10-23 02:30Z (prod revision `remonta-api-00017-4bz`; previous `00016-kzz` = `bf9b966`). U2 `activation-app` **released**: PR #109
-  merged (`main` `8b8a82d`), live 2026-10-23 (public list empty until admins activate). Open: the user's signed-in production
-  checks; Build and Test summary; the close (CLAUDE.md rollback rows). Still open from worker-tools: the docs PR `docs/rollback-rows-2026-10-22`.
+- **Current Cycle**: none (worker-activation closed 2026-10-28: `aidlc-docs/archive/worker-activation/`).
+- **Current Stage**: between cycles. Open docs PR: `docs/rollback-rows-2026-10-28` (supersedes `docs/rollback-rows-2026-10-22`).
 
 ## Previous cycles (archived, read-only)
 
@@ -26,6 +20,7 @@
 | API review: the worker dashboard on `apps/api` (U3-U5, the State filter) | `aidlc-docs/archive/api-review/` | **Parked 2026-10-21** (`PARKED.md`); api #61-#85 live (prod `b8fe2eb`, 2026-10-19); the State filter live (#86); `feat/account-app` held |
 | Onboarding tour + profile completion (U1 `tour-seen-api`, U2 `tour-app`, C1 `completion-api`; H1/H2) | `aidlc-docs/archive/onboarding-tour/` | Closed 2026-10-22; #88-#103 live (api prod `00014-wdv` = `9fdcf6d`, app `main` `62e24f9`); C2 not built (follow-up 27) |
 | Worker tools (U1 `tools-api`, U2 `tools-app`, the tool search) | `aidlc-docs/archive/worker-tools/` | Closed 2026-10-22; #104-#107 live (api prod `bf9b966`, app `main` `8943f93`) |
+| Worker activation (U1 `activation-api`, U2 `activation-app`) | `aidlc-docs/archive/worker-activation/` | Closed 2026-10-28; #108-#109 live 2026-10-23 (api `00017-4bz` = `746a60d`, app `main` `8b8a82d`); #110-#131 outside the cycle, api prod `90fdadb` |
 
 `aidlc-docs/audit.md` is the single append-only audit trail across cycles; never rewrite it.
 
