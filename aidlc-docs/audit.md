@@ -5804,3 +5804,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "yes, I want it"; then chose "All unsuspended (Recommended)" (the public list = every unsuspended worker; the activation switch stops affecting it)
 
 **AI action (2026-10-28):** `fix/public-list-unsuspended` (`d6f974e`, 2 commits, 10 files): one eligibility for both searches (ACTIVE + first and last name; `audience` removed from the spec), contract summary + `public-endpoints.json` reason + openapi, tests (unit: the statement never reads `isActivated`; database: both searches equal the unsuspended set with two thirds switched on), docs; the admin switch's tooltip and aria-label no longer claim it controls the public list. Gates: contract 138, api 1054 / 256 skipped, app 353 + baselines OK. Pushed. Order: merge → staging → promote; the app's tooltip change ships with the merge (wording only). Follow-up 41: remove or repurpose the activation switch.
+
+**User input (2026-10-28):** "merged"
+
+**AI action (2026-10-28):** by refs `main` = `331e5e3` (#149, contains `d6f974e`); deploy-api run 40709723615 (staging) in progress; watching, then a staging public search.
