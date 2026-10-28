@@ -179,9 +179,9 @@ Promote the last known-good deployment in Vercel. Seconds, no rebuild.
 
 | Project | Deployment |
 |---|---|
-| `remonta-app` | the `main` `9fdcf6d` production build, https://remonta-3o8rll8x5-remontas-projects.vercel.app (the last before the worker-dashboard release #94 `cf43d23`, 2026-10-21; find it in Vercel → remonta-app → Deployments and Promote) |
-| `remontamarketplace` | the `main` `9fdcf6d` production build, https://remontamarketplace-mk9jhsh75-remontas-projects.vercel.app (the same point, 2026-10-21) |
-| `remonta-api` (Cloud Run) | **current** (2026-10-22 04:44Z, deploy-api run 39723885178): image `c523f538e310ec32236ec8c5748948ba4b686479` (#104, the service tools; its revision name in Cloud Run → Revisions); the migration `worker_services_tools` (expand-only) stays on a rollback. **Previous known-good:** revision `remonta-api-00014-wdv` = image `9fdcf6df31b24226a4a24d7ff44b563139abb0e9` (#93, 2026-10-21); before it `remonta-api-00013-rl7` = `0fbd3d443da54a29b24a88aeaf9abacfc652312e`. The migrations `u5d_users_password_changed_at`, `tour_worker_profiles_tour_seen_at` and `worker_services_tools` (expand-only) stay on a rollback. Roll back with the deploy-api dispatch naming that full sha, or Cloud Run → Revisions → route traffic. |
+| `remonta-app` | the `main` `2f418e2` production build, https://remonta-1851u9pfz-remontas-projects.vercel.app (#131, the last of the service-request changes #121-#131, 2026-10-26; find it in Vercel → remonta-app → Deployments and Promote) |
+| `remontamarketplace` | the `main` `2f418e2` production build, https://remontamarketplace-1ngfw7ug1-remontas-projects.vercel.app (the same point, 2026-10-26) |
+| `remonta-api` (Cloud Run) | **current** (2026-10-26 05:41Z, deploy-api run 40275596042): image `90fdadb156e8135b8afb3d214dfe483a144721a6` (#121, `service_requests.status` gains `MATCHING`; its revision name in Cloud Run → Revisions). **Previous known-good:** image `ea66ac00e11c2f5fe1204390a4c71dbeaeba5039` (#119, promoted 2026-10-23 08:05Z); before it `remonta-api-00020-s7c` = `e0d7ec8a8f34b47eabc909cc68eb19d72f7ae30d` (#117). The migrations `worker_services_tools`, `worker_profiles_is_activated` and `service_requests_status_matching` (expand-only) stay on a rollback. Roll back with the deploy-api dispatch naming that full sha, or Cloud Run → Revisions → route traffic. |
 
 Re-record these before any unit that changes deployment settings. **Promote a
 deployment; do not redeploy a commit** — a rebuild can fail, an existing build cannot.
