@@ -5581,3 +5581,5 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "approve" (U2 Functional Design, D1-D3 as recommended)
 
 **AI action (2026-10-28):** U2 code generation plan written (`construction/plans/clients-app-code-generation-plan.md`, 8 steps, branch `feat/admin-clients-app` from `main` `59fd8cd`; shared pieces first with no visual change). Awaiting approval.
+
+**User input (2026-10-28):** "approved" (U2 code plan)
