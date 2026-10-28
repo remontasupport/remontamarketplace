@@ -5834,3 +5834,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "can we save this dlc? I will tackle this by tomorrow, save it"
 
 **AI action (2026-10-28):** paused mid-requirements of follow-up 39 stage 1. Resume point written into the state's Current Stage; record pushed; session memory updated. The code repository left on `main` `331e5e3`, clean apart from the untracked scratch scripts.
+
+**User input (2026-10-29):** "continue AI DLC"
+
+**AI action (2026-10-29):** resumed search-locations. By refs `main` = `331e5e3` (unchanged since the pause); record `aidlc/search-locations` at `cf256f04`. Next: the follow-up to Question 2 in `inception/requirements/legacy-columns-questions.md`, asked again.
