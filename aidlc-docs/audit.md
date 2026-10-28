@@ -5577,3 +5577,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "yes, start U2"
 
 **AI action (2026-10-28):** read for reuse: `lib/api/admin.ts` (one `call`, canonical queries), `AdminDashboardClient.tsx` (pagination and outcome notices inline), `ManageRequestTable.tsx` (`statusConfig` with the 7 statuses), `ParticipantDetailPanel.tsx` (presentational; Edit always rendered; parses NDIS details from `additionalInfo`), the worker admin page keyed by the worker profile id. U2 Functional Design written (`construction/clients-app/functional-design/functional-design.md`): A1 one list for both tabs (URL filters), A2 one detail route `/admin/requesters/[userId]?tab=` reusing the client participant card, A3 request card with everything in `details`, A4 status change behind `ConfirmDialog`, A5 three client methods, A6 four shared pieces moved out of their single files (Pagination, status styles, outcome notice, the card's optional Edit). Decisions D1-D3 asked.
+
+**User input (2026-10-28):** "approve" (U2 Functional Design, D1-D3 as recommended)
+
+**AI action (2026-10-28):** U2 code generation plan written (`construction/plans/clients-app-code-generation-plan.md`, 8 steps, branch `feat/admin-clients-app` from `main` `59fd8cd`; shared pieces first with no visual change). Awaiting approval.
