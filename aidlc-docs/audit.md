@@ -5744,3 +5744,9 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "Approve"
 
 **AI action (2026-10-28):** U1 Code Generation plan approved; Part 2 started on `feat/search-api` from `main` `832ce43`.
+
+**User input (2026-10-28, mid-generation):** "what is the PR link"
+
+**AI action (2026-10-28):** answered: no PR yet (code not pushed); gave the compare URL with the encoded branch name.
+
+**AI action (2026-10-28):** U1 Code Generation done on `feat/search-api` (`272827d`, 5 commits, 27 files): the search contract area, shared `home-sql.ts` (admin search rewritten on it), `resolvePlace` (exact name in postcode before the matcher: a comma-less suggestion failed the first test run; one suburb's postcode rows = one place), the search module, `parity:search`, docs. Gates: schemas 98, api-contract 138, api 1054 passed / 256 skipped (database tests need CI). Pushed; summary `construction/search-api/code/code-summary.md`. Awaiting review and the PR.
