@@ -5856,3 +5856,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-29):** "Yes, nothing reads them" (Q5 = A for `latitude`/`longitude`; `location/city/state/postalCode` stay C); "Plan it after U4 (Recommended)" (U5: remove the two fields from the Prisma schema, then a later drop migration once U5 is live); U3 plan: "I am not 100% sure with this"
 
 **AI action (2026-10-29):** recorded; U5 `drop-coordinates` added to the plan of record (after U4). U3 not started; explained what U3 changes and why, and asked what is unclear.
+
+**User input (2026-10-29):** "they fall back to the old columns, as you chose in question 1, if were are done it with, can we get rid off of falling back to the old columns? I want to clean up the columns in database"
+
+**AI action (2026-10-29):** answered: yes; the fallback exists only for the workers without a HOME row; removing it means deciding what happens to them, and dropping all six columns needs Q5 confirmed for location/city/state/postalCode too. Asked.
