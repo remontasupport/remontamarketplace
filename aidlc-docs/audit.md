@@ -5593,3 +5593,5 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "merged, what is the preview link"
 
 **AI action (2026-10-28):** by refs `main` = `45c6879` (merge of PR #133, contains `d9970a4`). Preview of `d9970a4`: remonta-app `remonta-59a0x5jxt-remontas-projects.vercel.app` (Preview scope = the staging api). Production deployments of `45c6879` watched.
+
+**AI action (2026-10-28, U2 live):** Vercel production builds of `45c6879` success: remonta-app `remonta-mkwy3phy3-remontas-projects.vercel.app`, remontamarketplace `remontamarketplace-1wnyx4pi7-remontas-projects.vercel.app`. Live: app `/login` 200, `/admin/manage?tab=clients` 200, `/admin/requesters/<id>` 200, www 200. Rollback point for the app: the `59fd8cd` production build `remonta-iaxpkn830-remontas-projects.vercel.app`. Signed-in production checks are the user's.
