@@ -104,18 +104,24 @@ export default function RequesterDetail({ userId }: { userId: string }) {
 
         {participants.length === 0 && <p className="rounded-lg bg-white p-6 text-center text-gray-500 shadow">No participants yet.</p>}
 
-        {participants.map((p) => (
-          <section key={p.id} className="space-y-3">
-            <ParticipantDetailPanel participant={cardOf(p)} />
-            <p className="text-sm text-gray-700">
-              Funding: {p.fundingType ? FUNDING_LABEL[p.fundingType] : 'not given'}{p.location ? ` · ${p.location}` : ''}
-            </p>
-            {p.requests.length === 0 ? (
-              <p className="text-sm text-gray-500">No requests for this participant.</p>
-            ) : (
-              p.requests.map((req) => <RequestCard key={`${req.id}-${req.status}`} request={req} onChangeStatus={changeStatus} />)
-            )}
-          </section>
+        {/* One card per participant with its requests inside; it opens and closes, the first one starts open. */}
+        {participants.map((p, i) => (
+          <ParticipantDetailPanel
+            key={p.id}
+            participant={cardOf(p)}
+            collapsible
+            defaultOpen={i === 0}
+            summary={`${p.fundingType ? FUNDING_LABEL[p.fundingType] : 'Funding not given'}${p.location ? ` · ${p.location}` : ''} · ${p.requests.length} request${p.requests.length === 1 ? '' : 's'}`}
+          >
+            <div className="mt-6 space-y-3">
+              <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-500 font-poppins">Requests</h3>
+              {p.requests.length === 0 ? (
+                <p className="text-sm text-gray-500">No requests for this participant.</p>
+              ) : (
+                p.requests.map((req) => <RequestCard key={`${req.id}-${req.status}`} request={req} onChangeStatus={changeStatus} />)
+              )}
+            </div>
+          </ParticipantDetailPanel>
         ))}
       </div>
     </div>

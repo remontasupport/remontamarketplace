@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Image from "next/image";
 import { Pencil, Calendar, User, Heart, Cake, ChevronDown } from "lucide-react";
 import { BRAND_COLORS } from "@/lib/constants";
@@ -25,6 +25,14 @@ interface ParticipantDetailPanelProps {
   onEditClick?: () => void;
   onRemoveClick?: () => void;
   showRelationship?: boolean;
+  /**
+   * admin-clients (read-only admin view): a header that opens and closes the card, a line beside the name, and content
+   * at the end of the card (the participant's requests). The client dashboard passes none of these: unchanged there.
+   */
+  collapsible?: boolean;
+  defaultOpen?: boolean;
+  summary?: ReactNode;
+  children?: ReactNode;
 }
 
 export default function ParticipantDetailPanel({
@@ -32,8 +40,14 @@ export default function ParticipantDetailPanel({
   onEditClick,
   onRemoveClick,
   showRelationship = true,
+  collapsible = false,
+  defaultOpen = true,
+  summary,
+  children,
 }: ParticipantDetailPanelProps) {
   const [isNdisExpanded, setIsNdisExpanded] = useState(false);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const showContent = !collapsible || isOpen;
 
   if (!participant) {
     return (
@@ -120,9 +134,9 @@ export default function ParticipantDetailPanel({
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden min-h-[calc(100vh-220px)] lg:min-h-0 lg:h-full lg:flex lg:flex-col">
+    <div className={collapsible ? "bg-white rounded-2xl border border-gray-200 overflow-hidden" : "bg-white rounded-2xl border border-gray-200 overflow-hidden min-h-[calc(100vh-220px)] lg:min-h-0 lg:h-full lg:flex lg:flex-col"}>
       {/* Header */}
-      <div className="p-4 sm:p-6 border-b border-gray-100">
+      <div className={`p-4 sm:p-6 ${showContent ? "border-b border-gray-100" : ""}`}>
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="flex items-center gap-4">
             {/* Avatar */}
@@ -147,8 +161,20 @@ export default function ParticipantDetailPanel({
               <h2 className="text-base sm:text-xl font-semibold text-gray-900 font-poppins">
                 {name}
               </h2>
+              {summary && <p className="mt-0.5 text-sm text-gray-600 font-poppins">{summary}</p>}
             </div>
           </div>
+          {collapsible && (
+            <button
+              type="button"
+              onClick={() => setIsOpen((o) => !o)}
+              aria-expanded={isOpen}
+              className="inline-flex items-center gap-1.5 self-start rounded-md border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 font-poppins hover:bg-gray-50"
+            >
+              {isOpen ? "Close" : "Open"}
+              <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+            </button>
+          )}
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-2">
@@ -176,7 +202,8 @@ export default function ParticipantDetailPanel({
       </div>
 
       {/* Content */}
-      <div className="p-4 sm:p-6 lg:flex-1 lg:overflow-y-auto lg:min-h-0">
+      {showContent && (
+      <div className={collapsible ? "p-4 sm:p-6" : "p-4 sm:p-6 lg:flex-1 lg:overflow-y-auto lg:min-h-0"}>
         {/* Personal Details Section */}
         <div className="mb-6">
           <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3 font-poppins">
@@ -334,7 +361,9 @@ export default function ParticipantDetailPanel({
             )}
           </div>
         )}
+        {children}
       </div>
+      )}
     </div>
   );
 }
