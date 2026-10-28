@@ -44,6 +44,12 @@ export function paramsOf(tab: string, f: ListFilters): URLSearchParams {
   return p
 }
 
+/** The list itself, at these filters. */
+export const listHref = (tab: string, f: ListFilters) => `/admin/manage?${paramsOf(tab, f).toString()}`
+
+/** One record, carrying the list it was opened from: Back and previous / next follow that list (U2 follow-up). */
+export const detailHref = (userId: string, tab: string, f: ListFilters) => `/admin/requesters/${userId}?${paramsOf(tab, f).toString()}`
+
 export function requestOf(role: RequesterRole, f: ListFilters): RequesterListQuery {
   return {
     role,

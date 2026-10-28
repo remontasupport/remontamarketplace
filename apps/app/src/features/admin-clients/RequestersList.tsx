@@ -14,7 +14,7 @@ import { adminApi } from '@/lib/api/admin'
 import { noticeText, noticeTitle } from '@/lib/api/outcome-notice'
 import { SERVICE_REQUEST_STATUS_STYLE } from '@/features/service-requests/status'
 import { FUNDING_LABEL } from '@/features/service-requests/funding'
-import { filtersOf, paramsOf, REQUESTER_TABS, requestOf, type ListFilters } from './listQuery'
+import { detailHref, filtersOf, listHref, REQUESTER_TABS, requestOf, type ListFilters } from './listQuery'
 
 const LIST_NOTICE = { name: 'list', plural: 'requests' }
 const SEARCH_PAUSE_MS = 350
@@ -28,7 +28,7 @@ export default function RequestersList({ role }: { role: RequesterRole }) {
   const filters = filtersOf(params)
   const [searchText, setSearchText] = useState(filters.search)
 
-  const go = (next: ListFilters) => router.replace(`/admin/manage?${paramsOf(tab, next).toString()}`, { scroll: false })
+  const go = (next: ListFilters) => router.replace(listHref(tab, next), { scroll: false })
 
   // The search box applies after a short pause, from page 1.
   useEffect(() => {
@@ -119,7 +119,7 @@ export default function RequestersList({ role }: { role: RequesterRole }) {
                   {result.data.map((r) => (
                     <tr key={r.userId} className="hover:bg-gray-50">
                       <td className="px-4 py-3 font-medium text-indigo-700">
-                        <Link href={`/admin/requesters/${r.userId}?tab=${tab}`}>{r.firstName} {r.lastName}</Link>
+                        <Link href={detailHref(r.userId, tab, filters)}>{r.firstName} {r.lastName}</Link>
                       </td>
                       <td className="px-4 py-3 text-gray-700">{r.email}</td>
                       <td className="px-4 py-3 text-gray-700">{r.mobile}</td>
