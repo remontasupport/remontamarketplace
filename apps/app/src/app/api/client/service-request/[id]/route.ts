@@ -17,13 +17,11 @@ import { authPrisma } from '@/lib/auth-prisma'
 import { UserRole } from '@/types/auth'
 import { applyRateLimit, publicApiRateLimit } from '@/lib/ratelimit'
 import { updateServiceRequestSchema, formatZodErrors } from '@/schema/serviceRequestSchema'
+import { isEditable } from '@/features/service-requests/status'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
 const ALLOWED_ROLES = new Set([UserRole.CLIENT, UserRole.COORDINATOR])
-
-/** The statuses the client or coordinator may still edit (and a hidden-archived request, restored to PENDING). */
-const EDITABLE_STATUSES = new Set(['PENDING', 'MATCHING'])
 
 // ============================================================================
 // SHARED AUTH HELPER
@@ -176,7 +174,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         { status: 400 }
       )
     }
-    if (!EDITABLE_STATUSES.has(existing.status) && !isHiddenArchived) {
+    if (!isEditable(existing.status) && !isHiddenArchived) {
       return NextResponse.json(
         { success: false, error: 'Cannot update request', message: 'Only pending or matching requests can be updated' },
         { status: 400 }

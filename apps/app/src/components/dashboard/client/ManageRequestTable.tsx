@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArchiveBoxArrowDownIcon, XCircleIcon, ArrowPathIcon, PencilSquareIcon } from '@heroicons/react/24/outline'
 import { BRAND_COLORS } from '@/lib/constants'
-import { SERVICE_REQUEST_STATUS_STYLE as statusConfig, type ServiceRequestStatus } from '@/features/service-requests/status'
+import { SERVICE_REQUEST_STATUS_STYLE as statusConfig, isEditable, type ServiceRequestStatus } from '@/features/service-requests/status'
 
 
 const SERVICE_LABEL_MAP: Record<string, string> = {
@@ -37,9 +37,6 @@ interface ManageRequestTableProps {
   basePath: string
   showRequestType?: boolean
 }
-
-// Statuses whose name does not link to the edit page
-const NOT_EDITABLE: ServiceRequestStatus[] = ['CANCELLED', 'COMPLETED']
 
 export default function ManageRequestTable({ requests: initialRequests, basePath, showRequestType = false }: ManageRequestTableProps) {
   const router = useRouter()
@@ -167,8 +164,8 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                 {/* Name + status badge */}
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <button
-                    onClick={() => !NOT_EDITABLE.includes(request.status) && router.push(`${basePath}/request-service/edit/${request.id}`)}
-                    className={`font-semibold font-poppins text-base text-left leading-snug ${NOT_EDITABLE.includes(request.status) ? 'text-gray-900 cursor-default' : 'text-gray-900 hover:underline cursor-pointer'}`}
+                    onClick={() => isEditable(request.status) && router.push(`${basePath}/request-service/edit/${request.id}`)}
+                    className={`font-semibold font-poppins text-base text-left leading-snug ${isEditable(request.status) ? 'text-gray-900 hover:underline cursor-pointer' : 'text-gray-900 cursor-default'}`}
                   >
                     {showRequestType ? formatServiceLabel(request.primaryService || '') || 'Service Request' : request.participantName}
                   </button>
@@ -179,9 +176,9 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                 </div>
               </div>
 
-              {/* Action footer — a completed request can only be archived */}
+              {/* Action footer — Edit only where the save accepts it; a completed request can only be archived */}
               <div className="border-t border-gray-100 bg-gray-50 px-2 py-1 flex items-center">
-                {request.status !== 'COMPLETED' && (
+                {isEditable(request.status) && (
                   <>
                     <button
                       onClick={() => router.push(`${basePath}/request-service/edit/${request.id}`)}
@@ -192,7 +189,11 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                     </button>
 
                     <div className="w-px h-5 bg-gray-200 flex-shrink-0" />
+                  </>
+                )}
 
+                {request.status !== 'COMPLETED' && (
+                  <>
                     {request.status === 'CANCELLED' ? (
                       <>
                         <button
@@ -261,8 +262,8 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                 >
                   <td className="px-6 py-5 text-center">
                     <button
-                      onClick={() => !NOT_EDITABLE.includes(request.status) && router.push(`${basePath}/request-service/edit/${request.id}`)}
-                      className={`font-medium font-poppins ${NOT_EDITABLE.includes(request.status) ? 'text-gray-900 cursor-default' : 'text-gray-900 hover:underline cursor-pointer'}`}
+                      onClick={() => isEditable(request.status) && router.push(`${basePath}/request-service/edit/${request.id}`)}
+                      className={`font-medium font-poppins ${isEditable(request.status) ? 'text-gray-900 hover:underline cursor-pointer' : 'text-gray-900 cursor-default'}`}
                     >
                       {showRequestType ? formatServiceLabel(request.primaryService || '') || 'Service Request' : request.participantName}
                     </button>
@@ -296,7 +297,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                           {isCancellingRequest === request.id ? 'Cancelling...' : 'Cancel'}
                         </button>
                       )}
-                      {request.status !== 'COMPLETED' && (
+                      {isEditable(request.status) && (
                         <button
                           onClick={() => router.push(`${basePath}/request-service/edit/${request.id}`)}
                           className="inline-flex items-center gap-1.5 text-sm font-poppins text-gray-400 hover:text-blue-500 transition-colors"
