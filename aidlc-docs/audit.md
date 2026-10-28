@@ -5764,3 +5764,11 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "what's the parity result?"; "wait for the shell"; "go ahead and activate workers on the dev branch"; "what's the parity result now?"; "wait for the shell"; "still not done? why it takes too long"; "stop"
 
 **AI action (2026-10-28):** 1828 ACTIVE workers activated on the DEV branch only (host checked; ids saved in the session scratchpad for an exact undo). Parity (`construction/search-api/code/parity-runs.md`): client search on all 23 places and public on 12, 0 unexplained differences; differences are FR-4 (no HOME row), legacy point ≠ HOME point (≈ a third of workers' legacy coordinates sit > 1 km from their suburb centre: address-geocoded vs LOCALITY), the radius edge, and texts that pin no suburb ("Gold Coast", "Canberra, ACT 2601": FD-Q1 A). Runs 1 and 2 stopped at the script's own 25-min limit (one lookup per differing worker); batched in `parity-search.ts` on `feat/search-callers` (U2). Part B stopped by the user after 6 of 17 public places (same statement as the client search).
+
+**User input (2026-10-28):** "should I promote it to main?"
+
+**AI action (2026-10-28):** answered: already on `main` (#147); "promote" = the deploy-api dispatch to prod with `6886e0908592d88bec64d458c8208678acbd6797`; recommended now (no caller yet, required before U2, rollback `979543a`).
+
+**User input (2026-10-28):** "promotion is done"
+
+**AI action (2026-10-28):** verified: deploy-api run 40699313324 (workflow_dispatch) success 13:45Z; prod `remonta-api-00025-8b9` 100 % on image `6886e09`; previous `00024-fpj` = `979543a`. `/v1/health` 200; `/v1/client/workers` 401 without a token; `/v1/public/workers` 200, `public, max-age=60`, total 0 — and the live old route `app.remontaservices.com.au/api/public/workers` also 0: production has no activated workers (the marketing list is empty today, independent of this cycle; told the user). U1 complete; U2 may merge after its preview checks.
