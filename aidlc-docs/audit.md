@@ -5683,3 +5683,15 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "Done, can you close the ai dlc for this tasks"
 
 **AI action (2026-10-28, the close):** verified by refs: `main` = `baf44fb` (#144); #142 `8a805c3`, #143 `549aec8` in `main`; no api-path change since `979543a`. gcloud: prod serves `remonta-api-00024-fpj` (100 %); previous `00023-f4b` (`59fd8cd`), `00022-xvq` (`90fdadb`). Vercel production builds of `baf44fb`: success (remonta-app deployment `ExArwoH93rKqCZdPSpRGJJ8iXKJK`, remontamarketplace `CtWBSuZUzDppFot4erbF8TDRSzCR`; short URLs not readable from GitHub). Docs branch `docs/rollback-rows-2026-10-28` brought up to `main` and rows rewritten (`5cd7e6e`); PR left to the user. Build and Test summary written; admin-clients archived (`archive/admin-clients/`: inception, construction, build-and-test, README, `aidlc-state-at-close.md`). State: between cycles; follow-ups 35-38 added (Zoho for an admin status change, n8n Renew, Edit on a cancelled request, the webhook URL seen in a transcript); 34 (gcloud) done.
+
+**User input (2026-10-28):** " Edit on a Cancelled request still shows, but saving is refused what do you mean by this?"
+
+**AI action (2026-10-28):** explained (Edit shows for every status but Completed; the save takes PENDING/MATCHING only, so the page shows "Cannot update request"); offered three options, recommended hiding Edit on Cancelled.
+
+**User input (2026-10-28):** " Hide Edit on Cancelled requests (recommended): the buttons become Renew · Archive, which points them to Renew. This is a one-line change., if we do this the only way the edit button show when it is pending right?"
+
+**AI action (2026-10-28):** answered no: Edit would still show on Pending, Matching, Matched and Active; Matched has the same refusal. Recommended Edit on Pending and Matching only, from the save route's list.
+
+**User input (2026-10-28):** "Pending and Matching only"
+
+**AI action (2026-10-28):** between cycles (follow-up 37). `fix/edit-pending-matching-only` from `main` `baf44fb`: `EDITABLE_STATUSES` / `isEditable` in `features/service-requests/status.ts`, used by the PATCH route and `ManageRequestTable` (Edit button and name link, desktop and mobile); test. App gate green (50 files, 351 tests). Pushed.

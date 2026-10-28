@@ -149,7 +149,7 @@
 35. **Zoho for an admin status change**: change one request in production, then check n8n's execution and the Zoho record; if
     Cancel/Archive work but other statuses do not, the n8n workflow must map `status` on `Edit` (a workflow change).
 36. **n8n `Renew`** (#144): confirm the workflow still handles it.
-37. **Edit on a cancelled request**: the button shows but the save is refused (PENDING/MATCHING only); hide it or explain.
+37. ~~**Edit on a cancelled request**~~: Edit shown on Pending and Matching only (`fix/edit-pending-matching-only`, 2026-10-28).
 38. **The n8n Cancel/Archive webhook URL** was shown in a session transcript (2026-10-28): rotate if that matters.
 
 ## Workspace State
