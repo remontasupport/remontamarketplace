@@ -2,7 +2,7 @@
 
 // admin-clients U2 (A1): the Clients and the Support Coordinators tabs, one component; the role is the only difference.
 // Filters and the page live in the URL (listQuery.ts); the api answers no-store, so every change is a fresh read.
-// Rows can be ticked (kept across pages) and downloaded as CSV, or every row matching the filters (exportCsv.ts).
+// Rows can be ticked (kept across pages) and downloaded as CSV, or every row matching the filters (features/admin-export).
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -15,9 +15,10 @@ import { adminApi } from '@/lib/api/admin'
 import { noticeText, noticeTitle } from '@/lib/api/outcome-notice'
 import { SERVICE_REQUEST_STATUS_STYLE } from '@/features/service-requests/status'
 import { FUNDING_LABEL } from '@/features/service-requests/funding'
-import { downloadCsv } from '@/lib/csv'
+import CsvDownloadBar from '@/features/admin-export/CsvDownloadBar'
+import { useContactsExport } from '@/features/admin-export/useContactsExport'
 import { OFFERED_STATUSES } from './statusChoices'
-import { allRequesters, csvFilename, requestersCsv } from './exportCsv'
+import { allRequesters } from './exportCsv'
 import { detailHref, filtersOf, listHref, REQUESTER_TABS, requestOf, type ListFilters } from './listQuery'
 
 const LIST_NOTICE = { name: 'list', plural: 'requests' }
@@ -31,10 +32,6 @@ export default function RequestersList({ role }: { role: RequesterRole }) {
   const { tab, title, singular, participantsFilter } = REQUESTER_TABS[role]
   const filters = filtersOf(params)
   const [searchText, setSearchText] = useState(filters.search)
-  /** Ticked rows by user id, kept while the admin pages and filters (the CSV takes them as they were ticked). */
-  const [selected, setSelected] = useState<ReadonlyMap<string, RequesterRow>>(new Map())
-  const [exporting, setExporting] = useState(false)
-  const [exportNotice, setExportNotice] = useState<string | null>(null)
 
   const go = (next: ListFilters) => router.replace(listHref(tab, next), { scroll: false })
 
@@ -56,24 +53,8 @@ export default function RequestersList({ role }: { role: RequesterRole }) {
   const notice = outcome && outcome.kind !== 'ok' ? outcome : null
   const isCoordinator = role === 'COORDINATOR'
 
-  const toggle = (rows: readonly RequesterRow[], on: boolean) =>
-    setSelected((prev) => {
-      const next = new Map(prev)
-      for (const r of rows) if (on) next.set(r.userId, r); else next.delete(r.userId)
-      return next
-    })
+  const exp = useContactsExport<RequesterRow>({ name: tab, keyOf: (r) => r.userId, fetchAll: () => allRequesters(role, filters) })
   const pageRows = result?.data ?? []
-  const allOnPage = pageRows.length > 0 && pageRows.every((r) => selected.has(r.userId))
-
-  const downloadSelected = () => downloadCsv(csvFilename(role), requestersCsv([...selected.values()]))
-  const downloadAll = async () => {
-    setExporting(true)
-    setExportNotice(null)
-    const all = await allRequesters(role, filters)
-    setExporting(false)
-    if (all.kind === 'ok') downloadCsv(csvFilename(role), requestersCsv(all.body))
-    else setExportNotice(`${noticeTitle(all, { name: 'download', plural: 'downloads' })}. ${noticeText(all)}`)
-  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -136,30 +117,7 @@ export default function RequestersList({ role }: { role: RequesterRole }) {
           </div>
         )}
 
-        <div className="mb-3 flex flex-wrap items-center justify-end gap-2 text-sm">
-          {selected.size > 0 && (
-            <span className="mr-auto text-gray-600">
-              {selected.size} selected ·{' '}
-              <button onClick={() => setSelected(new Map())} className="text-indigo-700 hover:underline">Clear</button>
-            </span>
-          )}
-          <button
-            onClick={downloadSelected}
-            disabled={selected.size === 0}
-            className="rounded-md border border-gray-300 bg-white px-3 py-1.5 font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Download selected{selected.size > 0 ? ` (${selected.size})` : ''}
-          </button>
-          <button
-            onClick={downloadAll}
-            disabled={exporting || !result || result.pagination.total === 0}
-            title="Everyone matching the current search and filters"
-            className="rounded-md bg-indigo-600 px-3 py-1.5 font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {exporting ? 'Preparing…' : `Download all${result ? ` (${result.pagination.total})` : ''}`}
-          </button>
-        </div>
-        {exportNotice && <p className="mb-3 text-sm text-red-700">{exportNotice}</p>}
+        <CsvDownloadBar exp={exp} total={result?.pagination.total} />
 
         <div className="overflow-hidden rounded-lg bg-white shadow">
           {isLoading ? (
@@ -172,7 +130,7 @@ export default function RequestersList({ role }: { role: RequesterRole }) {
                 <thead className="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
                   <tr>
                     <th className="w-10 px-4 py-3">
-                      <input type="checkbox" checked={allOnPage} onChange={(e) => toggle(pageRows, e.target.checked)} aria-label="Select every row on this page" />
+                      <input type="checkbox" checked={exp.allSelected(pageRows)} onChange={(e) => exp.toggle(pageRows, e.target.checked)} aria-label="Select every row on this page" />
                     </th>
                     <th className="px-4 py-3">Name</th>
                     <th className="px-4 py-3">Email</th>
@@ -186,7 +144,7 @@ export default function RequestersList({ role }: { role: RequesterRole }) {
                   {result.data.map((r) => (
                     <tr key={r.userId} className="hover:bg-gray-50">
                       <td className="px-4 py-3">
-                        <input type="checkbox" checked={selected.has(r.userId)} onChange={(e) => toggle([r], e.target.checked)} aria-label={`Select ${r.firstName} ${r.lastName}`} />
+                        <input type="checkbox" checked={exp.isSelected(r)} onChange={(e) => exp.toggle([r], e.target.checked)} aria-label={`Select ${r.firstName} ${r.lastName}`} />
                       </td>
                       <td className="px-4 py-3 font-medium text-indigo-700">
                         <Link href={detailHref(r.userId, tab, filters)}>{r.firstName} {r.lastName}</Link>

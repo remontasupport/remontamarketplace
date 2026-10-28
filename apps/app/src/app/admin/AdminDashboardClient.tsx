@@ -8,16 +8,20 @@
 // and listable. Repeats within a minute come from the browser's private cache and
 // the api's memo; the refresh button and every admin action reload past both.
 // Rules: construction/admin-search/functional-design/business-rules.md R11.
+// The cards can be ticked and downloaded as CSV, or every worker matching the filters (features/admin-export).
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { useRouter, useSearchParams } from 'next/navigation'
-import type { WorkerRow, WorkerSearchResponse } from '@remonta/api-contract'
+import { PAGE_SIZE_MAX, type WorkerRow, type WorkerSearchResponse } from '@remonta/api-contract'
 import { useCategories } from '@/hooks/queries/useCategories'
 import WorkerAvatar from '@/components/ui/WorkerAvatar'
 import { adminApi, type ApiOutcome } from '@/lib/api/admin'
 import { noticeText, noticeTitle } from '@/lib/api/outcome-notice'
 import Pagination from '@/components/ui/Pagination'
+import { allPages } from '@/lib/api/allPages'
+import CsvDownloadBar from '@/features/admin-export/CsvDownloadBar'
+import { useContactsExport } from '@/features/admin-export/useContactsExport'
 import {
   DEFAULT_FILTERS,
   EXPERIENCE_OPTIONS,
@@ -282,6 +286,12 @@ export default function AdminDashboard() {
       setFetchedAt(dataUpdatedAt)
     }
   }, [outcome, dataUpdatedAt])
+
+  const exp = useContactsExport<Contractor>({
+    name: 'contractors',
+    keyOf: (w) => w.id,
+    fetchAll: () => allPages((page) => adminApi.searchWorkers({ ...searchRequestOf(filters), page, pageSize: PAGE_SIZE_MAX }, { cache: 'reload' })),
+  })
 
   const reload = useCallback(() => {
     reloadRef.current = true
@@ -1133,6 +1143,8 @@ export default function AdminDashboard() {
                 </p>
               )}
 
+              <CsvDownloadBar exp={exp} total={results.pagination.total} pageRows={results.data} />
+
               {/* Cards List */}
               {results.data.length === 0 ? (
                 <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
@@ -1146,6 +1158,13 @@ export default function AdminDashboard() {
                       className="bg-white rounded-lg border-2 border-amber-400 p-4 hover:shadow-md transition-shadow"
                     >
                       <div className="flex gap-4">
+                        <input
+                          type="checkbox"
+                          checked={exp.isSelected(contractor)}
+                          onChange={(e) => exp.toggle([contractor], e.target.checked)}
+                          aria-label={`Select ${contractor.firstName} ${contractor.lastName}`}
+                          className="mt-1 h-4 w-4 shrink-0"
+                        />
                         {/* Profile Photo */}
                         <WorkerAvatar
                           photo={contractor.photos}
