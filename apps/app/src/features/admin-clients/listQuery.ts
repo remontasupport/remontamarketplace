@@ -6,10 +6,10 @@ import { OFFERED_STATUSES } from './statusChoices'
 
 export const REQUESTERS_PAGE_SIZE = 20
 
-/** The sidebar's tab for each role, and its titles. */
-export const REQUESTER_TABS: Record<RequesterRole, { tab: string; title: string; singular: string }> = {
-  CLIENT: { tab: 'clients', title: 'Clients', singular: 'client' },
-  COORDINATOR: { tab: 'support-coordinators', title: 'Support Coordinators', singular: 'support coordinator' },
+/** The sidebar's tab for each role, its titles, and whether its list offers the Participants filter (coordinators only). */
+export const REQUESTER_TABS: Record<RequesterRole, { tab: string; title: string; singular: string; participantsFilter: boolean }> = {
+  CLIENT: { tab: 'clients', title: 'Clients', singular: 'client', participantsFilter: false },
+  COORDINATOR: { tab: 'support-coordinators', title: 'Support Coordinators', singular: 'support coordinator', participantsFilter: true },
 }
 
 export function roleOfTab(tab: string | null): RequesterRole | undefined {
@@ -63,6 +63,7 @@ export function requestOf(role: RequesterRole, f: ListFilters): RequesterListQue
     ...(f.search ? { search: f.search } : {}),
     ...(f.requestStatus ? { requestStatus: f.requestStatus } : {}),
     ...(f.fundingType ? { fundingType: f.fundingType } : {}),
-    ...(f.participants ? { participants: f.participants } : {}),
+    // Only where the list offers it: an old clients link with `participants=` is ignored.
+    ...(f.participants && REQUESTER_TABS[role].participantsFilter ? { participants: f.participants } : {}),
   }
 }

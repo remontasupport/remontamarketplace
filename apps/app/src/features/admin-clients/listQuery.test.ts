@@ -21,8 +21,13 @@ describe('admin-clients list query (U2 A1)', () => {
     expect(filtersOf(paramsOf('support-coordinators', f))).toEqual(f)
   })
 
+  it('sends the Participants filter for coordinators only', () => {
+    expect(requestOf('COORDINATOR', { search: '', participants: 'with', page: 1 })).toMatchObject({ participants: 'with' })
+    expect(requestOf('CLIENT', { search: '', participants: 'with', page: 1 })).not.toHaveProperty('participants')
+  })
+
   it('builds the api query with the role and the page size', () => {
     expect(requestOf('COORDINATOR', { search: '', page: 1 })).toEqual({ role: 'COORDINATOR', page: 1, pageSize: 20 })
-    expect(requestOf('CLIENT', { search: 'ann', requestStatus: 'ACTIVE', participants: 'without', page: 2 })).toEqual({ role: 'CLIENT', page: 2, pageSize: 20, search: 'ann', requestStatus: 'ACTIVE', participants: 'without' })
+    expect(requestOf('COORDINATOR', { search: 'ann', requestStatus: 'ACTIVE', participants: 'without', page: 2 })).toEqual({ role: 'COORDINATOR', page: 2, pageSize: 20, search: 'ann', requestStatus: 'ACTIVE', participants: 'without' })
   })
 })
