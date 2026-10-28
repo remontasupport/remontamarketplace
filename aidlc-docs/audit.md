@@ -5754,3 +5754,5 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "there is an error CI (api) / API Quality (Node 20.x)"
 
 **AI action (2026-10-28):** read the job's annotations (anonymous GitHub API): `BootError ... search.searchWorkersForClient: no handler` in `test/registration/registration.int.test.ts` and `test/registration/harness.ts` (database-gated, skipped locally). Both listed the other areas' stand-in handlers by hand and lacked the new search area. Fix `2241256`: they now stand in for every contract but registration (`contracts.filter(...).map(unreachableHandlers)`, the worker tests' pattern), so a future area cannot break them the same way. Pushed; watching CI.
+
+**AI action (2026-10-28):** CI on `2241256`: API Quality Node 20.x and 22.x success (the database-gated suites, the new `test/search/search.int.test.ts` included, run there), App and Web Quality, CodeQL, Semgrep, both Vercel previews success; Supply chain still running at the check. Ready for the user's merge.
