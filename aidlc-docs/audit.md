@@ -5645,3 +5645,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **AI action (2026-10-28):** explained Download all follows every current filter, Download selected the ticked rows; the CSV rows are the clients / coordinators, not participants. A Participants filter (Any / Has / No, owned participants) added: an api query parameter `participants=with|without` (additive; the production app never sends it), then the app's select after the promotion.
 
 **AI action (2026-10-28):** api `feat/requesters-participants-filter-api` (`021b9e4`, from `main` `6c5aa78`): `PARTICIPANT_FILTERS`, `participants=with|without` on `listRequesters` (EXISTS / NOT EXISTS owned participants), the log line, a database test, docs; openapi 12 lines added, none changed; contract 130, api 49 files green. App `feat/requesters-participants-filter-app` (`14a4516a`, from the api branch with `feat/admin-requesters-csv` merged in): URL query + select "Any / Has / No participants"; tests; app gate green (55 / 277 known, 48 files); builds. Both pushed. Order: the CSV PR any time; the api PR -> staging check -> promote -> the app PR.
+
+**User input (2026-10-28):** "Both 2 are merges"
+
+**AI action (2026-10-28):** by refs `main` = `979543a`: #138 (CSV, `8f55fdd`) and #139 (participants filter api, `021b9e4`); the app PR (`14a4516`) not merged (correct). deploy-api run 40627331698 success; staging health 200; staging check 26/26 PASS incl. `participants=with` 30 = database 30, `without` 6 = 6. Promotion image handed over: `979543ad0df54502642931537b23edaaa99dc715`.
