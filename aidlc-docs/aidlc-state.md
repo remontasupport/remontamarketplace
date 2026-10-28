@@ -3,8 +3,8 @@
 ## Project Information
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
-- **Current Cycle**: none. The admin-clients cycle closed 2026-10-28 (archived under `archive/admin-clients/`). Record branch `aidlc/admin-clients` is the newest; the next cycle branches from it.
-- **Current Stage**: between cycles. Production at the close: api `remonta-api-00024-fpj` = `979543a`, app `main` `aaf1841` (#145, after the close: Edit on Pending/Matching only, Archive on Completed/Cancelled only). Docs PR #146 (`docs/rollback-rows-2026-10-28`, rows at `baf44fb` / `979543a`) merged: `main` = `832ce43`.
+- **Current Cycle**: **search-locations** (opened 2026-10-28, record branch `aidlc/search-locations` from `aidlc/admin-clients`): follow-up 1, the client search and the public list on `worker_locations` + PostGIS, then the dual write and the legacy columns.
+- **Current Stage**: INCEPTION, Requirements Analysis: questions out (`inception/requirements/requirement-verification-questions.md`), awaiting answers. Done: Workspace Detection (brownfield), targeted inventory (`inception/search-locations-inventory.md`). Production at the start: api `remonta-api-00024-fpj` = `979543a`, app `main` `832ce43`.
 
 ## Previous cycles (archived, read-only)
 

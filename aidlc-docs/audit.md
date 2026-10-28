@@ -5712,3 +5712,11 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "start ai dlc"
 
 **AI action (2026-10-28):** resumed between cycles. By refs `main` = `832ce43` (#146, the docs PR `docs/rollback-rows-2026-10-28`, `5cd7e6e`: CLAUDE.md rollback rows only, no code); nothing else since `aaf1841`. Asked the user for the new cycle's goal; candidates from the open follow-ups offered.
+
+**User input (2026-10-28):** "what is the meaning of 3?"
+
+**AI action (2026-10-28):** explained option 3 (follow-up 1): the two app routes `/api/client/workers` and `/api/public/workers` still compute distance from `worker_profiles.latitude/longitude` (bounding box + Haversine + Google geocoding), while the admin search already uses `worker_locations` + PostGIS; the three steps (move the searches, stop the dual write, drop the columns); no visible feature; option 1 still recommended first.
+
+**User input (2026-10-28):** "let's do this"
+
+**AI action (2026-10-28):** opened the cycle **search-locations** on record branch `aidlc/search-locations` (from `aidlc/admin-clients`). Workspace Detection: brownfield, unchanged. Targeted inventory `inception/search-locations-inventory.md` (the two routes and their callers; legacy writers = the api's `placeHome` only; display and reconciler readers; `/api/contractors` reads `contractor_profiles` in the jobs database, out of the column question). Requirements questions (8, incl. the carried extensions) in `inception/requirements/requirement-verification-questions.md`; awaiting answers.
