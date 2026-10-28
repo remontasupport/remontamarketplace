@@ -1,5 +1,7 @@
 # Code generation plan: U3 `legacy-readers-app` (follow-up 39 stage 1) (2026-10-29)
 
+> **Superseded 2026-10-29** by the requirements revision (home only, no fallback; U4 in the new order). Kept for the record.
+
 Requirements: FR-7 (apps/app readers), FR-11 (this unit first). Branch `feat/legacy-readers-app` from `main` `331e5e3`.
 No api change, no migration, no write change: the api still double-writes, so every screen shows the same place as
 today for every placed worker; this unit only makes the app independent of the columns before U4 stops writing them.

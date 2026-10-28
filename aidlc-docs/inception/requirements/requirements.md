@@ -109,3 +109,29 @@ later, after a soak and the user's check of outside readers).
 - **NFR-9 Equivalence.** Before U4's promotion, on the staging copy: every reader shows the same place as today for
   every worker whose HOME row matches the legacy columns (all placed workers today), and the unplaced keep their
   legacy text.
+
+### Revision (2026-10-29): no fallback; all six columns go
+
+User 2026-10-29: "can we get rid off of falling back to the old columns? I want to clean up the columns in database";
+then "Place them first", and Q5 = A for all six columns ("Nothing reads them"). **Supersedes FR-7, FR-8, FR-9, FR-11
+and NFR-8/NFR-9 above; FR-10 stands.**
+
+- **FR-7r Home only.** Every reader shows the HOME locality ("Suburb, ST 1234") and nothing else; no reader of the six
+  columns remains (app: by-ids cards, profile preview, shared profile, admin contractor page + PDF; api: worker
+  profile, admin lists, admin search row, the client/public search cards' fallback). A worker with no HOME row shows
+  "Not specified" / "Australia" as today's empty case.
+- **FR-8r Completion.** The "location" part of account details = has a HOME row.
+- **FR-9r The reconciler stops placing.** Its home-placement step (and the S1 backfill script) go: sign-up and the
+  service-area save always write HOME, and the columns it read are frozen.
+- **FR-12 Place the unplaced first.** Every worker without a HOME row gets one before the readers switch: a list with a
+  suggested suburb from their old text, reviewed and corrected by the user, applied by a one-off script (dry run by
+  default, `source = 'ADMIN'`). Workers with no usable text (empty, overseas) stay unplaced by the user's decision on
+  the list.
+- **FR-13 Drop the columns.** After the readers and the write stop are live: the six fields leave the Prisma schema
+  (one release, so no running image selects them), then a migration drops the columns (a later release; irreversible,
+  backed by a Neon branch taken just before).
+- **FR-11r Units and order.** U3 `place-unplaced` (FR-12) → U4 `legacy-readers-app` (FR-7r app) → U5
+  `legacy-readers-api` (FR-7r api, FR-8r, FR-9r, FR-10; staging, checklist, promotion) → U6 `drop-columns-schema` →
+  U7 `drop-columns-migration`. Each step reversible until U7.
+- **NFR-8r Rollback.** Until U6, rollback = the previous image/deployment. U7 is not reversible in place: restore from
+  the pre-drop Neon branch.

@@ -5860,3 +5860,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-29):** "they fall back to the old columns, as you chose in question 1, if were are done it with, can we get rid off of falling back to the old columns? I want to clean up the columns in database"
 
 **AI action (2026-10-29):** answered: yes; the fallback exists only for the workers without a HOME row; removing it means deciding what happens to them, and dropping all six columns needs Q5 confirmed for location/city/state/postalCode too. Asked.
+
+**User input (2026-10-29):** "Place them first (Recommended)"; "Nothing reads them" (Q5 = A for all six columns)
+
+**AI action (2026-10-29):** requirements revised (FR-7r home only, FR-8r completion = HOME, FR-9r reconciler and backfill stop placing, FR-12 place the unplaced from a user-reviewed list, FR-13 drop the six columns in two releases; units U3 place-unplaced, U4 app readers, U5 api readers + write stop, U6 schema, U7 drop migration). The fallback U3 plan marked superseded. Next: the user resets the DEV Neon branch, then the unplaced list.
