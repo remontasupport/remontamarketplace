@@ -5657,3 +5657,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "abort, it is now able to merge"; "merged"
 
 **AI action (2026-10-28):** by refs `main` = `22e0e4c` (merge of PR #140, contains `14a4516`), after the promotion (03:43Z): the order held. Vercel production builds success: remonta-app `remonta-7bkdl9wdp-remontas-projects.vercel.app`, remontamarketplace `remontamarketplace-gjyedocql-remontas-projects.vercel.app`; app `/login` 200, `/admin/manage?tab=clients` 200, www 200. CSV download and the Participants filter live; signed-in checks are the user's.
+
+**User input (2026-10-28):** "ahh, the participants filter dropdown should not be appear on the clients path"
+
+**AI action (2026-10-28):** the Participants filter per role in `REQUESTER_TABS` (coordinators only); `requestOf` drops it for clients (an old link is ignored); the select rendered only where offered. App only. Branch `fix/participants-filter-coordinators-only` from `main` `22e0e4c`.
