@@ -5814,3 +5814,15 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "wait for the shell"
 
 **AI action (2026-10-28):** watched prod: promoted 23:01 to `remonta-api-00026-zm4` (100 %, image `331e5e3`), health 200, public Sydney, NSW 2000 within 20 km: 178. www `/search` first showed "No Workers Found" (Vercel's 60 s data cache from before), then cards with and without a place. Noted: the page shows page 1 (12) and hides cards without a bio (5 of the first 12 for Sydney); offered a larger page or an api-side bio filter as options. Rollback: `6886e09` (`00025-8b9`).
+
+**User input (2026-10-28):** "So the client and marketing site are using the worker_locations now?"
+
+**AI action (2026-10-28):** answered: yes for both searches (distance, place, card suburb with a legacy fallback for the unplaced); the api still double-writes and other screens and the reconciler still read the old columns (follow-up 39).
+
+**User input (2026-10-28):** "can we do the follow-up 39 now? can it be done quickly"
+
+**AI action (2026-10-28):** answered: not safely quickly; the drop is irreversible, breaks image rollback, and unknown outside readers may exist; proposed stage 1 now (readers, reconciler, stop the double write; reversible) and stage 2 (drop) after a soak.
+
+**User input (2026-10-28):** "do not close this, you can do it here"
+
+**AI action (2026-10-28):** workflow change: follow-up 39 stage 1 joins the search-locations cycle (stage 2, the drop, stays separate). Inventory `inception/legacy-columns-inventory.md`: writers = the api only (register-worker, addresses); readers = api worker profile, completion, admin lists/search, the reconciler, backfill; app by-ids cards, profile preview, profile data/view, admin contractor page + PDF. F1: the reconciler moves HOME rows to match the legacy columns for any changed worker, so it must stop moving before the write stops. Questions (5) in `inception/requirements/legacy-columns-questions.md`.
