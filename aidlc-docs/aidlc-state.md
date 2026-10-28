@@ -4,7 +4,7 @@
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
 - **Current Cycle**: none. The admin-clients cycle closed 2026-10-28 (archived under `archive/admin-clients/`). Record branch `aidlc/admin-clients` is the newest; the next cycle branches from it.
-- **Current Stage**: between cycles. Production at the close: api `remonta-api-00024-fpj` = `979543a`, app `main` `aaf1841` (#145, after the close: Edit on Pending/Matching only, Archive on Completed/Cancelled only). Open docs PR: `docs/rollback-rows-2026-10-28` (`5cd7e6e`, rows at `baf44fb` / `979543a`; supersedes `docs/rollback-rows-2026-10-22`).
+- **Current Stage**: between cycles. Production at the close: api `remonta-api-00024-fpj` = `979543a`, app `main` `aaf1841` (#145, after the close: Edit on Pending/Matching only, Archive on Completed/Cancelled only). Docs PR #146 (`docs/rollback-rows-2026-10-28`, rows at `baf44fb` / `979543a`) merged: `main` = `832ce43`.
 
 ## Previous cycles (archived, read-only)
 

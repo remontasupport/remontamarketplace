@@ -5708,3 +5708,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 - Renew: confirm the n8n workflow handles the Renew message. these are done so take it out to the memory"
 
 **AI action (2026-10-28):** follow-ups 35 (Zoho for an admin status change) and 36 (n8n `Renew`) marked done on the user's confirmation, in the state file, the admin-clients Build and Test summary and the session memory. Open: 38 (the webhook URL seen in a transcript).
+
+**User input (2026-10-28):** "start ai dlc"
+
+**AI action (2026-10-28):** resumed between cycles. By refs `main` = `832ce43` (#146, the docs PR `docs/rollback-rows-2026-10-28`, `5cd7e6e`: CLAUDE.md rollback rows only, no code); nothing else since `aaf1841`. Asked the user for the new cycle's goal; candidates from the open follow-ups offered.
