@@ -5611,3 +5611,9 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **AI action (2026-10-28):** taken as the request card's Change status select (app only; the api keeps accepting MATCHED; a request already MATCHED still shows it as its current value; the list filter unchanged). Branch `feat/admin-status-no-matched` from `main` `186b617`.
 
 **AI action (2026-10-28):** `feat/admin-status-no-matched` (`e7729dd1`): `statusChoices.ts` (+ test) leaves MATCHED out of the request card's select unless it is the current status; docs. App gate green (55 / 277 known, 45 files, 338 tests). Pushed.
+
+**AI action (2026-10-28):** by refs PR #135 (Matched excluded) merged: `main` = `35f854c`.
+
+**User input (2026-10-28):** "in the participant card, can you place the request details of that participant with in the participant card, also the card can be close and open"
+
+**AI action (2026-10-28):** `feat/admin-participant-card-requests` (on `main` `35f854c`, `59b0b12f`): `ParticipantDetailPanel` gains optional `collapsible`, `defaultOpen`, `summary`, `children` (the client dashboard passes none: unchanged); the admin detail renders each participant collapsible (the first open), funding / location / request count beside the name, its requests inside the card. App gate green (55 / 277 known, 44 files, 336 tests); builds. Pushed.
