@@ -5605,3 +5605,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "merged" (prev/next)
 
 **AI action (2026-10-28):** by refs `main` = `186b617` (merge of PR #134, contains `8d7ae4c`). Vercel production builds success: remonta-app `remonta-de12vanbf-remontas-projects.vercel.app`, remontamarketplace `remontamarketplace-1znxnvb0y-remontas-projects.vercel.app`; app `/login` 200, `/admin/requesters/<id>` 200, www 200. Prev/next live; the signed-in check is the user's.
+
+**User input (2026-10-28):** "in the status dropdown, can you exclude the Matched for now"
+
+**AI action (2026-10-28):** taken as the request card's Change status select (app only; the api keeps accepting MATCHED; a request already MATCHED still shows it as its current value; the list filter unchanged). Branch `feat/admin-status-no-matched` from `main` `186b617`.
