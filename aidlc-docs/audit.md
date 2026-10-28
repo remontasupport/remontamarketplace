@@ -5649,3 +5649,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "Both 2 are merges"
 
 **AI action (2026-10-28):** by refs `main` = `979543a`: #138 (CSV, `8f55fdd`) and #139 (participants filter api, `021b9e4`); the app PR (`14a4516`) not merged (correct). deploy-api run 40627331698 success; staging health 200; staging check 26/26 PASS incl. `participants=with` 30 = database 30, `without` 6 = 6. Promotion image handed over: `979543ad0df54502642931537b23edaaa99dc715`.
+
+**User input (2026-10-28):** "promotion is done, but the pr says Can't automatically merge"
+
+**AI action (2026-10-28):** verified: deploy-api run 40628114144 (workflow_dispatch) success 03:43Z; prod `remonta-api-00024-fpj` 100 %, the image staging `00069-p85` checked; health 200 (previous `00023-f4b` = `59fd8cd`). The app branch merged `origin/main` locally with no conflict; merge commit `238c991` pushed; PR #140 now `mergeable: true` (checks running). Its diff: 4 files, the participants select only.
