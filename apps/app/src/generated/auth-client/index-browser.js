@@ -617,7 +617,9 @@ exports.AuditAction = exports.$Enums.AuditAction = {
   ROLE_CHANGE: 'ROLE_CHANGE',
   IMPERSONATION_START: 'IMPERSONATION_START',
   IMPERSONATION_END: 'IMPERSONATION_END',
-  ACCOUNT_REGISTERED: 'ACCOUNT_REGISTERED'
+  ACCOUNT_REGISTERED: 'ACCOUNT_REGISTERED',
+  ADMIN_RECORD_VIEW: 'ADMIN_RECORD_VIEW',
+  SERVICE_REQUEST_STATUS_CHANGE: 'SERVICE_REQUEST_STATUS_CHANGE'
 };
 
 exports.FundingType = exports.$Enums.FundingType = {
@@ -664,6 +666,7 @@ exports.JobApplicationStatus = exports.$Enums.JobApplicationStatus = {
 
 exports.ServiceRequestStatus = exports.$Enums.ServiceRequestStatus = {
   PENDING: 'PENDING',
+  MATCHING: 'MATCHING',
   MATCHED: 'MATCHED',
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED',

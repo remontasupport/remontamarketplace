@@ -53,9 +53,9 @@ describe('the contracts as committed', () => {
     expect(extra.success).toBe(false)
   })
 
-  it('declare the three admin lists, the document link (U3b) and the services of one worker (worker-tools U1) behind the ADMIN role, per-user limited, privately cacheable for a minute (U2); the two switches (worker-activation U1) never cached', () => {
-    expect(Object.keys(adminContract.entries).sort()).toEqual(['getDocumentLink', 'getWorkerServices', 'listSuspendedWorkers', 'listUsers', 'searchWorkers', 'setWorkerActivation', 'setWorkerSuspension'])
-    const fresh = new Set(['setWorkerActivation', 'setWorkerSuspension'])
+  it('declare the three admin lists, the document link (U3b) and the services of one worker (worker-tools U1) behind the ADMIN role, per-user limited, privately cacheable for a minute (U2); the two switches (worker-activation U1) and the client / coordinator entries (admin-clients U1) never cached', () => {
+    expect(Object.keys(adminContract.entries).sort()).toEqual(['getDocumentLink', 'getRequester', 'getWorkerServices', 'listRequesters', 'listSuspendedWorkers', 'listUsers', 'searchWorkers', 'setRequestStatus', 'setWorkerActivation', 'setWorkerSuspension'])
+    const fresh = new Set(['setWorkerActivation', 'setWorkerSuspension', 'listRequesters', 'getRequester', 'setRequestStatus'])
     for (const [name, e] of Object.entries(adminContract.entries)) {
       expect(e.method, name).toBe(name.startsWith('set') ? 'PUT' : name.startsWith('get') || name.startsWith('list') || name === 'searchWorkers' ? 'GET' : 'POST')
       expect(e.meta.access).toEqual({ roles: ['ADMIN'] })
@@ -64,6 +64,9 @@ describe('the contracts as committed', () => {
       expect(e.meta.rateLimit.map((r) => r.per).sort()).toEqual(['ip', 'user'])
     }
     expect(adminContract.entries.searchWorkers.meta.rateLimit).toEqual([{ per: 'user', limit: 120, window: '1m' }, { per: 'ip', limit: 300, window: '1m' }])
+    // admin-clients FR-10: the detail read and the status change are audited.
+    expect(adminContract.entries.getRequester.meta.audit).toBe('ADMIN_RECORD_VIEW')
+    expect(adminContract.entries.setRequestStatus.meta.audit).toBe('SERVICE_REQUEST_STATUS_CHANGE')
   })
 
   it('put a CAPTCHA and an audit action on the sign-up itself', () => {

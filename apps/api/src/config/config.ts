@@ -57,6 +57,11 @@ const envSchema = z.object({
   COMPLETION_SYNC_INTERVAL_MS: z.coerce.number().int().min(60_000).max(3_600_000).default(300_000),
   /** The CRM notification's webhook (deferred, user 2026-10-01): optional until that outbox handler exists. */
   N8N_REGISTRATION_WEBHOOK_URL: httpsUrl.optional(),
+  /**
+   * admin-clients U1 (BR-8): the n8n workflow an admin's service request status change is told to (production: the
+   * value of Vercel's Cancel_Archive_Webhook). `off` (staging, NFR-6: never the live webhook) means none is sent.
+   */
+  N8N_SERVICE_REQUEST_WEBHOOK_URL: z.union([z.literal('off').transform(() => undefined), httpsUrl]).optional(),
 
   /** Keys the IP hash stored with staged photos, so raw IPs are never stored. */
   IP_HASH_SECRET: z.string().min(32, 'missing or shorter than 32 characters'),
@@ -146,7 +151,7 @@ export function loadConfig(env: Record<string, string | undefined>): Config {
       'www.google.com', // reCAPTCHA siteverify
       'api.resend.com',
       'api.pwnedpasswords.com', // HIBP k-anonymity range API
-      ...(e.N8N_REGISTRATION_WEBHOOK_URL ? [new URL(e.N8N_REGISTRATION_WEBHOOK_URL).hostname] : []),
+      ...[e.N8N_REGISTRATION_WEBHOOK_URL, e.N8N_SERVICE_REQUEST_WEBHOOK_URL].flatMap((u) => (u ? [new URL(u).hostname] : [])),
     ].filter((h, i, all) => all.indexOf(h) === i),
   }
 }
