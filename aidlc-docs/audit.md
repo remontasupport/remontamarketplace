@@ -5663,3 +5663,11 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **AI action (2026-10-28):** the Participants filter per role in `REQUESTER_TABS` (coordinators only); `requestOf` drops it for clients (an old link is ignored); the select rendered only where offered. App only. Branch `fix/participants-filter-coordinators-only` from `main` `22e0e4c`.
 
 **AI action (2026-10-28):** `fix/participants-filter-coordinators-only` (`0c849610`): `REQUESTER_TABS.participantsFilter` (CLIENT false, COORDINATOR true); the select only where true; `requestOf` drops it for clients; test; docs. App gate green (55 / 277 known, 48 files, 348 tests); builds. Pushed.
+
+**User input (2026-10-28):** "Lastly, If I change the status of the request in the admin dashboard, will it change the status to both zoho and the user's dashboard?"
+
+**AI action (2026-10-28):** answered: the client's dashboard reads the same row (immediate on reload; Archived moves to the Archived page); Zoho through the same n8n webhook (Cancel / Archive / Edit with `status`, `changedBy:'admin'`), unverified end to end in production; suggested one test change. PR #141 (`0c84961`) confirmed in `main` (`6f18654`).
+
+**User input (2026-10-28):** "hey claude, in the Contractors Tab, I also want the admin to be able to download the same fields, the names, email address and phone number depending also to the filters"
+
+**AI action (2026-10-28):** `feat/admin-contractors-csv` (`db1c3a9f`) from `main` `6f18654`: the CSV pieces moved to `features/admin-export` (`contactsCsv`, `useContactsExport`, `CsvDownloadBar`) and `lib/api/allPages`, used by both the clients/coordinators list and the Contractors tab (a checkbox per card, "Select this page", Download selected / all matching the filters; email may be empty for a worker). App only, no api change. App gate green (49 files, 350 tests). Pushed.
