@@ -5740,3 +5740,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "continue to next stage"
 
 **AI action (2026-10-28):** U1 Functional Design approved. Code Generation Part 1: plan `construction/plans/search-api-code-generation-plan.md` (10 steps on `feat/search-api` from `main` `832ce43`: the slug map in schemas; `search.contract.ts` with the two entries; the HOME/PostGIS terms moved to `locations/persistence/home-sql.ts` and the admin search rewritten on them; `resolvePlace`; the keyword port; one statement; handlers; the staging comparison script; tests incl. PBT; docs). No migration, secret or infra change. Awaiting approval.
+
+**User input (2026-10-28):** "Approve"
+
+**AI action (2026-10-28):** U1 Code Generation plan approved; Part 2 started on `feat/search-api` from `main` `832ce43`.
