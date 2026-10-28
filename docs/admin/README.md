@@ -138,6 +138,35 @@ The impersonation picker: up to 50 users newest first whose email or any profile
 Workers whose account is suspended, most recently changed first, the same row shape as the search
 (`isActive: false`). Limits 60 / 120 per minute.
 
+### Clients and support coordinators (admin-clients U1)
+
+One set of entries for both roles: "requester" is the code's word for either (`service_requests.requesterId`).
+Never cached (`no-store`): a status change shows on the next read.
+
+- **`GET /v1/admin/requesters?role=CLIENT|COORDINATOR[&search=][&requestStatus=][&fundingType=][&page=&pageSize=]`**:
+  users of the role with that role's profile, newest account first. Row: name, email, mobile, `organisation`
+  (coordinators), `participantCount` (participants they still own; one removed by its owner, `userId` null, is not
+  counted), `requestCount`. `search` is a substring of the email, first or last name; `requestStatus` keeps those with
+  at least one request in it; `fundingType` those with at least one owned participant of it. One SQL statement per
+  page plus the total (`persistence/requester-sql.ts`; `service_requests` has no foreign key to `users`). Limits
+  60 / 120 per minute.
+- **`GET /v1/admin/requesters/:userId`**: the profile, the owned participants newest first with every field (date of
+  birth, conditions and funding type included: no password, user 2026-10-28) and each one's requests newest first in
+  full (`services` and `details` typed by the client's own request schema; `assignedWorkers` resolved to worker
+  profiles). Each read writes an `ADMIN_RECORD_VIEW` audit row (admin, `requesterUserId`): the record of who saw whose
+  health information. 404 for any other role or an unknown id. Limits 120 / 300 per minute.
+- **`PUT /v1/admin/service-requests/:requestId/status`** `{status}`: any of the seven statuses from any (an ACTIVE
+  request included, which the client cannot edit). One transaction: the row (CANCELLED also empties
+  `selectedWorkers`, as the client's cancel), a `SERVICE_REQUEST_STATUS_CHANGE` audit row (`requestId`, `from`, `to`)
+  and an outbox event `ServiceRequestStatusChanged` (ids only). A repeat writes nothing; a change made meanwhile
+  answers 409. Limits 60 / 120 per minute.
+- **The n8n notification** (`modules/admin/outbox/service-request-webhook.ts`): the dispatcher posts to
+  `N8N_SERVICE_REQUEST_WEBHOOK_URL` what the client's routes send for the same status, with `changedBy: "admin"`:
+  `{action: "Cancel", zohoRecordId}`, `{action: "Archive", zohoRecordId}`, otherwise the Edit body (request and
+  participant fields). Built from the rows at send time. 5xx, 408, 429 and timeouts are retried (backoff, 6 attempts,
+  then DEAD); another 4xx or a blocked host is not. Production's value is Vercel's `Cancel_Archive_Webhook`; staging's
+  is `off`, so nothing is sent there.
+
 ## 3. Caching: why a repeat is instant
 
 Each 200 carries `Cache-Control: private, max-age=60`, `Vary: Authorization` and a strong `ETag`. The browser
