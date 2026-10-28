@@ -2,7 +2,10 @@
 
 // admin-clients U2 (A2): one client or support coordinator, their participants (the client dashboard's own card, read
 // only) and each participant's requests. After a status change the detail and the lists are read again (AR-3).
+// Previous / next (and the arrow keys) walk the list the record was opened from (useNeighbours).
+import { useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { AdminParticipant } from '@remonta/api-contract'
 import type { ServiceRequestStatus } from '@remonta/schemas/data/serviceRequests'
@@ -11,9 +14,10 @@ import ParticipantDetailPanel from '@/components/dashboard/client/ParticipantDet
 import { adminApi } from '@/lib/api/admin'
 import { noticeText, noticeTitle } from '@/lib/api/outcome-notice'
 import { FUNDING_LABEL } from '@/features/service-requests/funding'
-import { REQUESTER_TABS } from './listQuery'
+import { detailHref, listHref, REQUESTER_TABS } from './listQuery'
 import RequestCard from './RequestCard'
 import { requestersQueryKey } from './RequestersList'
+import { useNeighbours } from './useNeighbours'
 
 const PAGE_NOTICE = { name: 'page', plural: 'requests' }
 
@@ -34,6 +38,23 @@ export default function RequesterDetail({ userId }: { userId: string }) {
   const queryClient = useQueryClient()
   const queryKey = ['admin-requester', userId]
   const { data: outcome, isLoading } = useQuery({ queryKey, queryFn: () => adminApi.getRequester(userId) })
+  const router = useRouter()
+  const nav = useNeighbours(userId, useSearchParams())
+  const hrefOf = (n: { userId: string; page: number } | undefined) => (n && nav.tab ? detailHref(n.userId, nav.tab, { ...nav.filters, page: n.page }) : undefined)
+  const prevHref = hrefOf(nav.prev)
+  const nextHref = hrefOf(nav.next)
+
+  // The arrow keys, except while typing or choosing in a field.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null
+      if (e.altKey || e.ctrlKey || e.metaKey || (t && ['INPUT', 'SELECT', 'TEXTAREA'].includes(t.tagName))) return
+      const href = e.key === 'ArrowLeft' ? prevHref : e.key === 'ArrowRight' ? nextHref : undefined
+      if (href) router.push(href)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [prevHref, nextHref, router])
 
   const changeStatus = async (requestId: string, status: ServiceRequestStatus): Promise<string | null> => {
     const result = await adminApi.setRequestStatus(requestId, status)
@@ -58,11 +79,21 @@ export default function RequesterDetail({ userId }: { userId: string }) {
 
   const { requester: r, participants } = outcome.body
   const tabs = REQUESTER_TABS[r.role]
+  const arrow = 'rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700'
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="mx-auto max-w-5xl space-y-6 px-4 sm:px-6 lg:px-8">
-        <Link href={`/admin/manage?tab=${tabs.tab}`} className="text-sm text-indigo-700 hover:underline">← Back to {tabs.title}</Link>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Link href={listHref(nav.tab ?? tabs.tab, nav.filters)} className="text-sm text-indigo-700 hover:underline">← Back to {tabs.title}</Link>
+          {nav.position && (
+            <div className="flex items-center gap-2">
+              {prevHref ? <Link href={prevHref} className={`${arrow} hover:bg-gray-50`} aria-label={`Previous ${tabs.singular}`}>‹ Previous</Link> : <span className={`${arrow} opacity-40`}>‹ Previous</span>}
+              <span className="text-sm text-gray-600">{nav.position.index} of {nav.position.total}</span>
+              {nextHref ? <Link href={nextHref} className={`${arrow} hover:bg-gray-50`} aria-label={`Next ${tabs.singular}`}>Next ›</Link> : <span className={`${arrow} opacity-40`}>Next ›</span>}
+            </div>
+          )}
+        </div>
 
         <div className="rounded-lg bg-white p-6 shadow">
           <p className="text-xs uppercase tracking-wide text-gray-500">{tabs.singular}</p>
