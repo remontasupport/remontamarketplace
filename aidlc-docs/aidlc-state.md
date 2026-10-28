@@ -3,8 +3,8 @@
 ## Project Information
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
-- **Current Cycle**: **admin-clients** (opened 2026-10-28). Goal (user, verbatim in `audit.md`): "in the admin dashboard, I want to have a list of the clients and coordinators and a display with their participants and requests". Record branch `aidlc/admin-clients` (from `aidlc/worker-activation`, closed the same day).
-- **Current Stage**: INCEPTION. Workspace Detection done (brownfield, unchanged; `main` `2f418e2`); targeted inventory in the questions file. Requirements Analysis approved 2026-10-28. Workflow Planning approved 2026-10-28 (U1 `clients-api`, U2 `clients-app`; CS-1..CS-5). CONSTRUCTION U1 **live**: #132 (`main` `59fd8cd`) promoted 2026-10-28 02:05Z, prod `remonta-api-00023-f4b` (previous `00022-xvq` = `90fdadb`). U2 `clients-app` **live** with follow-ups #134-#140 (prev/next, Matched left out, card with requests, age, CSV, Participants filter; api prod `00024-fpj` = `979543a`, app `main` `22e0e4c` build `remonta-7bkdl9wdp`). Open: the user's signed-in production checks; Build and Test summary; the close. Open docs PR: `docs/rollback-rows-2026-10-28` (supersedes `docs/rollback-rows-2026-10-22`).
+- **Current Cycle**: none. The admin-clients cycle closed 2026-10-28 (archived under `archive/admin-clients/`). Record branch `aidlc/admin-clients` is the newest; the next cycle branches from it.
+- **Current Stage**: between cycles. Production at the close: api `remonta-api-00024-fpj` = `979543a`, app `main` `baf44fb` (#144). Open docs PR: `docs/rollback-rows-2026-10-28` (`5cd7e6e`, rows at `baf44fb` / `979543a`; supersedes `docs/rollback-rows-2026-10-22`).
 
 ## Previous cycles (archived, read-only)
 
@@ -21,11 +21,18 @@
 | Onboarding tour + profile completion (U1 `tour-seen-api`, U2 `tour-app`, C1 `completion-api`; H1/H2) | `aidlc-docs/archive/onboarding-tour/` | Closed 2026-10-22; #88-#103 live (api prod `00014-wdv` = `9fdcf6d`, app `main` `62e24f9`); C2 not built (follow-up 27) |
 | Worker tools (U1 `tools-api`, U2 `tools-app`, the tool search) | `aidlc-docs/archive/worker-tools/` | Closed 2026-10-22; #104-#107 live (api prod `bf9b966`, app `main` `8943f93`) |
 | Worker activation (U1 `activation-api`, U2 `activation-app`) | `aidlc-docs/archive/worker-activation/` | Closed 2026-10-28; #108-#109 live 2026-10-23 (api `00017-4bz` = `746a60d`, app `main` `8b8a82d`); #110-#131 outside the cycle, api prod `90fdadb` |
+| Admin clients and coordinators (U1 `clients-api`, U2 `clients-app`, follow-ups) | `aidlc-docs/archive/admin-clients/` | Closed 2026-10-28; #132-#142 live (api prod `00024-fpj` = `979543a`, app `main` `baf44fb`); #143/#144 (Matching editable, Renew restored) outside the goal |
 
 `aidlc-docs/audit.md` is the single append-only audit trail across cycles; never rewrite it.
 
 ## What is live (carry forward -- facts the next cycle builds on)
 
+- **Admin clients and coordinators** (2026-10-28): `GET /v1/admin/requesters` (role, search, requestStatus, fundingType,
+  participants), `GET /v1/admin/requesters/:id` (audited per view), `PATCH` a request's status (audited; outbox
+  `ServiceRequestStatusChanged` posts Cancel / Archive / Edit with `changedBy: 'admin'` to `N8N_SERVICE_REQUEST_WEBHOOK_URL`,
+  staging `off`). The app's Clients / Support Coordinators tabs (`features/admin-clients`), MATCHED not offered. CSV
+  download on those tabs and the Contractors tab from one module (`features/admin-export`, `lib/api/allPages`). The
+  client's PATCH accepts PENDING and MATCHING; manage-request offers Renew on a cancelled request.
 - **Worker tools** (2026-10-22): `packages/schemas/src/data/serviceTools.ts` (the lists, `TOOL_SYNONYMS`, `toolSearchOf`)
   is the one source for the page and the api; `worker_services."toolIds"`/`"otherTools"`; the worker's "Your tools"
   screen (Cleaning, Home and Yard), the admin `tools` (all of) and `toolSearch` filters, `GET /v1/admin/workers/:id/services`.
@@ -138,7 +145,12 @@
     app PRs that call a not-yet-promoted api entry.
 33. **Tools, options**: show matched tools on the admin result cards (Q2 B); tools on the client/shared profile; tools
     for other services; review the synonym list after real use (the own tools workers type).
-34. **gcloud re-login** on this machine (revision names for the rollback rows).
+34. ~~**gcloud re-login**~~ done (2026-10-28: revision names read at the admin-clients close).
+35. **Zoho for an admin status change**: change one request in production, then check n8n's execution and the Zoho record; if
+    Cancel/Archive work but other statuses do not, the n8n workflow must map `status` on `Edit` (a workflow change).
+36. **n8n `Renew`** (#144): confirm the workflow still handles it.
+37. **Edit on a cancelled request**: the button shows but the save is refused (PENDING/MATCHING only); hide it or explain.
+38. **The n8n Cancel/Archive webhook URL** was shown in a session transcript (2026-10-28): rotate if that matters.
 
 ## Workspace State
 - **Existing Code**: Yes
@@ -156,7 +168,7 @@
 - **Documentation**: aidlc-docs/ only
 - **Structure patterns**: CLAUDE.md "Dynamic by default" (contract entries + handlers; form definitions)
 
-## Extension Configuration (worker-activation)
+## Extension Configuration (carried from worker-activation; admin-clients kept the same)
 | Extension | Enabled | Decided At |
 |---|---|---|
 | Security Baseline | Yes, blocking | worker-activation, Requirements Analysis 2026-10-23 (Security A) |
