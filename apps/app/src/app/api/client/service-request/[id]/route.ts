@@ -17,13 +17,11 @@ import { authPrisma } from '@/lib/auth-prisma'
 import { UserRole } from '@/types/auth'
 import { applyRateLimit, publicApiRateLimit } from '@/lib/ratelimit'
 import { updateServiceRequestSchema, formatZodErrors } from '@/schema/serviceRequestSchema'
+import { ARCHIVABLE_STATUSES, isEditable } from '@/features/service-requests/status'
 
 type RouteParams = { params: Promise<{ id: string }> }
 
 const ALLOWED_ROLES = new Set([UserRole.CLIENT, UserRole.COORDINATOR])
-
-/** The statuses the client or coordinator may still edit (and a hidden-archived request, restored to PENDING). */
-const EDITABLE_STATUSES = new Set(['PENDING', 'MATCHING'])
 
 // ============================================================================
 // SHARED AUTH HELPER
@@ -90,14 +88,18 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const userId = auth.session.user.id
     const body = await request.json()
 
-    // Archive — single UPDATE with ownership check in WHERE, no prior SELECT needed
+    // Archive — a completed or cancelled request only; ownership and status in one conditional UPDATE
     if (body?.status === 'ARCHIVED') {
-      const count = await authPrisma.$executeRaw`
-        UPDATE service_requests
-        SET status = 'ARCHIVED'::"ServiceRequestStatus", "updatedAt" = NOW()
-        WHERE id = ${id} AND "requesterId" = ${userId}
-      `
-      if (count === 0) return NextResponse.json({ success: false, error: 'Service request not found or forbidden' }, { status: 404 })
+      const { count } = await authPrisma.serviceRequest.updateMany({
+        where: { id, requesterId: userId, status: { in: [...ARCHIVABLE_STATUSES] } },
+        data: { status: 'ARCHIVED' },
+      })
+      if (count === 0) {
+        const owned = await authPrisma.serviceRequest.findFirst({ where: { id, requesterId: userId }, select: { id: true } })
+        return owned
+          ? NextResponse.json({ success: false, error: 'Only completed or cancelled requests can be archived' }, { status: 400 })
+          : NextResponse.json({ success: false, error: 'Service request not found or forbidden' }, { status: 404 })
+      }
       return NextResponse.json({ success: true, message: 'Request archived successfully' })
     }
 
@@ -176,7 +178,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         { status: 400 }
       )
     }
-    if (!EDITABLE_STATUSES.has(existing.status) && !isHiddenArchived) {
+    if (!isEditable(existing.status) && !isHiddenArchived) {
       return NextResponse.json(
         { success: false, error: 'Cannot update request', message: 'Only pending or matching requests can be updated' },
         { status: 400 }
