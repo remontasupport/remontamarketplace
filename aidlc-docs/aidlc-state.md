@@ -4,7 +4,7 @@
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
 - **Current Cycle**: **admin-clients** (opened 2026-10-28). Goal (user, verbatim in `audit.md`): "in the admin dashboard, I want to have a list of the clients and coordinators and a display with their participants and requests". Record branch `aidlc/admin-clients` (from `aidlc/worker-activation`, closed the same day).
-- **Current Stage**: INCEPTION. Workspace Detection done (brownfield, unchanged; `main` `2f418e2`); targeted inventory in the questions file. Requirements Analysis approved 2026-10-28. Workflow Planning approved 2026-10-28 (U1 `clients-api`, U2 `clients-app`; CS-1..CS-5). CONSTRUCTION U1: code plan approved (Q1 C: staging `off`); code pushed on `feat/admin-clients-api` (`f0c72d1`). Next: the secret on both stages, the PR, CI, merge -> staging check -> promote; then U2. Open docs PR: `docs/rollback-rows-2026-10-28` (supersedes `docs/rollback-rows-2026-10-22`).
+- **Current Stage**: INCEPTION. Workspace Detection done (brownfield, unchanged; `main` `2f418e2`); targeted inventory in the questions file. Requirements Analysis approved 2026-10-28. Workflow Planning approved 2026-10-28 (U1 `clients-api`, U2 `clients-app`; CS-1..CS-5). CONSTRUCTION U1: merged (#132, `main` `59fd8cd`); staging `00068-dz7` checked 24/24; secrets on both stages. Next: promote `59fd8cd...`; then U2 Functional Design. Open docs PR: `docs/rollback-rows-2026-10-28` (supersedes `docs/rollback-rows-2026-10-22`).
 
 ## Previous cycles (archived, read-only)
 

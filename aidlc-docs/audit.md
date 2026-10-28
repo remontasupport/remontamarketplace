@@ -5565,3 +5565,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** ran the production command with the URL pasted in place of the secret name (gcloud 404: nothing written; the webhook URL now appears in the session transcript).
 
 **AI action (2026-10-28):** ran the intended commands: prod `remonta-api-N8N_SERVICE_REQUEST_WEBHOOK_URL` version 2 = `Cancel_Archive_Webhook` from `apps/app/.env.local` (checked: https, the n8n host, 79 chars; value not printed), version 1 (placeholder) disabled; staging `remonta-api-staging-N8N_SERVICE_REQUEST_WEBHOOK_URL` created = `off`, user-managed australia-southeast1, label staging, accessor `remonta-api-staging-run`. Both stages ready for the merge.
+
+**User input (2026-10-28):** "merged"; "stop the local api"
+
+**AI action (2026-10-28):** by refs `main` = `59fd8cd` (merge of PR #132, contains `d38f6a2`). The local api stopped (task, then PID 20372; port 4000 free). deploy-api run 40617477585 (push) success: staging revision `remonta-api-staging-00068-dz7`; health 200; the three entries 401 without a token. The check script (now STAGE=staging: the staging api, rehearse-w1, the staging token secret on stdin) 24/24 PASS (36 clients / 33 coordinators = the database; filters; detail; view audited; status change + one event, repeat no-op, put back; 404/400/403/401); both events DONE, Cloud Logging "service request webhook off: nothing sent" 01:58Z. Promotion image handed over: `59fd8cdc0f1fa43ef95feb2ebc385adfab8cef4e`.
