@@ -5810,3 +5810,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **AI action (2026-10-28):** by refs `main` = `331e5e3` (#149, contains `d6f974e`); deploy-api run 40709723615 (staging) in progress; watching, then a staging public search.
 
 **AI action (2026-10-28):** staging `remonta-api-staging-00072-q62` on image `331e5e3`; public search Sydney, NSW 2000 within 20 km: 174 (was 0), nearest first. Promotion handed over: `331e5e3aac9f64aadc5267b83933e53bd170ac6a` (rollback `6886e09`).
+
+**User input (2026-10-28):** "wait for the shell"
+
+**AI action (2026-10-28):** watched prod: promoted 23:01 to `remonta-api-00026-zm4` (100 %, image `331e5e3`), health 200, public Sydney, NSW 2000 within 20 km: 178. www `/search` first showed "No Workers Found" (Vercel's 60 s data cache from before), then cards with and without a place. Noted: the page shows page 1 (12) and hides cards without a bio (5 of the first 12 for Sydney); offered a larger page or an api-side bio filter as options. Rollback: `6886e09` (`00025-8b9`).
