@@ -5,6 +5,7 @@ import type { Clock } from '../../../platform/clock'
 import { ApiError } from '../../../platform/errors'
 import type { Db } from '../../../platform/persistence/db'
 import { localityLabel } from '../../locations/domain/home'
+import { paginationOf } from '../domain/pagination'
 import { appliedFiltersOf, normaliseQuery, type LocalityRef, type SearchQuery } from '../domain/search-query'
 import { runSearch, type RawWorkerRow, type SearchResult } from '../persistence/worker-search-sql'
 
@@ -29,10 +30,9 @@ export async function searchWorkers(deps: SearchDeps, raw: WorkerSearchQueryPars
 
   const { rows, total, unplacedCount } = await (deps.run ?? runSearch)(deps.db, q, locality?.id)
   const data = rows.map((r) => shapeRow(r, now, locality !== undefined, q.withActivation))
-  const totalPages = Math.ceil(total / q.pageSize)
   return {
     data,
-    pagination: { total, page: q.page, pageSize: q.pageSize, totalPages, hasNext: q.page < totalPages, hasPrev: q.page > 1 },
+    pagination: paginationOf(total, q.page, q.pageSize),
     appliedFilters: appliedFiltersOf(q, locality),
     unplacedCount,
   }

@@ -61,6 +61,7 @@ describe('loadConfig', () => {
     ['a plain-http public origin', { CORS_ORIGINS: 'http://app.remontaservices.com.au' }],
     ['an origin with a path', { CORS_ORIGINS: 'https://app.example.com/x' }],
     ['an http webhook', { N8N_REGISTRATION_WEBHOOK_URL: 'http://n8n.example.test/b' }],
+    ['an http service request webhook', { N8N_SERVICE_REQUEST_WEBHOOK_URL: 'http://n8n.example.test/c' }],
     ['a non-postgres database URL', { AUTH_DATABASE_URL: 'mysql://x' }],
     ['a score outside 0..1', { RECAPTCHA_MIN_SCORE: '2' }],
   ])('refuses %s', (_label, patch) => {
@@ -70,6 +71,13 @@ describe('loadConfig', () => {
   it('does not require the n8n URLs while the CRM notification is deferred', () => {
     expect(problems({ ...complete, N8N_REGISTRATION_WEBHOOK_URL: undefined })).toEqual([])
     expect(loadConfig({ ...complete, N8N_REGISTRATION_WEBHOOK_URL: undefined }).outboundHosts).not.toContain('n8n.example.test')
+  })
+
+  it('admin-clients: the service request webhook is optional, `off` means none, and a URL joins the outbound hosts', () => {
+    expect(loadConfig({ ...complete, N8N_SERVICE_REQUEST_WEBHOOK_URL: 'off' }).N8N_SERVICE_REQUEST_WEBHOOK_URL).toBeUndefined()
+    const on = loadConfig({ ...complete, N8N_REGISTRATION_WEBHOOK_URL: undefined, N8N_SERVICE_REQUEST_WEBHOOK_URL: 'https://flows.example.test/webhook/sr' })
+    expect(on.N8N_SERVICE_REQUEST_WEBHOOK_URL).toBe('https://flows.example.test/webhook/sr')
+    expect(on.outboundHosts).toContain('flows.example.test')
   })
 
   it('names the photo bucket per stage and needs the Blob token (the clean copies live in Blob)', () => {
