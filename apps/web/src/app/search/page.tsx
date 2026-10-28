@@ -2,16 +2,9 @@ import Image from 'next/image'
 import Link from 'next/link'
 import HowItWorks from '@/components/sections/HowItWorks'
 import SearchBarSection from '@/components/sections/SearchBarSection'
+import { createClient, searchContract, type PublicWorkerCard } from '@remonta/api-contract'
 
-interface Worker {
-  id: string
-  firstName: string
-  lastName: string
-  city?: string
-  state?: string
-  photo?: string | null
-  bio?: string | null
-}
+type Worker = PublicWorkerCard
 
 interface PageProps {
   searchParams: Promise<{
@@ -39,20 +32,29 @@ const howItWorksSteps = [
   }
 ]
 
+/**
+ * The first page of the public worker list from apps/api (GET /v1/public/workers, search-locations U2), rendered
+ * server side; Vercel's data cache holds each answer for 60 s, the api's own cache window. Any failure shows no
+ * workers, as before.
+ */
 async function fetchWorkers(location: string, typeOfSupport: string, within: string): Promise<Worker[]> {
-  const params = new URLSearchParams()
-  if (location) params.set('location', location)
-  if (typeOfSupport) params.set('typeOfSupport', typeOfSupport)
-  if (within) params.set('within', within)
-  params.set('page', '1')
-
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL
+  if (!baseUrl) {
+    console.error('[search] NEXT_PUBLIC_API_URL missing; the worker list is unavailable')
+    return []
+  }
+  const api = createClient(searchContract, { baseUrl, fetch: (input, init) => fetch(input, { ...init, next: { revalidate: 60 } }) })
   try {
-    const res = await fetch(`${process.env.REMONTA_API_URL}/api/public/workers?${params}`, {
-      cache: 'no-store',
+    const res = await api.searchPublicWorkers({
+      query: {
+        page: 1,
+        ...(location ? { location } : {}),
+        ...(typeOfSupport ? { typeOfSupport } : {}),
+        ...(within ? { within } : {}),
+      },
     })
-    const data = await res.json()
-    const all: Worker[] = Array.isArray(data) ? data : (data?.data ?? data?.workers ?? data?.results ?? [])
-    return all.filter((w) => w.bio && w.bio.trim().length > 0)
+    if (!res.ok) return []
+    return res.body.data.filter((w) => w.bio && w.bio.trim().length > 0)
   } catch {
     return []
   }
