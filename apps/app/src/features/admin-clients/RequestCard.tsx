@@ -5,10 +5,11 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import type { AdminServiceRequest } from '@remonta/api-contract'
-import { SERVICE_REQUEST_STATUSES, type ServiceRequestStatus } from '@remonta/schemas/data/serviceRequests'
+import type { ServiceRequestStatus } from '@remonta/schemas/data/serviceRequests'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { SERVICE_REQUEST_STATUS_STYLE } from '@/features/service-requests/status'
 import { detailRows, servicesText } from './requestDetails'
+import { statusChoicesFor } from './statusChoices'
 
 const date = (iso: string) => new Date(iso).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })
 
@@ -56,7 +57,7 @@ export default function RequestCard({ request, onChangeStatus }: {
             className="rounded-md border border-gray-300 px-2 py-1.5 text-sm"
             aria-label="New status"
           >
-            {SERVICE_REQUEST_STATUSES.map((s) => <option key={s} value={s}>{SERVICE_REQUEST_STATUS_STYLE[s].label}</option>)}
+            {statusChoicesFor(request.status).map((s) => <option key={s} value={s}>{SERVICE_REQUEST_STATUS_STYLE[s].label}</option>)}
           </select>
           <button
             onClick={() => setConfirming(true)}
