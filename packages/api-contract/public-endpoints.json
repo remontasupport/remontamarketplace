@@ -37,6 +37,6 @@
   },
   {
     "route": "GET /v1/public/workers",
-    "reason": "The marketing site's worker list (search page), for visitors without an account. Returns activated workers' public cards only (name, bio, photo, suburb, state, service names, distance); no contact data, coordinates or ids beyond the worker id; per-IP and global limits, cached 60 s."
+    "reason": "The marketing site's worker list (search page), for visitors without an account. Returns unsuspended workers' public cards only (name, bio, photo, suburb, state, service names, distance); no contact data, coordinates or ids beyond the worker id; per-IP and global limits, cached 60 s."
   }
 ]

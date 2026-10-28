@@ -15257,7 +15257,7 @@
     "/v1/public/workers": {
       "get": {
         "operationId": "search.searchPublicWorkers",
-        "summary": "The marketing site's worker list: activated workers' public cards, by service and a radius from a suburb.",
+        "summary": "The marketing site's worker list: unsuspended workers' public cards, by service and a radius from a suburb.",
         "security": [],
         "parameters": [
           {

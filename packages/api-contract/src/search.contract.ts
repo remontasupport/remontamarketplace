@@ -120,7 +120,7 @@ export const searchContract = defineContract('search', {
   searchPublicWorkers: {
     method: 'GET',
     path: '/v1/public/workers',
-    summary: "The marketing site's worker list: activated workers' public cards, by service and a radius from a suburb.",
+    summary: "The marketing site's worker list: unsuspended workers' public cards, by service and a radius from a suburb.",
     query: publicWorkerQuerySchema,
     responses: { 200: publicWorkerResponseSchema },
     meta: meta({
