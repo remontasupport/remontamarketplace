@@ -5653,3 +5653,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "promotion is done, but the pr says Can't automatically merge"
 
 **AI action (2026-10-28):** verified: deploy-api run 40628114144 (workflow_dispatch) success 03:43Z; prod `remonta-api-00024-fpj` 100 %, the image staging `00069-p85` checked; health 200 (previous `00023-f4b` = `59fd8cd`). The app branch merged `origin/main` locally with no conflict; merge commit `238c991` pushed; PR #140 now `mergeable: true` (checks running). Its diff: 4 files, the participants select only.
+
+**User input (2026-10-28):** "abort, it is now able to merge"; "merged"
+
+**AI action (2026-10-28):** by refs `main` = `22e0e4c` (merge of PR #140, contains `14a4516`), after the promotion (03:43Z): the order held. Vercel production builds success: remonta-app `remonta-7bkdl9wdp-remontas-projects.vercel.app`, remontamarketplace `remontamarketplace-gjyedocql-remontas-projects.vercel.app`; app `/login` 200, `/admin/manage?tab=clients` 200, www 200. CSV download and the Participants filter live; signed-in checks are the user's.
