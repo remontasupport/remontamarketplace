@@ -5782,3 +5782,15 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **AI action (2026-10-28):** Q1 A (`NEXT_PUBLIC_API_URL`), Q2 A (remove the web proxy); taken as the plan's approval. Gave the Vercel steps (remontamarketplace → Settings → Environment Variables: Preview = staging api URL, Production = prod api URL; check against remonta-app's values; never prod in Preview). U2 Code Generation Part 2 started on `feat/search-callers`.
 
 **AI action (2026-10-28):** U2 code on `feat/search-callers` (`b7fa2b1`, 5 commits, 20 files, +244/-1403): shared `lib/api/call.ts` (account + search clients), `useWorkers` on `GET /v1/client/workers`, web `/search` on `GET /v1/public/workers` (contract client, revalidate 60), old routes + web proxy + `LISTABLE_WORKER` + the parity script removed (nothing left to compare; deviation from step 5), docs. Gates: app 353 tests, baselines OK (only the deleted routes' lines dropped), web clean, contract 138, api tsc, turbo build 3/3. Local api/app stopped (they held the Prisma engine: EPERM). Follow-up 40 (admin/worker clients onto `call.ts`). Pushed; awaiting the PR, the Vercel variable and the preview checklist.
+
+**User input (2026-10-28):** "what is the environment for NEXT_PUBLIC_API_URL"
+
+**AI action (2026-10-28):** answered: remontamarketplace Production = prod api URL, Preview = staging api URL, Development unset (local: `apps/web/.env.local`).
+
+**User input (2026-10-28):** "it says Remove the public framework prefix to keep this value private. Public prefixes expose values to the browser. If that's safe, change the variable to Config."
+
+**AI action (2026-10-28):** answered: safe (a public URL the app's browser code already calls; the web page reads it server side; the api is protected by token, limits, CORS); choose Config, keep the name.
+
+**User input (2026-10-28):** "Done and Merged"
+
+**AI action (2026-10-28):** by refs `main` = `0bacbea` (#148, contains `b7fa2b1`); Vercel production builds pending at the check; watching. Asked whether the preview checklist ran before the merge (not assumed).
