@@ -83,11 +83,11 @@ export default function RequestCard({ request, onChangeStatus }: {
       )}
 
       {rows.length > 0 && (
-        <dl className="mt-3 grid gap-x-6 gap-y-2 border-t border-gray-100 pt-3 text-sm sm:grid-cols-2">
+        <dl className="mt-4 grid gap-x-8 gap-y-4 border-t border-gray-100 pt-4 sm:grid-cols-2">
           {rows.map((r) => (
             <div key={r.label}>
-              <dt className="text-xs text-gray-500">{r.label}</dt>
-              <dd className="whitespace-pre-wrap text-gray-900">{r.value}</dd>
+              <dt className="text-sm font-semibold text-gray-800">{r.label}</dt>
+              <dd className="mt-0.5 whitespace-pre-wrap text-base text-gray-900">{r.value}</dd>
             </div>
           ))}
         </dl>
