@@ -10,10 +10,8 @@
 1	src/app/api/auth/verify-otp/route.ts::@typescript-eslint/no-explicit-any
 3	src/app/api/categories/route.ts::@typescript-eslint/no-explicit-any
 1	src/app/api/client/service-request/route.ts::@typescript-eslint/no-explicit-any
-3	src/app/api/client/workers/route.ts::@typescript-eslint/no-explicit-any
 3	src/app/api/contractors/route.ts::@typescript-eslint/no-explicit-any
 1	src/app/api/contractors/route.ts::prefer-const
-1	src/app/api/public/workers/route.ts::@typescript-eslint/no-explicit-any
 1	src/app/api/sms/send-verification/route.ts::prefer-const
 1	src/app/api/upload/worker-photo/route.ts::@typescript-eslint/no-explicit-any
 2	src/app/apply/page.tsx::react/no-unescaped-entities
