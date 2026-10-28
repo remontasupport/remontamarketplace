@@ -5796,3 +5796,11 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **AI action (2026-10-28):** by refs `main` = `0bacbea` (#148, contains `b7fa2b1`); Vercel production builds pending at the check; watching. Asked whether the preview checklist ran before the merge (not assumed).
 
 **AI action (2026-10-28):** production after #148: Vercel builds success (remonta-app, remontamarketplace, 22:31). app `/login` 200; `/api/client/workers` and `/api/public/workers` 404 (removed); www `/` 200; www `/search?location=Parramatta, NSW 2150&within=20` 200, renders "Support workers near Parramatta, NSW 2150" and "No Workers Found" (0 activated workers in production, as before); www `/api/public/workers` 404 (removed); api prod `remonta-api-00025-8b9` 100 % (unchanged), health 200. The signed-in client search in production is the user's check; the preview checklist answer is pending.
+
+**User input (2026-10-28):** "when I tested the marketing site and search Sydney, NSW 2000, there is no workers appeared, this is in the production"
+
+**AI action (2026-10-28):** verified on the prod api: total 0 with no filter and Sydney within 500 km; the old route was 0 before the switch too. Cause: 0 activated workers (worker-activation rule of 2026-10-23). Offered the alternative (every unsuspended worker) as a product decision.
+
+**User input (2026-10-28):** "yes, I want it"; then chose "All unsuspended (Recommended)" (the public list = every unsuspended worker; the activation switch stops affecting it)
+
+**AI action (2026-10-28):** `fix/public-list-unsuspended` (`d6f974e`, 2 commits, 10 files): one eligibility for both searches (ACTIVE + first and last name; `audience` removed from the spec), contract summary + `public-endpoints.json` reason + openapi, tests (unit: the statement never reads `isActivated`; database: both searches equal the unsuspended set with two thirds switched on), docs; the admin switch's tooltip and aria-label no longer claim it controls the public list. Gates: contract 138, api 1054 / 256 skipped, app 353 + baselines OK. Pushed. Order: merge → staging → promote; the app's tooltip change ships with the merge (wording only). Follow-up 41: remove or repurpose the activation switch.

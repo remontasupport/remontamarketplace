@@ -152,6 +152,7 @@
     Cancel/Archive work but other statuses do not, the n8n workflow must map `status` on `Edit` (a workflow change).
 36. ~~**n8n `Renew`**~~ (#144): confirmed by the user (2026-10-28).
 37. ~~**Edit on a cancelled request**~~: Edit shown on Pending and Matching only (`fix/edit-pending-matching-only`, 2026-10-28).
+41. **The activation switch** (user 2026-10-28): the public worker list no longer reads `isActivated` (every unsuspended worker is listed); the admin dashboard's switch (worker-activation) now changes nothing anyone sees. Remove it, or give it a new meaning.
 40. **The admin and worker api clients' token loop** (search-locations U2): `apps/app/src/lib/api/admin.ts` and `features/worker/api.ts` still carry their own copy of the loop `lib/api/call.ts` now holds; move them onto it (with their cache modes and abort signals) in a refactor with its own tests.
 39. **Legacy location columns, the remainder of follow-up 1** (user 2026-10-28, Q5 A "TAKE NOTE OF THIS"): after the search-locations cycle's searches have run in production for a while, a later cycle stops the api's dual write (`placeHome` → `LegacyLocationColumns`), moves the display readers (profile preview, profile data, completion, admin lists, the admin search fallback) to the HOME locality, reworks the reconciler (it matches the legacy city/state/postcode), then drops the six columns.
 38. **The n8n Cancel/Archive webhook URL** was shown in a session transcript (2026-10-28): rotate if that matters.
