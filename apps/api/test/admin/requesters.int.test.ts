@@ -94,6 +94,11 @@ describe.skipIf(!local)('admin-clients U1: clients and coordinators on PostGIS',
     expect(await ids({ requestStatus: 'PENDING' })).toEqual([id.c2])
     expect(await ids({ fundingType: 'NDIS' })).toEqual([id.c1]) // the unowned NDIS participant does not count for c2
     expect(await ids({ fundingType: 'PRIVATE', requestStatus: 'ACTIVE' })).toEqual([])
+    // The participants filter: owned ones only (the unowned participant is nobody's).
+    expect(await ids({ participants: 'with' })).toEqual([id.c2, id.c1])
+    expect(await ids({ participants: 'without' })).toEqual([])
+    expect((await list({ role: 'COORDINATOR', participants: 'without' })).data.map((r) => r.userId)).toEqual([id.k1])
+    expect((await list({ role: 'COORDINATOR', participants: 'with' })).data).toEqual([])
     expect(await ids({ search: `c1@${DOMAIN}` })).toEqual([id.c1])
     expect(await ids({ search: 'cody' })).toEqual(expect.arrayContaining([id.c2]))
     const page = await list({ role: 'CLIENT', pageSize: '1' })

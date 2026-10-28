@@ -42,6 +42,10 @@ function fromWhere(q: Filters): Prisma.Sql {
   if (q.fundingType) {
     terms.push(Prisma.sql`EXISTS (SELECT 1 FROM participants pa WHERE pa."userId" = u.id AND pa."fundingType" = ${q.fundingType}::"FundingType")`)
   }
+  if (q.participants) {
+    const owned = Prisma.sql`EXISTS (SELECT 1 FROM participants pa WHERE pa."userId" = u.id)`
+    terms.push(q.participants === 'with' ? owned : Prisma.sql`NOT ${owned}`)
+  }
   return Prisma.sql`FROM users u JOIN ${PROFILE[q.role].table} pr ON pr."userId" = u.id WHERE ${Prisma.join(terms, ' AND ')}`
 }
 
