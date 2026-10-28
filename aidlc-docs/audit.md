@@ -5627,3 +5627,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "by the way, why does the age didn't specified even if the Date of Birth has a values, fix it"
 
 **AI action (2026-10-28):** cause: the card shows `age` only when given one; the client pages compute it (three copies: the client and coordinator dashboard pages, `ParticipantsMasterDetail`), the admin page passed none. Branch `fix/participant-age` from `main` `819dbde` (`38c91186`): `lib/age.ts` `ageFrom` (+ test; the birth date read as a calendar date, so no timezone shift) used by the three client places and the admin page. App gate green (55 / 277 known, 46 files). Pushed.
+
+**User input (2026-10-28):** "In the any request status field, remove the has a matched request, apply it to the same pr above"
+
+**AI action (2026-10-28):** on `fix/participant-age` (`5e59386e`): `statusChoices.ts` exports `OFFERED_STATUSES` (Matched left out), used by the list filter, the URL reader (an old `requestStatus=MATCHED` link is ignored) and Change status; tests; docs. App gate green (55 / 277 known, 46 files, 342 tests). Pushed.
