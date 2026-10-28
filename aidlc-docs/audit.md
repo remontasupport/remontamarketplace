@@ -5661,3 +5661,5 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "ahh, the participants filter dropdown should not be appear on the clients path"
 
 **AI action (2026-10-28):** the Participants filter per role in `REQUESTER_TABS` (coordinators only); `requestOf` drops it for clients (an old link is ignored); the select rendered only where offered. App only. Branch `fix/participants-filter-coordinators-only` from `main` `22e0e4c`.
+
+**AI action (2026-10-28):** `fix/participants-filter-coordinators-only` (`0c849610`): `REQUESTER_TABS.participantsFilter` (CLIENT false, COORDINATOR true); the select only where true; `requestOf` drops it for clients; test; docs. App gate green (55 / 277 known, 48 files, 348 tests); builds. Pushed.
