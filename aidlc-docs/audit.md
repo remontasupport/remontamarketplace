@@ -5750,3 +5750,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **AI action (2026-10-28):** answered: no PR yet (code not pushed); gave the compare URL with the encoded branch name.
 
 **AI action (2026-10-28):** U1 Code Generation done on `feat/search-api` (`272827d`, 5 commits, 27 files): the search contract area, shared `home-sql.ts` (admin search rewritten on it), `resolvePlace` (exact name in postcode before the matcher: a comma-less suggestion failed the first test run; one suburb's postcode rows = one place), the search module, `parity:search`, docs. Gates: schemas 98, api-contract 138, api 1054 passed / 256 skipped (database tests need CI). Pushed; summary `construction/search-api/code/code-summary.md`. Awaiting review and the PR.
+
+**User input (2026-10-28):** "there is an error CI (api) / API Quality (Node 20.x)"
+
+**AI action (2026-10-28):** read the job's annotations (anonymous GitHub API): `BootError ... search.searchWorkersForClient: no handler` in `test/registration/registration.int.test.ts` and `test/registration/harness.ts` (database-gated, skipped locally). Both listed the other areas' stand-in handlers by hand and lacked the new search area. Fix `2241256`: they now stand in for every contract but registration (`contracts.filter(...).map(unreachableHandlers)`, the worker tests' pattern), so a future area cannot break them the same way. Pushed; watching CI.
