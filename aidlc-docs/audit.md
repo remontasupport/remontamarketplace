@@ -5675,3 +5675,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "Hey claude, I quick UX fix in the client's and coordinators path, when they edit the request that has a status matching, it won't allow to edit, can you make it allowable"
 
 **AI action (2026-10-28):** cause: `PATCH /api/client/service-request/[id]` accepted PENDING only (the table already opens the edit page for MATCHING). `fix/edit-matching-request` from `main`: `EDITABLE_STATUSES` = PENDING, MATCHING; the edit save sends no status, so the request stays MATCHING. App gate green (350 tests). Pushed.
+
+**User input (2026-10-28):** "Perfect, now on the /manage-request page, I had a button Renew beside the edit button before, I want to restore it the function of the button before was making the status as Pending"
+
+**AI action (2026-10-28):** Renew was removed in `9f779893` (2026-10-26); the `/reactivate` route stayed. `feat/manage-request-renew` from `main` `549aec8` (#143 confirmed merged): Renew restored on CANCELLED requests (desktop and mobile, in Cancel's place), POST `/reactivate` → PENDING with selected workers cleared, n8n action `Renew` as before. App gate green (350 tests). Pushed.
