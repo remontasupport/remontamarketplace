@@ -16,6 +16,8 @@ import type { WorkerRow, WorkerSearchResponse } from '@remonta/api-contract'
 import { useCategories } from '@/hooks/queries/useCategories'
 import WorkerAvatar from '@/components/ui/WorkerAvatar'
 import { adminApi, type ApiOutcome } from '@/lib/api/admin'
+import { noticeText, noticeTitle } from '@/lib/api/outcome-notice'
+import Pagination from '@/components/ui/Pagination'
 import {
   DEFAULT_FILTERS,
   EXPERIENCE_OPTIONS,
@@ -86,6 +88,8 @@ const QUERY_KEY = 'admin-workers'
 // ============================================================================
 // COMPONENT
 // ============================================================================
+
+const SEARCH_NOTICE = { name: 'search', plural: 'searches' }
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -405,86 +409,6 @@ export default function AdminDashboard() {
     } else {
       alert('Failed to restore the account: ' + noticeText(result))
     }
-  }
-
-  // ========================================
-  // RENDER HELPERS
-  // ========================================
-
-  const renderPagination = () => {
-    if (!results?.pagination) return null
-
-    const { page, totalPages, hasNext, hasPrev } = results.pagination
-
-    // Generate page numbers to display (max 5)
-    const pageNumbers: number[] = []
-    const maxPagesToShow = 5
-    let startPage = Math.max(1, page - Math.floor(maxPagesToShow / 2))
-    const endPage = Math.min(totalPages, startPage + maxPagesToShow - 1)
-
-    if (endPage - startPage + 1 < maxPagesToShow) {
-      startPage = Math.max(1, endPage - maxPagesToShow + 1)
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pageNumbers.push(i)
-    }
-
-    return (
-      <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
-        <div className="flex flex-1 justify-between sm:hidden">
-          <button
-            onClick={() => handlePageChange(page - 1)}
-            disabled={!hasPrev}
-            className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Previous
-          </button>
-          <button
-            onClick={() => handlePageChange(page + 1)}
-            disabled={!hasNext}
-            className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Next
-          </button>
-        </div>
-        <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-center">
-          <div>
-            <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-              <button
-                onClick={() => handlePageChange(page - 1)}
-                disabled={!hasPrev}
-                className="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span className="sr-only">Previous</span>
-                ←
-              </button>
-              {pageNumbers.map((pageNum) => (
-                <button
-                  key={pageNum}
-                  onClick={() => handlePageChange(pageNum)}
-                  className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
-                    pageNum === page
-                      ? 'z-10 bg-indigo-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
-                      : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
-                  }`}
-                >
-                  {pageNum}
-                </button>
-              ))}
-              <button
-                onClick={() => handlePageChange(page + 1)}
-                disabled={!hasNext}
-                className="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <span className="sr-only">Next</span>
-                →
-              </button>
-            </nav>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   const notice = outcome && outcome.kind !== 'ok' && outcome.kind !== 'unauthenticated' ? outcome : null
@@ -1150,7 +1074,7 @@ export default function AdminDashboard() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <h3 className={`text-sm font-medium ${notice.kind === 'rateLimited' ? 'text-amber-800' : 'text-red-800'}`}>
-                    {noticeTitle(notice)}
+                    {noticeTitle(notice, SEARCH_NOTICE)}
                   </h3>
                   <p className={`mt-1 text-sm ${notice.kind === 'rateLimited' ? 'text-amber-700' : 'text-red-700'}`}>{noticeText(notice)}</p>
                 </div>
@@ -1431,7 +1355,7 @@ export default function AdminDashboard() {
               )}
 
               {/* Pagination */}
-              {renderPagination()}
+              {results?.pagination && <Pagination pagination={results.pagination} onPage={handlePageChange} />}
             </div>
           )}
         </main>
@@ -1516,40 +1440,4 @@ export default function AdminDashboard() {
       )}
     </div>
   )
-}
-
-// ============================================================================
-// NOTICES (U1's outcome contract, frontend-components.md)
-// ============================================================================
-
-function noticeTitle(o: Exclude<ApiOutcome<unknown>, { kind: 'ok' }>): string {
-  switch (o.kind) {
-    case 'forbidden':
-      return 'Your account cannot use the admin search'
-    case 'rateLimited':
-      return 'Too many searches'
-    case 'unavailable':
-      return 'The search is temporarily unavailable'
-    case 'unauthenticated':
-      return 'Please sign in again'
-    default:
-      return 'The search could not be completed'
-  }
-}
-
-function noticeText(o: Exclude<ApiOutcome<unknown>, { kind: 'ok' }>): string {
-  switch (o.kind) {
-    case 'forbidden':
-      return 'This happens while impersonating a user or after a role change. The last results are kept.'
-    case 'rateLimited':
-      return `Retrying automatically in ${o.retryAfterSeconds} seconds. The last results are kept.`
-    case 'unavailable':
-      return 'Please try again in a moment. The last results are kept.'
-    case 'unauthenticated':
-      return 'Your session has ended.'
-    default: {
-      const fields = o.fields ? Object.entries(o.fields).map(([k, v]) => `${k}: ${v.join(', ')}`).join('; ') : ''
-      return `${fields || 'Something went wrong'}${o.requestId ? ` (request ${o.requestId})` : ''}.`
-    }
-  }
 }
