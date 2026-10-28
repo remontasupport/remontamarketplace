@@ -148,9 +148,9 @@
 33. **Tools, options**: show matched tools on the admin result cards (Q2 B); tools on the client/shared profile; tools
     for other services; review the synonym list after real use (the own tools workers type).
 34. ~~**gcloud re-login**~~ done (2026-10-28: revision names read at the admin-clients close).
-35. **Zoho for an admin status change**: change one request in production, then check n8n's execution and the Zoho record; if
+35. ~~**Zoho for an admin status change**~~ confirmed by the user (2026-10-28). Was: change one request in production, then check n8n's execution and the Zoho record; if
     Cancel/Archive work but other statuses do not, the n8n workflow must map `status` on `Edit` (a workflow change).
-36. **n8n `Renew`** (#144): confirm the workflow still handles it.
+36. ~~**n8n `Renew`**~~ (#144): confirmed by the user (2026-10-28).
 37. ~~**Edit on a cancelled request**~~: Edit shown on Pending and Matching only (`fix/edit-pending-matching-only`, 2026-10-28).
 38. **The n8n Cancel/Archive webhook URL** was shown in a session transcript (2026-10-28): rotate if that matters.
 

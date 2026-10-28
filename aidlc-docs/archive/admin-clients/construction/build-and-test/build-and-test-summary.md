@@ -27,7 +27,7 @@ client PATCH route (archiving another status now 400); app gate 352 tests.
 
 ## Not done
 
-- **Zoho end to end for an admin status change**: no admin status change in production logs at the close; whether the n8n
+- ~~**Zoho end to end for an admin status change**~~ (confirmed by the user after the close, 2026-10-28): no admin status change in production logs at the close; whether the n8n
   workflow writes `status` from an `Edit` is unknown (follow-up 35).
-- **n8n's handling of `Renew`** after #144 not verified (follow-up 36).
+- ~~**n8n's handling of `Renew`**~~ after #144: confirmed by the user after the close, 2026-10-28 (follow-up 36).
 - Database-gated tests ran only in CI. The full local `turbo run build` not run for #142-#144 (Vercel built them).

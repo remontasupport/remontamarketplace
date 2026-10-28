@@ -5703,3 +5703,8 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "Done merging, can you close the ai dlc now"
 
 **AI action (2026-10-28):** verified by refs: `main` = `aaf1841` (#145, contains `c46f9a4` and `ddbc8e8`); Vercel production builds of `aaf1841` pending at the time of the check. The admin-clients cycle was already closed; #145 recorded after the close in the archive README and Build and Test summary, and in the state's "what is live". Docs PR `docs/rollback-rows-2026-10-28` (`5cd7e6e`) still unmerged; its rows (the `baf44fb` builds, api `979543a`) remain valid rollback points. State: between cycles.
+
+**User input (2026-10-28):** " Zoho: confirm an admin status change reaches the Zoho record.
+- Renew: confirm the n8n workflow handles the Renew message. these are done so take it out to the memory"
+
+**AI action (2026-10-28):** follow-ups 35 (Zoho for an admin status change) and 36 (n8n `Renew`) marked done on the user's confirmation, in the state file, the admin-clients Build and Test summary and the session memory. Open: 38 (the webhook URL seen in a transcript).
