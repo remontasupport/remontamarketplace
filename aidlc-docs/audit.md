@@ -5671,3 +5671,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "hey claude, in the Contractors Tab, I also want the admin to be able to download the same fields, the names, email address and phone number depending also to the filters"
 
 **AI action (2026-10-28):** `feat/admin-contractors-csv` (`db1c3a9f`) from `main` `6f18654`: the CSV pieces moved to `features/admin-export` (`contactsCsv`, `useContactsExport`, `CsvDownloadBar`) and `lib/api/allPages`, used by both the clients/coordinators list and the Contractors tab (a checkbox per card, "Select this page", Download selected / all matching the filters; email may be empty for a worker). App only, no api change. App gate green (49 files, 350 tests). Pushed.
+
+**User input (2026-10-28):** "Hey claude, I quick UX fix in the client's and coordinators path, when they edit the request that has a status matching, it won't allow to edit, can you make it allowable"
+
+**AI action (2026-10-28):** cause: `PATCH /api/client/service-request/[id]` accepted PENDING only (the table already opens the edit page for MATCHING). `fix/edit-matching-request` from `main`: `EDITABLE_STATUSES` = PENDING, MATCHING; the edit save sends no status, so the request stays MATCHING. App gate green (350 tests). Pushed.
