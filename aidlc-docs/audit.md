@@ -5609,3 +5609,5 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "in the status dropdown, can you exclude the Matched for now"
 
 **AI action (2026-10-28):** taken as the request card's Change status select (app only; the api keeps accepting MATCHED; a request already MATCHED still shows it as its current value; the list filter unchanged). Branch `feat/admin-status-no-matched` from `main` `186b617`.
+
+**AI action (2026-10-28):** `feat/admin-status-no-matched` (`e7729dd1`): `statusChoices.ts` (+ test) leaves MATCHED out of the request card's select unless it is the current status; docs. App gate green (55 / 277 known, 45 files, 338 tests). Pushed.
