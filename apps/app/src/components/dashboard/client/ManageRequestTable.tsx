@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArchiveBoxArrowDownIcon, XCircleIcon, ArrowPathIcon, PencilSquareIcon } from '@heroicons/react/24/outline'
 import { BRAND_COLORS } from '@/lib/constants'
-import { SERVICE_REQUEST_STATUS_STYLE as statusConfig, isEditable, type ServiceRequestStatus } from '@/features/service-requests/status'
+import { SERVICE_REQUEST_STATUS_STYLE as statusConfig, isArchivable, isEditable, type ServiceRequestStatus } from '@/features/service-requests/status'
 
 
 const SERVICE_LABEL_MAP: Record<string, string> = {
@@ -176,7 +176,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                 </div>
               </div>
 
-              {/* Action footer — Edit only where the save accepts it; a completed request can only be archived */}
+              {/* Action footer — Edit and Archive only where the save accepts them; a completed request can only be archived */}
               <div className="border-t border-gray-100 bg-gray-50 px-2 py-1 flex items-center">
                 {isEditable(request.status) && (
                   <>
@@ -217,15 +217,12 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                           <XCircleIcon className="w-4 h-4" />
                           {isCancellingRequest === request.id ? 'Cancelling…' : 'Cancel'}
                         </button>
-
-                        {request.status !== 'ACTIVE' && <div className="w-px h-5 bg-gray-200 flex-shrink-0" />}
                       </>
                     )}
                   </>
                 )}
 
-                {/* An active request cannot be archived */}
-                {request.status !== 'ACTIVE' && (
+                {isArchivable(request.status) && (
                   <button
                     onClick={() => setArchiveTarget(request)}
                     className="flex-1 inline-flex items-center justify-center gap-1.5 py-2.5 text-sm font-medium font-poppins text-gray-500 hover:text-orange-500 rounded-lg transition-colors hover:bg-white"
@@ -306,7 +303,7 @@ export default function ManageRequestTable({ requests: initialRequests, basePath
                           Edit
                         </button>
                       )}
-                      {request.status !== 'ACTIVE' && (
+                      {isArchivable(request.status) && (
                         <button
                           onClick={() => setArchiveTarget(request)}
                           className="inline-flex items-center gap-1.5 text-sm font-poppins text-gray-400 hover:text-orange-500 transition-colors"

@@ -1,5 +1,6 @@
 // A service request status as every screen shows it (moved out of the client's request table, admin-clients U2 A6):
-// the label and the badge colours, one entry per database value; and which statuses the client or coordinator may edit.
+// the label and the badge colours, one entry per database value; and which statuses the client or coordinator may edit
+// or archive.
 import type { ServiceRequestStatus } from '@remonta/schemas/data/serviceRequests'
 
 export type { ServiceRequestStatus }
@@ -19,4 +20,11 @@ export const EDITABLE_STATUSES: readonly ServiceRequestStatus[] = ['PENDING', 'M
 
 export function isEditable(status: string): boolean {
   return (EDITABLE_STATUSES as readonly string[]).includes(status)
+}
+
+/** The statuses a client or coordinator may archive: the manage-request page shows Archive only for these, and the save accepts only these. */
+export const ARCHIVABLE_STATUSES: readonly ServiceRequestStatus[] = ['COMPLETED', 'CANCELLED']
+
+export function isArchivable(status: string): boolean {
+  return (ARCHIVABLE_STATUSES as readonly string[]).includes(status)
 }
