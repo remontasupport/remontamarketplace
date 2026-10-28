@@ -7,13 +7,14 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import type { RequesterRole } from '@remonta/api-contract'
-import { FUNDING_TYPES, SERVICE_REQUEST_STATUSES } from '@remonta/schemas/data/serviceRequests'
+import { FUNDING_TYPES } from '@remonta/schemas/data/serviceRequests'
 import Loader from '@/components/ui/Loader'
 import Pagination from '@/components/ui/Pagination'
 import { adminApi } from '@/lib/api/admin'
 import { noticeText, noticeTitle } from '@/lib/api/outcome-notice'
 import { SERVICE_REQUEST_STATUS_STYLE } from '@/features/service-requests/status'
 import { FUNDING_LABEL } from '@/features/service-requests/funding'
+import { OFFERED_STATUSES } from './statusChoices'
 import { detailHref, filtersOf, listHref, REQUESTER_TABS, requestOf, type ListFilters } from './listQuery'
 
 const LIST_NOTICE = { name: 'list', plural: 'requests' }
@@ -73,7 +74,7 @@ export default function RequestersList({ role }: { role: RequesterRole }) {
             aria-label="Request status"
           >
             <option value="">Any request status</option>
-            {SERVICE_REQUEST_STATUSES.map((s) => (
+            {OFFERED_STATUSES.map((s) => (
               <option key={s} value={s}>Has a {SERVICE_REQUEST_STATUS_STYLE[s].label.toLowerCase()} request</option>
             ))}
           </select>

@@ -10,6 +10,7 @@ import { UserRole } from "@/types/auth";
 import { authPrisma, withRetry } from "@/lib/auth-prisma";
 import ClientDashboardLayout from "@/components/dashboard/client/ClientDashboardLayout";
 import ParticipantsMasterDetail from "@/components/dashboard/client/ParticipantsMasterDetail";
+import { ageFrom } from '@/lib/age';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -74,17 +75,7 @@ export default async function SupportCoordinatorsDashboard() {
   `);
 
   const participants = participantsData.map((p) => {
-    const today = new Date();
-    let age: number | undefined = undefined;
-
-    const dobForAge = p.dateOfBirth instanceof Date ? p.dateOfBirth : (p.dateOfBirth ? new Date(p.dateOfBirth) : null);
-    if (dobForAge && !isNaN(dobForAge.getTime())) {
-      age = today.getFullYear() - dobForAge.getFullYear();
-      const monthDiff = today.getMonth() - dobForAge.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dobForAge.getDate())) {
-        age--;
-      }
-    }
+    const age = ageFrom(p.dateOfBirth);
 
     let services: string[] = [];
     const servicesData = p.srServices;

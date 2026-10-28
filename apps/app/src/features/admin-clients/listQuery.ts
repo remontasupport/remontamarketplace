@@ -1,7 +1,8 @@
 // admin-clients U2 (A1): the clients / coordinators list's filters as the URL carries them, and back. The sidebar's tab
 // names the role; anything the contract would refuse is dropped, so a hand-edited URL shows a list, never an error.
 import { REQUESTER_ROLES, type RequesterListQuery, type RequesterRole } from '@remonta/api-contract'
-import { FUNDING_TYPES, SERVICE_REQUEST_STATUSES, type FundingType, type ServiceRequestStatus } from '@remonta/schemas/data/serviceRequests'
+import { FUNDING_TYPES, type FundingType, type ServiceRequestStatus } from '@remonta/schemas/data/serviceRequests'
+import { OFFERED_STATUSES } from './statusChoices'
 
 export const REQUESTERS_PAGE_SIZE = 20
 
@@ -28,7 +29,8 @@ export function filtersOf(params: URLSearchParams): ListFilters {
   const page = Number(params.get('page'))
   return {
     search: (params.get('search') ?? '').trim().slice(0, 100),
-    requestStatus: oneOf(SERVICE_REQUEST_STATUSES, params.get('requestStatus')),
+    // Only a status the filter offers: an old link cannot apply one the dropdown no longer shows.
+    requestStatus: oneOf(OFFERED_STATUSES, params.get('requestStatus')),
     fundingType: oneOf(FUNDING_TYPES, params.get('fundingType')),
     page: Number.isInteger(page) && page >= 1 ? page : 1,
   }
