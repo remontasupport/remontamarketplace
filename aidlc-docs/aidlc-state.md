@@ -4,7 +4,7 @@
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
 - **Current Cycle**: **admin-clients** (opened 2026-10-28). Goal (user, verbatim in `audit.md`): "in the admin dashboard, I want to have a list of the clients and coordinators and a display with their participants and requests". Record branch `aidlc/admin-clients` (from `aidlc/worker-activation`, closed the same day).
-- **Current Stage**: INCEPTION. Workspace Detection done (brownfield, unchanged; `main` `2f418e2`); targeted inventory in the questions file. Requirements Analysis: waiting on `inception/requirements/requirement-verification-questions.md`. Open docs PR: `docs/rollback-rows-2026-10-28` (supersedes `docs/rollback-rows-2026-10-22`).
+- **Current Stage**: INCEPTION. Workspace Detection done (brownfield, unchanged; `main` `2f418e2`); targeted inventory in the questions file. Requirements Analysis: answers in; `inception/requirements/requirements.md` written, awaiting approval. Open docs PR: `docs/rollback-rows-2026-10-28` (supersedes `docs/rollback-rows-2026-10-22`).
 
 ## Previous cycles (archived, read-only)
 
