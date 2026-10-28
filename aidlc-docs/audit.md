@@ -5555,3 +5555,5 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "can I test it locally first before merging"
 
 **AI action (2026-10-28, local test):** `run-api.sh` sets `N8N_SERVICE_REQUEST_WEBHOOK_URL=off` (commit `f3`-, pushed on the branch). The developer Neon branch (`ep-royal-night`, a copy from about 2026-10-21) got the four pending expand-only migrations (`worker_services_tools`, `worker_profiles_is_activated`, `service_requests_status_matching`, `admin_clients_audit_actions`). Local api on :4000; untracked `scripts/_admin-clients-local-check.ts` (local admin token): 24/24 PASS (lists = profiles in the database, 39 clients / 34 coordinators; filters; search; detail = owned participants with every field; view audited; status change + one outbox event, repeat no-op, put back; 404/400/403/401). Both events DONE, log "service request webhook off: nothing sent".
+
+**AI action (2026-10-28):** correction to the entry above: the run-api.sh commit is `d38f6a2` (branch head, verified by `ls-remote`).
