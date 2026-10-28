@@ -5826,3 +5826,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "do not close this, you can do it here"
 
 **AI action (2026-10-28):** workflow change: follow-up 39 stage 1 joins the search-locations cycle (stage 2, the drop, stays separate). Inventory `inception/legacy-columns-inventory.md`: writers = the api only (register-worker, addresses); readers = api worker profile, completion, admin lists/search, the reconciler, backfill; app by-ids cards, profile preview, profile data/view, admin contractor page + PDF. F1: the reconciler moves HOME rows to match the legacy columns for any changed worker, so it must stop moving before the write stops. Questions (5) in `inception/requirements/legacy-columns-questions.md`.
+
+**User input (2026-10-28):** "1a, 2b, 3a, 4a, 5c"
+
+**AI action (2026-10-28):** recorded. Conflict found: 2 B (completion on the old columns) with the double write stopped would mark every new worker's location incomplete. Follow-up question added (A: HOME or the old columns, recommended; B: keep writing city/state/postalCode; C: HOME only).
