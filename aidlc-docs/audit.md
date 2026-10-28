@@ -5794,3 +5794,5 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "Done and Merged"
 
 **AI action (2026-10-28):** by refs `main` = `0bacbea` (#148, contains `b7fa2b1`); Vercel production builds pending at the check; watching. Asked whether the preview checklist ran before the merge (not assumed).
+
+**AI action (2026-10-28):** production after #148: Vercel builds success (remonta-app, remontamarketplace, 22:31). app `/login` 200; `/api/client/workers` and `/api/public/workers` 404 (removed); www `/` 200; www `/search?location=Parramatta, NSW 2150&within=20` 200, renders "Support workers near Parramatta, NSW 2150" and "No Workers Found" (0 activated workers in production, as before); www `/api/public/workers` 404 (removed); api prod `remonta-api-00025-8b9` 100 % (unchanged), health 200. The signed-in client search in production is the user's check; the preview checklist answer is pending.
