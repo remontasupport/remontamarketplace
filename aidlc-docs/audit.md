@@ -5728,3 +5728,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "approved"
 
 **AI action (2026-10-28):** Requirements Analysis complete (User Stories skipped). Workflow Planning: `inception/plans/execution-plan.md`: two units, U1 `search-api` (the two contract entries, one shared search reusing the reconciler's locality matcher and the admin search's PostGIS terms, the keyword rules ported with their tests, a staging comparison script) and U2 `search-callers` (the client dashboard and the web `/search` on the api; the two Next routes removed; a web env value per Vercel scope). Functional + short NFR Design for U1; Application Design, Units Generation, NFR Requirements and Infrastructure Design skipped. Awaiting approval.
+
+**User input (2026-10-28):** "approved"
+
+**AI action (2026-10-28):** Workflow Planning approved; INCEPTION complete. CONSTRUCTION, U1 `search-api`, Functional Design: plan `construction/plans/search-api-functional-design-plan.md`. Found: both search bars' suggestions come from `au_localities` (`apps/app/src/lib/suburbs`) and are written as "Suburb, ST 1234", the shape `matchLegacyLocation` reads first, so a picked suburb always matches. Two questions: text typed without picking (Google covered it today), and the order inside a distance tie. Awaiting answers.

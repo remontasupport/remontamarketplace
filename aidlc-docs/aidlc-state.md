@@ -4,7 +4,7 @@
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
 - **Current Cycle**: **search-locations** (opened 2026-10-28, record branch `aidlc/search-locations` from `aidlc/admin-clients`): follow-up 1, the client search and the public list on `worker_locations` + PostGIS, then the dual write and the legacy columns.
-- **Current Stage**: INCEPTION, Workflow Planning: `inception/plans/execution-plan.md` (U1 `search-api`, U2 `search-callers`) awaiting approval. Requirements approved 2026-10-28; User Stories skipped. **Q5 A: this cycle moves the two searches only; the dual write, display readers, reconciler and column drop are follow-up 39, a later cycle.** Production at the start: api `remonta-api-00024-fpj` = `979543a`, app `main` `832ce43`.
+- **Current Stage**: CONSTRUCTION, U1 `search-api`, Functional Design: plan and 2 questions in `construction/plans/search-api-functional-design-plan.md`, awaiting answers. INCEPTION complete (requirements and execution plan approved 2026-10-28; U2 `search-callers` follows U1's promotion). **Q5 A: this cycle moves the two searches only; the dual write, display readers, reconciler and column drop are follow-up 39, a later cycle.** Production at the start: api `remonta-api-00024-fpj` = `979543a`, app `main` `832ce43`.
 
 ## Previous cycles (archived, read-only)
 
