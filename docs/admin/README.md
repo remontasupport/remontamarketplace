@@ -147,7 +147,7 @@ Never cached (`no-store`): a status change shows on the next read.
   users of the role with that role's profile, newest account first. Row: name, email, mobile, `organisation`
   (coordinators), `participantCount` (participants they still own; one removed by its owner, `userId` null, is not
   counted), `requestCount`. `search` is a substring of the email, first or last name; `requestStatus` keeps those with
-  at least one request in it; `fundingType` those with at least one owned participant of it. One SQL statement per
+  at least one request in it; `fundingType` those with at least one owned participant of it; `participants=with|without` those with at least one owned participant, or none. One SQL statement per
   page plus the total (`persistence/requester-sql.ts`; `service_requests` has no foreign key to `users`). Limits
   60 / 120 per minute.
 - **`GET /v1/admin/requesters/:userId`**: the profile, the owned participants newest first with every field (date of

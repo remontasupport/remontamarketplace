@@ -67,7 +67,7 @@ export function adminHandlers(deps: AdminModuleDeps) {
     listRequesters: async (req, ctx) => {
       const started = Date.now()
       const body = await listRequesters(deps, req.query)
-      ctx.log.info({ entry: 'admin.listRequesters', durationMs: Date.now() - started, role: req.query.role, total: body.pagination.total, search: req.query.search !== undefined, requestStatus: req.query.requestStatus ?? null, fundingType: req.query.fundingType ?? null }, 'admin requesters')
+      ctx.log.info({ entry: 'admin.listRequesters', durationMs: Date.now() - started, role: req.query.role, total: body.pagination.total, search: req.query.search !== undefined, requestStatus: req.query.requestStatus ?? null, fundingType: req.query.fundingType ?? null, participants: req.query.participants ?? null }, 'admin requesters')
       return { status: 200, body }
     },
 

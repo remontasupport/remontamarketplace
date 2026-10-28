@@ -47,6 +47,8 @@ export const REQUESTER_DETAIL_LIMITS = { user: 120, ip: 300 } as const
 export const REQUEST_STATUS_WRITE_LIMITS = { user: 60, ip: 120 } as const
 /** The two roles that file service requests ("requesters", as service_requests.requesterId names them). */
 export const REQUESTER_ROLES = ['CLIENT', 'COORDINATOR'] as const
+/** The list's participants filter: with at least one owned participant, or with none. */
+export const PARTICIPANT_FILTERS = ['with', 'without'] as const
 
 /** A comma-separated query value: split, trimmed, empties dropped, deduplicated, sorted (R1.5). */
 const csv = <T extends z.ZodType<string>>(item: T, max = 20) =>
@@ -305,6 +307,8 @@ export const requesterListQuerySchema = z.strictObject({
   requestStatus: z.enum(SERVICE_REQUEST_STATUSES).optional(),
   /** Has at least one participant of theirs with this funding type. */
   fundingType: z.enum(FUNDING_TYPES).optional(),
+  /** With at least one participant they still own, or with none (a removed participant does not count, FR-5). */
+  participants: z.enum(PARTICIPANT_FILTERS).optional(),
 })
 export type RequesterListQuery = z.input<typeof requesterListQuerySchema>
 export type RequesterListQueryParsed = z.output<typeof requesterListQuerySchema>

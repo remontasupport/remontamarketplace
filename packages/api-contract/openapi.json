@@ -3314,6 +3314,18 @@
                 "OTHER"
               ]
             }
+          },
+          {
+            "name": "participants",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "with",
+                "without"
+              ]
+            }
           }
         ],
         "responses": {
