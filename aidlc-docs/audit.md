@@ -5838,3 +5838,9 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-29):** "continue AI DLC"
 
 **AI action (2026-10-29):** resumed search-locations. By refs `main` = `331e5e3` (unchanged since the pause); record `aidlc/search-locations` at `cf256f04`. Next: the follow-up to Question 2 in `inception/requirements/legacy-columns-questions.md`, asked again.
+
+**AI action (2026-10-29):** asked the Question 2 follow-up again.
+
+**User input (2026-10-29):** chose "HOME or old columns (Recommended)" (Question 2 follow-up A)
+
+**AI action (2026-10-29):** recorded. Requirements addendum (FR-7 one place rule for every reader, HOME first then the legacy columns; FR-8 completion = HOME or the columns; FR-9 reconciler only creates; FR-10 the double write stops; FR-11 U3 app first, then U4 api; NFR-8 rollback note: the previous image's reconciler would move a worker who moved during U4 back to the stale columns; NFR-9 equivalence on staging). U3 code generation plan written: one pure `placeOf`/`localityLabel` in `packages/schemas` (U4 moves the api onto it), one Prisma select fragment + `withPlace` in the app, five readers, a scan test. Awaiting approval.

@@ -51,4 +51,4 @@ A) Complete when the worker has a HOME location **or** the old columns are non-e
 B) Keep the old rule and keep writing `city/state/postalCode` for it (only `location`, `latitude`, `longitude` stop)
 C) Has a HOME location only (the earlier 2 A)
 
-[Answer]:
+[Answer]: A (2026-10-29)

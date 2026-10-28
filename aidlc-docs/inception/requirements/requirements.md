@@ -78,3 +78,34 @@ readable at this cycle's close.
 
 Security Baseline (blocking), Resiliency Baseline (99.9 %, RTO ≤ 30 min, RPO ≤ 5 min), Property-Based Testing (full):
 kept (Q8 A).
+
+---
+
+## Addendum (2026-10-29): follow-up 39 stage 1, the legacy location columns
+
+Scope extended by the user 2026-10-28 ("do not close this, you can do it here"). Map:
+`../legacy-columns-inventory.md`; answers: `legacy-columns-questions.md` (1 A, 2 B then follow-up A, 3 A, 4 A, 5 C).
+Columns: `worker_profiles.location, city, state, postalCode, latitude, longitude`. **No column is dropped** (stage 2,
+later, after a soak and the user's check of outside readers).
+
+- **FR-7 One place rule for every reader.** A worker's place is their HOME `worker_locations` row's locality (suburb,
+  state, postcode; label "Suburb, ST 1234"); with no HOME row, the legacy columns as today (Q1 A). Readers: the
+  assigned-worker cards (by-ids), the profile preview, the shared profile page, the admin contractor page and PDF
+  (apps/app); `GET /v1/worker/profile`, the admin users / suspended lists and the admin worker search's row (apps/api).
+  The rule is written once and shared (CS-1).
+- **FR-8 Completion.** The "location" part of account details is met when the worker has a HOME row **or**
+  `city`, `state`, `postalCode` are all non-empty (Q2 follow-up A): today's result for every existing worker; a new
+  worker completes once they pick a suburb.
+- **FR-9 The reconciler only creates.** It places a HOME row from the legacy columns for a worker who has none; it
+  never moves an existing one (Q3 A; finding F1). Its `moved` outcome goes.
+- **FR-10 The double write stops.** Sign-up and the service-area save write `worker_locations` only; the six columns
+  are no longer written (frozen at today's values for workers who move; empty for new workers).
+- **FR-11 Order (Q4 A, F1, F4).** U3 `legacy-readers-app` (FR-7, apps/app) merges and is live first. U4
+  `legacy-readers-api` (FR-7 api readers, FR-8, FR-9, FR-10) goes to staging after U3, and is promoted after the
+  preview checklist; within U4 the reconciler stops moving before or with the write stopping (one image).
+- **NFR-8 Reversible.** Rollback of U4 = the previous image: it resumes the double write; workers who moved in between
+  keep the right HOME row (the old image's reconciler would move them back to the stale columns -- noted for the
+  rollback: roll back only within the soak, and re-save is the fix for any moved worker).
+- **NFR-9 Equivalence.** Before U4's promotion, on the staging copy: every reader shows the same place as today for
+  every worker whose HOME row matches the legacy columns (all placed workers today), and the unplaced keep their
+  legacy text.
