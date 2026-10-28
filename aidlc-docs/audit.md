@@ -5695,3 +5695,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "Pending and Matching only"
 
 **AI action (2026-10-28):** between cycles (follow-up 37). `fix/edit-pending-matching-only` from `main` `baf44fb`: `EDITABLE_STATUSES` / `isEditable` in `features/service-requests/status.ts`, used by the PATCH route and `ManageRequestTable` (Edit button and name link, desktop and mobile); test. App gate green (50 files, 351 tests). Pushed.
+
+**User input (2026-10-28):** "I think the Archive button should only seen and appear when it is cancelled and completed. Can you adjust the PR"
+
+**AI action (2026-10-28):** on the same branch `fix/edit-pending-matching-only` (`ddbc8e8`, then the Archive commit): `ARCHIVABLE_STATUSES` / `isArchivable` (COMPLETED, CANCELLED) in `features/service-requests/status.ts`; the Archive button (desktop and mobile) shown only for those; the PATCH archive branch a conditional `updateMany` on those statuses (400 "Only completed or cancelled requests can be archived", 404 when not owned); test. App gate green (50 files, 352 tests). Pushed.
