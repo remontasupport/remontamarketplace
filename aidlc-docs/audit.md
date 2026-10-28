@@ -5595,3 +5595,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **AI action (2026-10-28):** by refs `main` = `45c6879` (merge of PR #133, contains `d9970a4`). Preview of `d9970a4`: remonta-app `remonta-59a0x5jxt-remontas-projects.vercel.app` (Preview scope = the staging api). Production deployments of `45c6879` watched.
 
 **AI action (2026-10-28, U2 live):** Vercel production builds of `45c6879` success: remonta-app `remonta-mkwy3phy3-remontas-projects.vercel.app`, remontamarketplace `remontamarketplace-1wnyx4pi7-remontas-projects.vercel.app`. Live: app `/login` 200, `/admin/manage?tab=clients` 200, `/admin/requesters/<id>` 200, www 200. Rollback point for the app: the `59fd8cd` production build `remonta-iaxpkn830-remontas-projects.vercel.app`. Signed-in production checks are the user's.
+
+**User input (2026-10-28):** "perfect, a little adjustment to the UX, when opening any record to the client and coordinator, can you add a left and right arrow that lets the admin to proceed to the next record instead of back to the list?"
+
+**AI action (2026-10-28):** "perfect" taken as the user's signed-in production check of U2. Previous / next on the detail page taken as a U2 follow-up (app only): the list's links carry its filters and page; the detail reads the same list page (cached) and the adjacent page at an edge; buttons and the arrow keys; Back returns to the same filtered page. Branch `feat/admin-clients-prev-next` from `main` `45c6879`.
