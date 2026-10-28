@@ -5844,3 +5844,9 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-29):** chose "HOME or old columns (Recommended)" (Question 2 follow-up A)
 
 **AI action (2026-10-29):** recorded. Requirements addendum (FR-7 one place rule for every reader, HOME first then the legacy columns; FR-8 completion = HOME or the columns; FR-9 reconciler only creates; FR-10 the double write stops; FR-11 U3 app first, then U4 api; NFR-8 rollback note: the previous image's reconciler would move a worker who moved during U4 back to the stale columns; NFR-9 equivalence on staging). U3 code generation plan written: one pure `placeOf`/`localityLabel` in `packages/schemas` (U4 moves the api onto it), one Prisma select fragment + `withPlace` in the app, five readers, a scan test. Awaiting approval.
+
+**User input (2026-10-29):** "The latitude ang longitude columns in the worker's profile can be deleted right?"
+
+**AI action (2026-10-29):** checked: no reader of `worker_profiles.latitude/longitude` in the repository (both searches on `worker_locations`; the `contractors` routes' coordinates are `contractor_profiles`, jobs database); writers = sign-up and the service-area save through `placeHome().legacy`. Answered: yes from the code; blockers = outside readers (Q5 C) and order (stop the write, remove from the Prisma schema, then a drop migration; the current image and any rollback image write them). Offered to make them the first step of stage 2.
+
+**User input (2026-10-29):** "No repo are connected to them"
