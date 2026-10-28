@@ -5539,3 +5539,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** D1 "Yes, all of it (Recommended)"; D2 "Needs the unlock (Recommended)"; D3 "Mirror the client (Recommended)"; D4 "Per admin, 15 min (Recommended)".
 
 **AI action (2026-10-28):** decisions recorded in the U1 Functional Design. Shared NFR Design written (`construction/shared/nfr-design/nfr-design.md`, N1-N11: additions only; ADMIN only; the password as a bcrypt hash in Secret Manager, the existing hasher, 5 / 15 min per admin; the unlock window from the audit row; one redaction point with a property test; audit; no-store; outbox delivery to n8n, never the live webhook from staging; performance; logs; tests). Awaiting approval of both.
+
+**User input (2026-10-28):** "change of design, do not apply the password for now, admin can see the details instantly"
+
+**AI action (2026-10-28):** FR-9 changed (all participant and request data shown, no password; the funding filter open), NFR-3 withdrawn, FR-10 without unlocks; risk recorded (health information visible to every admin, the view audit the only control beyond sign-in). U1 Functional Design revised: `unlockSensitive`, the redaction, the sensitive-field list, the password secret and the unlock index removed (3 entries left; migration 2 `AuditAction` values; one secret); D1, D2, D4 lapsed, D3 stands. NFR Design revised to match (N3-N5 removed). Approval awaited.

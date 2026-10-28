@@ -36,22 +36,18 @@ Q9 B + a password, Security A) and the follow-ups of 2026-10-28 (audit).
   which the client cannot edit). No other admin edits in this cycle (details, participants and profiles stay read-only).
 - **FR-8 n8n on a status change.** An admin's status change notifies the same n8n webhook as the client's change, with
   the payload marking it as made by an admin, so Zoho stays in step. Delivery is retried (not a bare request).
-- **FR-9 Sensitive participant data behind a password.** A participant's date of birth, conditions and funding type
-  are hidden on the detail page until the admin enters the **shared sensitive-data password** (one secret per
-  environment, all admins know it). An unlock lasts a limited time for that admin's session (15 minutes proposed).
-  The rest of the participant (name, location, relationship, notes) shows without it.
-  *The funding-type filter (FR-2) matches without showing anyone's funding type; to confirm at Functional Design.*
-- **FR-10 Audit.** Every detail-page view, every unlock (success and failure) and every status change is written to
-  the audit log with the admin's user id, the client / coordinator id and, for a change, the old and new status.
+- **FR-9 All participant data shown at once** (changed by the user 2026-10-28: "do not apply the password for now,
+  admin can see the details instantly"). Date of birth, conditions, funding type and the request's NDIS details show
+  on the detail page with no password; the funding-type filter needs none. A password may come back later.
+- **FR-10 Audit.** Every detail-page view and every status change is written to the audit log with the admin's user
+  id, the client / coordinator id and, for a change, the old and new status.
 
 ## Non-functional / security
 
 - **NFR-1 On `apps/api`.** New admin contract entries (P-6), bound one handler each; the bearer token from
   `/api/auth/api-token`; ADMIN role only; proven on staging and promoted before the app's page merges.
-- **NFR-2 Limits.** Rate limits per admin on every entry; the unlock entry tighter (e.g. 5 failures per 15 minutes,
-  then refused), so the shared password cannot be guessed.
-- **NFR-3 The shared password** is stored as a hash in Secret Manager (`remonta-api[-staging]-...`), compared in
-  constant time, never logged, never sent back. Staging has its own value.
+- **NFR-2 Limits.** Rate limits per admin on every entry.
+- **NFR-3** (withdrawn with the password, 2026-10-28.)
 - **NFR-4 No personal data in logs**: ids only.
 - **NFR-5 Freshness**: lists and the detail page are not cached across a status change.
 - **NFR-6 Previews never call the live n8n webhook**: staging's webhook value is a staging URL or empty.
@@ -59,8 +55,8 @@ Q9 B + a password, Security A) and the follow-ups of 2026-10-28 (audit).
 
 ## Risk noted
 
-A shared password proves "someone who knows it", not which admin. The audit still records which signed-in admin
-unlocked. Rotation when an admin leaves is manual (a new Secret Manager version, then a redeploy).
+Health information (date of birth, conditions, NDIS details) is visible to every admin with no second step; the
+view audit (FR-10) is the only control beyond admin sign-in. Accepted by the user for now (2026-10-28).
 
 ## Out of scope
 
