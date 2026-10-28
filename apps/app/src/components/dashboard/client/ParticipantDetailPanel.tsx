@@ -152,14 +152,17 @@ export default function ParticipantDetailPanel({
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-2">
-            <button
-              onClick={onEditClick}
-              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-md text-xs font-medium font-poppins transition-colors"
-              style={{ backgroundColor: BRAND_COLORS.HIGHLIGHT, color: BRAND_COLORS.PRIMARY }}
-            >
-              <Pencil className="w-3.5 h-3.5" />
-              Edit Profile
-            </button>
+            {/* Without onEditClick (the admin's read-only view, admin-clients U2) there is nothing to edit. */}
+            {onEditClick && (
+              <button
+                onClick={onEditClick}
+                className="inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:py-1.5 rounded-md text-xs font-medium font-poppins transition-colors"
+                style={{ backgroundColor: BRAND_COLORS.HIGHLIGHT, color: BRAND_COLORS.PRIMARY }}
+              >
+                <Pencil className="w-3.5 h-3.5" />
+                Edit Profile
+              </button>
+            )}
             {onRemoveClick && (
               <button
                 onClick={onRemoveClick}

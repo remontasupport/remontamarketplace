@@ -144,6 +144,31 @@ describe('getWorkerServices (worker-tools UR-9)', () => {
 })
 
 
+describe('clients and coordinators (admin-clients U2, A5)', () => {
+  const page = { total: 0, page: 1, pageSize: 20, totalPages: 0, hasNext: false, hasPrev: false }
+
+  it('lists by role with a canonical query (filters in any order give one URL)', async () => {
+    const h = harness([{ status: 200, body: { data: [], pagination: page } }, { status: 200, body: { data: [], pagination: page } }])
+    await h.api.listRequesters({ role: 'CLIENT', requestStatus: 'ACTIVE', search: 'ann' })
+    await h.api.listRequesters({ search: 'ann', role: 'CLIENT', requestStatus: 'ACTIVE' })
+    expect(h.seen[0]!.url).toBe(h.seen[1]!.url)
+    expect(h.seen[0]!.url).toContain('/v1/admin/requesters?')
+    expect(h.seen[0]!.url).toContain('role=CLIENT')
+  })
+
+  it('reads one by user id; PUTs a status with a JSON body; 404 and 409 are failures', async () => {
+    const detail = harness([{ status: 404, body: { error: { code: 'NOT_FOUND', message: 'x', requestId: 'r' } } }])
+    expect(await detail.api.getRequester('u1')).toMatchObject({ kind: 'failed', status: 404 })
+    expect(detail.seen[0]!.url).toBe('https://api.example/v1/admin/requesters/u1')
+    const put = harness([{ status: 200, body: { requestId: 'sr1', status: 'COMPLETED' } }, { status: 409, body: { error: { code: 'CONFLICT', message: 'x', requestId: 'r' } } }])
+    expect(await put.api.setRequestStatus('sr1', 'COMPLETED')).toEqual({ kind: 'ok', body: { requestId: 'sr1', status: 'COMPLETED' } })
+    expect(put.seen[0]!.url).toBe('https://api.example/v1/admin/service-requests/sr1/status')
+    expect(put.seen[0]!.init.method).toBe('PUT')
+    expect(JSON.parse(String(put.seen[0]!.init.body))).toEqual({ status: 'COMPLETED' })
+    expect(await put.api.setRequestStatus('sr1', 'ACTIVE')).toMatchObject({ kind: 'failed', status: 409 })
+  })
+})
+
 describe('the two switches (worker-activation U2, A1/A4/A5)', () => {
   it('PUT the activation with a JSON body and the bearer token; the answer passes through', async () => {
     const h = harness([{ status: 200, body: { workerId: 'w1', activated: true } }])

@@ -4,8 +4,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArchiveBoxArrowDownIcon, XCircleIcon, PencilSquareIcon } from '@heroicons/react/24/outline'
 import { BRAND_COLORS } from '@/lib/constants'
+import { SERVICE_REQUEST_STATUS_STYLE as statusConfig, type ServiceRequestStatus } from '@/features/service-requests/status'
 
-type ServiceRequestStatus = 'PENDING' | 'MATCHING' | 'MATCHED' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'ARCHIVED'
 
 const SERVICE_LABEL_MAP: Record<string, string> = {
   'Support Worker': 'Support Work',
@@ -36,51 +36,6 @@ interface ManageRequestTableProps {
   requests: ServiceRequest[]
   basePath: string
   showRequestType?: boolean
-}
-
-const statusConfig: Record<ServiceRequestStatus, { label: string; bgColor: string; textColor: string; dotColor: string }> = {
-  PENDING: {
-    label: 'Pending',
-    bgColor: 'bg-yellow-50',
-    textColor: 'text-yellow-700',
-    dotColor: 'bg-yellow-500',
-  },
-  MATCHING: {
-    label: 'Matching',
-    bgColor: 'bg-indigo-50',
-    textColor: 'text-indigo-700',
-    dotColor: 'bg-indigo-500',
-  },
-  MATCHED: {
-    label: 'Matched',
-    bgColor: 'bg-blue-50',
-    textColor: 'text-blue-700',
-    dotColor: 'bg-blue-500',
-  },
-  ACTIVE: {
-    label: 'Active',
-    bgColor: 'bg-green-50',
-    textColor: 'text-green-700',
-    dotColor: 'bg-green-500',
-  },
-  COMPLETED: {
-    label: 'Completed',
-    bgColor: 'bg-gray-50',
-    textColor: 'text-gray-700',
-    dotColor: 'bg-gray-500',
-  },
-  CANCELLED: {
-    label: 'Cancelled',
-    bgColor: 'bg-red-50',
-    textColor: 'text-red-700',
-    dotColor: 'bg-red-500',
-  },
-  ARCHIVED: {
-    label: 'Archived',
-    bgColor: 'bg-gray-50',
-    textColor: 'text-gray-400',
-    dotColor: 'bg-gray-400',
-  },
 }
 
 // Statuses whose name does not link to the edit page
