@@ -18,6 +18,7 @@ import { detailHref, listHref, REQUESTER_TABS } from './listQuery'
 import RequestCard from './RequestCard'
 import { requestersQueryKey } from './RequestersList'
 import { useNeighbours } from './useNeighbours'
+import { ageFrom } from '@/lib/age'
 
 const PAGE_NOTICE = { name: 'page', plural: 'requests' }
 
@@ -27,6 +28,7 @@ const cardOf = (p: AdminParticipant) => ({
   name: `${p.firstName} ${p.lastName}`.trim(),
   gender: p.gender ?? undefined,
   dateOfBirth: p.dateOfBirth,
+  age: ageFrom(p.dateOfBirth),
   location: p.location ?? undefined,
   fundingType: p.fundingType ?? undefined,
   relationshipToClient: p.relationshipToClient ?? undefined,
