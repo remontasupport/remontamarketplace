@@ -86,8 +86,14 @@ export const publicWorkerCardSchema = z.strictObject({
 export const clientWorkerResponseSchema = z.strictObject({ success: z.literal(true), data: z.array(clientWorkerCardSchema), pagination: paginationSchema })
 export const publicWorkerResponseSchema = z.strictObject({ success: z.literal(true), data: z.array(publicWorkerCardSchema), pagination: paginationSchema })
 
+/** Parsed: what apps/api's handlers receive (defaults applied). */
 export type ClientWorkerQuery = z.output<typeof clientWorkerQuerySchema>
 export type PublicWorkerQuery = z.output<typeof publicWorkerQuerySchema>
+/** What a caller may send (every field optional). */
+export type ClientWorkerQueryInput = z.input<typeof clientWorkerQuerySchema>
+export type PublicWorkerQueryInput = z.input<typeof publicWorkerQuerySchema>
+export type ClientWorkerResponse = z.output<typeof clientWorkerResponseSchema>
+export type PublicWorkerResponse = z.output<typeof publicWorkerResponseSchema>
 export type ClientWorkerCard = z.output<typeof clientWorkerCardSchema>
 export type PublicWorkerCard = z.output<typeof publicWorkerCardSchema>
 

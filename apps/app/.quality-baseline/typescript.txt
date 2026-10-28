@@ -7,7 +7,6 @@
 1	src/app/api/client/participants/[id]/route.ts::TS2322
 1	src/app/api/client/participants/[id]/route.ts::TS2339
 1	src/app/api/client/participants/route.ts::TS2322
-1	src/app/api/client/workers/route.ts::TS2322
 1	src/app/dashboard/worker/additional-documents/page.tsx::TS2322
 1	src/app/dashboard/worker/additional-documents/page.tsx::TS2741
 1	src/app/dashboard/worker/requirements/setup/page.tsx::TS2741

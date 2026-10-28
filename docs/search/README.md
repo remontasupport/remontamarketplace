@@ -5,8 +5,15 @@ The two worker searches that are not the admin's: the client and coordinator das
 rule or a limit changes, update this file in the same PR. Design record: `aidlc-docs/construction/search-api/` (cycle
 search-locations, 2026-10-28). The admin search is in `docs/admin/README.md`.
 
-Until U2 of that cycle moves the pages, they still call the Next routes `apps/app` `/api/client/workers` and
-`/api/public/workers`. The entries below answer the same parameters with the same bodies.
+**Callers** (U2, since the Next routes `/api/client/workers` and `/api/public/workers` were removed):
+
+- The client and coordinator dashboard: `apps/app/src/hooks/queries/useWorkers.ts` → `lib/api/search.ts`
+  (`createClient(searchContract)`, the token from `GET /api/auth/api-token`, one retry on a 401: `lib/api/call.ts`).
+- The marketing `/search` page: `apps/web/src/app/search/page.tsx`, server side, `createClient(searchContract)`
+  against `NEXT_PUBLIC_API_URL` (Vercel `remontamarketplace`: Preview = staging api, Production = prod api), Vercel's
+  data cache 60 s. Without the variable the page shows no workers and logs why.
+
+The entries answer the parameters and bodies the old routes had, so the pages' rendering did not change.
 
 ## 1. The entries
 
@@ -64,10 +71,12 @@ Ported unchanged from the app route (`apps/api/src/modules/search/domain/keyword
 
 With no keywords, no place and no services, the client search lists only workers with an introduction.
 
-## 4. Checking parity on staging
+## 4. Parity with the old routes (history)
 
-`pnpm --filter @remonta/api parity:search -- --old=<preview url> --cookie="<client session cookie>" --new=<staging api
-url> --token=<client token>` with `REHEARSAL_DATABASE_URL` in `apps/api/.env`. It compares every page of the old routes
-and the new entries over the places in `apps/api/scripts/parity-search.json`, and explains each difference from the
-database (no HOME row, legacy point ≠ HOME point, radius edge, text that pins no suburb). It exits 1 on an
-unexplained difference. It refuses the production database.
+Before the switch (2026-10-28), every page of the old Next routes and the new entries was compared on a copy of
+production (23 places for the client search, 12 for the public one): no unexplained difference. The differences that
+remain are by design: no HOME row (FR-4), a legacy point away from the HOME point (the old columns were often
+address-geocoded; the HOME point is the suburb's centre), Google's point vs the suburb's centre at the radius edge,
+and text that names no suburb ("Gold Coast", "Canberra"). Results:
+`aidlc-docs/construction/search-api/code/parity-runs.md` on the record branch. The comparison script went with the old
+routes (search-locations U2).

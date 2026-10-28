@@ -12,22 +12,15 @@
  */
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import type { ClientWorkerCard, ClientWorkerResponse } from '@remonta/api-contract';
+import { searchApi } from '@/lib/api/search';
 
 // ============================================================================
 // TYPES
 // ============================================================================
 
-export interface Worker {
-  id: string;
-  firstName: string;
-  lastName: string;
-  photo: string | null;
-  role: string;
-  bio: string;
-  skills: string[];
-  location: string;
-  isNdisCompliant: boolean;
-}
+/** A worker card, as GET /v1/client/workers returns it (search-locations U2). */
+export type Worker = ClientWorkerCard;
 
 export interface WorkersSearchParams {
   page?: number;
@@ -37,19 +30,7 @@ export interface WorkersSearchParams {
   services?: string[];
 }
 
-export interface WorkersResponse {
-  success: boolean;
-  data: Worker[];
-  pagination: {
-    total: number;
-    page: number;
-    pageSize: number;
-    totalPages: number;
-    hasNext: boolean;
-    hasPrev: boolean;
-  };
-  cached?: boolean;
-}
+export type WorkersResponse = ClientWorkerResponse;
 
 // ============================================================================
 // CONSTANTS
@@ -64,34 +45,19 @@ const CACHE_TIME = 10 * 60 * 1000; // 10 minutes
 // ============================================================================
 
 /**
- * Fetch workers from API
+ * Fetch workers from apps/api (GET /v1/client/workers, with the signed-in user's token).
+ * Anything but a result throws, so React Query's retry and error state work as before.
  */
 async function fetchWorkers(params: WorkersSearchParams): Promise<WorkersResponse> {
-  const searchParams = new URLSearchParams();
-
-  if (params.page) searchParams.set('page', String(params.page));
-  if (params.pageSize) searchParams.set('pageSize', String(params.pageSize));
-  if (params.search) searchParams.set('search', params.search);
-  if (params.location) searchParams.set('location', params.location);
-  if (params.services?.length) searchParams.set('services', params.services.join(','));
-
-  const url = `/api/client/workers?${searchParams.toString()}`;
-
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    // Enable caching for GET requests
-    cache: 'default',
+  const outcome = await searchApi.searchWorkersForClient({
+    page: params.page,
+    pageSize: params.pageSize,
+    search: params.search,
+    location: params.location,
+    services: params.services?.length ? params.services.join(',') : undefined,
   });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.message || `Failed to fetch workers: ${response.status}`);
-  }
-
-  return response.json();
+  if (outcome.kind === 'ok') return outcome.body;
+  throw new Error(`Failed to fetch workers: ${outcome.kind === 'failed' ? outcome.status : outcome.kind}`);
 }
 
 // ============================================================================
