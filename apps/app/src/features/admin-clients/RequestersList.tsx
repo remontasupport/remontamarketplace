@@ -28,7 +28,7 @@ export const requestersQueryKey = ['admin-requesters'] as const
 export default function RequestersList({ role }: { role: RequesterRole }) {
   const router = useRouter()
   const params = useSearchParams()
-  const { tab, title, singular } = REQUESTER_TABS[role]
+  const { tab, title, singular, participantsFilter } = REQUESTER_TABS[role]
   const filters = filtersOf(params)
   const [searchText, setSearchText] = useState(filters.search)
   /** Ticked rows by user id, kept while the admin pages and filters (the CSV takes them as they were ticked). */
@@ -83,7 +83,7 @@ export default function RequestersList({ role }: { role: RequesterRole }) {
           <p className="mt-2 text-sm text-gray-600">Each {singular} with their participants and requests. Open one to see everything.</p>
         </div>
 
-        <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className={`mb-4 grid gap-3 sm:grid-cols-2 ${participantsFilter ? 'lg:grid-cols-5' : 'lg:grid-cols-4'}`}>
           <input
             type="search"
             value={searchText}
@@ -115,6 +115,7 @@ export default function RequestersList({ role }: { role: RequesterRole }) {
               <option key={f} value={f}>{FUNDING_LABEL[f]} participant</option>
             ))}
           </select>
+          {participantsFilter && (
           <select
             value={filters.participants ?? ''}
             onChange={(e) => go({ ...filters, participants: (e.target.value || undefined) as ListFilters['participants'], page: 1 })}
@@ -125,6 +126,7 @@ export default function RequestersList({ role }: { role: RequesterRole }) {
             <option value="with">Has participants</option>
             <option value="without">No participants</option>
           </select>
+          )}
         </div>
 
         {notice && (
