@@ -13,6 +13,7 @@ import { accountContract } from './account.contract'
 import { adminContract } from './admin.contract'
 import { platformContract } from './platform.contract'
 import { registrationContract } from './registration.contract'
+import { searchContract } from './search.contract'
 import { workerContract } from './worker.contract'
 
 export * from './define'
@@ -29,8 +30,9 @@ export * from './openapi'
 export * from './photos'
 export * from './platform.contract'
 export * from './registration.contract'
+export * from './search.contract'
 export * from './worker.contract'
 export * from './worker.sections'
 
 /** Every area's contract. apps/api must bind all of them. */
-export const contracts: readonly Contract[] = [platformContract, registrationContract, adminContract, workerContract, accountContract]
+export const contracts: readonly Contract[] = [platformContract, registrationContract, adminContract, workerContract, accountContract, searchContract]
