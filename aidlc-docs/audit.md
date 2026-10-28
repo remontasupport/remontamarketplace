@@ -5543,3 +5543,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "change of design, do not apply the password for now, admin can see the details instantly"
 
 **AI action (2026-10-28):** FR-9 changed (all participant and request data shown, no password; the funding filter open), NFR-3 withdrawn, FR-10 without unlocks; risk recorded (health information visible to every admin, the view audit the only control beyond sign-in). U1 Functional Design revised: `unlockSensitive`, the redaction, the sensitive-field list, the password secret and the unlock index removed (3 entries left; migration 2 `AuditAction` values; one secret); D1, D2, D4 lapsed, D3 stands. NFR Design revised to match (N3-N5 removed). Approval awaited.
+
+**User input (2026-10-28):** "approved" (the revised U1 Functional Design and NFR Design)
+
+**AI action (2026-10-28):** U1 code generation plan written (`construction/plans/clients-api-code-generation-plan.md`, 10 steps, branch `feat/admin-clients-api` from `main` `2f418e2`; reuse list; the new secret must exist on both stages before the merge; Q1 on staging's webhook value). Awaiting approval.
