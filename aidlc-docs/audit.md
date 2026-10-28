@@ -5772,3 +5772,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "promotion is done"
 
 **AI action (2026-10-28):** verified: deploy-api run 40699313324 (workflow_dispatch) success 13:45Z; prod `remonta-api-00025-8b9` 100 % on image `6886e09`; previous `00024-fpj` = `979543a`. `/v1/health` 200; `/v1/client/workers` 401 without a token; `/v1/public/workers` 200, `public, max-age=60`, total 0 — and the live old route `app.remontaservices.com.au/api/public/workers` also 0: production has no activated workers (the marketing list is empty today, independent of this cycle; told the user). U1 complete; U2 may merge after its preview checks.
+
+**User input (2026-10-28):** "yes go ahead"
+
+**AI action (2026-10-28):** U2 `search-callers` Code Generation plan `construction/plans/search-callers-code-generation-plan.md` (7 steps): the app's search client on one extracted token-and-retry helper (`lib/api/call.ts`, also used by `account.ts`; admin and worker clients left as a follow-up), `useWorkers` on it, the marketing `/search` on the contract client with `revalidate: 60` (`apps/web` gains `@remonta/api-contract`, allowed by P-1), the two app routes and the web proxy removed, tests, docs. Before merge: `NEXT_PUBLIC_API_URL` on Vercel `remontamarketplace` (Preview staging, Production prod). Two questions: the variable's name; the web proxy. Awaiting answers and approval.
