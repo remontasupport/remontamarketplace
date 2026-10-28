@@ -155,7 +155,8 @@ Pause:     gcloud run services update remonta-api-staging --region australia-sou
 Reach:     the app calls the api named by NEXT_PUBLIC_API_URL (Vercel scope: Preview → staging, Production → prod);
            the worker sign-up publicly, the admin lists (worker search, user picker, suspended list) and the worker's
            own profile read (GET /v1/worker/profile, docs/worker/README.md) with a bearer token the app mints at
-           GET /api/auth/api-token from the session (docs/admin/README.md)
+           GET /api/auth/api-token from the session (docs/admin/README.md); the worker searches for clients and the
+           marketing site, GET /v1/client/workers and GET /v1/public/workers (docs/search/README.md)
 ```
 
 Rules that have earned their place:
