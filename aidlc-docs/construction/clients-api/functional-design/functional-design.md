@@ -74,6 +74,8 @@ bindings), the outbox handler beside the notification handlers, `main.ts` wiring
 
 ## Decisions for the user
 
+**Decided 2026-10-28 (user): D1 yes, all of it; D2 needs the unlock; D3 mirror the client; D4 per admin, 15 minutes.**
+
 - **D1** Sensitive set: participant date of birth, conditions, funding type, **and the request's funding type and NDIS
   details** (NDIS number, plan manager, plan dates, a date of birth). Recommended: all behind the password.
 - **D2** The funding-type filter needs an unlock (otherwise it reveals funding). Recommended: yes.
