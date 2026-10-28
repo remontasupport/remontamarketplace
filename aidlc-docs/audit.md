@@ -5776,3 +5776,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "yes go ahead"
 
 **AI action (2026-10-28):** U2 `search-callers` Code Generation plan `construction/plans/search-callers-code-generation-plan.md` (7 steps): the app's search client on one extracted token-and-retry helper (`lib/api/call.ts`, also used by `account.ts`; admin and worker clients left as a follow-up), `useWorkers` on it, the marketing `/search` on the contract client with `revalidate: 60` (`apps/web` gains `@remonta/api-contract`, allowed by P-1), the two app routes and the web proxy removed, tests, docs. Before merge: `NEXT_PUBLIC_API_URL` on Vercel `remontamarketplace` (Preview staging, Production prod). Two questions: the variable's name; the web proxy. Awaiting answers and approval.
+
+**User input (2026-10-28):** "answer is both the recommended. in Vercel's remontamarketplace project, add the api URL to Preview (staging) and Production (prod), with the same values remonta-app uses how to do that?"
+
+**AI action (2026-10-28):** Q1 A (`NEXT_PUBLIC_API_URL`), Q2 A (remove the web proxy); taken as the plan's approval. Gave the Vercel steps (remontamarketplace → Settings → Environment Variables: Preview = staging api URL, Production = prod api URL; check against remonta-app's values; never prod in Preview). U2 Code Generation Part 2 started on `feat/search-callers`.

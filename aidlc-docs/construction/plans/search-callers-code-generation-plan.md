@@ -51,7 +51,7 @@ A) `NEXT_PUBLIC_API_URL`, the same name and per-scope values as `remonta-app` (o
 B) A server-only name, e.g. `REMONTA_SERVICE_API_URL`
 X) Other
 
-[Answer]:
+[Answer]: A
 
 ### Question 2: The marketing site's own `/api/public/workers` proxy (www.…/api/public/workers)
 Nothing in `apps/web` calls it (the page calls the app directly). Something outside the repository might (a bookmark,
@@ -60,4 +60,4 @@ A) Remove it with the two app routes
 B) Keep it, pointed at the new api entry
 X) Other
 
-[Answer]:
+[Answer]: A
