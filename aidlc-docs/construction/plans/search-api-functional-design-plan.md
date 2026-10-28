@@ -33,15 +33,15 @@ A) Accept what pins down one place: a picked `"Suburb, ST 1234"`; a postcode alo
 B) Strict: only a picked suggestion counts; any other text is searched without a place
 C) A, and Google as a last resort for text that pins nothing (keeps "Gold Coast" working, keeps the Google key and its
    cost on the api)
-X) Other (please describe after [Answer]: A tag below)
+X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A
 
 ### Question 2: Ties in "nearest first"
 Most workers sit at their suburb's centre, so many share one distance (everyone in Parramatta is 0 km from Parramatta).
 Today the order inside a tie is whatever the database returns.
 A) Nearest first, then newest first (the order a search without a place already uses)
 B) Nearest first, then by first name
-X) Other (please describe after [Answer]: A tag below)
+X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A
