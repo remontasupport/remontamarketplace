@@ -11,16 +11,16 @@ invites it: "City, suburb, or postcode".
 
 ## Steps
 
-- [ ] Domain entities: the query of each entry (fields, defaults, limits), the card of each entry (today's fields).
-- [ ] Business rules: eligibility per entry; the keyword rules (ported as they are); the service filters; the
+- [x] Domain entities: the query of each entry (fields, defaults, limits), the card of each entry (today's fields).
+- [x] Business rules: eligibility per entry; the keyword rules (ported as they are); the service filters; the
       introduction rule of the default listing; the place match (Q1); the radius; order and ties (Q2); paging.
-- [ ] Business logic model: request → validate → match the place → one SQL statement (filters, `ST_DWithin`, order,
+- [x] Business logic model: request → validate → match the place → one SQL statement (filters, `ST_DWithin`, order,
       `COUNT(*) OVER()`, page) under a statement timeout → cards. The HOME join and the distance terms shared with the
       admin search (moved to one place, both use it), not copied.
-- [ ] NFR design (short): rate limits per entry; `cacheSeconds: 60` (public) and `privateCacheSeconds` (client); what
+- [x] NFR design (short): rate limits per entry; `cacheSeconds: 60` (public) and `privateCacheSeconds` (client); what
       the public card may carry; the degrade path (a match or keyword-terms failure → search without that part, never
       a 500); the staging comparison script (NFR-2): suburbs × radii × both entries, old route vs new entry.
-- [ ] PBT properties: the matcher never returns a suburb for text it cannot pin to one; paging covers every result
+- [x] PBT properties: the matcher never returns a suburb for text it cannot pin to one; paging covers every result
       once; the order is total (no two runs differ).
 
 ## Questions
@@ -33,7 +33,7 @@ A) Accept what pins down one place: a picked `"Suburb, ST 1234"`; a postcode alo
 B) Strict: only a picked suggestion counts; any other text is searched without a place
 C) A, and Google as a last resort for text that pins nothing (keeps "Gold Coast" working, keeps the Google key and its
    cost on the api)
-X) Other (please describe after [Answer]: tag below)
+X) Other (please describe after [Answer]: A tag below)
 
 [Answer]:
 
@@ -42,6 +42,6 @@ Most workers sit at their suburb's centre, so many share one distance (everyone 
 Today the order inside a tie is whatever the database returns.
 A) Nearest first, then newest first (the order a search without a place already uses)
 B) Nearest first, then by first name
-X) Other (please describe after [Answer]: tag below)
+X) Other (please describe after [Answer]: A tag below)
 
 [Answer]:
