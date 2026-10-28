@@ -5850,3 +5850,9 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **AI action (2026-10-29):** checked: no reader of `worker_profiles.latitude/longitude` in the repository (both searches on `worker_locations`; the `contractors` routes' coordinates are `contractor_profiles`, jobs database); writers = sign-up and the service-area save through `placeHome().legacy`. Answered: yes from the code; blockers = outside readers (Q5 C) and order (stop the write, remove from the Prisma schema, then a drop migration; the current image and any rollback image write them). Offered to make them the first step of stage 2.
 
 **User input (2026-10-29):** "No repo are connected to them"
+
+**AI action (2026-10-29):** asked: outside readers of latitude/longitude; drop timing; U3 plan approval.
+
+**User input (2026-10-29):** "Yes, nothing reads them" (Q5 = A for `latitude`/`longitude`; `location/city/state/postalCode` stay C); "Plan it after U4 (Recommended)" (U5: remove the two fields from the Prisma schema, then a later drop migration once U5 is live); U3 plan: "I am not 100% sure with this"
+
+**AI action (2026-10-29):** recorded; U5 `drop-coordinates` added to the plan of record (after U4). U3 not started; explained what U3 changes and why, and asked what is unclear.
