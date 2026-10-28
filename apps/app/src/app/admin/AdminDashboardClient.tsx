@@ -1190,7 +1190,7 @@ export default function AdminDashboard() {
                                   );
                                 }}
                                 className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-full cursor-pointer transition-colors border ${contractor.activated === true ? 'text-green-700 bg-green-50 border-green-200 hover:bg-green-100' : 'text-gray-600 bg-gray-50 border-gray-200 hover:bg-gray-100'}`}
-                                title={contractor.activated === true ? 'Shown in the public worker list' : 'Hidden from the public worker list until switched on'}
+                                title={contractor.activated === true ? 'Activated by an admin. The public worker list shows every unsuspended worker either way.' : 'Not activated. The public worker list shows every unsuspended worker either way.'}
                               >
                                 <svg className={`w-3.5 h-3.5 ${contractor.activated === true ? 'text-green-600' : 'text-gray-400'}`} fill="currentColor" viewBox="0 0 20 20">
                                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
@@ -1212,7 +1212,7 @@ export default function AdminDashboard() {
                                   } ${toggleActivationMutation.isPending ? 'opacity-50 cursor-wait' : ''}`}
                                   role="switch"
                                   aria-checked={contractor.activated === true}
-                                  aria-label="In the public worker list"
+                                  aria-label="Activated"
                                 >
                                   <span
                                     className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${

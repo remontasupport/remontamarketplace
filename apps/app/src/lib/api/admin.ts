@@ -42,7 +42,7 @@ export interface AdminApi {
   listSuspendedWorkers(query: SuspendedListQuery, opts?: CallOptions): Promise<ApiOutcome<SuspendedListResponse>>
   /** worker-tools (UR-9): one worker's services and their tools, by the worker profile id. */
   getWorkerServices(workerId: string, opts?: CallOptions): Promise<ApiOutcome<AdminWorkerServices>>
-  /** worker-activation U2 (A1): switch a worker on or off for the public worker list; sign-in is untouched. */
+  /** worker-activation U2 (A1): the admin's activation flag. Since 2026-10-28 the public worker list no longer reads it (it lists every unsuspended worker); sign-in is untouched. */
   setWorkerActivation(workerId: string, activated: boolean): Promise<ApiOutcome<WorkerActivation>>
   /** worker-activation U2 (A4, A5): suspend the account (no sign-in) or restore it; the activation flag is untouched. */
   setWorkerSuspension(workerId: string, suspended: boolean): Promise<ApiOutcome<WorkerSuspension>>
