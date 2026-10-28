@@ -5808,3 +5808,5 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "merged"
 
 **AI action (2026-10-28):** by refs `main` = `331e5e3` (#149, contains `d6f974e`); deploy-api run 40709723615 (staging) in progress; watching, then a staging public search.
+
+**AI action (2026-10-28):** staging `remonta-api-staging-00072-q62` on image `331e5e3`; public search Sydney, NSW 2000 within 20 km: 174 (was 0), nearest first. Promotion handed over: `331e5e3aac9f64aadc5267b83933e53bd170ac6a` (rollback `6886e09`).
