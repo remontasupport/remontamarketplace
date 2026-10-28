@@ -11,6 +11,8 @@ describe('admin-clients list query (U2 A1)', () => {
   it('reads the URL, dropping what the contract would refuse', () => {
     expect(filtersOf(new URLSearchParams('search=%20ann%20&requestStatus=ACTIVE&fundingType=NDIS&page=3'))).toEqual({ search: 'ann', requestStatus: 'ACTIVE', fundingType: 'NDIS', page: 3 })
     expect(filtersOf(new URLSearchParams('requestStatus=DONE&fundingType=x&page=-2'))).toEqual({ search: '', requestStatus: undefined, fundingType: undefined, page: 1 })
+    // Matched is not offered for now: an old link with it lists without that filter.
+    expect(filtersOf(new URLSearchParams('requestStatus=MATCHED')).requestStatus).toBeUndefined()
   })
 
   it('writes only what is set, and round-trips', () => {
