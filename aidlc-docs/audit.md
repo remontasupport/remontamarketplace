@@ -5631,3 +5631,9 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "In the any request status field, remove the has a matched request, apply it to the same pr above"
 
 **AI action (2026-10-28):** on `fix/participant-age` (`5e59386e`): `statusChoices.ts` exports `OFFERED_STATUSES` (Matched left out), used by the list filter, the URL reader (an old `requestStatus=MATCHED` link is ignored) and Change status; tests; docs. App gate green (55 / 277 known, 46 files, 342 tests). Pushed.
+
+**AI action (2026-10-28):** by refs `fix/participant-age` (age + filter without Matched) merged: `main` = `6c5aa78`.
+
+**User input (2026-10-28):** "Perfect, now can on both client and coordinator lists, can you add a function that the admin can download the lists as csv, the columns only are first name, last names, email address and mobile, also admin can select they want to download or download all"
+
+**AI action (2026-10-28):** "Perfect" taken as the check of the previous change. CSV export as a U2 follow-up, app only: row checkboxes (selection kept across pages), Download selected / Download all (= everyone matching the current search and filters, read through `listRequesters` 100 per page); columns First name, Last name, Email, Mobile; a shared `lib/csv.ts` (quoting, UTF-8 BOM, formula-injection guard that keeps phone numbers). Branch `feat/admin-requesters-csv` from `main` `6c5aa78`.
