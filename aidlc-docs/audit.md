@@ -5621,3 +5621,9 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "by the way on the request details, can you add more size to the texts, and bold the title, like the Preferred days, Frequency, Description etc"
 
 **AI action (2026-10-28):** on the same unmerged branch `feat/admin-participant-card-requests` (`7226a3ad`): the request details list in `RequestCard` titles `text-sm font-semibold`, values `text-base`, wider spacing. App gate green. Pushed.
+
+**AI action (2026-10-28):** by refs the participant-card PR (incl. the details text commit `7226a3a`) is merged: `main` = `819dbde`.
+
+**User input (2026-10-28):** "by the way, why does the age didn't specified even if the Date of Birth has a values, fix it"
+
+**AI action (2026-10-28):** cause: the card shows `age` only when given one; the client pages compute it (three copies: the client and coordinator dashboard pages, `ParticipantsMasterDetail`), the admin page passed none. Branch `fix/participant-age` from `main` `819dbde` (`38c91186`): `lib/age.ts` `ageFrom` (+ test; the birth date read as a calendar date, so no timezone shift) used by the three client places and the admin page. App gate green (55 / 277 known, 46 files). Pushed.
