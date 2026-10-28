@@ -22,6 +22,9 @@ type RouteParams = { params: Promise<{ id: string }> }
 
 const ALLOWED_ROLES = new Set([UserRole.CLIENT, UserRole.COORDINATOR])
 
+/** The statuses the client or coordinator may still edit (and a hidden-archived request, restored to PENDING). */
+const EDITABLE_STATUSES = new Set(['PENDING', 'MATCHING'])
+
 // ============================================================================
 // SHARED AUTH HELPER
 // ============================================================================
@@ -161,7 +164,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
     }
 
-    // Only PENDING (or hidden-archived) can be edited
+    // Only PENDING or MATCHING (or hidden-archived) can be edited
     const isHiddenArchived = existing.status === 'ARCHIVED' && existing.hidden
     if (existing.status === 'ACTIVE') {
       return NextResponse.json(
@@ -173,9 +176,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         { status: 400 }
       )
     }
-    if (existing.status !== 'PENDING' && !isHiddenArchived) {
+    if (!EDITABLE_STATUSES.has(existing.status) && !isHiddenArchived) {
       return NextResponse.json(
-        { success: false, error: 'Cannot update request', message: 'Only pending requests can be updated' },
+        { success: false, error: 'Cannot update request', message: 'Only pending or matching requests can be updated' },
         { status: 400 }
       )
     }

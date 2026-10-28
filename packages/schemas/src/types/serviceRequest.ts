@@ -4,7 +4,9 @@
 // PARTICIPANT TYPE (matches Prisma model)
 // ============================================
 
-export type FundingType = 'NDIS' | 'AGED_CARE' | 'INSURANCE' | 'PRIVATE' | 'OTHER'
+import type { FundingType } from '../data/serviceRequests'
+
+export type { FundingType }
 
 export type Participant = {
   id: string

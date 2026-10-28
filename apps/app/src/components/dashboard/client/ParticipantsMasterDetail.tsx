@@ -9,6 +9,7 @@ import ParticipantDetailPanel from "./ParticipantDetailPanel";
 import EditParticipantModal from "./EditParticipantModal";
 import AddClientModal from "./AddClientModal";
 import RemoveClientModal from "./RemoveClientModal";
+import { ageFrom } from "@/lib/age";
 
 export interface ParticipantData {
   id: string;
@@ -123,16 +124,7 @@ export default function ParticipantsMasterDetail({
     conditions?: string[];
     additionalInfo?: string | null;
   }) => {
-    // Compute age client-side from dateOfBirth
-    let age: number | undefined;
-    if (newParticipant.dateOfBirth) {
-      const [year, month, day] = newParticipant.dateOfBirth.split("-").map(Number);
-      const dob = new Date(year, month - 1, day);
-      const today = new Date();
-      age = today.getFullYear() - dob.getFullYear();
-      const m = today.getMonth() - dob.getMonth();
-      if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
-    }
+    const age = ageFrom(newParticipant.dateOfBirth);
 
     const startDate = new Date().toLocaleDateString("en-AU", {
       day: "numeric",

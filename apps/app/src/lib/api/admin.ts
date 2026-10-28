@@ -11,6 +11,10 @@ import {
   createClient,
   serializeCanonical,
   type AdminWorkerServices,
+  type RequesterDetail,
+  type RequesterListQuery,
+  type RequesterListResponse,
+  type RequestStatus,
   type SuspendedListQuery,
   type SuspendedListResponse,
   type UserListResponse,
@@ -20,6 +24,7 @@ import {
   type WorkerSearchResponse,
   type WorkerSuspension,
 } from '@remonta/api-contract'
+import type { ServiceRequestStatus } from '@remonta/schemas/data/serviceRequests'
 import { failure, type ApiOutcome } from './outcome'
 import { createTokenSource, Unauthenticated, type TokenSource } from './token'
 
@@ -41,6 +46,12 @@ export interface AdminApi {
   setWorkerActivation(workerId: string, activated: boolean): Promise<ApiOutcome<WorkerActivation>>
   /** worker-activation U2 (A4, A5): suspend the account (no sign-in) or restore it; the activation flag is untouched. */
   setWorkerSuspension(workerId: string, suspended: boolean): Promise<ApiOutcome<WorkerSuspension>>
+  /** admin-clients U2 (A5): clients or support coordinators, by role, filtered and paged. */
+  listRequesters(query: RequesterListQuery, opts?: CallOptions): Promise<ApiOutcome<RequesterListResponse>>
+  /** One client or coordinator with their participants and requests (each read is audited by the api). */
+  getRequester(userId: string, opts?: CallOptions): Promise<ApiOutcome<RequesterDetail>>
+  /** Any status on one request; the api tells the CRM. */
+  setRequestStatus(requestId: string, status: ServiceRequestStatus): Promise<ApiOutcome<RequestStatus>>
   /** The canonical query string of a search (R8.5): what the URL bar and the cache key carry. */
   canonicalSearch(query: WorkerSearchQuery): string
 }
@@ -51,9 +62,9 @@ export interface AdminApiDeps {
   fetch?: typeof globalThis.fetch
 }
 
-type QueryEntryName = 'searchWorkers' | 'listUsers' | 'listSuspendedWorkers'
-type EntryName = QueryEntryName | 'getWorkerServices' | 'setWorkerActivation' | 'setWorkerSuspension'
-const QUERY_ENTRIES: ReadonlySet<EntryName> = new Set<EntryName>(['searchWorkers', 'listUsers', 'listSuspendedWorkers'])
+type QueryEntryName = 'searchWorkers' | 'listUsers' | 'listSuspendedWorkers' | 'listRequesters'
+type EntryName = QueryEntryName | 'getWorkerServices' | 'setWorkerActivation' | 'setWorkerSuspension' | 'getRequester' | 'setRequestStatus'
+const QUERY_ENTRIES: ReadonlySet<EntryName> = new Set<EntryName>(['searchWorkers', 'listUsers', 'listSuspendedWorkers', 'listRequesters'])
 
 export function createAdminApi(deps: AdminApiDeps): AdminApi {
   const doFetch = deps.fetch ?? ((input: RequestInfo | URL, init?: RequestInit) => globalThis.fetch(input, init))
@@ -122,6 +133,9 @@ export function createAdminApi(deps: AdminApiDeps): AdminApi {
     // Writes are never cached: the browser does not cache a PUT, and the api answers no-store.
     setWorkerActivation: (workerId, activated) => call('setWorkerActivation', undefined, undefined, { workerId }, { activated }),
     setWorkerSuspension: (workerId, suspended) => call('setWorkerSuspension', undefined, undefined, { workerId }, { suspended }),
+    listRequesters: (query, opts) => call('listRequesters', query, opts),
+    getRequester: (userId, opts) => call('getRequester', undefined, opts, { userId }),
+    setRequestStatus: (requestId, status) => call('setRequestStatus', undefined, undefined, { requestId }, { status }),
     canonicalSearch: (query) => {
       const q = canonical('searchWorkers', query)
       return 'fields' in q && typeof q.fields === 'object' ? '' : new URLSearchParams(q as Record<string, string>).toString()

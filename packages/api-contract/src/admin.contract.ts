@@ -6,7 +6,9 @@
 // (privateCacheSeconds, D15/D16). Adding an endpoint = one entry here + one handler in
 // apps/api's admin module.
 import { EXPERIENCE_AREA_PAIRS } from '@remonta/schemas/data/experienceAreas'
+import { FUNDING_TYPES, SERVICE_REQUEST_STATUSES } from '@remonta/schemas/data/serviceRequests'
 import { OTHER_TOOL_MAX_CHARS, OTHER_TOOLS_MAX, TOOL_IDS, TOOL_SEARCH_MAX_CHARS } from '@remonta/schemas/data/serviceTools'
+import { createServiceRequestSchema } from '@remonta/schemas/schema/serviceRequestSchema'
 import * as z from 'zod'
 import { defineContract } from './define'
 import { meta, ROLES } from './meta'
@@ -40,6 +42,13 @@ export const WORKER_SEARCH_LIMITS = { user: 120, ip: 300 } as const
 export const ACTIVATION_WRITE_LIMITS = { user: 120, ip: 300 } as const
 export const SUSPENSION_WRITE_LIMITS = { user: 30, ip: 120 } as const
 export const ADMIN_LIST_LIMITS = { user: 60, ip: 120 } as const
+/** admin-clients U1: an admin opening one client or coordinator after another; a status change is rarer. */
+export const REQUESTER_DETAIL_LIMITS = { user: 120, ip: 300 } as const
+export const REQUEST_STATUS_WRITE_LIMITS = { user: 60, ip: 120 } as const
+/** The two roles that file service requests ("requesters", as service_requests.requesterId names them). */
+export const REQUESTER_ROLES = ['CLIENT', 'COORDINATOR'] as const
+/** The list's participants filter: with at least one owned participant, or with none. */
+export const PARTICIPANT_FILTERS = ['with', 'without'] as const
 
 /** A comma-separated query value: split, trimmed, empties dropped, deduplicated, sorted (R1.5). */
 const csv = <T extends z.ZodType<string>>(item: T, max = 20) =>
@@ -227,7 +236,11 @@ export type SuspendedListQuery = z.input<typeof suspendedListQuerySchema>
 export const suspendedListResponseSchema = z.strictObject({ data: z.array(workerRowSchema), pagination: paginationSchema })
 export type SuspendedListResponse = z.output<typeof suspendedListResponseSchema>
 
-const adminRead = (limits: { user: number; ip: number }) =>
+/**
+ * Every admin entry: ADMIN only, per-user and per-IP limits, a small body. Never cached (the api's no-store default)
+ * unless the entry adds a private cache; `audit` names the action the pipeline requires the handler to record.
+ */
+const adminMeta = (limits: { user: number; ip: number }, extra: { privateCacheSeconds?: number; audit?: string } = {}) =>
   meta({
     access: { roles: ['ADMIN'] },
     bot: 'none',
@@ -236,31 +249,24 @@ const adminRead = (limits: { user: number; ip: number }) =>
       { per: 'ip', limit: limits.ip, window: '1m' },
     ],
     maxBodyKb: 1,
-    // Repeats within a minute are served by the browser's private cache (ETag/304)
-    // and, for the search, the api's memo. Personal data: never a shared cache.
-    privateCacheSeconds: 60,
+    ...extra,
   })
+
+// Repeats within a minute are served by the browser's private cache (ETag/304)
+// and, for the search, the api's memo. Personal data: never a shared cache.
+const adminRead = (limits: { user: number; ip: number }) => adminMeta(limits, { privateCacheSeconds: 60 })
 
 const json = <S extends z.ZodType>(schema: S): { kind: 'json'; schema: S } => ({ kind: 'json', schema })
 
-/** worker-activation U1 (N3): an admin write. Never cached; the body is one small object. */
-const adminWrite = (limits: { user: number; ip: number }) =>
-  meta({
-    access: { roles: ['ADMIN'] },
-    bot: 'none',
-    rateLimit: [
-      { per: 'user', limit: limits.user, window: '1m' },
-      { per: 'ip', limit: limits.ip, window: '1m' },
-    ],
-    maxBodyKb: 1,
-  })
+/** A record id in a path: cuid or uuid shaped, bounded. */
+const recordId = (what: string) => z.string().regex(/^[A-Za-z0-9_-]{1,40}$/, `Not a ${what} id`)
 
 /** U3b: a short-lived link to view a worker's private document (the compliance review page opens it through the app). */
-export const adminDocumentParamsSchema = z.strictObject({ documentId: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/, 'Not a document id') })
+export const adminDocumentParamsSchema = z.strictObject({ documentId: recordId('document') })
 export const adminDocumentLinkSchema = z.strictObject({ url: z.url().max(4096), expiresAt: z.iso.datetime({ offset: true }).nullable() })
 
 /** worker-tools U1 (E3, Q1 B): one worker's services and their tools, for the worker's admin page. */
-export const adminWorkerParamsSchema = z.strictObject({ workerId: z.string().regex(/^[A-Za-z0-9_-]{1,40}$/, 'Not a worker id') })
+export const adminWorkerParamsSchema = z.strictObject({ workerId: recordId('worker') })
 /** worker-activation U1: the two admin switches. The target state travels in the body, so a repeat is harmless. */
 export const workerActivationBodySchema = z.strictObject({ activated: z.boolean() })
 export const workerActivationSchema = z.strictObject({ workerId: z.string(), activated: z.boolean() })
@@ -283,6 +289,93 @@ export const adminWorkerServicesSchema = z.strictObject({
     .max(50),
 })
 export type AdminWorkerServices = z.output<typeof adminWorkerServicesSchema>
+
+// ---- admin-clients U1: clients and coordinators, their participants and requests ---------------------------------
+// One set of entries for both roles (CS-1). Every participant field and the request's details are shown in full
+// (FR-9, no password since 2026-10-28); each detail read is audited (FR-10). The request's services and details reuse
+// the client's own request schemas, so the admin sees what the client entered, typed the same way.
+
+const { services: requestServicesSchema, details: requestDetailsSchema } = createServiceRequestSchema.shape
+
+export const requesterListQuerySchema = z.strictObject({
+  role: z.enum(REQUESTER_ROLES),
+  page: positiveInt.default(1),
+  pageSize: positiveInt.max(PAGE_SIZE_MAX).default(20),
+  /** Email, first or last name, substring, any case. */
+  search: z.string().trim().min(1).max(100).optional(),
+  /** Has at least one request in this status. */
+  requestStatus: z.enum(SERVICE_REQUEST_STATUSES).optional(),
+  /** Has at least one participant of theirs with this funding type. */
+  fundingType: z.enum(FUNDING_TYPES).optional(),
+  /** With at least one participant they still own, or with none (a removed participant does not count, FR-5). */
+  participants: z.enum(PARTICIPANT_FILTERS).optional(),
+})
+export type RequesterListQuery = z.input<typeof requesterListQuerySchema>
+export type RequesterListQueryParsed = z.output<typeof requesterListQuerySchema>
+export type RequesterRole = (typeof REQUESTER_ROLES)[number]
+
+export const requesterRowSchema = z.strictObject({
+  userId: z.string(),
+  role: z.enum(REQUESTER_ROLES),
+  email: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  mobile: z.string(),
+  /** Coordinators only. */
+  organisation: z.string().optional(),
+  /** Participants they still own (a removed participant is not counted, FR-5). */
+  participantCount: z.number().int().min(0),
+  requestCount: z.number().int().min(0),
+})
+export type RequesterRow = z.output<typeof requesterRowSchema>
+export const requesterListResponseSchema = z.strictObject({ data: z.array(requesterRowSchema), pagination: paginationSchema })
+export type RequesterListResponse = z.output<typeof requesterListResponseSchema>
+
+export const adminServiceRequestSchema = z.strictObject({
+  id: z.string(),
+  status: z.enum(SERVICE_REQUEST_STATUSES),
+  services: requestServicesSchema,
+  details: requestDetailsSchema,
+  location: z.string(),
+  /** The workers in assignedWorker, resolved to their profile (a worker since removed is left out). */
+  assignedWorkers: z.array(z.strictObject({ workerProfileId: z.string(), name: z.string() })),
+  createdAt: isoDate,
+  updatedAt: isoDate,
+})
+export type AdminServiceRequest = z.output<typeof adminServiceRequestSchema>
+
+export const adminParticipantSchema = z.strictObject({
+  id: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  dateOfBirth: isoDate.nullable(),
+  location: z.string().nullable(),
+  gender: z.string().nullable(),
+  conditions: z.array(z.string()),
+  fundingType: z.enum(FUNDING_TYPES).nullable(),
+  relationshipToClient: z.string().nullable(),
+  isSelfManaged: z.boolean(),
+  servicesRequested: z.json().nullable(),
+  additionalInfo: z.string().nullable(),
+  createdAt: isoDate,
+  /** Newest first. */
+  requests: z.array(adminServiceRequestSchema),
+})
+export type AdminParticipant = z.output<typeof adminParticipantSchema>
+
+export const requesterParamsSchema = z.strictObject({ userId: recordId('user') })
+export const requesterDetailSchema = z.strictObject({
+  requester: requesterRowSchema,
+  /** Owned participants, newest first. */
+  participants: z.array(adminParticipantSchema),
+})
+export type RequesterDetail = z.output<typeof requesterDetailSchema>
+
+export const serviceRequestParamsSchema = z.strictObject({ requestId: recordId('service request') })
+/** The target status travels in the body, so a repeat is harmless. */
+export const requestStatusBodySchema = z.strictObject({ status: z.enum(SERVICE_REQUEST_STATUSES) })
+export const requestStatusSchema = z.strictObject({ requestId: z.string(), status: z.enum(SERVICE_REQUEST_STATUSES) })
+export type RequestStatus = z.output<typeof requestStatusSchema>
 
 export const adminContract = defineContract('admin', {
   searchWorkers: {
@@ -339,7 +432,7 @@ export const adminContract = defineContract('admin', {
     pathParams: adminWorkerParamsSchema,
     body: json(workerActivationBodySchema),
     responses: { 200: workerActivationSchema },
-    meta: adminWrite(ACTIVATION_WRITE_LIMITS),
+    meta: adminMeta(ACTIVATION_WRITE_LIMITS),
   },
 
   setWorkerSuspension: {
@@ -349,6 +442,34 @@ export const adminContract = defineContract('admin', {
     pathParams: adminWorkerParamsSchema,
     body: json(workerSuspensionBodySchema),
     responses: { 200: workerSuspensionSchema },
-    meta: adminWrite(SUSPENSION_WRITE_LIMITS),
+    meta: adminMeta(SUSPENSION_WRITE_LIMITS),
+  },
+
+  listRequesters: {
+    method: 'GET',
+    path: '/v1/admin/requesters',
+    summary: 'Clients or support coordinators (by role) with their participant and request counts, newest first, paged; search by email or name, filter by a request status or a participant funding type.',
+    query: requesterListQuerySchema,
+    responses: { 200: requesterListResponseSchema },
+    meta: adminMeta(ADMIN_LIST_LIMITS),
+  },
+
+  getRequester: {
+    method: 'GET',
+    path: '/v1/admin/requesters/:userId',
+    summary: 'One client or support coordinator: the profile, the participants they own and every request of each, in full. Audited. 404 when no client or coordinator has that id.',
+    pathParams: requesterParamsSchema,
+    responses: { 200: requesterDetailSchema },
+    meta: adminMeta(REQUESTER_DETAIL_LIMITS, { audit: 'ADMIN_RECORD_VIEW' }),
+  },
+
+  setRequestStatus: {
+    method: 'PUT',
+    path: '/v1/admin/service-requests/:requestId/status',
+    summary: 'Set a service request to any status (an active one included); the change is audited and sent to the CRM workflow. A repeat writes nothing. 404 when no request has that id.',
+    pathParams: serviceRequestParamsSchema,
+    body: json(requestStatusBodySchema),
+    responses: { 200: requestStatusSchema },
+    meta: adminMeta(REQUEST_STATUS_WRITE_LIMITS, { audit: 'SERVICE_REQUEST_STATUS_CHANGE' }),
   },
 })

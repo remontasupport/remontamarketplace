@@ -233,7 +233,9 @@ export const AuditAction: {
   ROLE_CHANGE: 'ROLE_CHANGE',
   IMPERSONATION_START: 'IMPERSONATION_START',
   IMPERSONATION_END: 'IMPERSONATION_END',
-  ACCOUNT_REGISTERED: 'ACCOUNT_REGISTERED'
+  ACCOUNT_REGISTERED: 'ACCOUNT_REGISTERED',
+  ADMIN_RECORD_VIEW: 'ADMIN_RECORD_VIEW',
+  SERVICE_REQUEST_STATUS_CHANGE: 'SERVICE_REQUEST_STATUS_CHANGE'
 };
 
 export type AuditAction = (typeof AuditAction)[keyof typeof AuditAction]
@@ -306,6 +308,7 @@ export type FundingType = (typeof FundingType)[keyof typeof FundingType]
 
 export const ServiceRequestStatus: {
   PENDING: 'PENDING',
+  MATCHING: 'MATCHING',
   MATCHED: 'MATCHED',
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED',

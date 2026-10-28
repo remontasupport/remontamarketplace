@@ -9,6 +9,7 @@ import { ApiError } from '../../platform/errors'
 import type { PhotoStore } from '../registration/adapters/photo-store'
 import { linkFor } from '../worker/application/service-documents'
 import { listSuspendedWorkers, listUsers } from './application/lists'
+import { getRequester, listRequesters, setRequestStatus } from './application/requesters'
 import { searchWorkers } from './application/search-workers'
 import { getWorkerServices } from './application/worker-services'
 import { setWorkerActivation, setWorkerSuspension } from './application/worker-status'
@@ -59,6 +60,26 @@ export function adminHandlers(deps: AdminModuleDeps) {
     setWorkerSuspension: async (req, ctx) => {
       const body = await setWorkerSuspension(deps, req.params.workerId, req.body.suspended)
       ctx.log.info({ entry: 'admin.setWorkerSuspension', adminUserId: ctx.principal!.userId, workerProfileId: body.workerId, suspended: body.suspended }, 'admin worker suspension')
+      return { status: 200, body }
+    },
+
+    // admin-clients U1 (N10): one line per entry, ids and counts only; the role, status and funding filters are not personal.
+    listRequesters: async (req, ctx) => {
+      const started = Date.now()
+      const body = await listRequesters(deps, req.query)
+      ctx.log.info({ entry: 'admin.listRequesters', durationMs: Date.now() - started, role: req.query.role, total: body.pagination.total, search: req.query.search !== undefined, requestStatus: req.query.requestStatus ?? null, fundingType: req.query.fundingType ?? null, participants: req.query.participants ?? null }, 'admin requesters')
+      return { status: 200, body }
+    },
+
+    getRequester: async (req, ctx) => {
+      const body = await getRequester(deps, ctx.audit, ctx.principal!.userId, req.params.userId)
+      ctx.log.info({ entry: 'admin.getRequester', adminUserId: ctx.principal!.userId, requesterUserId: req.params.userId, participants: body.participants.length }, 'admin requester view')
+      return { status: 200, body }
+    },
+
+    setRequestStatus: async (req, ctx) => {
+      const body = await setRequestStatus(deps, ctx.audit, ctx.principal!.userId, req.params.requestId, req.body.status)
+      ctx.log.info({ entry: 'admin.setRequestStatus', adminUserId: ctx.principal!.userId, requestId: body.requestId, status: body.status }, 'admin request status')
       return { status: 200, body }
     },
   })

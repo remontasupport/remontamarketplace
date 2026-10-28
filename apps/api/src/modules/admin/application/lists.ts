@@ -3,6 +3,7 @@
 import type { SuspendedListResponse, UserListResponse, WorkerRow } from '@remonta/api-contract'
 import type { Clock } from '../../../platform/clock'
 import type { Db } from '../../../platform/persistence/db'
+import { paginationOf } from '../domain/pagination'
 import { shapeRow } from './search-workers'
 
 const NAME = (search: string) => ({ contains: search, mode: 'insensitive' as const })
@@ -112,6 +113,5 @@ export async function listSuspendedWorkers(deps: { db: Db; clock: Clock }, query
       false,
     )
   })
-  const totalPages = Math.ceil(total / query.pageSize)
-  return { data, pagination: { total, page: query.page, pageSize: query.pageSize, totalPages, hasNext: query.page < totalPages, hasPrev: query.page > 1 } }
+  return { data, pagination: paginationOf(total, query.page, query.pageSize) }
 }
