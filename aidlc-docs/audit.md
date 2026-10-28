@@ -5569,3 +5569,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "merged"; "stop the local api"
 
 **AI action (2026-10-28):** by refs `main` = `59fd8cd` (merge of PR #132, contains `d38f6a2`). The local api stopped (task, then PID 20372; port 4000 free). deploy-api run 40617477585 (push) success: staging revision `remonta-api-staging-00068-dz7`; health 200; the three entries 401 without a token. The check script (now STAGE=staging: the staging api, rehearse-w1, the staging token secret on stdin) 24/24 PASS (36 clients / 33 coordinators = the database; filters; detail; view audited; status change + one event, repeat no-op, put back; 404/400/403/401); both events DONE, Cloud Logging "service request webhook off: nothing sent" 01:58Z. Promotion image handed over: `59fd8cdc0f1fa43ef95feb2ebc385adfab8cef4e`.
+
+**User input (2026-10-28):** "is the staging deploy done?"; "I already run that imageTag and stage to prod"
+
+**AI action (2026-10-28):** verified: deploy-api run 40618713934 (workflow_dispatch) success 02:05Z; prod revision `remonta-api-00023-f4b` serves 100 % (previous `00022-xvq` = `90fdadb`); its image digest `sha256:2af252e7...` equals staging `00068-dz7`'s (the image checked 24/24); prod health 200; `/v1/admin/requesters` and `.../status` 401 without a token (present); no ERROR log lines on the revision. U1 `clients-api` live. Next: U2 `clients-app` Functional Design.
