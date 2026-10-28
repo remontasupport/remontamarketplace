@@ -14,6 +14,7 @@ code and abstraction" (CS-1..CS-5 in the execution plan).
 | #139 `979543a` / #140 / #141 | the Participants filter (api promoted 03:42Z, `remonta-api-00024-fpj`), coordinators only |
 | #142 | CSV download on the Contractors tab; the download pieces shared (`features/admin-export`, `lib/api/allPages`) |
 | #143, #144 | outside the goal, same day: a Matching request can be edited by its client/coordinator; manage-request's Renew restored |
+| #145 `aaf1841` | after the close, same day: manage-request offers Edit on Pending/Matching only and Archive on Completed/Cancelled only; the client PATCH enforces both (`EDITABLE_STATUSES`, `ARCHIVABLE_STATUSES` in `features/service-requests/status.ts`) |
 
 ## Deviations
 

@@ -4,7 +4,7 @@
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
 - **Current Cycle**: none. The admin-clients cycle closed 2026-10-28 (archived under `archive/admin-clients/`). Record branch `aidlc/admin-clients` is the newest; the next cycle branches from it.
-- **Current Stage**: between cycles. Production at the close: api `remonta-api-00024-fpj` = `979543a`, app `main` `baf44fb` (#144). Open docs PR: `docs/rollback-rows-2026-10-28` (`5cd7e6e`, rows at `baf44fb` / `979543a`; supersedes `docs/rollback-rows-2026-10-22`).
+- **Current Stage**: between cycles. Production at the close: api `remonta-api-00024-fpj` = `979543a`, app `main` `aaf1841` (#145, after the close: Edit on Pending/Matching only, Archive on Completed/Cancelled only). Open docs PR: `docs/rollback-rows-2026-10-28` (`5cd7e6e`, rows at `baf44fb` / `979543a`; supersedes `docs/rollback-rows-2026-10-22`).
 
 ## Previous cycles (archived, read-only)
 
@@ -32,7 +32,9 @@
   `ServiceRequestStatusChanged` posts Cancel / Archive / Edit with `changedBy: 'admin'` to `N8N_SERVICE_REQUEST_WEBHOOK_URL`,
   staging `off`). The app's Clients / Support Coordinators tabs (`features/admin-clients`), MATCHED not offered. CSV
   download on those tabs and the Contractors tab from one module (`features/admin-export`, `lib/api/allPages`). The
-  client's PATCH accepts PENDING and MATCHING; manage-request offers Renew on a cancelled request.
+  client's PATCH edits PENDING and MATCHING only and archives COMPLETED and CANCELLED only (`EDITABLE_STATUSES`,
+  `ARCHIVABLE_STATUSES` in `features/service-requests/status.ts`, the page's buttons follow them); manage-request offers
+  Renew on a cancelled request.
 - **Worker tools** (2026-10-22): `packages/schemas/src/data/serviceTools.ts` (the lists, `TOOL_SYNONYMS`, `toolSearchOf`)
   is the one source for the page and the api; `worker_services."toolIds"`/`"otherTools"`; the worker's "Your tools"
   screen (Cleaning, Home and Yard), the admin `tools` (all of) and `toolSearch` filters, `GET /v1/admin/workers/:id/services`.

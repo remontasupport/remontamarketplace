@@ -22,6 +22,8 @@
 
 #143 a Matching request is editable by its client/coordinator (the PATCH route took PENDING only); #144 manage-request's
 Renew restored on a cancelled request (`/reactivate` → PENDING, n8n `Renew`), removed 2026-10-26 in `9f77989`.
+After the close: #145 (`aaf1841`) Edit on Pending/Matching only, Archive on Completed/Cancelled only, both enforced by the
+client PATCH route (archiving another status now 400); app gate 352 tests.
 
 ## Not done
 
