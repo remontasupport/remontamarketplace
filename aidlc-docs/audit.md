@@ -5720,3 +5720,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "let's do this"
 
 **AI action (2026-10-28):** opened the cycle **search-locations** on record branch `aidlc/search-locations` (from `aidlc/admin-clients`). Workspace Detection: brownfield, unchanged. Targeted inventory `inception/search-locations-inventory.md` (the two routes and their callers; legacy writers = the api's `placeHome` only; display and reconciler readers; `/api/contractors` reads `contractor_profiles` in the jobs database, out of the column question). Requirements questions (8, incl. the carried extensions) in `inception/requirements/requirement-verification-questions.md`; awaiting answers.
+
+**User input (2026-10-28):** "ANSWERED" (in the questions file: Q1 A, Q2 A, Q3 A, Q4 A, Q5 "A, TAKE NOTE OF THIS", Q6 A, Q7 A, Q8 A)
+
+**AI action (2026-10-28):** correction of the earlier summary: the two search bars do not send a locality id; both fill `location` from the app's `/api/suburbs` (a static list) as "Suburb STATE postcode"; FR-2 matches that text to `au_localities` on the server. Also found: the client search lists every unsuspended worker (not `isActivated`, user 2026-10-23) and falls back to no place on a failed geocode; kept (FR-5, FR-2). `inception/requirements/requirements.md` written. Q5 recorded as follow-up 39 (the dual write, display readers, reconciler and column drop: a later cycle). Extensions kept. Awaiting approval; User Stories proposed skipped.

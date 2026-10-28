@@ -13,7 +13,7 @@ A) On `apps/api`, as contract entries (`GET /v1/client/workers` with the bearer 
 B) Stay as Next routes in `apps/app`, rewritten to query `worker_locations` with PostGIS
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A
 
 ## Question 2: How is the searched place given?
 A) A locality id from the suburb autocomplete (both bars already use one); a free-text `location` (old links, the
@@ -21,7 +21,7 @@ A) A locality id from the suburb autocomplete (both bars already use one); a fre
 B) Keep Google geocoding of the text, only change what the distance is measured against
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A
 
 ## Question 3: Workers with no HOME location (69 active)
 A location search on `worker_locations` alone leaves them out; today they appear if their old columns have coordinates.
@@ -29,7 +29,7 @@ A) Leave them out of location searches (they still appear in searches without a 
 B) Fall back to the old coordinates for them until follow-up 17 places them
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A
 
 ## Question 4: The worker's own travel radius
 Each HOME row has `travelRadiusKm` (default 50). Today only the searcher's radius ("within") counts.
@@ -37,7 +37,7 @@ A) Searcher's radius only, as today
 B) Also require the searched suburb within the worker's own travel radius
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A
 
 ## Question 5: How far this cycle goes
 The old columns are also read for display (profile preview, the worker's profile, completion) and by the reconciler,
@@ -50,14 +50,14 @@ C) Everything: the searches, every display reader moved to the HOME locality, th
    columns dropped
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A, TAKE NOTE OF THIS
 
 ## Question 6: What users see
 A) No visible change: same cards, same order (nearest first), same filters
 B) A plus "N km away" on the client dashboard's cards (the public cards already show it)
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A
 
 ## Question 7: The marketing `/api/contractors` search
 It reads `contractor_profiles` in the jobs database (the Zoho sync), not worker profiles.
@@ -65,11 +65,11 @@ A) Out of scope for this cycle
 B) In scope: decide its future here too
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A
 
 ## Question 8: Extensions (carried from the last two cycles)
 Security Baseline (blocking), Resiliency Baseline (99.9 %, RTO ≤ 30 min, RPO ≤ 5 min), Property-Based Testing (full).
 A) Keep all three as they are
 B) Change (say which after [Answer]:)
 
-[Answer]:
+[Answer]: A
