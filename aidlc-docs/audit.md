@@ -5617,3 +5617,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "in the participant card, can you place the request details of that participant with in the participant card, also the card can be close and open"
 
 **AI action (2026-10-28):** `feat/admin-participant-card-requests` (on `main` `35f854c`, `59b0b12f`): `ParticipantDetailPanel` gains optional `collapsible`, `defaultOpen`, `summary`, `children` (the client dashboard passes none: unchanged); the admin detail renders each participant collapsible (the first open), funding / location / request count beside the name, its requests inside the card. App gate green (55 / 277 known, 44 files, 336 tests); builds. Pushed.
+
+**User input (2026-10-28):** "by the way on the request details, can you add more size to the texts, and bold the title, like the Preferred days, Frequency, Description etc"
+
+**AI action (2026-10-28):** on the same unmerged branch `feat/admin-participant-card-requests` (`7226a3ad`): the request details list in `RequestCard` titles `text-sm font-semibold`, values `text-base`, wider spacing. App gate green. Pushed.
