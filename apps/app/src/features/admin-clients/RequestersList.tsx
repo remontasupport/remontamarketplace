@@ -83,7 +83,7 @@ export default function RequestersList({ role }: { role: RequesterRole }) {
           <p className="mt-2 text-sm text-gray-600">Each {singular} with their participants and requests. Open one to see everything.</p>
         </div>
 
-        <div className="mb-4 grid gap-3 sm:grid-cols-3">
+        <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <input
             type="search"
             value={searchText}
@@ -114,6 +114,16 @@ export default function RequestersList({ role }: { role: RequesterRole }) {
             {FUNDING_TYPES.map((f) => (
               <option key={f} value={f}>{FUNDING_LABEL[f]} participant</option>
             ))}
+          </select>
+          <select
+            value={filters.participants ?? ''}
+            onChange={(e) => go({ ...filters, participants: (e.target.value || undefined) as ListFilters['participants'], page: 1 })}
+            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+            aria-label="Participants"
+          >
+            <option value="">Any participants</option>
+            <option value="with">Has participants</option>
+            <option value="without">No participants</option>
           </select>
         </div>
 

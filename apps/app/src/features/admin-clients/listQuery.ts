@@ -1,6 +1,6 @@
 // admin-clients U2 (A1): the clients / coordinators list's filters as the URL carries them, and back. The sidebar's tab
 // names the role; anything the contract would refuse is dropped, so a hand-edited URL shows a list, never an error.
-import { REQUESTER_ROLES, type RequesterListQuery, type RequesterRole } from '@remonta/api-contract'
+import { PARTICIPANT_FILTERS, REQUESTER_ROLES, type RequesterListQuery, type RequesterRole } from '@remonta/api-contract'
 import { FUNDING_TYPES, type FundingType, type ServiceRequestStatus } from '@remonta/schemas/data/serviceRequests'
 import { OFFERED_STATUSES } from './statusChoices'
 
@@ -22,6 +22,7 @@ export interface ListFilters {
   search: string
   requestStatus?: ServiceRequestStatus
   fundingType?: FundingType
+  participants?: (typeof PARTICIPANT_FILTERS)[number]
   page: number
 }
 
@@ -32,6 +33,7 @@ export function filtersOf(params: URLSearchParams): ListFilters {
     // Only a status the filter offers: an old link cannot apply one the dropdown no longer shows.
     requestStatus: oneOf(OFFERED_STATUSES, params.get('requestStatus')),
     fundingType: oneOf(FUNDING_TYPES, params.get('fundingType')),
+    participants: oneOf(PARTICIPANT_FILTERS, params.get('participants')),
     page: Number.isInteger(page) && page >= 1 ? page : 1,
   }
 }
@@ -42,6 +44,7 @@ export function paramsOf(tab: string, f: ListFilters): URLSearchParams {
   if (f.search) p.set('search', f.search)
   if (f.requestStatus) p.set('requestStatus', f.requestStatus)
   if (f.fundingType) p.set('fundingType', f.fundingType)
+  if (f.participants) p.set('participants', f.participants)
   if (f.page > 1) p.set('page', String(f.page))
   return p
 }
@@ -60,5 +63,6 @@ export function requestOf(role: RequesterRole, f: ListFilters): RequesterListQue
     ...(f.search ? { search: f.search } : {}),
     ...(f.requestStatus ? { requestStatus: f.requestStatus } : {}),
     ...(f.fundingType ? { fundingType: f.fundingType } : {}),
+    ...(f.participants ? { participants: f.participants } : {}),
   }
 }
