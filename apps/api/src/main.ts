@@ -15,6 +15,7 @@ import { createDb } from './platform/persistence/db'
 import { PostgresRateLimiter } from './platform/rate-limit/rate-limiter'
 import { adminHandlers } from './modules/admin/admin.handlers'
 import { workerHandlers } from './modules/worker/worker.handlers'
+import { searchHandlers } from './modules/search/search.handlers'
 import { ResponseMemo } from './platform/cache/response-memo'
 import { systemClock } from './platform/clock'
 import { LocalityDirectory } from './modules/localities/locality-directory'
@@ -57,6 +58,8 @@ async function main() {
     adminHandlers({ db, clock: systemClock, bucket }),
     // The worker's own profile (worker-profile-api U1): per-user bodies, never memoised.
     workerHandlers({ db, clock: systemClock, completionModel: config.COMPLETION_MODEL, photos: { bucket, publicBaseUrl: config.PHOTO_PUBLIC_BASE_URL, ipHashSecret: config.IP_HASH_SECRET, blob: blobStore } }),
+    // The worker search for clients, coordinators and the marketing site (search-locations U1): memoised, as the bodies do not depend on the caller.
+    searchHandlers({ db, clock: systemClock }),
     // The signed-in user's own sign-in details (api-review U5d): email and password.
     accountHandlers({ db, clock: systemClock, hasher, breaches }),
     registrationHandlers({
@@ -97,7 +100,7 @@ async function main() {
         minScore: config.RECAPTCHA_MIN_SCORE,
       }),
       authenticator,
-      memo: { store: new ResponseMemo({ clock: systemClock }), entries: new Set(['admin.searchWorkers']) },
+      memo: { store: new ResponseMemo({ clock: systemClock }), entries: new Set(['admin.searchWorkers', 'search.searchWorkersForClient', 'search.searchPublicWorkers']) },
       exemptIps: config.rateLimitExemptIps,
     },
   })
