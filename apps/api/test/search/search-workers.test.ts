@@ -95,7 +95,7 @@ describe('the public search fills the spec', () => {
     const h = harness()
     for (const typeOfSupport of ['support-worker', 'all', 'Nursing Services']) await searchPublic(h.deps, publicWorkerQuerySchema.parse({ typeOfSupport }), h.notes())
     expect(h.specs.map((s) => s.services)).toEqual([['Support Worker'], [], ['Nursing Services']])
-    expect(h.specs.every((s) => s.audience === 'public' && !s.introductionRequired && s.keywords.length === 0)).toBe(true)
+    expect(h.specs.every((s) => !s.introductionRequired && s.keywords.length === 0)).toBe(true)
   })
 
   it('the envelope: success, data, pagination', async () => {
@@ -131,7 +131,7 @@ describe('the cards', () => {
 })
 
 describe('the statement', () => {
-  const spec = (over: Partial<SearchSpec> = {}): SearchSpec => ({ audience: 'client', introductionRequired: false, keywords: [], services: [], place: null, withinKm: 50, page: 1, pageSize: 20, ...over })
+  const spec = (over: Partial<SearchSpec> = {}): SearchSpec => ({ introductionRequired: false, keywords: [], services: [], place: null, withinKm: 50, page: 1, pageSize: 20, ...over })
   const text = (s: { sql: string }) => s.sql.replace(/\s+/g, ' ')
 
   it('BR-O1: without a place, newest first and no radius', () => {
@@ -147,9 +147,10 @@ describe('the statement', () => {
     expect(s.values).toContain(20_000)
   })
 
-  it('BR-E1/E2: each audience its own eligibility', () => {
-    expect(text(searchStatement(spec()))).toMatch(/u\.status = 'ACTIVE' AND p\."firstName" <> '' AND p\."lastName" <> ''/)
-    expect(text(searchStatement(spec({ audience: 'public' })))).toMatch(/p\."isActivated" = true AND u\.status = 'ACTIVE'/)
+  it('BR-E1: every unsuspended worker with a name, for both searches; the activation switch is not read', () => {
+    const s = text(searchStatement(spec()))
+    expect(s).toMatch(/u\.status = 'ACTIVE' AND p\."firstName" <> '' AND p\."lastName" <> ''/)
+    expect(s).not.toMatch(/isActivated/)
   })
 
   it('binds every keyword, wildcards literal', () => {

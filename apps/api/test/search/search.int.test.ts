@@ -1,4 +1,4 @@
-// The two worker searches on PostGIS (search-locations U1): eligibility per entry (BR-E1/E2), the radius against a
+// The two worker searches on PostGIS (search-locations U1): one eligibility for both entries (BR-E1), the radius against a
 // Haversine oracle (BR-D1), unplaced workers left out with a place (FR-4), distances non-decreasing (P4), ties
 // newest first (BR-O2), pages partition the result (P3), and the keyword fields (BR-K3). Reuses the admin search's
 // seeded population. Runs only when TEST_DATABASE_URL points at localhost and the suburb list is loaded.
@@ -21,6 +21,7 @@ describe.skipIf(!local)('the worker searches on PostGIS', () => {
   let t: TestApp
   /** Index in the harness = age order: a lower index is a newer profile. */
   const order = new Map<string, number>()
+  /** Two thirds switched on by an admin: both searches must ignore the switch (user 2026-10-28). */
   const activated = (_w: SeededWorker, i: number) => i % 3 !== 0
 
   beforeAll(async () => {
@@ -54,11 +55,10 @@ describe.skipIf(!local)('the worker searches on PostGIS', () => {
   const pub = (query: Record<string, string>, pageSize = 50) => pages<PublicWorkerCard>('/v1/public/workers', { typeOfSupport: SERVICE, ...query }, pageSize)
   const withService = () => h.workers.filter((w) => w.serviceIds.length > 0)
 
-  it('BR-E1/E2: the client sees every unsuspended worker; the public list only the activated ones', async () => {
-    const c = await client({})
-    expect(new Set(c.rows.map((r) => r.id))).toEqual(new Set(withService().filter((w) => w.status === 'ACTIVE').map((w) => w.id)))
-    const p = await pub({})
-    expect(new Set(p.rows.map((r) => r.id))).toEqual(new Set(withService().filter((w) => w.status === 'ACTIVE' && activated(w, order.get(w.id)!)).map((w) => w.id)))
+  it('BR-E1: both searches list every unsuspended worker, switched on or not', async () => {
+    const unsuspended = new Set(withService().filter((w) => w.status === 'ACTIVE').map((w) => w.id))
+    expect(new Set((await client({})).rows.map((r) => r.id))).toEqual(unsuspended)
+    expect(new Set((await pub({})).rows.map((r) => r.id))).toEqual(unsuspended)
   }, 60_000)
 
   it('BR-D1, FR-4, P4: within X km of a suggestion equals the oracle, unplaced left out, distances non-decreasing', async () => {
@@ -68,7 +68,7 @@ describe.skipIf(!local)('the worker searches on PostGIS', () => {
         const { rows } = await pub({ location: `${loc.suburb}, ${loc.state} ${loc.postcode}`, within: String(km) })
         const got = new Set(rows.map((r) => r.id))
         for (const w of withService()) {
-          if (w.status !== 'ACTIVE' || !activated(w, order.get(w.id)!)) continue
+          if (w.status !== 'ACTIVE') continue
           if (!w.home) {
             expect(got.has(w.id), 'an unplaced worker in a search with a place').toBe(false)
             continue

@@ -54,7 +54,6 @@ export async function searchForClient(deps: SearchDeps, q: ClientWorkerQuery, no
   }
   const services = q.services ?? []
   const spec: SearchSpec = {
-    audience: 'client',
     // BR-E3: a location that matches nothing still counts as given, as it did.
     introductionRequired: q.search === undefined && q.location === undefined && services.length === 0,
     keywords: q.search === undefined ? [] : keywordsOf(q.search, terms),
@@ -70,7 +69,6 @@ export async function searchForClient(deps: SearchDeps, q: ClientWorkerQuery, no
 
 export async function searchPublic(deps: SearchDeps, q: PublicWorkerQuery, notes: SearchNotes) {
   const spec: SearchSpec = {
-    audience: 'public',
     introductionRequired: false,
     keywords: [],
     services: q.typeOfSupport && q.typeOfSupport !== 'all' ? [categoryNameOfSlug(q.typeOfSupport)] : [],

@@ -20,7 +20,7 @@ The entries answer the parameters and bodies the old routes had, so the pages' r
 | | `GET /v1/client/workers` | `GET /v1/public/workers` |
 |---|---|---|
 | Caller | CLIENT or COORDINATOR, `Authorization: Bearer <token>` from the app's `GET /api/auth/api-token` (`docs/admin/README.md` §1) | anyone (`public-endpoints.json`) |
-| Who is listed | every worker whose account is ACTIVE and whose profile has a first and last name (activated or not: user 2026-10-23) | activated workers whose account is ACTIVE |
+| Who is listed | every worker whose account is ACTIVE and whose profile has a first and last name, activated or not (user 2026-10-23) | the same (user 2026-10-28: the admin's activation switch no longer hides a worker; only a suspension does). The `/search` page then hides cards without a bio. |
 | `page` | 1.. (default 1) | same |
 | `pageSize` | 1..50 (default 20) | 1..50 (default 12) |
 | `search` | keywords, ≤ 200 characters (§3) | not accepted |

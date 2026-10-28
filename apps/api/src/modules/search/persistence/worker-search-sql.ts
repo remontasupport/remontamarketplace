@@ -9,8 +9,6 @@ import type { Keyword } from '../domain/keywords'
 export const STATEMENT_TIMEOUT_MS = 5000
 
 export interface SearchSpec {
-  /** client: every unsuspended worker with a name (BR-E1); public: activated and unsuspended (BR-E2). */
-  audience: 'client' | 'public'
   /** BR-E3: the client's default listing shows only workers with an introduction. */
   introductionRequired: boolean
   keywords: readonly Keyword[]
@@ -59,10 +57,9 @@ function keywordTerm(k: Keyword): Prisma.Sql {
 }
 
 export function whereOf(spec: SearchSpec): Prisma.Sql {
-  const terms: Prisma.Sql[] =
-    spec.audience === 'client'
-      ? [Prisma.sql`u.status = 'ACTIVE'`, Prisma.sql`p."firstName" <> ''`, Prisma.sql`p."lastName" <> ''`]
-      : [Prisma.sql`p."isActivated" = true`, Prisma.sql`u.status = 'ACTIVE'`]
+  // BR-E1: every unsuspended worker with a name, for both searches (the public list stopped requiring the admin's
+  // activation switch: user 2026-10-28).
+  const terms: Prisma.Sql[] = [Prisma.sql`u.status = 'ACTIVE'`, Prisma.sql`p."firstName" <> ''`, Prisma.sql`p."lastName" <> ''`]
   if (spec.introductionRequired) terms.push(Prisma.sql`p.introduction IS NOT NULL AND p.introduction <> ''`)
   for (const k of spec.keywords) terms.push(keywordTerm(k))
   if (spec.services.length > 0) {
