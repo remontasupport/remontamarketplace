@@ -5509,3 +5509,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-26):** "merged"
 
 **AI action (2026-10-26):** by refs `main` = `1a84674` (merge of PR #120, contains `99f0d2c`). Production: app `/api/jobs` 100 rows, all `FAKE-`, no `firstName`/`lastName`; www `/api/jobs` the same 100; `/provide-support` 200.
+
+**User input (2026-10-28):** "start ai dlc"
+
+**AI action (2026-10-28):** resumed. By refs `main` = `2f418e2` (merge of PR #131). Since the last entry (#120, 2026-10-26), PRs #121-#131 merged outside the record (service-request matching status, manage-request columns/actions, edit/cancel/archive webhook URLs and messages, webhooks sent with `after()`, an active request hides Archive). Cycle worker-activation still open: U1 and U2 live since 2026-10-23; left: the user's signed-in production checks, the Build and Test summary, the close (CLAUDE.md rollback rows, archive). `docs/rollback-rows-2026-10-22` still unmerged. Asked how to proceed.
