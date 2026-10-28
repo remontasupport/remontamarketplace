@@ -5601,3 +5601,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **AI action (2026-10-28):** "perfect" taken as the user's signed-in production check of U2. Previous / next on the detail page taken as a U2 follow-up (app only): the list's links carry its filters and page; the detail reads the same list page (cached) and the adjacent page at an edge; buttons and the arrow keys; Back returns to the same filtered page. Branch `feat/admin-clients-prev-next` from `main` `45c6879`.
 
 **AI action (2026-10-28):** prev/next built on `feat/admin-clients-prev-next` (`8d7ae4c1`): `listHref`/`detailHref` carry the list's filters and page into the detail; `neighbours.ts` (pure, tested) + `useNeighbours.ts` (the list page by its own query key, the adjacent page only at an edge); ‹ Previous / Next ›, "N of M", the arrow keys (not while in a field); Back to the same filtered page. App gate green (55 / 277 known, 44 files, 336 tests); builds. Pushed.
+
+**User input (2026-10-28):** "merged" (prev/next)
+
+**AI action (2026-10-28):** by refs `main` = `186b617` (merge of PR #134, contains `8d7ae4c`). Vercel production builds success: remonta-app `remonta-de12vanbf-remontas-projects.vercel.app`, remontamarketplace `remontamarketplace-1znxnvb0y-remontas-projects.vercel.app`; app `/login` 200, `/admin/requesters/<id>` 200, www 200. Prev/next live; the signed-in check is the user's.
