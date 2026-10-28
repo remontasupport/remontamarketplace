@@ -3,7 +3,7 @@
 // only for the CAPTCHA, the rate limiter and the breached-password service.
 // Runs only when TEST_DATABASE_URL points at localhost.
 import { randomUUID } from 'node:crypto'
-import { accountContract, adminContract, contracts, platformContract, workerContract, type PublicEndpoint } from '@remonta/api-contract'
+import { contracts, registrationContract, type PublicEndpoint } from '@remonta/api-contract'
 import publicEndpoints from '@remonta/api-contract/public-endpoints.json'
 import { CONSENT_WORDING_VERSION, workerRegistrationSchema } from '@remonta/schemas/schema/workerRegistrationSchema'
 import pino from 'pino'
@@ -79,7 +79,7 @@ describe.skipIf(!local)('registration on PostGIS', () => {
     })
     t = await testApp({
       contracts,
-      handlerSets: [unreachableHandlers(platformContract), unreachableHandlers(adminContract), unreachableHandlers(workerContract), unreachableHandlers(accountContract), handlers],
+      handlerSets: [...contracts.filter((c) => c !== registrationContract).map(unreachableHandlers), handlers],
       publicEndpoints: publicEndpoints as PublicEndpoint[],
     })
   })

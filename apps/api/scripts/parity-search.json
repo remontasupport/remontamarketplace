@@ -1,0 +1,31 @@
+{
+  "places": [
+    "Parramatta, NSW 2150",
+    "Sydney, NSW 2000",
+    "Penrith, NSW 2750",
+    "Newcastle, NSW 2300",
+    "Wollongong, NSW 2500",
+    "Dubbo, NSW 2830",
+    "Melbourne, VIC 3000",
+    "Geelong, VIC 3220",
+    "Ballarat Central, VIC 3350",
+    "Brisbane City, QLD 4000",
+    "Southport, QLD 4215",
+    "Townsville City, QLD 4810",
+    "Toowoomba City, QLD 4350",
+    "Adelaide, SA 5000",
+    "Perth, WA 6000",
+    "Hobart, TAS 7000",
+    "Canberra, ACT 2601",
+    "Darwin City, NT 800",
+    "Alice Springs, NT 0870",
+    "Cairns City, QLD 4870",
+    "2150",
+    "Parramatta",
+    "Gold Coast"
+  ],
+  "clientRadii": [5, 20, 50],
+  "publicRadii": [5, 20, 500],
+  "clientService": "Support Worker",
+  "publicService": "support-worker"
+}

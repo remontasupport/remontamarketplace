@@ -4,6 +4,7 @@
 // Every value is a bound parameter; the only raw text is the sort column, chosen
 // from a fixed map.
 import { Prisma, type Db } from '../../../platform/persistence/db'
+import { distanceTerm, HOME_JOIN, localityPoint, withinTerm } from '../../locations/persistence/home-sql'
 import { whereOf } from '../application/filters'
 import type { SearchQuery, SortField } from '../domain/search-query'
 
@@ -58,19 +59,18 @@ const FROM = Prisma.sql`
   FROM worker_profiles p
   JOIN users u ON u.id = p."userId"
   LEFT JOIN worker_additional_info wai ON wai."workerProfileId" = p.id
-  LEFT JOIN worker_locations wl ON wl."workerProfileId" = p.id AND wl.kind = 'HOME'
-  LEFT JOIN au_localities al ON al.id = wl."localityId"`
+  ${HOME_JOIN}`
 
 /** The location term (R4): with a suburb, placed workers (within the radius if given); unmapped-only lists the rest. */
 function locationTerm(q: SearchQuery, localityId: number | undefined): Prisma.Sql {
   if (q.unplaced) return Prisma.sql`AND wl.id IS NULL`
   if (localityId === undefined) return Prisma.empty
   if (q.withinKm === undefined) return Prisma.sql`AND wl.point IS NOT NULL`
-  return Prisma.sql`AND wl.point IS NOT NULL AND ST_DWithin(wl.point, (SELECT point FROM au_localities WHERE id = ${localityId}), ${q.withinKm * 1000})`
+  return withinTerm(localityPoint(localityId), q.withinKm)
 }
 
 export function searchStatement(q: SearchQuery, localityId: number | undefined): Prisma.Sql {
-  const distance = localityId !== undefined && !q.unplaced ? Prisma.sql`ST_Distance(wl.point, (SELECT point FROM au_localities WHERE id = ${localityId}))` : Prisma.sql`NULL::double precision`
+  const distance = localityId !== undefined && !q.unplaced ? distanceTerm(localityPoint(localityId)) : Prisma.sql`NULL::double precision`
   const order = Prisma.sql`${SORT[q.sortBy]} ${q.sortOrder === 'asc' ? Prisma.sql`ASC` : Prisma.sql`DESC`}`
   const offset = (q.page - 1) * q.pageSize
   return Prisma.sql`
