@@ -29,7 +29,7 @@ B) Read, plus account actions (suspend / restore the client or coordinator, as f
 C) Read, plus editing participants and requests on their behalf (status changes, cancel, edit)
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]:C
 
 ## Question 2: The list rows
 Which columns on the Clients and Support Coordinators lists?
@@ -38,7 +38,7 @@ B) A plus the newest request's status and date
 C) A plus account status (active / suspended) and last sign-in
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: A plus do not include sign up date
 
 ## Question 3: Search and filters on the lists
 A) A name / email search box only
@@ -46,7 +46,7 @@ B) A plus filters: request status (e.g. "has an ACTIVE request"), funding type, 
 C) None for now: newest first, paged
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: b
 
 ## Question 4: The "display" of participants and requests
 A) A detail page per client / coordinator (`/admin/clients/<id>`): their profile, then each participant with that
@@ -55,7 +55,7 @@ B) An expandable row in the list (no separate page)
 C) A side panel that opens beside the list
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: a
 
 ## Question 5: How much of each request?
 A) Summary: services, location, status, created date, and the assigned worker's name if any
@@ -63,7 +63,7 @@ B) Everything the client entered (`details`: schedule, preferences, notes) plus 
 C) B plus a link to the assigned or selected worker's admin page
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: b
 
 ## Question 6: Participants that no longer have an owner
 When a client removes a participant, `userId` becomes empty but its requests remain.
@@ -72,14 +72,14 @@ B) Show them under the requester of their requests (found through `service_reque
 C) A separate "Unlinked participants" list
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: a
 
 ## Question 7: A global "all requests" list
 A) Not now: requests are seen through their client / coordinator
 B) Yes, also a Requests tab: every request, filterable by status, newest first
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: a
 
 ## Question 8: Where the data comes from
 A) `apps/api` (Recommended): new admin contract entries, like the worker lists (bearer token, rate limits, audit),
@@ -87,7 +87,7 @@ A) `apps/api` (Recommended): new admin contract entries, like the worker lists (
 B) Next.js routes in `apps/app` (faster, but against the direction of the admin lists since 2026-10-08)
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: a
 
 ## Question 9: Sensitive participant data
 Participants carry date of birth, conditions and funding type (health information).
@@ -96,11 +96,11 @@ B) Show it, and record each detail-page view in the audit log (who looked at who
 C) Hide conditions and date of birth on the admin view
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]: b but a apply passwrod to open it
 
 ## Security extension
 The security baseline applies (admin-only access, rate limits, no data in logs, audit). Any exception?
 A) No exception
 X) Other (please describe after [Answer]: tag below)
 
-[Answer]:
+[Answer]:a
