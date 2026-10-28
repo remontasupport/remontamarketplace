@@ -5589,3 +5589,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-28):** "merged" (U2)
 
 **AI action (2026-10-28):** not merged by refs: `main` still `59fd8cd`; PR #133 (`feat/admin-clients-app`) is open, `merged_at` null. Told the user.
+
+**User input (2026-10-28):** "merged, what is the preview link"
+
+**AI action (2026-10-28):** by refs `main` = `45c6879` (merge of PR #133, contains `d9970a4`). Preview of `d9970a4`: remonta-app `remonta-59a0x5jxt-remontas-projects.vercel.app` (Preview scope = the staging api). Production deployments of `45c6879` watched.
