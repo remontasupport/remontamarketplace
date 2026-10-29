@@ -5,6 +5,7 @@ import { readAllPromoted } from "@/lib/w1/read";
 import { authOptions } from "@/lib/auth.config";
 import { authPrisma } from "@/lib/auth-prisma";
 import { UserRole } from "@/types/auth";
+import { HOME_PLACE_SELECT, homePlaceOf } from "@/lib/workerPlace";
 
 /**
  * Who may read whose profile (security fix 2026-10-16). This file is "use server": every export is an action any
@@ -139,9 +140,7 @@ export async function getProfilePreviewData(userId?: string): Promise<ProfilePre
         photos: true,
         introduction: true,
         createdAt: true,
-        city: true,
-        state: true,
-        postalCode: true,
+        ...HOME_PLACE_SELECT,
         hasVehicle: true,
         workerAdditionalInfo: {
           select: {
@@ -207,6 +206,8 @@ export async function getProfilePreviewData(userId?: string): Promise<ProfilePre
       })),
     }));
 
+    const place = homePlaceOf(workerProfile);
+
     // 5. Return comprehensive data
     return {
       success: true,
@@ -225,9 +226,9 @@ export async function getProfilePreviewData(userId?: string): Promise<ProfilePre
           photos: workerProfile.photos,
           introduction: workerProfile.introduction,
           createdAt: workerProfile.createdAt,
-          city: workerProfile.city,
-          state: workerProfile.state,
-          postalCode: workerProfile.postalCode,
+          city: place.city,
+          state: place.state,
+          postalCode: place.postalCode,
           hasVehicle: workerProfile.hasVehicle,
         },
         services: servicesGrouped,

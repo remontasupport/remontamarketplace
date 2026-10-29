@@ -13,7 +13,7 @@ vi.mock("@/lib/auth-prisma", () => ({
 
 import { getProfilePreviewData } from "./profilePreview.service";
 
-const row = { id: "wp1", userId: "worker-a", setupProgress: {}, firstName: "A", lastName: "B", photos: null, introduction: null, createdAt: new Date(0), city: null, state: null, postalCode: null, hasVehicle: null, workerAdditionalInfo: { languages: [] }, verificationRequirements: [] };
+const row = { id: "wp1", userId: "worker-a", setupProgress: {}, firstName: "A", lastName: "B", photos: null, introduction: null, createdAt: new Date(0), locations: [], hasVehicle: null, workerAdditionalInfo: { languages: [] }, verificationRequirements: [] };
 
 beforeEach(() => {
   session.mockReset();

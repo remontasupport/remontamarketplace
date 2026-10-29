@@ -1,5 +1,6 @@
 import { authPrisma as prisma } from '@/lib/auth-prisma'
 import jsPDF from 'jspdf'
+import { HOME_PLACE_SELECT, homePlaceOf } from '@/lib/workerPlace'
 
 /**
  * Transform WorkerService records to get primary service
@@ -34,7 +35,7 @@ export async function generateWorkerReport(
     select: {
       firstName: true,
       lastName: true,
-      state: true,
+      ...HOME_PLACE_SELECT,
       workerServices: {
         select: {
           categoryName: true,
@@ -99,7 +100,7 @@ export async function generateWorkerReport(
 
     const fullName = `${worker.firstName} ${worker.lastName}`
     const primaryService = getPrimaryService(worker.workerServices)
-    const state = worker.state || 'N/A'
+    const state = homePlaceOf(worker).state || 'N/A'
 
     // Alternate row background
     if (index % 2 === 1) {

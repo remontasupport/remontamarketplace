@@ -5,6 +5,7 @@ import WorkerProfilePDF from '@/components/pdf/WorkerProfilePDF'
 import React from 'react'
 import { requireRole } from '@/lib/auth'
 import { UserRole } from '@/types/auth'
+import { HOME_PLACE_SELECT, homePlaceOf } from '@/lib/workerPlace'
 
 /**
  * GET /api/admin/contractors/:id/pdf
@@ -34,7 +35,7 @@ export async function GET(
         id: true,
         firstName: true,
         lastName: true,
-        location: true,
+        ...HOME_PLACE_SELECT,
         languages: true,
         workerServices: {
           select: {
@@ -58,6 +59,8 @@ export async function GET(
 
     const workerData = {
       ...worker,
+      locations: undefined,
+      location: homePlaceOf(worker).location,
       services,
       workerServices: undefined,
       photos: Array.isArray(worker.photos) ? worker.photos as string[] : undefined,
