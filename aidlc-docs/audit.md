@@ -5918,3 +5918,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-29):** "promoted, watch it"
 
 **AI action (2026-10-29):** deploy-api dispatch 40804296232 (02:05:35Z): "Promote ba12ece... to prod" success. Production `remonta-api-00027-rp9` 100 % (created 02:06:34Z, digest `ff7af99...` = staging `00074-r96`); health 200; public search Sydney, NSW 2000 within 20 km: 184, every card with its HOME suburb; Nikenbah QLD 4655 within 10 km finds the U3-placed worker; suburb search with ids; www `/search` 200; the reconciler's first run on the revision 02:09:42Z (examined 0, failed 0, no home outcome); no ERROR entries since 02:06Z. Rollback: `331e5e3...` (`remonta-api-00026-zm4`). U5 live. Next: U6 `drop-columns-schema` plan.
+
+**User input (2026-10-29):** "Yes, can it be done today"
+
+**AI action (2026-10-29):** U6 plan written (`construction/plans/drop-columns-schema-code-generation-plan.md`): schema-only release (six fields and five indexes out of `WorkerProfile`, no migration), refreshed app auth client, tests, docs; release = merge (app + staging) -> short checklist -> promotion. U7 (the DROP migration) kept separate, after U6 runs in production. Answered: U6 can be done today; U7 technically the same day once U6 is promoted everywhere, recommended after a soak.
