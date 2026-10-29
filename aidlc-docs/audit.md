@@ -5944,3 +5944,11 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-29):** "done testing, all works"
 
 **AI action (2026-10-29):** staging request logs since the U6 revision `00075-bz6` (03:13:45Z) to 03:21Z: only GET /v1/worker/profile 304 (03:13:59Z) and my public search; no sign-up, no service-area save, no admin search reached staging (none since 02:34Z either). Promotion withheld; asked the user where the tests ran and to repeat sign-up, service-area save and admin search on the `feat-drop-columns-schema` preview.
+
+**User input (2026-10-29):** "Done test. I noticed some difference between preview and live site, in the preview, the % of the profile appeared but on the live account, it didn't show up, can you fix this really quick"
+
+**AI action (2026-10-29):** staging logs since 03:21Z: sign-up (email code, verify, registration, photo ticket + confirmation) and a service-area save, all 2xx. The % difference is by design: the sidebar badge shows only below 80 % (`workerMenu.ts` R8.3); the new preview worker is below, the live account above. Offered a one-line app change (badge always) as a separate PR; not done.
+
+**User input (2026-10-29):** "admin search works, give me the promotion command"
+
+**AI action (2026-10-29):** staging logs show no `/v1/admin/` request since 03:13Z (the admin search the user ran likely hit production). Told the user; the admin search is read-only, its SQL and select compile against the U6 schema and CI's API Quality ran its database tests green. Promotion handed over on the user's decision: `6551489240b6607d157a5eeec44345ee0ce46e67` (rollback `ba12ece...`, `remonta-api-00027-rp9`).
