@@ -5880,3 +5880,9 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-29):** "approved, go ahead with U4"
 
 **AI action (2026-10-29):** U4 built on `feat/legacy-readers-app` from `main` `331e5e3`: `localityLabel` in `@remonta/schemas/data/locality`; `lib/workerPlace.ts` (`HOME_PLACE_SELECT`, `homePlaceOf`); readers by-ids, profile preview, profileData, admin contractor page + PDF, and `lib/reports.ts` (a sixth reader the guard found: admin daily/weekly reports' `state`). Guard test (no app read selects a legacy column) proved on a reverted reader; scanner shared with the privacy test. Gates green (schemas, app 742 tests, build 3/3). Pushed; PR to be opened by the user.
+
+**User input (2026-10-29):** "I opened it already, should I merge it? it is still running should I merged it after it runs?" -- answered: wait for every check, run the preview checks, then merge (PR #150).
+
+**User input (2026-10-29):** "Merged"
+
+**AI action (2026-10-29):** by refs `main` = `a39c0b7` (#150, contains `dd25872`). Vercel production builds watched. U5 `legacy-readers-api` plan written (`construction/plans/legacy-readers-api-code-generation-plan.md`); awaiting approval.
