@@ -5984,3 +5984,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-29):** "hEY CAN YOU CHECK THIS CHRISTMAS ISLAND ADDRESS? THE ADDRESS BELONGS TO THE ot state which is not existing state in AU"
 
 **AI action (2026-10-29):** checked: "OT" is G-NAF's code for Australia's Other Territories; 11 of the 15,467 suburbs carry it (Christmas Island 6798 and its 5 settlements, Cocos (Keeling) Islands: Home Island and West Island 6799, Jervis Bay and Wreck Bay 2540, Norfolk Island 2899). Real Australian places, not a state. The DEV copy of production (reset today): no worker's service area or home address is in an OT suburb; the Christmas Island worker was the user's staging test sign-up. The admin State filter offers the eight states only, so an OT worker could not be filtered by state. Options put to the user.
+
+**User input (2026-10-29):** "leave it as is but if the worker selected it, will they be searchable?"
+
+**AI action (2026-10-29):** kept as is. Checked in production: public search "Christmas Island, OT 6798" and "Norfolk Island, OT 2899" within 50 km match the suburb (0 results, not the 1875 of a search without a place; Perth within 50 km: 189). So an OT worker is found by any search near their suburb (client and public), listed without a place, and found by the admin suburb search; not by an admin State filter (`AU_STATES` has the eight states only): follow-up 44 (add "Other Territories" to the admin State filter) offered.
