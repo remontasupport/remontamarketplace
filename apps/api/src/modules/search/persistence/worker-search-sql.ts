@@ -75,7 +75,7 @@ export function searchStatement(spec: SearchSpec): Prisma.Sql {
   const order = point ? Prisma.sql`distance_m ASC, p."createdAt" DESC, p.id ASC` : Prisma.sql`p."createdAt" DESC, p.id ASC`
   return Prisma.sql`
     SELECT p.id, p."firstName", p."lastName", p.photos, p.introduction,
-           COALESCE(al.suburb, p.city) AS city, COALESCE(al.state, p.state) AS state,
+           al.suburb AS city, al.state AS state,
            (SELECT json_agg(json_build_object('name', ws."categoryName", 'subs', ws."subcategoryNames") ORDER BY ws."createdAt", ws.id)
               FROM worker_services ws WHERE ws."workerProfileId" = p.id) AS services,
            EXISTS (SELECT 1 FROM verification_requirements vr WHERE vr."workerProfileId" = p.id AND vr.status = 'APPROVED') AS approved,

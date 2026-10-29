@@ -14,7 +14,6 @@
     "test": "vitest run",
     "quality": "pnpm run prisma:generate && pnpm run lint && pnpm run typecheck && pnpm run test",
     "load:harness": "tsx load/harness.ts",
-    "backfill:locations": "node --env-file=.env --import tsx scripts/backfill-worker-locations.ts",
     "backfill:onboarding": "node --env-file=.env --import tsx scripts/backfill-worker-onboarding.ts",
     "parity:admin-search": "tsx scripts/parity-admin-search.ts",
     "load:worker": "tsx scripts/load-worker.ts",

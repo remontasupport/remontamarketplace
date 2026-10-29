@@ -15,6 +15,7 @@ export interface OracleInput {
   services: ServiceRow[]
   requirements: RequirementRow[]
   catalogue: CatalogueRows
+  hasHome: boolean
 }
 
 /** `false` is what today's callers read as "all four flags false" (the no-offerings early return). */
@@ -28,9 +29,8 @@ export function completionOracle(input: OracleInput): CompletionFlags | false {
     workerProfile.lastName &&
     workerProfile.photos &&
     workerProfile.introduction &&
-    workerProfile.city &&
-    workerProfile.state &&
-    workerProfile.postalCode &&
+    // search-locations FR-8r (2026-10-29): the HOME row replaces today's city/state/postcode columns.
+    input.hasHome &&
     workerProfile.age !== null &&
     workerProfile.age !== undefined &&
     workerProfile.gender

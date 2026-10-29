@@ -1,12 +1,13 @@
 // The two addresses (U2 R3, L4; D8). The home address is private: two columns on the
 // profile and nothing else (R3.2). The service area is where clients find the worker: the
 // HOME worker_locations row placed by the locations module's placeHome with source
-// ONBOARDING, and the legacy location columns written exactly as the sign-up writes them
-// (R3.5), so every reader of those columns -- the client search included -- follows.
+// ONBOARDING, and nothing else: the legacy location columns are no longer written
+// (search-locations FR-10).
 import type { HomeAddress, HomeAddressInput, ServiceAreaInput } from '@remonta/api-contract'
+import { localityLabel } from '@remonta/schemas/data/locality'
 import { ApiError } from '../../../platform/errors'
 import type { Tx } from '../../../platform/persistence/db'
-import { DEFAULT_TRAVEL_RADIUS_KM, localityLabel, placeHome } from '../../locations/domain/home'
+import { DEFAULT_TRAVEL_RADIUS_KM, placeHome } from '../../locations/domain/home'
 
 const UNKNOWN_SUBURB = { localityId: ['Unknown suburb'] }
 
@@ -32,10 +33,9 @@ export async function writeServiceArea(tx: Tx, profileId: string, body: ServiceA
   // The page no longer asks for the distance (user, 2026-10-21): a save without one keeps the stored value.
   const placed = placeHome(locality, 'ONBOARDING', body.travelRadiusKm ?? existing?.travelRadiusKm ?? DEFAULT_TRAVEL_RADIUS_KM)
   if (!placed.ok) throw new ApiError(400, 'retired locality', UNKNOWN_SUBURB)
-  const { home, legacy } = placed
+  const { home } = placed
   const data = { localityId: home.localityId, latitude: home.latitude, longitude: home.longitude, travelRadiusKm: home.travelRadiusKm, precision: home.precision, source: home.source }
   if (existing) await tx.workerLocation.update({ where: { id: existing.id }, data, select: { id: true } })
   else await tx.workerLocation.create({ data: { workerProfileId: profileId, kind: 'HOME', ...data }, select: { id: true } })
-  await tx.workerProfile.update({ where: { id: profileId }, data: legacy, select: { id: true } })
   return { localityId: locality.id, label: localityLabel(locality, ', '), travelRadiusKm: home.travelRadiusKm, precision: 'LOCALITY' }
 }

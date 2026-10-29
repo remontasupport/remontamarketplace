@@ -62,11 +62,6 @@ Email look-ups use the index `users_lower_email_idx` on `lower(email)`.
 | `firstName`, `lastName` | text | normalised `firstName` / `lastName` |
 | `mobile` | text | `mobile` as E.164, `+614XXXXXXXX` |
 | `photos` | text | the Blob URL of the claimed photo |
-| `location` | text | legacy shape: `"Parramatta, NSW 2150"` |
-| `city` | text | the locality's suburb |
-| `state` | text | the locality's state |
-| `postalCode` | text | the locality's postcode |
-| `latitude`, `longitude` | float | the locality's centroid |
 | `languages` | text[] | `[]` |
 | `profileCompleted` | bool | false |
 | `isPublished` | bool | false |
@@ -78,8 +73,9 @@ Email look-ups use the index `users_lower_email_idx` on `lower(email)`.
 | `createdAt`, `updatedAt` | timestamp | now |
 | everything else (`middleName`, `dateOfBirth`, `gender`, `abn`, `setupProgress`, …) | | NULL / default — onboarding fills them |
 
-The legacy location columns (`location`, `city`, `state`, `postalCode`, `latitude`, `longitude`) are
-written in exactly the shape apps/app writes, so every existing reader (search included) keeps working.
+The legacy location columns (`location`, `city`, `state`, `postalCode`, `latitude`, `longitude`) are not
+written (search-locations, 2026-10-29): where the worker is lives in `worker_locations` (§2.4) only, and no
+reader uses the columns. They are dropped in a later release.
 
 ### 2.3 `worker_services` — one row per chosen service
 

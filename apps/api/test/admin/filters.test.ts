@@ -62,9 +62,9 @@ describe('each filter contributes its fragment with bound parameters', () => {
     expect(one.split('"specificAreas" &&').length - 1).toBe(1)
   })
 
-  it("state: the HOME suburb's, else the legacy column as a code or the full name, upper-cased (R3.12)", () => {
-    expect(text(whereOf(q({ state: 'VIC' })))).toContain('COALESCE(al.state, UPPER(TRIM(p.state))) IN (<"VIC">, <"VICTORIA">)')
-    expect(text(whereOf(q({ state: 'ACT' })))).toContain('IN (<"ACT">, <"AUSTRALIAN CAPITAL TERRITORY">)')
+  it("state: the HOME suburb's only, no legacy fallback (R3.12, search-locations FR-7r)", () => {
+    expect(text(whereOf(q({ state: 'VIC' })))).toContain('al.state = <"VIC">')
+    expect(text(whereOf(q({ state: 'VIC' })))).not.toMatch(/p\.state/)
     expect(() => q({ state: 'OT' })).toThrow()
     expect(() => q({ state: 'nsw' })).toThrow()
   })
@@ -139,13 +139,13 @@ describe('the statement', () => {
   })
   it('the state combines with the suburb and with the unmapped list and its count (R3.12)', () => {
     const near = text(searchStatement(q({ localityId: '42', state: 'NSW' }), 42))
-    expect(near).toContain('IN (<"NSW">, <"NEW SOUTH WALES">)')
+    expect(near).toContain('al.state = <"NSW">')
     expect(near).toContain('AND wl.point IS NOT NULL')
-    expect(text(searchStatement(q({ unplaced: 'true', state: 'WA' }), undefined))).toMatch(/IN \(<"WA">, <"WESTERN AUSTRALIA">\)\)\s+AND wl\.id IS NULL/)
-    expect(text(unplacedCountStatement(q({ state: 'WA' })))).toContain('IN (<"WA">, <"WESTERN AUSTRALIA">)')
+    expect(text(searchStatement(q({ unplaced: 'true', state: 'WA' }), undefined))).toMatch(/al\.state = <"WA">\)\s+AND wl\.id IS NULL/)
+    expect(text(unplacedCountStatement(q({ state: 'WA' })))).toContain('al.state = <"WA">')
   })
-  it('city and state sort from the HOME locality with the legacy fallback (R5.1)', () => {
-    expect(text(searchStatement(q({ sortBy: 'city', sortOrder: 'asc' }), undefined))).toMatch(/ORDER BY COALESCE\(al\.suburb, p\.city\) ASC, p\.id ASC/)
-    expect(text(searchStatement(q({ sortBy: 'state' }), undefined))).toMatch(/ORDER BY COALESCE\(al\.state, p\.state\) DESC/)
+  it('city and state sort from the HOME locality only (R5.1, search-locations FR-7r)', () => {
+    expect(text(searchStatement(q({ sortBy: 'city', sortOrder: 'asc' }), undefined))).toMatch(/ORDER BY al\.suburb ASC, p\.id ASC/)
+    expect(text(searchStatement(q({ sortBy: 'state' }), undefined))).toMatch(/ORDER BY al\.state DESC/)
   })
 })

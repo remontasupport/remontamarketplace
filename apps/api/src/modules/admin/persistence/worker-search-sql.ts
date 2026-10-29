@@ -21,9 +21,6 @@ export interface RawWorkerRow {
   age: number | null
   dateOfBirth: string | null
   languages: string[]
-  city: string | null
-  state: string | null
-  postalCode: string | null
   photos: string | null
   experience: string | null
   introduction: string | null
@@ -45,13 +42,13 @@ export interface RawWorkerRow {
   total: number
 }
 
-/** R5.1: the sort keys; city and state come from the HOME locality, else the legacy columns. */
+/** R5.1: the sort keys; city and state are the HOME locality's (no HOME row sorts as null). */
 const SORT: Record<SortField, Prisma.Sql> = {
   createdAt: Prisma.sql`p."createdAt"`,
   firstName: Prisma.sql`p."firstName"`,
   lastName: Prisma.sql`p."lastName"`,
-  city: Prisma.sql`COALESCE(al.suburb, p.city)`,
-  state: Prisma.sql`COALESCE(al.state, p.state)`,
+  city: Prisma.sql`al.suburb`,
+  state: Prisma.sql`al.state`,
   distance: Prisma.sql`distance_m`,
 }
 
@@ -75,7 +72,7 @@ export function searchStatement(q: SearchQuery, localityId: number | undefined):
   const offset = (q.page - 1) * q.pageSize
   return Prisma.sql`
     SELECT p.id, p."userId", p."firstName", p."lastName", p.mobile, p.gender, p.age, p."dateOfBirth",
-           p.languages, p.city, p.state, p."postalCode", p.photos, p.experience, p.introduction,
+           p.languages, p.photos, p.experience, p.introduction,
            p."createdAt", p."updatedAt",
            u.email, u.status AS "userStatus", p."isActivated" AS activated,
            wai.languages AS "infoLanguages",

@@ -5,9 +5,10 @@
 // burst of typing never reaches the database. A reload that fails keeps serving
 // the previous list (it is refreshed twice a year; an hour-old copy is fine).
 import type { localitySchema } from '@remonta/api-contract'
+import { localityLabel } from '@remonta/schemas/data/locality'
 import type * as z from 'zod'
 import type { Db } from '../../platform/persistence/db'
-import { localityLabel, type Locality } from '../locations/domain/home'
+import type { Locality } from '../locations/domain/home'
 
 /** A match is exactly what the contract returns; the pipeline rejects anything else. */
 export type LocalityMatch = z.output<typeof localitySchema>

@@ -126,8 +126,6 @@ async function createAccount(tx: Tx, input: WorkerRegistration, passwordHash: st
             lastName: input.lastName,
             mobile: input.mobile,
             photos: null,
-            // Legacy columns, dual-written in today's shape (S1-data-model 2.2).
-            ...placed.legacy,
             languages: [],
             profileCompleted: false,
             isPublished: false,

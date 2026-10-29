@@ -3,10 +3,10 @@
 // account is masked here and nowhere later (R2.3, P8); no write (R2.8). The pipeline
 // adds the private-cache headers and the ETag (R2.7).
 import { ageOn, isoDateSchema, type Profile } from '@remonta/api-contract'
+import { localityLabel } from '@remonta/schemas/data/locality'
 import type { FastifyBaseLogger } from 'fastify'
 import type { Principal } from '../../../platform/auth/authenticator'
 import type { Db } from '../../../platform/persistence/db'
-import { localityLabel } from '../../locations/domain/home'
 import { maskBankAccount } from '../domain/bank-account'
 import { abnOf, completionOf, type CatalogueRows, type CompletionInput, type RequirementRow } from '../domain/completion'
 import { displayRoleOf } from '../domain/display-role'
@@ -42,7 +42,7 @@ export function completionInputOf(rows: ProfileRows): CompletionInput {
   const catalogue: CatalogueRows = { categories: rows.catalogue }
   const requirements: RequirementRow[] = p.verificationRequirements.map((r) => ({ requirementType: r.requirementType, status: r.status, documentCategory: r.documentCategory, documentUrl: r.documentUrl }))
   return {
-    profile: { firstName: p.firstName, lastName: p.lastName, photos: p.photos, introduction: p.introduction, city: p.city, state: p.state, postalCode: p.postalCode, age: p.age, dateOfBirth: p.dateOfBirth, gender: p.gender, hasVehicle: p.hasVehicle, languages: p.languages, abn: p.abn },
+    profile: { firstName: p.firstName, lastName: p.lastName, photos: p.photos, introduction: p.introduction, age: p.age, dateOfBirth: p.dateOfBirth, gender: p.gender, hasVehicle: p.hasVehicle, languages: p.languages, abn: p.abn },
     services: p.workerServices.map((s) => ({ categoryId: s.categoryId, categoryName: s.categoryName, subcategoryIds: s.subcategoryIds, subcategoryNames: s.subcategoryNames })),
     requirements,
     catalogue,
