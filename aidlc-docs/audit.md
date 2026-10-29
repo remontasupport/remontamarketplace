@@ -5952,3 +5952,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-29):** "admin search works, give me the promotion command"
 
 **AI action (2026-10-29):** staging logs show no `/v1/admin/` request since 03:13Z (the admin search the user ran likely hit production). Told the user; the admin search is read-only, its SQL and select compile against the U6 schema and CI's API Quality ran its database tests green. Promotion handed over on the user's decision: `6551489240b6607d157a5eeec44345ee0ce46e67` (rollback `ba12ece...`, `remonta-api-00027-rp9`).
+
+**User input (2026-10-29):** "running"
+
+**AI action (2026-10-29):** deploy-api dispatch 40812584264 (03:31:04Z) success. Production `remonta-api-00028-bcq` 100 % (created 03:32:37Z; digest `f14030a5...` = staging `00075-bz6`); health 200; public search Parramatta, NSW 2150 within 20 km: 251, every card with a suburb; admin worker search on the new revision answered 200 at 03:33Z (list and a name search); no ERROR entries. U6 live (app on `main` `6551489`, api `00028-bcq`). Rollback: `ba12ece...` (`00027-rp9`) while the columns exist. Next: U7 (the drop migration) after a soak, then the close.
