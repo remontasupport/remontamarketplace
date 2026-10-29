@@ -5960,3 +5960,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-29):** "ok, can you save the U7 as a pending task, recommend it every time an ai dlc starts"
 
 **AI action (2026-10-29):** U7 recorded as a pending task at the top of the state's follow-ups ("recommend at every AI-DLC start", not before 2026-10-30, preconditions and steps); follow-up 1 marked done except U7; session memory updated with the same instruction.
+
+**User input (2026-10-29):** "Ok perfet. Now on the clients and coordinators dashboard, I beleive when searching for an address, it still uses the old api and not the au localities, can you confirm that"
+
+**AI action (2026-10-29):** checked: the client and coordinator suburb pickers (client WorkerSearchBar, request-service WhereSection, the client and support-coordinator edit-participant pages) and the admin dashboard call apps/app's old Next route `/api/suburbs`; the marketing site's `/api/suburbs` proxies to it. That route (`lib/suburbs/index.ts`) already reads `au_localities` straight from the auth database (since S1), with a Google fallback only when the table is missing (never in production). Not apps/api: the sign-up and the worker profile use `GET /v1/localities` through `useLocalitySearch`. Service requests store the place as text (`location: string`), not a locality id. Proposed follow-up 43: move these pickers onto `/v1/localities` (the existing `useLocalitySearch`), then remove `/api/suburbs`, `lib/suburbs` and the Google fallback.
