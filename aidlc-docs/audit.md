@@ -5876,3 +5876,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-29):** ran the production dry run (`ep-delicate-recipe`): "plan: 62 to place, 0 skipped, 0 refused" (the same rows as the DEV rehearsal); then `--apply`: "applied: 62 HOME rows created; workers without a HOME row now: 8"
 
 **AI action (2026-10-29):** U3 `place-unplaced` done in production (62 HOME rows, `source = 'ADMIN'`, 50 km; undo = delete those rows). The 8 left (4 empty, 4 overseas) show "Not specified" once the readers are home-only. Next: U4 `legacy-readers-app` plan.
+
+**User input (2026-10-29):** "approved, go ahead with U4"
+
+**AI action (2026-10-29):** U4 built on `feat/legacy-readers-app` from `main` `331e5e3`: `localityLabel` in `@remonta/schemas/data/locality`; `lib/workerPlace.ts` (`HOME_PLACE_SELECT`, `homePlaceOf`); readers by-ids, profile preview, profileData, admin contractor page + PDF, and `lib/reports.ts` (a sixth reader the guard found: admin daily/weekly reports' `state`). Guard test (no app read selects a legacy column) proved on a reverted reader; scanner shared with the privacy test. Gates green (schemas, app 742 tests, build 3/3). Pushed; PR to be opened by the user.

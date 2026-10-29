@@ -15,13 +15,20 @@ change except that the 8 unplaced show the empty case ("Not specified" / no subu
 
 ## Steps
 
-1. [ ] `localityLabel` in `packages/schemas` (pure, P-5) + subpath export + test.
-2. [ ] `lib/workerPlace.ts` + test (placed; unplaced -> nulls).
-3. [ ] Readers: replace `city/state/postalCode/location` in the select with `...HOME_PLACE_SELECT`; map with `homePlaceOf`:
+1. [x] `localityLabel` in `packages/schemas` (pure, P-5) + subpath export + test.
+2. [x] `lib/workerPlace.ts` + test (placed; unplaced -> nulls).
+3. [x] Readers: replace `city/state/postalCode/location` in the select with `...HOME_PLACE_SELECT`; map with `homePlaceOf`:
    `app/api/client/workers/by-ids/route.ts`, `services/worker/profilePreview.service.ts`, `lib/profileData.ts`,
    `app/api/admin/contractors/[id]/route.ts`, `.../pdf/route.ts`.
-4. [ ] Guard test: no file under `apps/app/src` (outside `generated`) selects any of the six legacy columns of
+4. [x] Guard test: no file under `apps/app/src` (outside `generated`) selects any of the six legacy columns of
    `workerProfile` (proved to fail on a reverted reader).
-5. [ ] Gates: schemas, app quality, `turbo run build`.
+5. [x] Gates: schemas, app quality, `turbo run build`.
 6. [ ] PR, CI, preview: a staging client's assigned workers, a profile preview, an admin contractor page + PDF.
 7. [ ] Merge (user) -> production check -> U5.
+
+## Construction notes (2026-10-29)
+
+- Found by the guard: a sixth reader, `lib/reports.ts` (admin daily/weekly PDF, `state`), moved too. The scanner is shared with `privacy.test.ts` (`lib/sourceScan.ts`, plus `topLevelSelectKeys`).
+- Guard proved: with `by-ids` reverted, 1 failure.
+- Gates: schemas 100 tests; app type 54 known, lint 273 known, 742 tests / 12 skipped; `turbo run build` 3/3. Regenerated Prisma clients discarded (whitespace and build noise).
+- Commit `feat/legacy-readers-app` (13 files, +195/-55), pushed.
