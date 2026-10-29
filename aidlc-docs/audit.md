@@ -5864,3 +5864,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-29):** "Place them first (Recommended)"; "Nothing reads them" (Q5 = A for all six columns)
 
 **AI action (2026-10-29):** requirements revised (FR-7r home only, FR-8r completion = HOME, FR-9r reconciler and backfill stop placing, FR-12 place the unplaced from a user-reviewed list, FR-13 drop the six columns in two releases; units U3 place-unplaced, U4 app readers, U5 api readers + write stop, U6 schema, U7 drop migration). The fallback U3 plan marked superseded. Next: the user resets the DEV Neon branch, then the unplaced list.
+
+**User input (2026-10-29):** "done, I reset the dev branch"
+
+**AI action (2026-10-29):** U3 list built on the DEV branch (fresh copy; scratch script `apps/api/scripts/_unplaced-list.ts`, untracked): 1897 profiles, 70 without a HOME row (69 ACTIVE, 1 SUSPENDED). Suggestions: 3 high (a suburb of that postcode named in the text), 25 medium (spelling within that postcode, or a real suburb with a wrong postcode), 34 low (metro or unknown name: the postcode's central suburb; or a nearby misspelling), 8 none (4 empty, 4 overseas). The CSV with names and emails stays in the session scratchpad; presented for the user's review without them.
