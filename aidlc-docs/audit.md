@@ -5892,3 +5892,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-29):** "approved" (the U5 plan)
 
 **AI action (2026-10-29):** U5 built on `feat/legacy-readers-api`: api readers HOME-only (admin search row/sort/state filter, admin lists, search cards), completion's location = HOME, the reconciler's home step and the S1 location backfill removed, sign-up and the service-area save stop writing the six columns, guard test, DB tests and docs updated. Gates green locally (DB tests are CI's). Pushed; PR to be opened by the user. Order: merge -> staging -> preview checklist -> promotion.
+
+**User input (2026-10-29):** "merged"
+
+**AI action (2026-10-29):** by refs `main` = `ba12ece` (#151, contains `4d0842f`); deploy-api run 40800334346 (staging) watched; then the preview checklist on staging, then promotion.
