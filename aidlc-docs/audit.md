@@ -5930,3 +5930,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-29):** "merged / can you continue"
 
 **AI action (2026-10-29):** by refs `main` is still `ba12ece` (#151); PR #152 is open, not merged (merged_at null); its checks all green (API Quality both Node versions, App, Web, Supply chain, CodeQL, Semgrep, Vercel). Asked the user to press Merge.
+
+**User input (2026-10-29):** "Merged"
+
+**AI action (2026-10-29):** by refs `main` = `6551489` (#152, contains U6); deploy-api run 40810371224 (staging) watched.
