@@ -5910,3 +5910,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-29):** "yes admin works" (admin worker search State filter and city/state sort on staging)
 
 **AI action (2026-10-29):** recorded; the service-area change on U5 still open.
+
+**User input (2026-10-29):** "done, I changed the suburb to Parramatta"
+
+**AI action (2026-10-29):** staging copy: the new worker's HOME moved at 01:50:34Z to Paramatta SA 5558 (source ONBOARDING, 50 km; the user picked the SA suburb "Paramatta", not Parramatta NSW); the six legacy columns still null. The reconciler ran at 01:53, 01:58 (examined 1 each: the profile's updatedAt 01:50:43Z) and 02:03 (examined 0); its summary has no home outcome (U5 code); at 02:04Z the HOME row is unchanged. Preview checklist on staging passed: sign-in + dashboard, health 200, suburb search with ids, photo upload (the one message = load shed on the list refresh, follow-up 42), full sign-up (audit, outbox DONE, legacy columns null, HOME), duplicate-email notice (user), service-area change kept, admin State filter and sort (user), production unchanged. Promotion handed to the user: `ba12ece0c767c3d83a129c171fc94b500fa95d1f` (rollback `331e5e3aac9f64aadc5267b83933e53bd170ac6a`, `remonta-api-00026-zm4`).
