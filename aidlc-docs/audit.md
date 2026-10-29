@@ -5926,3 +5926,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-29):** "approved" (the U6 plan); later "can you continue"
 
 **AI action (2026-10-29):** U6 built on `feat/drop-columns-schema` (`d1e02ee0`, 11 files, +35/-658): the six fields and five indexes out of `WorkerProfile` (no migration); the app auth client refreshed (7 files with content changes); `registration.int` and `sections.int` no longer name the columns; data-model doc. My finished scratch scripts deleted (`_u5-check*`, `_unplaced-list`, `_place-unplaced`, `_place-decisions.json`); the user's untracked `_u2-staging-writes.ts` no longer compiles against the schema, so it was moved aside for the local api gate and put back unchanged. Gates: api 1151 (251 DB skipped), db 50, contract 138, schemas 100, app 742 + baselines, build 3/3. Pushed; PR to be opened by the user.
+
+**User input (2026-10-29):** "merged / can you continue"
+
+**AI action (2026-10-29):** by refs `main` is still `ba12ece` (#151); PR #152 is open, not merged (merged_at null); its checks all green (API Quality both Node versions, App, Web, Supply chain, CodeQL, Semgrep, Vercel). Asked the user to press Merge.
