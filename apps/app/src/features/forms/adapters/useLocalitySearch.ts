@@ -4,14 +4,12 @@
 // call the sign-up makes. The one place the locality field's data comes from -- the
 // replacement for the fetch + debounce copied into each suburb picker.
 import { useEffect, useRef, useState } from "react";
-import { createClient, registrationContract } from "@remonta/api-contract";
 import type { Backend } from "@remonta/form-engine";
 import type { LocalityOption } from "@/components/ui/form-wizard/fields";
+import { localitySuggestions } from "@/lib/api/localities";
 
 async function fromApi(apiBaseUrl: string, q: string): Promise<LocalityOption[]> {
-  const r = await createClient(registrationContract, { baseUrl: apiBaseUrl }).searchLocalities({ query: { q } });
-  if (!r.ok) return [];
-  return r.body.localities.map((l) => ({ id: l.id, name: l.suburb, state: l.state, postcode: l.postcode }));
+  return (await localitySuggestions(q, apiBaseUrl)).map((l) => ({ id: l.id, name: l.suburb, state: l.state, postcode: l.postcode }));
 }
 
 export function useLocalitySearch(query: string, backend: Backend, delayMs = 300) {

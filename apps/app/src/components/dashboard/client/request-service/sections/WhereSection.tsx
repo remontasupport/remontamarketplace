@@ -4,14 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { Search, Loader2 } from "lucide-react";
 import { useRequestService } from "../RequestServiceContext";
 import StepNavigation from "../StepNavigation";
-
-interface Suburb {
-  name: string;
-  postcode: number;
-  state: {
-    abbreviation: string;
-  };
-}
+import { suburbSuggestions, type Suburb } from "@/lib/api/localities";
 
 export default function WhereSection() {
   const { formData, updateFormData } = useRequestService();
@@ -60,8 +53,7 @@ export default function WhereSection() {
 
       setIsLoading(true);
       try {
-        const response = await fetch(`/api/suburbs?q=${encodeURIComponent(searchQuery)}`);
-        const data = await response.json();
+        const data = await suburbSuggestions(searchQuery);
 
         if (Array.isArray(data) && data.length > 0) {
           setSuburbs(data);

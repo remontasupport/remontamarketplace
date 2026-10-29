@@ -40,6 +40,7 @@ import {
   type AdminFilters,
 } from '@/features/admin-search/query'
 import { estimatedDriveMinutes, formatDrive } from '@/features/admin-search/travel'
+import { suburbSuggestions } from '@/lib/api/localities'
 
 // ============================================================================
 // TYPES
@@ -47,7 +48,7 @@ import { estimatedDriveMinutes, formatDrive } from '@/features/admin-search/trav
 
 type Contractor = WorkerRow
 
-/** What /api/suburbs answers (lib/suburbs): the id is an au_localities id, null for a Google fallback. */
+/** A suburb suggestion (lib/api/localities, GET /v1/localities): the id is an au_localities id. */
 interface SuburbMatch {
   id: number | null
   name: string
@@ -229,8 +230,7 @@ export default function AdminDashboard() {
 
       setIsLoadingSuburbs(true)
       try {
-        const response = await fetch(`/api/suburbs?q=${encodeURIComponent(suburbSearch)}`)
-        const data = await response.json()
+        const data = await suburbSuggestions(suburbSearch)
 
         if (Array.isArray(data) && data.length > 0) {
           setSuburbs(data as SuburbMatch[])

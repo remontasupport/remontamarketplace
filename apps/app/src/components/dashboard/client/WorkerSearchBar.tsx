@@ -8,6 +8,7 @@ import {
   ClockIcon,
 } from '@heroicons/react/24/outline'
 import { BRAND_COLORS } from '@/constants'
+import { suburbSuggestions } from '@/lib/api/localities'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -88,8 +89,7 @@ export default function WorkerSearchBar({ onSearch }: WorkerSearchBarProps) {
       }
       setIsLoadingSuburbs(true)
       try {
-        const res  = await fetch(`/api/suburbs?q=${encodeURIComponent(suburbSearch)}`)
-        const data = await res.json()
+        const data = await suburbSuggestions(suburbSearch)
         if (Array.isArray(data) && data.length > 0) {
           setSuburbs(data)
           setShowSuburbDropdown(true)
