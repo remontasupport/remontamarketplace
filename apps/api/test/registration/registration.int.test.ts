@@ -323,13 +323,6 @@ describe.skipIf(!local)('registration on PostGIS', () => {
         firstName: 'Mary-Jane',
         lastName: "O'Connor",
         mobile: '+61412345678',
-        // search-locations FR-10: the HOME row only; the legacy location columns stay empty.
-        location: null,
-        city: null,
-        state: null,
-        postalCode: null,
-        latitude: null,
-        longitude: null,
         isPublished: false,
         verificationStatus: 'NOT_STARTED',
         consentWordingVersion: CONSENT_WORDING_VERSION,
