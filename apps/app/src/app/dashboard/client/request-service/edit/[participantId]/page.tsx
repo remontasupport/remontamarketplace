@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import ClientDashboardLayout from "@/components/dashboard/client/ClientDashboardLayout";
 import DatePickerField from "@/components/forms/fields/DatePickerFieldV2";
+import { suburbSuggestions, type Suburb } from "@/lib/api/localities";
 
 // Types
 interface Category {
@@ -36,14 +37,6 @@ interface PreferredDays {
   friday: DaySchedule;
   saturday: DaySchedule;
   sunday: DaySchedule;
-}
-
-interface Suburb {
-  name: string;
-  postcode: number;
-  state: {
-    abbreviation: string;
-  };
 }
 
 interface ServiceRequestData {
@@ -346,8 +339,7 @@ export default function EditServiceRequestPage({
 
       setIsLoadingSuburbs(true);
       try {
-        const response = await fetch(`/api/suburbs?q=${encodeURIComponent(locationSearchQuery)}`);
-        const data = await response.json();
+        const data = await suburbSuggestions(locationSearchQuery);
 
         if (Array.isArray(data) && data.length > 0) {
           setSuburbs(data);

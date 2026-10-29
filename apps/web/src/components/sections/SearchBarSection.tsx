@@ -42,7 +42,7 @@ export default function SearchBarSection({ currentLocation }: Props) {
       try {
         const res = await fetch(`/api/suburbs?q=${encodeURIComponent(value)}`)
         const data = await res.json()
-        const raw: { name: string; postcode: number; state: { abbreviation: string } }[] = Array.isArray(data) ? data : []
+        const raw: { name: string; postcode: string; state: { abbreviation: string } }[] = Array.isArray(data) ? data : []
         const results = raw.map((item) => `${item.name}, ${item.state.abbreviation} ${item.postcode}`)
         setSuggestions(results)
         setShowSuggestions(results.length > 0)
