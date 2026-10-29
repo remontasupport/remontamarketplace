@@ -5934,3 +5934,5 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-29):** "Merged"
 
 **AI action (2026-10-29):** by refs `main` = `6551489` (#152, contains U6); deploy-api run 40810371224 (staging) watched.
+
+**AI action (2026-10-29):** deploy-api 40810371224 success: staging on image `6551489` (U6). Staging health 200; public search Parramatta, NSW 2150 within 20 km: 234 with suburbs; app production `/login` 200 and Vercel builds success for `6551489` (the app now runs the client without the six fields). Short preview check handed to the user (preview `feat-drop-columns-schema`).
