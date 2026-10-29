@@ -5896,3 +5896,5 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-29):** "merged"
 
 **AI action (2026-10-29):** by refs `main` = `ba12ece` (#151, contains `4d0842f`); deploy-api run 40800334346 (staging) watched; then the preview checklist on staging, then promotion.
+
+**AI action (2026-10-29):** deploy-api 40800334346 success: staging on image `ba12ece` (quality, build, deploy staging; promote skipped). Staging checks: health 200; suburb search returns rows with ids (Parramatta 5410); public search Sydney, NSW 2000 within 20 km: 175, nearest first, cards with the HOME suburb (0 without a city on page 1); no place: 1762. gcloud needs a re-login (revision name not read). Signed-in checklist handed to the user on the #151 preview.
