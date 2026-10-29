@@ -89,9 +89,14 @@
 
 ## Follow-ups left open (candidates for the next cycle or housekeeping)
 
-1. **Search slice, remainder**: the client search and the public list still read `worker_profiles.latitude/longitude`;
-   move them to `worker_locations` + PostGIS, then stop the api's dual write, then drop the columns. (The admin list is
-   done.)
+> **PENDING, RECOMMEND AT EVERY AI-DLC START (user 2026-10-29): U7 `drop-columns-migration`.** Not before 2026-10-30
+> (soak after U5/U6). Drops `worker_profiles.location, city, state, postalCode, latitude, longitude` and their five
+> indexes (`city`, `latitude+longitude`, `postalCode`, `state`, `isPublished+city`). Preconditions: U6 live in app and
+> api (yes, `remonta-api-00028-bcq` = `6551489`); a Neon branch of production taken just before (the only way back);
+> after it, api rollback only to `6551489` or later. Steps: migration in `packages/db` -> PR -> staging (migrate runs
+> there) -> checklist -> promotion (migrate runs on prod). Irreversible.
+
+1. **Search slice, remainder**: done 2026-10-29 (search-locations U1-U6) except the column drop = U7 above.
 2. **CRM notification** (n8n -> Zoho) for sign-ups: an outbox handler.
 3. **Form engine wording**: a reCAPTCHA token failure reads "We couldn't reach Remonta…".
 4. **Rotate exposed credentials**: the production auth db role; the production Blob token; the Prisma Accelerate key;

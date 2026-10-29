@@ -5956,3 +5956,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-29):** "running"
 
 **AI action (2026-10-29):** deploy-api dispatch 40812584264 (03:31:04Z) success. Production `remonta-api-00028-bcq` 100 % (created 03:32:37Z; digest `f14030a5...` = staging `00075-bz6`); health 200; public search Parramatta, NSW 2150 within 20 km: 251, every card with a suburb; admin worker search on the new revision answered 200 at 03:33Z (list and a name search); no ERROR entries. U6 live (app on `main` `6551489`, api `00028-bcq`). Rollback: `ba12ece...` (`00027-rp9`) while the columns exist. Next: U7 (the drop migration) after a soak, then the close.
+
+**User input (2026-10-29):** "ok, can you save the U7 as a pending task, recommend it every time an ai dlc starts"
+
+**AI action (2026-10-29):** U7 recorded as a pending task at the top of the state's follow-ups ("recommend at every AI-DLC start", not before 2026-10-30, preconditions and steps); follow-up 1 marked done except U7; session memory updated with the same instruction.
