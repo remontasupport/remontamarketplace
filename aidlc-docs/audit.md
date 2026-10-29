@@ -5940,3 +5940,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-29):** "I think the prodiction is ok"
 
 **AI action (2026-10-29):** recorded the production app check; asked whether the preview checks on staging (sign-in, sign-up, service-area save, admin search) were done before handing over the promotion.
+
+**User input (2026-10-29):** "done testing, all works"
+
+**AI action (2026-10-29):** staging request logs since the U6 revision `00075-bz6` (03:13:45Z) to 03:21Z: only GET /v1/worker/profile 304 (03:13:59Z) and my public search; no sign-up, no service-area save, no admin search reached staging (none since 02:34Z either). Promotion withheld; asked the user where the tests ran and to repeat sign-up, service-area save and admin search on the `feat-drop-columns-schema` preview.
