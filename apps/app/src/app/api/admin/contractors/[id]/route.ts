@@ -3,6 +3,7 @@ import { authPrisma as prisma } from '@/lib/auth-prisma'
 import { requireRole } from '@/lib/auth'
 import { UserRole } from '@/types/auth'
 import { maskBankAccount } from '@/lib/bankAccount'
+import { HOME_PLACE_SELECT, homePlaceOf } from '@/lib/workerPlace'
 
 /**
  * GET /api/admin/contractors/:id
@@ -32,7 +33,7 @@ export async function GET(
         id: true,
         firstName: true,
         lastName: true,
-        location: true,
+        ...HOME_PLACE_SELECT,
         languages: true,
         photos: true,
         additionalPhotos: true,
@@ -77,7 +78,7 @@ export async function GET(
         id: worker.id,
         firstName: worker.firstName,
         lastName: worker.lastName,
-        location: worker.location,
+        location: homePlaceOf(worker).location,
         languages: worker.languages,
         photos: worker.photos,
         additionalPhotos: worker.additionalPhotos,

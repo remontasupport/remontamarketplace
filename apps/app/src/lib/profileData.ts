@@ -6,6 +6,7 @@
 
 import { authPrisma } from "@/lib/auth-prisma";
 import { readAllPromoted } from "@/lib/w1/read";
+import { HOME_PLACE_SELECT, homePlaceOf } from "@/lib/workerPlace";
 
 export type ProfilePreviewData = {
   profile: {
@@ -69,9 +70,7 @@ export async function fetchProfileByUserId(userId: string): Promise<ProfilePrevi
         photos: true,
         introduction: true,
         createdAt: true,
-        city: true,
-        state: true,
-        postalCode: true,
+        ...HOME_PLACE_SELECT,
         hasVehicle: true,
         workerAdditionalInfo: {
           select: {
@@ -134,6 +133,8 @@ export async function fetchProfileByUserId(userId: string): Promise<ProfilePrevi
       })),
     }));
 
+    const place = homePlaceOf(workerProfile);
+
     // Return comprehensive data
     return {
       profile: {
@@ -142,9 +143,9 @@ export async function fetchProfileByUserId(userId: string): Promise<ProfilePrevi
         photos: workerProfile.photos,
         introduction: workerProfile.introduction,
         createdAt: workerProfile.createdAt,
-        city: workerProfile.city,
-        state: workerProfile.state,
-        postalCode: workerProfile.postalCode,
+        city: place.city,
+        state: place.state,
+        postalCode: place.postalCode,
         hasVehicle: workerProfile.hasVehicle,
       },
       services: servicesGrouped,

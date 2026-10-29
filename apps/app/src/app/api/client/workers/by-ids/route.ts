@@ -10,6 +10,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth.config'
 import { UserRole } from '@/types/auth'
 import { authPrisma } from '@/lib/auth-prisma'
+import { HOME_PLACE_SELECT, homePlaceOf } from '@/lib/workerPlace'
 
 export async function GET(request: NextRequest) {
   try {
@@ -45,8 +46,7 @@ export async function GET(request: NextRequest) {
         lastName: true,
         photos: true,
         introduction: true,
-        city: true,
-        state: true,
+        ...HOME_PLACE_SELECT,
         workerServices: {
           select: { categoryName: true, subcategoryNames: true },
           take: 5,
@@ -62,7 +62,8 @@ export async function GET(request: NextRequest) {
     // 4. Transform to unified shape
     const workerMap = new Map(
       workerProfiles.map((w) => {
-        const locationParts = [w.city, w.state].filter(Boolean)
+        const place = homePlaceOf(w)
+        const locationParts = [place.city, place.state].filter(Boolean)
         const skills = [...new Set(w.workerServices.flatMap((ws) => ws.subcategoryNames))]
         return [
           w.userId,

@@ -4,43 +4,12 @@
 //    return every scalar column, the home street line included, without naming it.
 // The admin route (/api/admin/contractors/[id]) is the one place that reads it, masked bank
 // account alongside; it is not in these folders.
-import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { join, relative } from 'node:path'
+import { readFileSync } from 'node:fs'
+import { relative } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { filesUnder, SRC, workerReads } from './sourceScan'
 
-const SRC = join(__dirname, '..')
 const CLIENT_FACING = ['app/api/client', 'app/api/public', 'app/api/contractors', 'app/api/share', 'app/api/coordinator', 'app/share', 'app/workers']
-
-function filesUnder(dir: string): string[] {
-  const abs = join(SRC, dir)
-  let entries: string[]
-  try {
-    entries = readdirSync(abs)
-  } catch {
-    return []
-  }
-  return entries.flatMap((e) => {
-    const p = join(abs, e)
-    return statSync(p).isDirectory() ? filesUnder(relative(SRC, p)) : /\.(ts|tsx)$/.test(e) && !/\.test\./.test(e) ? [p] : []
-  })
-}
-
-/** The argument text of each `workerProfile.find*(` call, by balanced parentheses. */
-export function workerReads(src: string): string[] {
-  const out: string[] = []
-  const re = /workerProfile\.(findMany|findUnique|findUniqueOrThrow|findFirst|findFirstOrThrow)\(/g
-  for (let m = re.exec(src); m; m = re.exec(src)) {
-    let depth = 1
-    let i = m.index + m[0].length
-    while (i < src.length && depth > 0) {
-      if (src[i] === '(') depth++
-      else if (src[i] === ')') depth--
-      i++
-    }
-    out.push(src.slice(m.index + m[0].length, i - 1))
-  }
-  return out
-}
 
 const files = CLIENT_FACING.flatMap(filesUnder)
 
