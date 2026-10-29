@@ -33,8 +33,8 @@ The entries answer the parameters and bodies the old routes had, so the pages' r
 | Limits | 120/min per user, 300/min per IP | 600/min per IP, 3000/min global (the marketing page calls from Vercel's servers: one IP for every visitor) |
 | Caching | `private, max-age=60` + ETag; the api's 60 s memo | `public, max-age=60`; the api's 60 s memo |
 
-A bad parameter is a 400 with the field named. City and state come from the worker's HOME suburb, else from the
-legacy `worker_profiles` columns.
+A bad parameter is a 400 with the field named. City and state come from the worker's HOME suburb (none without
+one; the legacy `worker_profiles` columns are no longer read, 2026-10-29).
 
 ## 2. The place (`location`)
 
@@ -42,7 +42,7 @@ The text is matched to our suburbs (`au_localities`, current rows); no Google ca
 decides (`apps/api/src/modules/locations/domain/place.ts`):
 
 1. **Ends in a postcode** (`"Parramatta, NSW 2150"`, what both search bars send; the comma is optional): the suburb of
-   that name (and state) in that postcode; else the reconciler's matcher (`legacy-match.ts`: a street address or a
+   that name (and state) in that postcode; else the old-text matcher (`legacy-match.ts`: a street address or a
    metro name around the suburb, a wrong state). One suburb or no place.
 2. **A postcode alone** (`"2150"`, 3 or 4 digits): the centre of that postcode's suburbs.
 3. **A name, optionally with a state** (`"Parramatta"`, `"Richmond VIC"`): the suburb when only one place has that

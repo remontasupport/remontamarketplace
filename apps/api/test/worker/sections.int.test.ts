@@ -224,14 +224,14 @@ describe.skipIf(!local)('the section writes on PostGIS', () => {
     expect((await h.db.workerProfile.findUniqueOrThrow({ where: { id: h.a.profileId }, select: { homeStreetLine: true } })).homeStreetLine).toBeNull()
   })
 
-  it('P6: the service area places the worker (an unplaced one too), writes the legacy columns, and the reconciler keeps it', async () => {
-    const north = await h.db.auLocality.findFirstOrThrow({ where: { searchName: 'north sydney', retiredAt: null }, select: { id: true, suburb: true, state: true, postcode: true, latitude: true } })
+  it('P6: the service area places the worker (an unplaced one too), leaves the legacy columns as they were (FR-10), and the reconciler keeps it', async () => {
+    const north = await h.db.auLocality.findFirstOrThrow({ where: { searchName: 'north sydney', retiredAt: null }, select: { id: true } })
+    const before = await h.db.workerProfile.findUniqueOrThrow({ where: { id: h.b.profileId }, select: LEGACY })
     const res = await put('/v1/worker/profile/service-area', { localityId: north.id, travelRadiusKm: 25 }, () => h.b.userId)
     expect(res.json()).toMatchObject({ localityId: north.id, travelRadiusKm: 25, precision: 'LOCALITY' })
     const home = await h.db.workerLocation.findFirstOrThrow({ where: { workerProfileId: h.b.profileId, kind: 'HOME' } })
     expect(home).toMatchObject({ localityId: north.id, source: 'ONBOARDING', travelRadiusKm: 25 })
-    const legacy = await h.db.workerProfile.findUniqueOrThrow({ where: { id: h.b.profileId }, select: LEGACY })
-    expect(legacy).toMatchObject({ city: north.suburb, state: north.state, postalCode: north.postcode, latitude: north.latitude })
+    expect(await h.db.workerProfile.findUniqueOrThrow({ where: { id: h.b.profileId }, select: LEGACY })).toEqual(before)
     await h.db.workerProfile.update({ where: { id: h.b.profileId }, data: { updatedAt: new Date() } }) // the reconciler's watermark sees it
     await onboardingReconcilerJob(h.db, pino({ level: 'silent' }), { everyMs: 60_000 }).run({ watermark: new Date(Date.now() - 60_000), now: new Date(), signal: new AbortController().signal })
     expect(await h.db.workerLocation.findFirstOrThrow({ where: { workerProfileId: h.b.profileId, kind: 'HOME' } })).toMatchObject({ localityId: north.id, source: 'ONBOARDING' })

@@ -2,9 +2,8 @@
 //
 // Registration places the worker at the locality's centroid straight away
 // (precision LOCALITY, no geocoding call); onboarding may refine it to an address
-// later. During the transition the old worker_profiles location columns are written
-// in the same transaction, in exactly the shape apps/app writes them today, so
-// every legacy reader -- search included -- keeps working unchanged.
+// later. The HOME row is the only record of where a worker is: the old
+// worker_profiles location columns are no longer written (search-locations FR-10).
 
 /** Decided 2026-09-25 (S1-data-model 2.1, option A). */
 export const DEFAULT_TRAVEL_RADIUS_KM = 50
@@ -31,24 +30,13 @@ export interface HomeLocation {
   source: LocationSource
 }
 
-/** The worker_profiles location columns the worker-search readers in apps/app still read (follow-up 1: move them to worker_locations). */
-export interface LegacyLocationColumns {
-  /** "Parramatta, NSW 2150" -- the string Step1Location.tsx builds from a suggestion. */
-  location: string
-  city: string
-  state: string
-  postalCode: string
-  latitude: number
-  longitude: number
-}
-
 export type PlacementError = { kind: 'locality-retired'; localityId: number }
 
 export function placeHome(
   locality: Locality,
   source: LocationSource,
   travelRadiusKm: number = DEFAULT_TRAVEL_RADIUS_KM,
-): { ok: true; home: HomeLocation; legacy: LegacyLocationColumns } | { ok: false; error: PlacementError } {
+): { ok: true; home: HomeLocation } | { ok: false; error: PlacementError } {
   // A new placement must use a current suburb; rows already placed at one that a
   // later release retires stay valid (the refresh never deletes).
   if (locality.retiredAt !== null) return { ok: false, error: { kind: 'locality-retired', localityId: locality.id } }
@@ -66,18 +54,5 @@ export function placeHome(
       precision: 'LOCALITY',
       source,
     },
-    legacy: {
-      location: localityLabel(locality, ', '),
-      city: locality.suburb,
-      state: locality.state,
-      postalCode: locality.postcode,
-      latitude: locality.latitude,
-      longitude: locality.longitude,
-    },
   }
-}
-
-/** "Parramatta, NSW 2150" (legacy column) or "Parramatta NSW 2150" (autocomplete label). */
-export function localityLabel(l: Pick<Locality, 'suburb' | 'state' | 'postcode'>, afterSuburb: ', ' | ' ' = ' '): string {
-  return `${l.suburb}${afterSuburb}${l.state} ${l.postcode}`
 }

@@ -76,12 +76,12 @@ parameters are refused (400). Limits: 120 per minute per admin, 300 per minute p
 | Parameter | Values | Meaning |
 |---|---|---|
 | `page`, `pageSize` | ints, `pageSize` <= 100 (default 20) | the page |
-| `sortBy`, `sortOrder` | `createdAt` (default without a suburb), `firstName`, `lastName`, `city`, `state`, `distance` (default with a suburb); `asc`/`desc` | `city`/`state` sort by the worker's home suburb, falling back to the legacy columns; ties by id |
+| `sortBy`, `sortOrder` | `createdAt` (default without a suburb), `firstName`, `lastName`, `city`, `state`, `distance` (default with a suburb); `asc`/`desc` | `city`/`state` sort by the worker's home suburb (a worker with none sorts as empty); ties by id |
 | `search` | <= 100 chars | first name, last name or mobile contains it; two words match first/last in either order |
 | `localityId` | an `au_localities` id (from the suburb autocomplete) | the suburb to measure from; unknown id = 400 `fields.localityId` |
 | `withinKm` | 1..500, only with `localityId` | workers whose home suburb centre is within this distance (PostGIS `ST_DWithin` on geography); without it, every placed worker, nearest first |
 | `unplaced` | `true` | list active workers with **no** mapped suburb instead (ignores `localityId`/`withinKm`) |
-| `state` | `ACT`, `NSW`, `NT`, `QLD`, `SA`, `TAS`, `VIC`, `WA` | the home suburb's state; a worker with no mapped suburb by the legacy `worker_profiles.state`, read as the code in any case or the full name (`Victoria`). Combines with `localityId` and with `unplaced` (the unmapped list and its count narrow to the state) |
+| `state` | `ACT`, `NSW`, `NT`, `QLD`, `SA`, `TAS`, `VIC`, `WA` | the home suburb's state; a worker with no mapped suburb matches no state (2026-10-29: the legacy column is no longer read). Combines with `localityId` and with `unplaced` (the unmapped list and its count narrow to the state) |
 | `typeOfSupport` | a category id (`support-worker`, `therapeutic-supports`, ...) | has that service |
 | `therapeuticSubcategories` | comma-separated sub-category ids | any of, under therapeutic supports |
 | `gender` | `Male`, `Female` | |
@@ -232,4 +232,4 @@ street line, suburb, state, postcode, or null) and the bank account masked to th
 (private)" block **above** the profile card, never inside it: the "Download JPEG Profile" button captures only
 `.profile-card`, which is sent to clients. No client-facing route or page reads the home address
 (`src/lib/privacy.test.ts` checks every client-facing worker read selects named columns and none names it).
-
+

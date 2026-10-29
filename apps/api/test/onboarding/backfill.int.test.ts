@@ -4,7 +4,6 @@
 import { randomUUID } from 'node:crypto'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { backfillWorkerOnboarding, formatOnboardingReport } from '../../src/modules/onboarding/backfill'
-import { localityCandidates } from '../../src/modules/locations/candidates'
 import { reconcileWorker } from '../../src/modules/onboarding/reconciler'
 import { createDb, unitOfWork, type Db } from '../../src/platform/persistence/db'
 
@@ -31,7 +30,7 @@ describe.skipIf(!local)('onboarding backfill on PostGIS', () => {
     await requirement(ids.published, 'wwcc', { status: 'APPROVED', documentUrl: 'u', documentUploadedAt: daysAgo(28), approvedAt: daysAgo(8), updatedAt: daysAgo(8) })
     // Already has a marker (the reconciler saw them): the backfill must not touch it.
     ids.marked = await legacyWorker({ createdAt: daysAgo(10) })
-    await unitOfWork(db, (tx) => reconcileWorker(tx, ids.marked!, NOW, localityCandidates(db)))
+    await unitOfWork(db, (tx) => reconcileWorker(tx, ids.marked!, NOW))
   })
   afterAll(async () => {
     await cleanup()
@@ -53,7 +52,6 @@ describe.skipIf(!local)('onboarding backfill on PostGIS', () => {
         workerProfile: {
           create: {
             firstName: 'Legacy', lastName: 'Worker', mobile: '0412 345 678', languages: [],
-            location: 'Mount Victoria, NSW 2786', city: 'Mount', state: 'NSW', postalCode: '2786',
             isPublished: p.isPublished ?? false, createdAt: p.createdAt, updatedAt: p.updatedAt ?? p.createdAt,
           },
         },
@@ -121,7 +119,7 @@ describe.skipIf(!local)('onboarding backfill on PostGIS', () => {
   it('the reconciler agrees with every backfilled marker: no stage change, no new transition', async () => {
     const before = await transitions()
     for (const id of ours()) {
-      const o = await unitOfWork(db, (tx) => reconcileWorker(tx, id, new Date(NOW.getTime() + 2000), localityCandidates(db)))
+      const o = await unitOfWork(db, (tx) => reconcileWorker(tx, id, new Date(NOW.getTime() + 2000)))
       expect(o, id).toMatchObject({ created: false, changed: null })
     }
     expect(await transitions()).toEqual(before)

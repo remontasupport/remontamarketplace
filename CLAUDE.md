@@ -253,8 +253,9 @@ TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:55432/s1test GCS_API_
   `.env` points at production: `AUTH_DATABASE_URL=… DATABASE_URL=… DIRECT_DATABASE_URL=… UPSTASH_REDIS_REST_URL=
   UPSTASH_REDIS_REST_TOKEN= NEXT_PUBLIC_API_URL=http://127.0.0.1:4000 npx next dev`. Without `NEXT_PUBLIC_API_URL`
   the sign-up page shows "temporarily unavailable" (there is no other backend).
-- `pnpm --filter @remonta/api backfill:locations` and `backfill:onboarding`: the S1 backfills. Dry run by
-  default, `--apply` to write, `--report=<file>` for the full JSON. They read `apps/api/.env`.
+- `pnpm --filter @remonta/api backfill:onboarding`: the S1 backfill (`backfill:locations` was removed on 2026-10-29
+  with the legacy location columns: sign-up and the service-area save write `worker_locations`). Dry run by
+  default, `--apply` to write, `--report=<file>` for the full JSON. It reads `apps/api/.env`.
 
 ### Refreshing the suburb list (`au_localities`): every six months, or on request
 

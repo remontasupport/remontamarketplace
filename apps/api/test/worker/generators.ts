@@ -129,9 +129,6 @@ export const profileColumns: fc.Arbitrary<ProfileColumns> = fc.record({
   lastName: text(false).map((s) => s ?? ''),
   photos: maybe(fc.constantFrom('https://blob.test/p.jpg', ' '), null),
   introduction: bio,
-  city: text(),
-  state: text(),
-  postalCode: text(),
   age: maybe(fc.integer({ min: 18, max: 80 }), null),
   dateOfBirth: maybe(fc.constantFrom('1990-01-01', '1985-07-15', ' '), null, 0.8),
   gender: maybe(fc.constantFrom('Male', 'Female', ' '), null),
@@ -239,7 +236,7 @@ export type FixCase =
 export function fixCasesOf(input: CompletionInput): FixCase[] {
   const hits = new Set<FixCase>()
   const p = input.profile
-  const columns = [p.firstName, p.lastName, p.photos, p.introduction, p.city, p.state, p.postalCode, p.gender]
+  const columns = [p.firstName, p.lastName, p.photos, p.introduction, p.gender]
   if (columns.some((c) => typeof c === 'string' && c.length > 0 && !nonEmpty(c))) hits.add('whitespace')
   if (p.age === null && nonEmpty(p.dateOfBirth)) hits.add('whitespace')
 

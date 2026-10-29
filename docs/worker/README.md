@@ -198,7 +198,8 @@ read fetched: pure, no clock, no second query. The rules are `aidlc-docs/constru
 design/business-rules.md` R3; today's app function is kept as the test oracle, and the property test proves the
 two agree everywhere except where the rules below say **[fix]**.
 
-- **accountDetails**: first name, last name, main photo, bio, city, state, postcode and gender all non-empty,
+- **accountDetails**: first name, last name, main photo, bio and gender all non-empty, a home suburb (the HOME
+  `worker_locations` row; until 2026-10-29 the legacy city, state and postcode columns),
   and an age or a date of birth. Whitespace-only counts as empty **[fix]**; a date of birth counts like an age
   **[fix]**.
 - **compliance**: false without services. Required = the catalogue documents of category IDENTITY, BUSINESS or

@@ -5,7 +5,7 @@
 //   --batch=<n>       page size (default 500)
 //
 // Needs DIRECT_DATABASE_URL or AUTH_DATABASE_URL, e.g. from apps/api/.env:
-//   node --env-file=.env --import tsx scripts/backfill-worker-locations.ts
+//   node --env-file=.env --import tsx scripts/backfill-worker-onboarding.ts
 import { writeFile } from 'node:fs/promises'
 import { createDb } from '../src/platform/persistence/db'
 

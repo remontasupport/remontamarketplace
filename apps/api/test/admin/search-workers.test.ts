@@ -20,9 +20,6 @@ const raw = (patch: Partial<RawWorkerRow> = {}): RawWorkerRow => ({
   age: 40,
   dateOfBirth: '1990-03-15',
   languages: ['English'],
-  city: 'Parramatta',
-  state: 'NSW',
-  postalCode: '2150',
   photos: null,
   experience: null,
   introduction: 'hi',
@@ -59,6 +56,11 @@ describe('shapeRow', () => {
     expect(shapeRow(raw(), NOW, false).distanceKm).toBeUndefined()
     expect(shapeRow(raw({ distance_m: null }), NOW, true).distanceKm).toBeUndefined()
     expect(shapeRow(raw({ homeSuburb: null, homeState: null, homePostcode: null, precision: null, travelRadiusKm: null, distance_m: null }), NOW, true).location).toBeUndefined()
+  })
+
+  it('city, state and postcode are the HOME suburb only; none without a HOME row (search-locations FR-7r)', () => {
+    expect(shapeRow(raw(), NOW, false)).toMatchObject({ city: 'Parramatta', state: 'NSW', postalCode: '2150' })
+    expect(shapeRow(raw({ homeSuburb: null, homeState: null, homePostcode: null }), NOW, false)).toMatchObject({ city: null, state: null, postalCode: null })
   })
 
   it('G10: for any raw row the shaped row matches the contract and never carries abn or dateOfBirth', () => {

@@ -89,8 +89,8 @@ describe('the groups (E3, E4, CR-2..CR-7)', () => {
 })
 
 describe('the on-purpose differences from today (business-rules.md)', () => {
-  it('My Profile needs no suburb: without city/state/postcode, today\'s accountDetails is false, the new My Profile item set is unaffected', () => {
-    const rows = sampleRows({ city: null, state: null, postalCode: null })
+  it('My Profile needs no suburb: without a HOME row, accountDetails is false (FR-8r), the new My Profile item set is unaffected', () => {
+    const rows = sampleRows({ locations: [] })
     expect(completionOf(completionInputOf(rows)).accountDetails).toBe(false)
     expect(completionItems(rows).filter((i) => i.group === 'my-profile').map((i) => i.done)).toEqual(completionItems(sampleRows()).filter((i) => i.group === 'my-profile').map((i) => i.done))
   })
@@ -109,7 +109,7 @@ describe('the on-purpose differences from today (business-rules.md)', () => {
 const rowsArb = fc
   .record({
     name: fc.boolean(), photo: fc.boolean(), bio: fc.boolean(), dob: fc.boolean(), gender: fc.boolean(), lang: fc.boolean(), exp: fc.boolean(), job: fc.boolean(), edu: fc.boolean(),
-    hours: fc.boolean(), vehicle: fc.constantFrom<string | null>('yes', 'No', null, ''), services: fc.boolean(), home: fc.boolean(), legacyPlace: fc.boolean(), qual: fc.boolean(), police: fc.constantFrom('APPROVED', 'SUBMITTED', 'REJECTED', 'PENDING'),
+    hours: fc.boolean(), vehicle: fc.constantFrom<string | null>('yes', 'No', null, ''), services: fc.boolean(), home: fc.boolean(), qual: fc.boolean(), police: fc.constantFrom('APPROVED', 'SUBMITTED', 'REJECTED', 'PENDING'),
   })
   .map((g): ProfileRows => {
     const base = sampleRows()
@@ -129,7 +129,6 @@ const rowsArb = fc
       hasVehicle: g.vehicle,
       workerServices: g.services ? base.profile.workerServices : [],
       locations: g.home ? base.profile.locations : [],
-      city: g.legacyPlace ? 'Parramatta' : null,
       verificationRequirements: [
         { ...base.profile.verificationRequirements[0]!, status: g.police as never },
         ...(g.qual ? [{ id: 'vr2', requirementType: 'Support Worker:qualification-certificate', requirementName: 'Cert', status: 'APPROVED' as const, documentCategory: 'SERVICE_QUALIFICATION' as const, documentUrl: null, expiresAt: null, documentUploadedAt: null, metadata: null }] : []),

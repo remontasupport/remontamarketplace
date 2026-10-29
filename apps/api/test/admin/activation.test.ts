@@ -41,7 +41,7 @@ describe('the activation filter (BR-5)', () => {
 
 const raw = (patch: Partial<RawWorkerRow> = {}): RawWorkerRow => ({
   id: 'w1', userId: 'u1', firstName: 'Ann', lastName: 'Lee', mobile: '0400000000', gender: 'Female', age: 40, dateOfBirth: null,
-  languages: [], city: null, state: null, postalCode: null, photos: null, experience: null, introduction: null,
+  languages: [], photos: null, experience: null, introduction: null,
   createdAt: new Date('2026-01-01T00:00:00Z'), updatedAt: new Date('2026-01-02T00:00:00Z'), email: 'ann@example.test',
   userStatus: 'ACTIVE', infoLanguages: null, serviceNames: null, serviceIds: null, homeSuburb: null, homeState: null,
   homePostcode: null, precision: null, travelRadiusKm: null, distance_m: null, total: 1, ...patch,

@@ -126,7 +126,7 @@ describe('P3: the percentage (R3.10)', () => {
   }, 30_000)
 
   it('is the sidebar formula: round(100 × filled / 13)', () => {
-    const empty: CompletionInput = { profile: { firstName: '', lastName: '', photos: null, introduction: null, city: null, state: null, postalCode: null, age: null, dateOfBirth: null, gender: null, hasVehicle: null, languages: [], abn: null }, services: [], requirements: [], catalogue: { categories: [] }, hasHome: false, availabilityCount: 0, experienceCount: 0, jobHistoryCount: 0, educationCount: 0, additionalInfo: null }
+    const empty: CompletionInput = { profile: { firstName: '', lastName: '', photos: null, introduction: null, age: null, dateOfBirth: null, gender: null, hasVehicle: null, languages: [], abn: null }, services: [], requirements: [], catalogue: { categories: [] }, hasHome: false, availabilityCount: 0, experienceCount: 0, jobHistoryCount: 0, educationCount: 0, additionalInfo: null }
     expect(percentOf(empty)).toBe(0)
     expect(percentOf({ ...empty, hasHome: true })).toBe(8) // 1/13
     expect(percentOf({ ...empty, hasHome: true, availabilityCount: 1, experienceCount: 1 })).toBe(23) // 3/13
@@ -180,7 +180,7 @@ describe('E4: the services table equals today\'s function', () => {
 // ---- One case per [fix] rule ---------------------------------------------------------
 
 const base = (): CompletionInput => ({
-  profile: { firstName: 'Mary', lastName: 'Lee', photos: 'https://blob.test/p.jpg', introduction: 'hello', city: 'Parramatta', state: 'NSW', postalCode: '2150', age: 30, dateOfBirth: null, gender: 'Female', hasVehicle: 'Yes', languages: ['English'], abn: null },
+  profile: { firstName: 'Mary', lastName: 'Lee', photos: 'https://blob.test/p.jpg', introduction: 'hello', age: 30, dateOfBirth: null, gender: 'Female', hasVehicle: 'Yes', languages: ['English'], abn: null },
   services: [{ categoryId: 'support-worker', categoryName: 'Support Worker', subcategoryIds: ['personal-care'], subcategoryNames: ['Personal Care'] }],
   requirements: [],
   catalogue: { categories: [] },
@@ -196,11 +196,12 @@ const link = (id: string, documentType = 'REQUIRED', conditionKey: string | null
 const row = (requirementType: string, status: RequirementRow['status'] = 'SUBMITTED', documentCategory: RequirementRow['documentCategory'] = null, documentUrl: string | null = 'https://blob.test/d.pdf'): RequirementRow => ({ requirementType, status, documentCategory, documentUrl })
 
 describe('the [fix] rules', () => {
-  it('R3.1: whitespace-only is empty; a date of birth counts like an age', () => {
-    expect(accountDetailsOf(base().profile)).toBe(true)
-    expect(accountDetailsOf({ ...base().profile, city: '   ' })).toBe(false)
-    expect(accountDetailsOf({ ...base().profile, age: null, dateOfBirth: '1990-01-01' })).toBe(true)
-    expect(accountDetailsOf({ ...base().profile, age: null, dateOfBirth: ' ' })).toBe(false)
+  it('R3.1: whitespace-only is empty; a date of birth counts like an age; the location is the HOME row (FR-8r)', () => {
+    expect(accountDetailsOf(base().profile, true)).toBe(true)
+    expect(accountDetailsOf(base().profile, false)).toBe(false)
+    expect(accountDetailsOf({ ...base().profile, gender: '   ' }, true)).toBe(false)
+    expect(accountDetailsOf({ ...base().profile, age: null, dateOfBirth: '1990-01-01' }, true)).toBe(true)
+    expect(accountDetailsOf({ ...base().profile, age: null, dateOfBirth: ' ' }, true)).toBe(false)
   })
 
   it('R3.3: an OPTIONAL category link is not required; a condition is honoured when known and ignored otherwise', () => {

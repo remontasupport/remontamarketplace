@@ -11,14 +11,14 @@
 //      backfilled. They are picked up regardless of the watermark.
 // The watermark moves only as far as A was fully processed, minus an overlap, so a
 // row committed late is still seen; recomputing is idempotent.
-import { randomUUID } from 'node:crypto'
+//
+// It no longer places workers (search-locations FR-9r, 2026-10-29): sign-up and the
+// service-area save write the HOME row, and the legacy location columns it used to
+// match are no longer written.
 import type { FastifyBaseLogger } from 'fastify'
 import type { Job } from '../../platform/jobs/scheduler'
 import type { Db, Tx } from '../../platform/persistence/db'
 import { unitOfWork } from '../../platform/persistence/db'
-import { candidatePool, localityCandidates, type CandidatesByPostcode } from '../locations/candidates'
-import { placeHome, type Locality } from '../locations/domain/home'
-import { matchLegacyLocation } from '../locations/domain/legacy-match'
 import { maxDate, minDate, obligationsFrom, type LegacyRequirement } from './domain/initial-marker'
 import { countsOf, deriveStage, type Stage } from './domain/stage'
 import { changeOf } from './domain/transitions'
@@ -29,15 +29,14 @@ export const OVERLAP_MS = 60_000
 export interface ReconcileOutcome {
   created: boolean
   changed: { from: Stage | null; to: Stage; singleStep: boolean } | null
-  home: 'created' | 'moved' | 'unchanged' | 'unmatched' | 'ambiguous'
 }
 
 /** Recomputes one worker in one transaction. */
-export async function reconcileWorker(tx: Tx, workerProfileId: string, now: Date, candidatesFor: CandidatesByPostcode): Promise<ReconcileOutcome | null> {
+export async function reconcileWorker(tx: Tx, workerProfileId: string, now: Date): Promise<ReconcileOutcome | null> {
   const p = await tx.workerProfile.findUnique({
     where: { id: workerProfileId },
     select: {
-      id: true, isPublished: true, createdAt: true, updatedAt: true, location: true, city: true, state: true, postalCode: true,
+      id: true, isPublished: true, createdAt: true, updatedAt: true,
       user: { select: { lastLoginAt: true } },
       verificationRequirements: { where: { isRequired: true }, select: REQUIREMENT_SELECT },
     },
@@ -50,7 +49,7 @@ export async function reconcileWorker(tx: Tx, workerProfileId: string, now: Date
     // First sight of a legacy worker: the same first marker as the backfill, dated
     // from the facts rather than from this run.
     const m = await createInitialMarker(tx, { workerProfileId, ...p, lastLoginAt: p.user.lastLoginAt, requirements: reqs }, now, 'RECONCILER', 'reconciled')
-    return { created: true, changed: { from: null, to: m.stage, singleStep: m.stage === 'SIGNED_UP' }, home: await reconcileHome(tx, p, now, candidatesFor) }
+    return { created: true, changed: { from: null, to: m.stage, singleStep: m.stage === 'SIGNED_UP' } }
   }
 
   const facts = { obligations: obligationsFrom(reqs), published: p.isPublished, now }
@@ -72,37 +71,13 @@ export async function reconcileWorker(tx: Tx, workerProfileId: string, now: Date
     where: { workerProfileId, version: marker.version },
     data: { stage, ...(c ? { stageEnteredAt: now } : {}), lastActivityAt, ...milestones, ...counts, version: { increment: 1 }, updatedAt: now },
   })
-  if (upd.count === 0) return { created: false, changed: null, home: 'unchanged' }
+  if (upd.count === 0) return { created: false, changed: null }
   if (c) {
     await tx.workerOnboardingTransition.create({
       data: { workerProfileId, fromStage: c.from, toStage: c.to, at: now, cause: c.singleStep ? 'reconciled' : 'reconciled (several changes at once)', source: 'RECONCILER' },
     })
   }
-  return { created: false, changed: c ? { from: c.from, to: c.to, singleStep: c.singleStep } : null, home: await reconcileHome(tx, p, now, candidatesFor) }
-}
-
-async function reconcileHome(
-  tx: Tx,
-  p: { id: string; location: string | null; city: string | null; state: string | null; postalCode: string | null },
-  now: Date,
-  candidatesFor: CandidatesByPostcode,
-): Promise<ReconcileOutcome['home']> {
-  // The legacy page and legacy onboarding still write these columns in S1, so they
-  // are the source of truth for where the worker is.
-  const match = matchLegacyLocation(p, await candidatePool(p, candidatesFor))
-  if (match.status !== 'matched') return match.status
-
-  const home = await tx.workerLocation.findFirst({ where: { workerProfileId: p.id, kind: 'HOME' } })
-  if (home?.localityId === match.localityId) return 'unchanged'
-  const locality = await tx.auLocality.findUniqueOrThrow({ where: { id: match.localityId } })
-  const placed = placeHome(locality as Locality, 'RECONCILER', home?.travelRadiusKm ?? undefined)
-  if (!placed.ok) return 'unmatched'
-  if (home) {
-    await tx.workerLocation.update({ where: { id: home.id }, data: { localityId: locality.id, latitude: locality.latitude, longitude: locality.longitude, precision: 'LOCALITY', source: 'RECONCILER', updatedAt: now } })
-    return 'moved'
-  }
-  await tx.workerLocation.create({ data: { id: randomUUID(), workerProfileId: p.id, ...placed.home, updatedAt: now } })
-  return 'created'
+  return { created: false, changed: c ? { from: c.from, to: c.to, singleStep: c.singleStep } : null }
 }
 
 export function onboardingReconcilerJob(db: Db, log: FastifyBaseLogger, opts: { everyMs: number; batch?: number }): Job {
@@ -129,9 +104,7 @@ export function onboardingReconcilerJob(db: Db, log: FastifyBaseLogger, opts: { 
         SELECT p.id AS pid FROM worker_profiles p LEFT JOIN worker_onboarding o ON o."workerProfileId" = p.id
          WHERE o."workerProfileId" IS NULL ORDER BY p."createdAt" LIMIT ${batch}`
 
-      const candidatesFor = localityCandidates(db)
-
-      const summary = { examined: 0, created: 0, stageChanges: 0, jumps: 0, home: { created: 0, moved: 0, unchanged: 0, unmatched: 0, ambiguous: 0 }, failed: 0 }
+      const summary = { examined: 0, created: 0, stageChanges: 0, jumps: 0, failed: 0 }
       let processedUpTo: Date | null = null
       let stoppedEarly = false
       const ids = [...new Set([...unmarked.map((r) => r.pid), ...changedRows.map((r) => r.pid)])]
@@ -142,14 +115,13 @@ export function onboardingReconcilerJob(db: Db, log: FastifyBaseLogger, opts: { 
           break
         }
         try {
-          const o = await unitOfWork(db, (tx) => reconcileWorker(tx, pid, now, candidatesFor))
+          const o = await unitOfWork(db, (tx) => reconcileWorker(tx, pid, now))
           summary.examined++
           if (o?.created) summary.created++
           if (o?.changed && o.changed.from !== null) {
             summary.stageChanges++
             if (!o.changed.singleStep) summary.jumps++
           }
-          if (o) summary.home[o.home]++
         } catch (err) {
           summary.failed++
           log.error({ err, workerProfileId: pid }, 'reconcile failed; retried next run')

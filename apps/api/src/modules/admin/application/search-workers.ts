@@ -1,10 +1,10 @@
 // The search service (U2, functional design L1, L5; rules R2, R6): normalise, resolve
 // the suburb, run the statement, shape the rows into the contract's row.
 import type { WorkerRow, WorkerSearchQueryParsed, WorkerSearchResponse } from '@remonta/api-contract'
+import { localityLabel } from '@remonta/schemas/data/locality'
 import type { Clock } from '../../../platform/clock'
 import { ApiError } from '../../../platform/errors'
 import type { Db } from '../../../platform/persistence/db'
-import { localityLabel } from '../../locations/domain/home'
 import { paginationOf } from '../domain/pagination'
 import { appliedFiltersOf, normaliseQuery, type LocalityRef, type SearchQuery } from '../domain/search-query'
 import { runSearch, type RawWorkerRow, type SearchResult } from '../persistence/worker-search-sql'
@@ -54,9 +54,10 @@ export function shapeRow(raw: RawWorkerRow, now: Date, withDistance: boolean, wi
     languages,
     services: raw.serviceNames ?? [],
     serviceIds: raw.serviceIds ?? [],
-    city: raw.city,
-    state: raw.state,
-    postalCode: raw.postalCode,
+    // The HOME locality only (search-locations FR-7r); the legacy columns are no longer read.
+    city: raw.homeSuburb,
+    state: raw.homeState,
+    postalCode: raw.homePostcode,
     photos: raw.photos,
     experience: raw.experience,
     introduction: raw.introduction,
@@ -67,7 +68,7 @@ export function shapeRow(raw: RawWorkerRow, now: Date, withDistance: boolean, wi
   if (withActivation) row.activated = raw.activated === true
   if (withDistance && raw.distance_m !== null && raw.distance_m !== undefined) row.distanceKm = Math.round(raw.distance_m / 100) / 10
   if (raw.homeSuburb && raw.homeState && raw.homePostcode && raw.precision && raw.travelRadiusKm !== null) {
-    row.location = { localityLabel: `${raw.homeSuburb} ${raw.homeState} ${raw.homePostcode}`, precision: raw.precision, travelRadiusKm: raw.travelRadiusKm }
+    row.location = { localityLabel: localityLabel({ suburb: raw.homeSuburb, state: raw.homeState, postcode: raw.homePostcode }), precision: raw.precision, travelRadiusKm: raw.travelRadiusKm }
   }
   return row
 }

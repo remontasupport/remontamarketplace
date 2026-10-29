@@ -16,9 +16,6 @@ export interface ProfileColumns {
   lastName: string
   photos: string | null
   introduction: string | null
-  city: string | null
-  state: string | null
-  postalCode: string | null
   age: number | null
   dateOfBirth: string | null
   gender: string | null
@@ -198,16 +195,14 @@ export function requiredDocumentIds(catalogue: CatalogueRows, profile: Pick<Prof
 
 // ---- The flags ---------------------------------------------------------------------
 
-/** R3.1. */
-export function accountDetailsOf(p: ProfileColumns): boolean {
+/** R3.1. The location part is the HOME row (search-locations FR-8r); the legacy columns are no longer read. */
+export function accountDetailsOf(p: ProfileColumns, hasHome: boolean): boolean {
   return (
     nonEmpty(p.firstName) &&
     nonEmpty(p.lastName) &&
     nonEmpty(p.photos) &&
     nonEmpty(p.introduction) &&
-    nonEmpty(p.city) &&
-    nonEmpty(p.state) &&
-    nonEmpty(p.postalCode) &&
+    hasHome &&
     (p.age !== null || nonEmpty(p.dateOfBirth)) &&
     nonEmpty(p.gender)
   )
@@ -322,7 +317,7 @@ export function percentOf(input: CompletionInput): number {
 
 /** L3: the four flags, the overall flag (R3.8 [fix]) and the percentage. */
 export function completionOf(input: CompletionInput): Completion {
-  const accountDetails = accountDetailsOf(input.profile)
+  const accountDetails = accountDetailsOf(input.profile, input.hasHome)
   const compliance = complianceOf(input)
   const trainings = trainingsOf(input)
   const services = servicesOf(input)

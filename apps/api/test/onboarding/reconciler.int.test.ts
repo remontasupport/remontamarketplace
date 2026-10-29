@@ -1,5 +1,5 @@
 // The onboarding reconciler on PostGIS, fed the way apps/app writes today: users,
-// worker_profiles (legacy location columns) and verification_requirements.
+// worker_profiles and verification_requirements. It no longer places anyone (search-locations FR-9r).
 import { randomUUID } from 'node:crypto'
 import pino from 'pino'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
@@ -13,14 +13,10 @@ const DAY = 86_400_000
 
 describe.skipIf(!local)('onboarding reconciler on PostGIS', () => {
   let db: Db
-  let mountVictoria: { id: number }
-  const candidatesFor = (postcode: string) =>
-    db.auLocality.findMany({ where: { postcode, retiredAt: null }, select: { id: true, searchName: true, state: true, postcode: true } })
 
   beforeAll(async () => {
     db = createDb(url!)
     await cleanup()
-    mountVictoria = await db.auLocality.findFirstOrThrow({ where: { searchName: 'mount victoria', state: 'NSW', postcode: '2786' } })
   })
   afterAll(async () => {
     await cleanup()
@@ -31,7 +27,7 @@ describe.skipIf(!local)('onboarding reconciler on PostGIS', () => {
   }
 
   /** A worker as apps/app's processWorkerRegistration creates one today. */
-  async function legacyWorker(loc: { location: string; city: string | null; state: string | null; postalCode: string | null }) {
+  async function legacyWorker() {
     const u = await db.user.create({
       data: {
         email: `${randomUUID().slice(0, 8)}@${DOMAIN}`,
@@ -39,7 +35,7 @@ describe.skipIf(!local)('onboarding reconciler on PostGIS', () => {
         role: 'WORKER',
         status: 'ACTIVE',
         updatedAt: new Date(),
-        workerProfile: { create: { firstName: 'Legacy', lastName: 'Worker', mobile: '0412 345 678', ...loc, languages: [], updatedAt: new Date() } },
+        workerProfile: { create: { firstName: 'Legacy', lastName: 'Worker', mobile: '0412 345 678', languages: [], updatedAt: new Date() } },
       },
       include: { workerProfile: true },
     })
@@ -47,24 +43,22 @@ describe.skipIf(!local)('onboarding reconciler on PostGIS', () => {
   }
   const requirement = (workerProfileId: string, type: string, patch: Record<string, unknown> = {}) =>
     db.verificationRequirement.create({ data: { workerProfileId, requirementType: type, requirementName: type, isRequired: true, updatedAt: new Date(), ...patch } })
-  const reconcile = (pid: string, now = new Date()) => unitOfWork(db, (tx) => reconcileWorker(tx, pid, now, candidatesFor))
+  const reconcile = (pid: string, now = new Date()) => unitOfWork(db, (tx) => reconcileWorker(tx, pid, now))
   const marker = (pid: string) => db.workerOnboarding.findUniqueOrThrow({ where: { workerProfileId: pid } })
   const history = async (pid: string) =>
     (await db.workerOnboardingTransition.findMany({ where: { workerProfileId: pid }, orderBy: { id: 'asc' } })).map((t) => `${t.fromStage ?? '-'} -> ${t.toStage} (${t.source})`)
 
-  it('gives a legacy sign-up its marker and HOME -- matching "Mount Victoria" despite apps/app storing city "Mount"', async () => {
-    const pid = await legacyWorker({ location: 'Mount Victoria, NSW 2786', city: 'Mount', state: 'NSW', postalCode: '2786' })
+  it('gives a legacy sign-up its marker, and places no HOME row', async () => {
+    const pid = await legacyWorker()
     const o = await reconcile(pid)
-    expect(o).toMatchObject({ created: true, home: 'created' })
+    expect(o).toEqual({ created: true, changed: { from: null, to: 'SIGNED_UP', singleStep: true } })
     expect(await marker(pid)).toMatchObject({ stage: 'SIGNED_UP', mandatoryTotal: 0 })
     expect(await history(pid)).toEqual(['- -> SIGNED_UP (RECONCILER)'])
-    expect(await db.workerLocation.findMany({ where: { workerProfileId: pid } })).toMatchObject([
-      { kind: 'HOME', localityId: mountVictoria.id, travelRadiusKm: 50, precision: 'LOCALITY', source: 'RECONCILER' },
-    ])
+    expect(await db.workerLocation.count({ where: { workerProfileId: pid } })).toBe(0)
   })
 
   it('follows the documents through the stages, one transition per change, and is idempotent', async () => {
-    const pid = await legacyWorker({ location: 'Mount Victoria, NSW 2786', city: 'Mount', state: 'NSW', postalCode: '2786' })
+    const pid = await legacyWorker()
     const police = await requirement(pid, 'police-check')
     const wwcc = await requirement(pid, 'wwcc')
     await reconcile(pid)
@@ -104,14 +98,14 @@ describe.skipIf(!local)('onboarding reconciler on PostGIS', () => {
   })
 
   it('treats a requirement apps/app marked EXPIRED as a lapsed approval', async () => {
-    const pid = await legacyWorker({ location: 'Mount Victoria, NSW 2786', city: 'Mount', state: 'NSW', postalCode: '2786' })
+    const pid = await legacyWorker()
     await requirement(pid, 'police-check', { status: 'EXPIRED', approvedAt: new Date(Date.now() - 400 * DAY), expiresAt: null, documentUrl: 'u' })
     await reconcile(pid)
     expect((await marker(pid)).stage).toBe('ACTION_REQUIRED')
   })
 
   it('records a jump when several things changed between runs', async () => {
-    const pid = await legacyWorker({ location: 'Mount Victoria, NSW 2786', city: 'Mount', state: 'NSW', postalCode: '2786' })
+    const pid = await legacyWorker()
     await reconcile(pid)
     await requirement(pid, 'police-check', { status: 'APPROVED', approvedAt: new Date(), documentUrl: 'u' })
     await reconcile(pid)
@@ -119,26 +113,20 @@ describe.skipIf(!local)('onboarding reconciler on PostGIS', () => {
     expect(t.at(-1)).toMatchObject({ fromStage: 'SIGNED_UP', toStage: 'VERIFIED', cause: 'reconciled (several changes at once)' })
   })
 
-  it('moves HOME when the worker changes suburb in legacy onboarding, keeping their radius', async () => {
-    const pid = await legacyWorker({ location: 'Mount Victoria, NSW 2786', city: 'Mount', state: 'NSW', postalCode: '2786' })
-    await reconcile(pid)
-    await db.workerLocation.updateMany({ where: { workerProfileId: pid }, data: { travelRadiusKm: 80 } })
+  it('never moves a HOME row: a suburb the worker saved stays after their profile changes (F1)', async () => {
+    const pid = await legacyWorker()
     const parramatta = await db.auLocality.findFirstOrThrow({ where: { searchName: 'parramatta', postcode: '2150' } })
-    await db.workerProfile.update({ where: { id: pid }, data: { location: 'Parramatta, NSW 2150', city: 'Parramatta', postalCode: '2150', updatedAt: new Date() } })
-    expect((await reconcile(pid))?.home).toBe('moved')
-    expect(await db.workerLocation.findFirstOrThrow({ where: { workerProfileId: pid } })).toMatchObject({ localityId: parramatta.id, travelRadiusKm: 80, source: 'RECONCILER' })
-  })
-
-  it('never guesses: an ambiguous or unknown location gets no HOME', async () => {
-    const a = await legacyWorker({ location: 'Somewhere nice', city: 'Somewhere nice', state: null, postalCode: '2000' })
-    expect((await reconcile(a))?.home).toBe('ambiguous')
-    const b = await legacyWorker({ location: 'Atlantis', city: 'Atlantis', state: null, postalCode: null })
-    expect((await reconcile(b))?.home).toBe('unmatched')
-    expect(await db.workerLocation.count({ where: { workerProfileId: { in: [a, b] } } })).toBe(0)
+    const home = await db.workerLocation.create({
+      data: { workerProfileId: pid, kind: 'HOME', localityId: parramatta.id, latitude: parramatta.latitude, longitude: parramatta.longitude, travelRadiusKm: 80, precision: 'LOCALITY', source: 'ONBOARDING' },
+    })
+    await reconcile(pid)
+    await db.workerProfile.update({ where: { id: pid }, data: { introduction: 'changed', updatedAt: new Date() } })
+    await reconcile(pid)
+    expect(await db.workerLocation.findMany({ where: { workerProfileId: pid } })).toMatchObject([{ id: home.id, localityId: parramatta.id, travelRadiusKm: 80, source: 'ONBOARDING' }])
   })
 
   it('the job: finds workers without a marker and workers changed since the watermark, then moves the watermark', async () => {
-    const fresh = await legacyWorker({ location: 'Mount Victoria, NSW 2786', city: 'Mount', state: 'NSW', postalCode: '2786' })
+    const fresh = await legacyWorker()
     const job = onboardingReconcilerJob(db, pino({ level: 'silent' }), { everyMs: 300_000 })
     const now = new Date()
     const first = await job.run({ watermark: new Date(now.getTime() - 10 * 60_000), now, signal: new AbortController().signal })
