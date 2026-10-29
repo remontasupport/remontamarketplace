@@ -3,10 +3,8 @@
 ## Project Information
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
-- **Current Cycle**: **search-locations** (opened 2026-10-28, record branch `aidlc/search-locations` from `aidlc/admin-clients`): follow-up 1, the client search and the public list on `worker_locations` + PostGIS, then the dual write and the legacy columns.
-- **Current Stage**: **PAUSED 2026-10-28 (resume here).** Live: U1 `search-api` (#147) and U2 `search-callers` (#148), then #149 (public list = every unsuspended worker, user decision): prod api `remonta-api-00026-zm4` = `331e5e3` (rollback `6886e09` / `00025-8b9`), app/web `main` `331e5e3`. Scope extended (user 2026-10-28): follow-up 39 **stage 1** (readers to HOME, the reconciler, stop the double write; the column drop = stage 2, later) in this cycle.
-  **Next step (2026-10-29):** scope revised by the user: no fallback, all six legacy columns dropped (requirements "Revision (2026-10-29)": FR-7r..FR-13, units U3 `place-unplaced` -> U4 `legacy-readers-app` -> U5 `legacy-readers-api` -> U6 `drop-columns-schema` -> U7 `drop-columns-migration`). The earlier U3 plan (`legacy-readers-app-code-generation-plan.md`, with fallback) is superseded. **U3 done in production 2026-10-29** (62 HOME rows `source = 'ADMIN'`; 8 left: 4 empty, 4 overseas). **U4 live** (#150, `main` `a39c0b7`). **U5 live 2026-10-29** (#151 `ba12ece`; prod api `remonta-api-00027-rp9` = `ba12ece`, rollback `331e5e3` / `00026-zm4`): the api neither reads nor writes the six columns. Follow-up 42 (photo page retries a 503 shed). **U6 live 2026-10-29** (#152 `6551489`; app on `main`, prod api `remonta-api-00028-bcq` = `6551489`, rollback `ba12ece` / `00027-rp9`): the six fields and five indexes are out of the schema; the columns remain in the database. **Next:** U7 `drop-columns-migration` after a soak (Neon branch of production first; DROP INDEX x5, DROP COLUMN x6), then the close.
-  **Loose ends for the close:** undo the 1828 activations on the DEV Neon branch with Neon "Reset from parent" (the ids file was session-temporary; harmless now, nothing reads the flag); delete `apps/api/scripts/_search-*.ts` (untracked); re-record CLAUDE.md rollback rows (api `00026-zm4` = `331e5e3`, previous `00025-8b9` = `6886e09`; app/web `331e5e3` builds); Build and Test summary; archive. The user's own check still open: a signed-in client search in production.
+- **Current Cycle**: none (search-locations closed 2026-10-29; archive `aidlc-docs/archive/search-locations/`). The next cycle branches from `aidlc/search-locations` as `aidlc/<name>`.
+- **Current Stage**: between cycles. **At the start of the next AI-DLC, recommend U7 first** (the pending task below, user 2026-10-29).
 
 ## Previous cycles (archived, read-only)
 
@@ -24,6 +22,7 @@
 | Worker tools (U1 `tools-api`, U2 `tools-app`, the tool search) | `aidlc-docs/archive/worker-tools/` | Closed 2026-10-22; #104-#107 live (api prod `bf9b966`, app `main` `8943f93`) |
 | Worker activation (U1 `activation-api`, U2 `activation-app`) | `aidlc-docs/archive/worker-activation/` | Closed 2026-10-28; #108-#109 live 2026-10-23 (api `00017-4bz` = `746a60d`, app `main` `8b8a82d`); #110-#131 outside the cycle, api prod `90fdadb` |
 | Admin clients and coordinators (U1 `clients-api`, U2 `clients-app`, follow-ups) | `aidlc-docs/archive/admin-clients/` | Closed 2026-10-28; #132-#142 live (api prod `00024-fpj` = `979543a`, app `main` `baf44fb`); #143/#144 (Matching editable, Renew restored) outside the goal |
+| Search on worker_locations + the legacy location columns (U1 `search-api`, U2 `search-callers`, U3-U6, follow-up 43) | `aidlc-docs/archive/search-locations/` | Closed 2026-10-29; #147-#153 live (api prod `00028-bcq` = `6551489`, app/web `main` `2f8dcf1`); U3 placed 62 workers; **U7 (the DROP) pending** |
 
 `aidlc-docs/audit.md` is the single append-only audit trail across cycles; never rewrite it.
 
@@ -61,11 +60,10 @@
   stores them as labels, and the search takes `experienceAreas` (`DOMAIN:Area` pairs, any-of within a domain, all-of
   across; a pair needs its domain in `experienceWith`). Checked on the staging copy: 38 distinct stored values, all in
   the list. `otherAreas` is not read.
-- **Unplaced workers**: 69 active workers have no HOME row (the S1 backfill's no-guess leftovers: city names such as
+- **Unplaced workers** (until 2026-10-29; now 8: 4 empty, 4 overseas, after U3 placed 62): 69 active workers had no HOME row (the S1 backfill's no-guess leftovers: city names such as
   Sydney, Melbourne, Hervey Bay, Gold Coast with a suburb's postcode; misspelt suburbs; street addresses without a
-  suburb; four empty, four overseas). The reconciler (every 5 min) places a worker the moment the legacy columns match
-  one suburb. No admin control exists; a direct row with `source = 'ADMIN'` plus the legacy columns is the manual way
-  (audit 2026-10-09). "Hervey Bay" is not a locality: 24 suburbs on 4655.
+  suburb; four empty, four overseas). Since U5 the reconciler places nobody; a worker places themselves by saving a
+  suburb, or an admin adds a HOME row with `source = 'ADMIN'` (the U3 script's way, 2026-10-29). "Hervey Bay" is not a locality: 24 suburbs on 4655.
 - **Staging** `remonta-api-staging` deploys from every merge to `main` touching the api path (`rehearse-w1` Neon copy,
   host `ep-wandering-shadow`); production moves only by `workflow_dispatch` promotion of an image already built.
   Vercel Preview points at staging. `scripts/local/run-api.sh` + `run-app.sh` run the new code on a developer machine
@@ -75,8 +73,8 @@
   database-gated tests skip locally; CI's API Quality job is the proof. `gcloud` needs a re-login for secrets.
 - **The production auth database** (`workerprofiles`, host `ep-delicate-recipe-a7mbt4ef`) carries the S1 migrations,
   PostGIS 3.5, `au_localities` (15,467), `worker_locations`, `worker_onboarding` + transitions, the outbox, rate-limit
-  buckets and scheduled jobs. The api still dual-writes `worker_profiles.location/city/state/postalCode/latitude/
-  longitude`: the client search and the public list read them (follow-up 1).
+  buckets and scheduled jobs. Since 2026-10-29 nothing reads or writes `worker_profiles.location/city/state/postalCode/latitude/longitude`;
+  they are out of the Prisma schema (U6) and still in the database until U7.
 - **Secrets** `remonta-api[-staging]-<NAME>`, six per stage, in Secret Manager; add versions with
   `printf '%s' | gcloud secrets versions add --data-file=-` (no trailing newline: follow-up 15).
 - **Quality gates (2026-10-09):** schemas 63 tests; api-contract 49; api 368 unit (+143 database-gated, CI); app
@@ -89,7 +87,7 @@
 
 ## Follow-ups left open (candidates for the next cycle or housekeeping)
 
-> **PENDING, RECOMMEND AT EVERY AI-DLC START (user 2026-10-29): U7 `drop-columns-migration`.** Not before 2026-10-30
+> **PENDING, RECOMMEND AT EVERY AI-DLC START (user 2026-10-29): U7 `drop-columns-migration`** (plan: `archive/search-locations/construction/plans/drop-columns-schema-code-generation-plan.md` §U7). Not before 2026-10-30
 > (soak after U5/U6). Drops `worker_profiles.location, city, state, postalCode, latitude, longitude` and their five
 > indexes (`city`, `latitude+longitude`, `postalCode`, `state`, `isPublished+city`). Preconditions: U6 live in app and
 > api (yes, `remonta-api-00028-bcq` = `6551489`); a Neon branch of production taken just before (the only way back);
@@ -161,7 +159,7 @@
 37. ~~**Edit on a cancelled request**~~: Edit shown on Pending and Matching only (`fix/edit-pending-matching-only`, 2026-10-28).
 41. **The activation switch** (user 2026-10-28): the public worker list no longer reads `isActivated` (every unsuspended worker is listed); the admin dashboard's switch (worker-activation) now changes nothing anyone sees. Remove it, or give it a new meaning.
 40. **The admin and worker api clients' token loop** (search-locations U2): `apps/app/src/lib/api/admin.ts` and `features/worker/api.ts` still carry their own copy of the loop `lib/api/call.ts` now holds; move them onto it (with their cache modes and abort signals) in a refactor with its own tests.
-39. **Legacy location columns, the remainder of follow-up 1** (user 2026-10-28, Q5 A "TAKE NOTE OF THIS"): after the search-locations cycle's searches have run in production for a while, a later cycle stops the api's dual write (`placeHome` → `LegacyLocationColumns`), moves the display readers (profile preview, profile data, completion, admin lists, the admin search fallback) to the HOME locality, reworks the reconciler (it matches the legacy city/state/postcode), then drops the six columns.
+39. **Legacy location columns**: done in search-locations (U3-U6, 2026-10-29) except the DROP = U7 (pending, top of this list).
 38. **The n8n Cancel/Archive webhook URL** was shown in a session transcript (2026-10-28): rotate if that matters.
 
 ## Workspace State
