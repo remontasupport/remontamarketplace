@@ -5906,3 +5906,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-29):** "Done testing, I check the dev db and it didnt write to the location, city state and zipcode columns now, can you double check on your own"
 
 **AI action (2026-10-29):** read-only on the staging copy (rehearse-w1; scratch `apps/api/scripts/_u5-check*.ts`, untracked): staging revision `remonta-api-staging-00074-r96` created 01:30:11Z (image `ba12ece`). The one sign-up today (01:42:23Z, an internal address): all six legacy columns null; HOME Christmas Island OT 6798 (REGISTRATION); onboarding SIGNED_UP; audit ACCOUNT_REGISTERED, LOGIN_SUCCESS, PROFILE_UPDATE x2; outbox WorkerRegistered DONE. The only worker-saved HOME today is 00:33Z, before the U5 revision (old code: legacy written), so the service-area check on U5 is still open; asked the user to repeat it.
+
+**User input (2026-10-29):** "yes admin works" (admin worker search State filter and city/state sort on staging)
+
+**AI action (2026-10-29):** recorded; the service-area change on U5 still open.
