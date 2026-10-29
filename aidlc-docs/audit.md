@@ -5922,3 +5922,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-29):** "Yes, can it be done today"
 
 **AI action (2026-10-29):** U6 plan written (`construction/plans/drop-columns-schema-code-generation-plan.md`): schema-only release (six fields and five indexes out of `WorkerProfile`, no migration), refreshed app auth client, tests, docs; release = merge (app + staging) -> short checklist -> promotion. U7 (the DROP migration) kept separate, after U6 runs in production. Answered: U6 can be done today; U7 technically the same day once U6 is promoted everywhere, recommended after a soak.
+
+**User input (2026-10-29):** "approved" (the U6 plan); later "can you continue"
+
+**AI action (2026-10-29):** U6 built on `feat/drop-columns-schema` (`d1e02ee0`, 11 files, +35/-658): the six fields and five indexes out of `WorkerProfile` (no migration); the app auth client refreshed (7 files with content changes); `registration.int` and `sections.int` no longer name the columns; data-model doc. My finished scratch scripts deleted (`_u5-check*`, `_unplaced-list`, `_place-unplaced`, `_place-decisions.json`); the user's untracked `_u2-staging-writes.ts` no longer compiles against the schema, so it was moved aside for the local api gate and put back unchanged. Gates: api 1151 (251 DB skipped), db 50, contract 138, schemas 100, app 742 + baselines, build 3/3. Pushed; PR to be opened by the user.
