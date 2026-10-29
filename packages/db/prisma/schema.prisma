@@ -236,10 +236,6 @@ model WorkerProfile {
   middleName               String?
   lastName                 String
   mobile                   String
-  location                 String?
-  city                     String?
-  state                    String?
-  postalCode               String?
   age                      Int?
   dateOfBirth              String?
   gender                   String?
@@ -253,8 +249,6 @@ model WorkerProfile {
   uniqueService            String?
   photos                   String?
   additionalPhotos         String?
-  latitude                 Float?
-  longitude                Float?
   abn                      Json?
   setupProgress            Json?
   profileCompleted         Boolean                   @default(false)
@@ -291,8 +285,9 @@ model WorkerProfile {
   isActivated Boolean @default(false)
 
   // worker-profile-api U2 (D8, FR-PI-04) — the private home address: a street line and a
-  // suburb of ours. Never a client-facing column; never geocoded; never written to the
-  // legacy location columns above (those stay the service area's).
+  // suburb of ours. Never a client-facing column; never geocoded. Where the worker works
+  // from is the HOME worker_locations row (the legacy location columns left the schema in
+  // search-locations U6, 2026-10-29; the database drops them in U7).
   homeStreetLine String?
   homeLocalityId Int?
   homeLocality   AuLocality? @relation("WorkerHomeLocality", fields: [homeLocalityId], references: [id], onDelete: Restrict)
@@ -303,11 +298,7 @@ model WorkerProfile {
   onboardingTransitions WorkerOnboardingTransition[]
   registrationPhotos    RegistrationPhotoUpload[]
 
-  @@index([city])
   @@index([isPublished])
-  @@index([latitude, longitude])
-  @@index([postalCode])
-  @@index([state])
   @@index([userId])
   @@index([verificationStatus])
   @@index([gender])
@@ -317,7 +308,6 @@ model WorkerProfile {
   @@index([lastName])
   @@index([mobile])
   @@index([languages], type: Gin)
-  @@index([isPublished, city])
   @@index([isPublished, gender])
   @@index([isPublished, verificationStatus])
   @@index([createdAt])

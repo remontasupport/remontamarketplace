@@ -14831,15 +14831,11 @@ export namespace Prisma {
 
   export type WorkerProfileAvgAggregateOutputType = {
     age: number | null
-    latitude: number | null
-    longitude: number | null
     homeLocalityId: number | null
   }
 
   export type WorkerProfileSumAggregateOutputType = {
     age: number | null
-    latitude: number | null
-    longitude: number | null
     homeLocalityId: number | null
   }
 
@@ -14850,10 +14846,6 @@ export namespace Prisma {
     middleName: string | null
     lastName: string | null
     mobile: string | null
-    location: string | null
-    city: string | null
-    state: string | null
-    postalCode: string | null
     age: number | null
     dateOfBirth: string | null
     gender: string | null
@@ -14866,8 +14858,6 @@ export namespace Prisma {
     uniqueService: string | null
     photos: string | null
     additionalPhotos: string | null
-    latitude: number | null
-    longitude: number | null
     profileCompleted: boolean | null
     isPublished: boolean | null
     verificationStatus: string | null
@@ -14889,10 +14879,6 @@ export namespace Prisma {
     middleName: string | null
     lastName: string | null
     mobile: string | null
-    location: string | null
-    city: string | null
-    state: string | null
-    postalCode: string | null
     age: number | null
     dateOfBirth: string | null
     gender: string | null
@@ -14905,8 +14891,6 @@ export namespace Prisma {
     uniqueService: string | null
     photos: string | null
     additionalPhotos: string | null
-    latitude: number | null
-    longitude: number | null
     profileCompleted: boolean | null
     isPublished: boolean | null
     verificationStatus: string | null
@@ -14928,10 +14912,6 @@ export namespace Prisma {
     middleName: number
     lastName: number
     mobile: number
-    location: number
-    city: number
-    state: number
-    postalCode: number
     age: number
     dateOfBirth: number
     gender: number
@@ -14945,8 +14925,6 @@ export namespace Prisma {
     uniqueService: number
     photos: number
     additionalPhotos: number
-    latitude: number
-    longitude: number
     abn: number
     setupProgress: number
     profileCompleted: number
@@ -14967,15 +14945,11 @@ export namespace Prisma {
 
   export type WorkerProfileAvgAggregateInputType = {
     age?: true
-    latitude?: true
-    longitude?: true
     homeLocalityId?: true
   }
 
   export type WorkerProfileSumAggregateInputType = {
     age?: true
-    latitude?: true
-    longitude?: true
     homeLocalityId?: true
   }
 
@@ -14986,10 +14960,6 @@ export namespace Prisma {
     middleName?: true
     lastName?: true
     mobile?: true
-    location?: true
-    city?: true
-    state?: true
-    postalCode?: true
     age?: true
     dateOfBirth?: true
     gender?: true
@@ -15002,8 +14972,6 @@ export namespace Prisma {
     uniqueService?: true
     photos?: true
     additionalPhotos?: true
-    latitude?: true
-    longitude?: true
     profileCompleted?: true
     isPublished?: true
     verificationStatus?: true
@@ -15025,10 +14993,6 @@ export namespace Prisma {
     middleName?: true
     lastName?: true
     mobile?: true
-    location?: true
-    city?: true
-    state?: true
-    postalCode?: true
     age?: true
     dateOfBirth?: true
     gender?: true
@@ -15041,8 +15005,6 @@ export namespace Prisma {
     uniqueService?: true
     photos?: true
     additionalPhotos?: true
-    latitude?: true
-    longitude?: true
     profileCompleted?: true
     isPublished?: true
     verificationStatus?: true
@@ -15064,10 +15026,6 @@ export namespace Prisma {
     middleName?: true
     lastName?: true
     mobile?: true
-    location?: true
-    city?: true
-    state?: true
-    postalCode?: true
     age?: true
     dateOfBirth?: true
     gender?: true
@@ -15081,8 +15039,6 @@ export namespace Prisma {
     uniqueService?: true
     photos?: true
     additionalPhotos?: true
-    latitude?: true
-    longitude?: true
     abn?: true
     setupProgress?: true
     profileCompleted?: true
@@ -15193,10 +15149,6 @@ export namespace Prisma {
     middleName: string | null
     lastName: string
     mobile: string
-    location: string | null
-    city: string | null
-    state: string | null
-    postalCode: string | null
     age: number | null
     dateOfBirth: string | null
     gender: string | null
@@ -15210,8 +15162,6 @@ export namespace Prisma {
     uniqueService: string | null
     photos: string | null
     additionalPhotos: string | null
-    latitude: number | null
-    longitude: number | null
     abn: JsonValue | null
     setupProgress: JsonValue | null
     profileCompleted: boolean
@@ -15254,10 +15204,6 @@ export namespace Prisma {
     middleName?: boolean
     lastName?: boolean
     mobile?: boolean
-    location?: boolean
-    city?: boolean
-    state?: boolean
-    postalCode?: boolean
     age?: boolean
     dateOfBirth?: boolean
     gender?: boolean
@@ -15271,8 +15217,6 @@ export namespace Prisma {
     uniqueService?: boolean
     photos?: boolean
     additionalPhotos?: boolean
-    latitude?: boolean
-    longitude?: boolean
     abn?: boolean
     setupProgress?: boolean
     profileCompleted?: boolean
@@ -15310,10 +15254,6 @@ export namespace Prisma {
     middleName?: boolean
     lastName?: boolean
     mobile?: boolean
-    location?: boolean
-    city?: boolean
-    state?: boolean
-    postalCode?: boolean
     age?: boolean
     dateOfBirth?: boolean
     gender?: boolean
@@ -15327,8 +15267,6 @@ export namespace Prisma {
     uniqueService?: boolean
     photos?: boolean
     additionalPhotos?: boolean
-    latitude?: boolean
-    longitude?: boolean
     abn?: boolean
     setupProgress?: boolean
     profileCompleted?: boolean
@@ -15354,10 +15292,6 @@ export namespace Prisma {
     middleName?: boolean
     lastName?: boolean
     mobile?: boolean
-    location?: boolean
-    city?: boolean
-    state?: boolean
-    postalCode?: boolean
     age?: boolean
     dateOfBirth?: boolean
     gender?: boolean
@@ -15371,8 +15305,6 @@ export namespace Prisma {
     uniqueService?: boolean
     photos?: boolean
     additionalPhotos?: boolean
-    latitude?: boolean
-    longitude?: boolean
     abn?: boolean
     setupProgress?: boolean
     profileCompleted?: boolean
@@ -15398,10 +15330,6 @@ export namespace Prisma {
     middleName?: boolean
     lastName?: boolean
     mobile?: boolean
-    location?: boolean
-    city?: boolean
-    state?: boolean
-    postalCode?: boolean
     age?: boolean
     dateOfBirth?: boolean
     gender?: boolean
@@ -15415,8 +15343,6 @@ export namespace Prisma {
     uniqueService?: boolean
     photos?: boolean
     additionalPhotos?: boolean
-    latitude?: boolean
-    longitude?: boolean
     abn?: boolean
     setupProgress?: boolean
     profileCompleted?: boolean
@@ -15433,7 +15359,7 @@ export namespace Prisma {
     homeLocalityId?: boolean
   }
 
-  export type WorkerProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "firstName" | "middleName" | "lastName" | "mobile" | "location" | "city" | "state" | "postalCode" | "age" | "dateOfBirth" | "gender" | "languages" | "experience" | "introduction" | "qualifications" | "hasVehicle" | "funFact" | "hobbies" | "uniqueService" | "photos" | "additionalPhotos" | "latitude" | "longitude" | "abn" | "setupProgress" | "profileCompleted" | "isPublished" | "verificationStatus" | "createdAt" | "updatedAt" | "consentProfileShareAt" | "consentWordingVersion" | "zohoLeadId" | "tourSeenAt" | "isActivated" | "homeStreetLine" | "homeLocalityId", ExtArgs["result"]["workerProfile"]>
+  export type WorkerProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "firstName" | "middleName" | "lastName" | "mobile" | "age" | "dateOfBirth" | "gender" | "languages" | "experience" | "introduction" | "qualifications" | "hasVehicle" | "funFact" | "hobbies" | "uniqueService" | "photos" | "additionalPhotos" | "abn" | "setupProgress" | "profileCompleted" | "isPublished" | "verificationStatus" | "createdAt" | "updatedAt" | "consentProfileShareAt" | "consentWordingVersion" | "zohoLeadId" | "tourSeenAt" | "isActivated" | "homeStreetLine" | "homeLocalityId", ExtArgs["result"]["workerProfile"]>
   export type WorkerProfileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     verificationRequirements?: boolean | WorkerProfile$verificationRequirementsArgs<ExtArgs>
     workerAdditionalInfo?: boolean | WorkerProfile$workerAdditionalInfoArgs<ExtArgs>
@@ -15483,10 +15409,6 @@ export namespace Prisma {
       middleName: string | null
       lastName: string
       mobile: string
-      location: string | null
-      city: string | null
-      state: string | null
-      postalCode: string | null
       age: number | null
       dateOfBirth: string | null
       gender: string | null
@@ -15500,8 +15422,6 @@ export namespace Prisma {
       uniqueService: string | null
       photos: string | null
       additionalPhotos: string | null
-      latitude: number | null
-      longitude: number | null
       abn: Prisma.JsonValue | null
       setupProgress: Prisma.JsonValue | null
       profileCompleted: boolean
@@ -15958,10 +15878,6 @@ export namespace Prisma {
     readonly middleName: FieldRef<"WorkerProfile", 'String'>
     readonly lastName: FieldRef<"WorkerProfile", 'String'>
     readonly mobile: FieldRef<"WorkerProfile", 'String'>
-    readonly location: FieldRef<"WorkerProfile", 'String'>
-    readonly city: FieldRef<"WorkerProfile", 'String'>
-    readonly state: FieldRef<"WorkerProfile", 'String'>
-    readonly postalCode: FieldRef<"WorkerProfile", 'String'>
     readonly age: FieldRef<"WorkerProfile", 'Int'>
     readonly dateOfBirth: FieldRef<"WorkerProfile", 'String'>
     readonly gender: FieldRef<"WorkerProfile", 'String'>
@@ -15975,8 +15891,6 @@ export namespace Prisma {
     readonly uniqueService: FieldRef<"WorkerProfile", 'String'>
     readonly photos: FieldRef<"WorkerProfile", 'String'>
     readonly additionalPhotos: FieldRef<"WorkerProfile", 'String'>
-    readonly latitude: FieldRef<"WorkerProfile", 'Float'>
-    readonly longitude: FieldRef<"WorkerProfile", 'Float'>
     readonly abn: FieldRef<"WorkerProfile", 'Json'>
     readonly setupProgress: FieldRef<"WorkerProfile", 'Json'>
     readonly profileCompleted: FieldRef<"WorkerProfile", 'Boolean'>
@@ -42981,10 +42895,6 @@ export namespace Prisma {
     middleName: 'middleName',
     lastName: 'lastName',
     mobile: 'mobile',
-    location: 'location',
-    city: 'city',
-    state: 'state',
-    postalCode: 'postalCode',
     age: 'age',
     dateOfBirth: 'dateOfBirth',
     gender: 'gender',
@@ -42998,8 +42908,6 @@ export namespace Prisma {
     uniqueService: 'uniqueService',
     photos: 'photos',
     additionalPhotos: 'additionalPhotos',
-    latitude: 'latitude',
-    longitude: 'longitude',
     abn: 'abn',
     setupProgress: 'setupProgress',
     profileCompleted: 'profileCompleted',
@@ -43579,20 +43487,6 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'Float'
-   */
-  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
-    
-
-
-  /**
-   * Reference to a field of type 'Float[]'
-   */
-  export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
-    
-
-
-  /**
    * Reference to a field of type 'JobApplicationStatus'
    */
   export type EnumJobApplicationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'JobApplicationStatus'>
@@ -43645,6 +43539,20 @@ export namespace Prisma {
    * Reference to a field of type 'CareDomain[]'
    */
   export type ListEnumCareDomainFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CareDomain[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float'
+   */
+  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float[]'
+   */
+  export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
 
 
@@ -44518,10 +44426,6 @@ export namespace Prisma {
     middleName?: StringNullableFilter<"WorkerProfile"> | string | null
     lastName?: StringFilter<"WorkerProfile"> | string
     mobile?: StringFilter<"WorkerProfile"> | string
-    location?: StringNullableFilter<"WorkerProfile"> | string | null
-    city?: StringNullableFilter<"WorkerProfile"> | string | null
-    state?: StringNullableFilter<"WorkerProfile"> | string | null
-    postalCode?: StringNullableFilter<"WorkerProfile"> | string | null
     age?: IntNullableFilter<"WorkerProfile"> | number | null
     dateOfBirth?: StringNullableFilter<"WorkerProfile"> | string | null
     gender?: StringNullableFilter<"WorkerProfile"> | string | null
@@ -44535,8 +44439,6 @@ export namespace Prisma {
     uniqueService?: StringNullableFilter<"WorkerProfile"> | string | null
     photos?: StringNullableFilter<"WorkerProfile"> | string | null
     additionalPhotos?: StringNullableFilter<"WorkerProfile"> | string | null
-    latitude?: FloatNullableFilter<"WorkerProfile"> | number | null
-    longitude?: FloatNullableFilter<"WorkerProfile"> | number | null
     abn?: JsonNullableFilter<"WorkerProfile">
     setupProgress?: JsonNullableFilter<"WorkerProfile">
     profileCompleted?: BoolFilter<"WorkerProfile"> | boolean
@@ -44573,10 +44475,6 @@ export namespace Prisma {
     middleName?: SortOrderInput | SortOrder
     lastName?: SortOrder
     mobile?: SortOrder
-    location?: SortOrderInput | SortOrder
-    city?: SortOrderInput | SortOrder
-    state?: SortOrderInput | SortOrder
-    postalCode?: SortOrderInput | SortOrder
     age?: SortOrderInput | SortOrder
     dateOfBirth?: SortOrderInput | SortOrder
     gender?: SortOrderInput | SortOrder
@@ -44590,8 +44488,6 @@ export namespace Prisma {
     uniqueService?: SortOrderInput | SortOrder
     photos?: SortOrderInput | SortOrder
     additionalPhotos?: SortOrderInput | SortOrder
-    latitude?: SortOrderInput | SortOrder
-    longitude?: SortOrderInput | SortOrder
     abn?: SortOrderInput | SortOrder
     setupProgress?: SortOrderInput | SortOrder
     profileCompleted?: SortOrder
@@ -44631,10 +44527,6 @@ export namespace Prisma {
     middleName?: StringNullableFilter<"WorkerProfile"> | string | null
     lastName?: StringFilter<"WorkerProfile"> | string
     mobile?: StringFilter<"WorkerProfile"> | string
-    location?: StringNullableFilter<"WorkerProfile"> | string | null
-    city?: StringNullableFilter<"WorkerProfile"> | string | null
-    state?: StringNullableFilter<"WorkerProfile"> | string | null
-    postalCode?: StringNullableFilter<"WorkerProfile"> | string | null
     age?: IntNullableFilter<"WorkerProfile"> | number | null
     dateOfBirth?: StringNullableFilter<"WorkerProfile"> | string | null
     gender?: StringNullableFilter<"WorkerProfile"> | string | null
@@ -44648,8 +44540,6 @@ export namespace Prisma {
     uniqueService?: StringNullableFilter<"WorkerProfile"> | string | null
     photos?: StringNullableFilter<"WorkerProfile"> | string | null
     additionalPhotos?: StringNullableFilter<"WorkerProfile"> | string | null
-    latitude?: FloatNullableFilter<"WorkerProfile"> | number | null
-    longitude?: FloatNullableFilter<"WorkerProfile"> | number | null
     abn?: JsonNullableFilter<"WorkerProfile">
     setupProgress?: JsonNullableFilter<"WorkerProfile">
     profileCompleted?: BoolFilter<"WorkerProfile"> | boolean
@@ -44686,10 +44576,6 @@ export namespace Prisma {
     middleName?: SortOrderInput | SortOrder
     lastName?: SortOrder
     mobile?: SortOrder
-    location?: SortOrderInput | SortOrder
-    city?: SortOrderInput | SortOrder
-    state?: SortOrderInput | SortOrder
-    postalCode?: SortOrderInput | SortOrder
     age?: SortOrderInput | SortOrder
     dateOfBirth?: SortOrderInput | SortOrder
     gender?: SortOrderInput | SortOrder
@@ -44703,8 +44589,6 @@ export namespace Prisma {
     uniqueService?: SortOrderInput | SortOrder
     photos?: SortOrderInput | SortOrder
     additionalPhotos?: SortOrderInput | SortOrder
-    latitude?: SortOrderInput | SortOrder
-    longitude?: SortOrderInput | SortOrder
     abn?: SortOrderInput | SortOrder
     setupProgress?: SortOrderInput | SortOrder
     profileCompleted?: SortOrder
@@ -44736,10 +44620,6 @@ export namespace Prisma {
     middleName?: StringNullableWithAggregatesFilter<"WorkerProfile"> | string | null
     lastName?: StringWithAggregatesFilter<"WorkerProfile"> | string
     mobile?: StringWithAggregatesFilter<"WorkerProfile"> | string
-    location?: StringNullableWithAggregatesFilter<"WorkerProfile"> | string | null
-    city?: StringNullableWithAggregatesFilter<"WorkerProfile"> | string | null
-    state?: StringNullableWithAggregatesFilter<"WorkerProfile"> | string | null
-    postalCode?: StringNullableWithAggregatesFilter<"WorkerProfile"> | string | null
     age?: IntNullableWithAggregatesFilter<"WorkerProfile"> | number | null
     dateOfBirth?: StringNullableWithAggregatesFilter<"WorkerProfile"> | string | null
     gender?: StringNullableWithAggregatesFilter<"WorkerProfile"> | string | null
@@ -44753,8 +44633,6 @@ export namespace Prisma {
     uniqueService?: StringNullableWithAggregatesFilter<"WorkerProfile"> | string | null
     photos?: StringNullableWithAggregatesFilter<"WorkerProfile"> | string | null
     additionalPhotos?: StringNullableWithAggregatesFilter<"WorkerProfile"> | string | null
-    latitude?: FloatNullableWithAggregatesFilter<"WorkerProfile"> | number | null
-    longitude?: FloatNullableWithAggregatesFilter<"WorkerProfile"> | number | null
     abn?: JsonNullableWithAggregatesFilter<"WorkerProfile">
     setupProgress?: JsonNullableWithAggregatesFilter<"WorkerProfile">
     profileCompleted?: BoolWithAggregatesFilter<"WorkerProfile"> | boolean
@@ -47482,10 +47360,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -47499,8 +47373,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -47536,10 +47408,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -47553,8 +47421,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -47588,10 +47454,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -47605,8 +47467,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -47642,10 +47502,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -47659,8 +47515,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -47695,10 +47549,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -47712,8 +47562,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -47736,10 +47584,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -47753,8 +47597,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -47777,10 +47619,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -47794,8 +47632,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -50656,17 +50492,6 @@ export namespace Prisma {
     expires?: SortOrder
   }
 
-  export type FloatNullableFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
-  }
-
   export type VerificationRequirementListRelationFilter = {
     every?: VerificationRequirementWhereInput
     some?: VerificationRequirementWhereInput
@@ -50779,10 +50604,6 @@ export namespace Prisma {
     middleName?: SortOrder
     lastName?: SortOrder
     mobile?: SortOrder
-    location?: SortOrder
-    city?: SortOrder
-    state?: SortOrder
-    postalCode?: SortOrder
     age?: SortOrder
     dateOfBirth?: SortOrder
     gender?: SortOrder
@@ -50796,8 +50617,6 @@ export namespace Prisma {
     uniqueService?: SortOrder
     photos?: SortOrder
     additionalPhotos?: SortOrder
-    latitude?: SortOrder
-    longitude?: SortOrder
     abn?: SortOrder
     setupProgress?: SortOrder
     profileCompleted?: SortOrder
@@ -50816,8 +50635,6 @@ export namespace Prisma {
 
   export type WorkerProfileAvgOrderByAggregateInput = {
     age?: SortOrder
-    latitude?: SortOrder
-    longitude?: SortOrder
     homeLocalityId?: SortOrder
   }
 
@@ -50828,10 +50645,6 @@ export namespace Prisma {
     middleName?: SortOrder
     lastName?: SortOrder
     mobile?: SortOrder
-    location?: SortOrder
-    city?: SortOrder
-    state?: SortOrder
-    postalCode?: SortOrder
     age?: SortOrder
     dateOfBirth?: SortOrder
     gender?: SortOrder
@@ -50844,8 +50657,6 @@ export namespace Prisma {
     uniqueService?: SortOrder
     photos?: SortOrder
     additionalPhotos?: SortOrder
-    latitude?: SortOrder
-    longitude?: SortOrder
     profileCompleted?: SortOrder
     isPublished?: SortOrder
     verificationStatus?: SortOrder
@@ -50867,10 +50678,6 @@ export namespace Prisma {
     middleName?: SortOrder
     lastName?: SortOrder
     mobile?: SortOrder
-    location?: SortOrder
-    city?: SortOrder
-    state?: SortOrder
-    postalCode?: SortOrder
     age?: SortOrder
     dateOfBirth?: SortOrder
     gender?: SortOrder
@@ -50883,8 +50690,6 @@ export namespace Prisma {
     uniqueService?: SortOrder
     photos?: SortOrder
     additionalPhotos?: SortOrder
-    latitude?: SortOrder
-    longitude?: SortOrder
     profileCompleted?: SortOrder
     isPublished?: SortOrder
     verificationStatus?: SortOrder
@@ -50901,25 +50706,7 @@ export namespace Prisma {
 
   export type WorkerProfileSumOrderByAggregateInput = {
     age?: SortOrder
-    latitude?: SortOrder
-    longitude?: SortOrder
     homeLocalityId?: SortOrder
-  }
-
-  export type FloatNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedFloatNullableFilter<$PrismaModel>
-    _sum?: NestedFloatNullableFilter<$PrismaModel>
-    _min?: NestedFloatNullableFilter<$PrismaModel>
-    _max?: NestedFloatNullableFilter<$PrismaModel>
   }
 
   export type CategoryDocumentListRelationFilter = {
@@ -53001,14 +52788,6 @@ export namespace Prisma {
     push?: string | string[]
   }
 
-  export type NullableFloatFieldUpdateOperationsInput = {
-    set?: number | null
-    increment?: number
-    decrement?: number
-    multiply?: number
-    divide?: number
-  }
-
   export type VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput = {
     create?: XOR<VerificationRequirementCreateWithoutWorkerProfileInput, VerificationRequirementUncheckedCreateWithoutWorkerProfileInput> | VerificationRequirementCreateWithoutWorkerProfileInput[] | VerificationRequirementUncheckedCreateWithoutWorkerProfileInput[]
     connectOrCreate?: VerificationRequirementCreateOrConnectWithoutWorkerProfileInput | VerificationRequirementCreateOrConnectWithoutWorkerProfileInput[]
@@ -54474,22 +54253,6 @@ export namespace Prisma {
     _max?: NestedEnumDocumentCategoryNullableFilter<$PrismaModel>
   }
 
-  export type NestedFloatNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedFloatNullableFilter<$PrismaModel>
-    _sum?: NestedFloatNullableFilter<$PrismaModel>
-    _min?: NestedFloatNullableFilter<$PrismaModel>
-    _max?: NestedFloatNullableFilter<$PrismaModel>
-  }
-
   export type NestedBoolNullableFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
     not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
@@ -55597,10 +55360,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -55614,8 +55373,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -55649,10 +55406,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -55666,8 +55419,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -55905,10 +55656,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -55922,8 +55669,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -55957,10 +55702,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -55974,8 +55715,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -56110,10 +55849,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -56127,8 +55862,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -56163,10 +55896,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -56180,8 +55909,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -56230,10 +55957,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -56247,8 +55970,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -56283,10 +56004,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -56300,8 +56017,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -57854,10 +57569,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -57871,8 +57582,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -57907,10 +57616,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -57924,8 +57629,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -57974,10 +57677,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -57991,8 +57690,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -58027,10 +57724,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -58044,8 +57737,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -58224,10 +57915,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -58241,8 +57928,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -58277,10 +57962,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -58294,8 +57975,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -58344,10 +58023,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -58361,8 +58036,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -58397,10 +58070,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -58414,8 +58083,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -58536,10 +58203,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -58553,8 +58216,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -58589,10 +58250,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -58606,8 +58263,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -58656,10 +58311,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -58673,8 +58324,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -58709,10 +58358,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -58726,8 +58371,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -58760,10 +58403,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -58777,8 +58416,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -58813,10 +58450,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -58830,8 +58463,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -58880,10 +58511,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -58897,8 +58524,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -58933,10 +58558,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -58950,8 +58571,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -58984,10 +58603,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -59001,8 +58616,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -59037,10 +58650,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -59054,8 +58663,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -59104,10 +58711,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -59121,8 +58724,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -59157,10 +58758,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -59174,8 +58771,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -59208,10 +58803,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -59225,8 +58816,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -59261,10 +58850,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -59278,8 +58863,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -59328,10 +58911,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -59345,8 +58924,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -59381,10 +58958,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -59398,8 +58971,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -59553,10 +59124,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -59570,8 +59137,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -59606,10 +59171,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -59623,8 +59184,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -59784,10 +59343,6 @@ export namespace Prisma {
     middleName?: StringNullableFilter<"WorkerProfile"> | string | null
     lastName?: StringFilter<"WorkerProfile"> | string
     mobile?: StringFilter<"WorkerProfile"> | string
-    location?: StringNullableFilter<"WorkerProfile"> | string | null
-    city?: StringNullableFilter<"WorkerProfile"> | string | null
-    state?: StringNullableFilter<"WorkerProfile"> | string | null
-    postalCode?: StringNullableFilter<"WorkerProfile"> | string | null
     age?: IntNullableFilter<"WorkerProfile"> | number | null
     dateOfBirth?: StringNullableFilter<"WorkerProfile"> | string | null
     gender?: StringNullableFilter<"WorkerProfile"> | string | null
@@ -59801,8 +59356,6 @@ export namespace Prisma {
     uniqueService?: StringNullableFilter<"WorkerProfile"> | string | null
     photos?: StringNullableFilter<"WorkerProfile"> | string | null
     additionalPhotos?: StringNullableFilter<"WorkerProfile"> | string | null
-    latitude?: FloatNullableFilter<"WorkerProfile"> | number | null
-    longitude?: FloatNullableFilter<"WorkerProfile"> | number | null
     abn?: JsonNullableFilter<"WorkerProfile">
     setupProgress?: JsonNullableFilter<"WorkerProfile">
     profileCompleted?: BoolFilter<"WorkerProfile"> | boolean
@@ -59825,10 +59378,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -59842,8 +59391,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -59878,10 +59425,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -59895,8 +59438,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -59985,10 +59526,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -60002,8 +59539,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -60038,10 +59573,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -60055,8 +59586,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -60135,10 +59664,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -60152,8 +59677,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -60188,10 +59711,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -60205,8 +59724,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -60255,10 +59772,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -60272,8 +59785,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -60308,10 +59819,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -60325,8 +59832,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -60359,10 +59864,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -60376,8 +59877,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -60412,10 +59911,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -60429,8 +59924,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -60479,10 +59972,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -60496,8 +59985,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -60532,10 +60019,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -60549,8 +60032,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -60583,10 +60064,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -60600,8 +60077,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -60636,10 +60111,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -60653,8 +60124,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -60703,10 +60172,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -60720,8 +60185,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -60756,10 +60219,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -60773,8 +60232,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -61744,10 +61201,6 @@ export namespace Prisma {
     middleName?: string | null
     lastName: string
     mobile: string
-    location?: string | null
-    city?: string | null
-    state?: string | null
-    postalCode?: string | null
     age?: number | null
     dateOfBirth?: string | null
     gender?: string | null
@@ -61761,8 +61214,6 @@ export namespace Prisma {
     uniqueService?: string | null
     photos?: string | null
     additionalPhotos?: string | null
-    latitude?: number | null
-    longitude?: number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: boolean
@@ -61873,10 +61324,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -61890,8 +61337,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -61926,10 +61371,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -61943,8 +61384,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean
@@ -61978,10 +61417,6 @@ export namespace Prisma {
     middleName?: NullableStringFieldUpdateOperationsInput | string | null
     lastName?: StringFieldUpdateOperationsInput | string
     mobile?: StringFieldUpdateOperationsInput | string
-    location?: NullableStringFieldUpdateOperationsInput | string | null
-    city?: NullableStringFieldUpdateOperationsInput | string | null
-    state?: NullableStringFieldUpdateOperationsInput | string | null
-    postalCode?: NullableStringFieldUpdateOperationsInput | string | null
     age?: NullableIntFieldUpdateOperationsInput | number | null
     dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
     gender?: NullableStringFieldUpdateOperationsInput | string | null
@@ -61995,8 +61430,6 @@ export namespace Prisma {
     uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
     photos?: NullableStringFieldUpdateOperationsInput | string | null
     additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
-    latitude?: NullableFloatFieldUpdateOperationsInput | number | null
-    longitude?: NullableFloatFieldUpdateOperationsInput | number | null
     abn?: NullableJsonNullValueInput | InputJsonValue
     setupProgress?: NullableJsonNullValueInput | InputJsonValue
     profileCompleted?: BoolFieldUpdateOperationsInput | boolean

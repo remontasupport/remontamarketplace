@@ -74,8 +74,8 @@ Email look-ups use the index `users_lower_email_idx` on `lower(email)`.
 | everything else (`middleName`, `dateOfBirth`, `gender`, `abn`, `setupProgress`, …) | | NULL / default — onboarding fills them |
 
 The legacy location columns (`location`, `city`, `state`, `postalCode`, `latitude`, `longitude`) are not
-written (search-locations, 2026-10-29): where the worker is lives in `worker_locations` (§2.4) only, and no
-reader uses the columns. They are dropped in a later release.
+written or read (search-locations, 2026-10-29): where the worker is lives in `worker_locations` (§2.4) only.
+They left the Prisma schema in U6; the database still holds them until the U7 migration drops them.
 
 ### 2.3 `worker_services` — one row per chosen service
 

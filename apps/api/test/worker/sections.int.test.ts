@@ -15,7 +15,6 @@ import { workerHarness, type WorkerHarness } from './harness'
 const url = process.env.TEST_DATABASE_URL
 const local = !!url && /@(localhost|127\.0\.0\.1)[:/]/.test(url)
 
-const LEGACY = { location: true, city: true, state: true, postalCode: true, latitude: true, longitude: true } as const
 
 describe.skipIf(!local)('the section writes on PostGIS', () => {
   let h: WorkerHarness
@@ -206,14 +205,12 @@ describe.skipIf(!local)('the section writes on PostGIS', () => {
     expect(JSON.stringify(audit?.metadata)).not.toContain('87654321')
   })
 
-  it('P5: the home address writes its two columns only; the legacy columns and the HOME row are untouched', async () => {
-    const before = await h.db.workerProfile.findUniqueOrThrow({ where: { id: h.a.profileId }, select: LEGACY })
+  it('P5: the home address writes its two columns only; the HOME row is untouched', async () => {
     const homeBefore = await h.db.workerLocation.findFirst({ where: { workerProfileId: h.a.profileId, kind: 'HOME' } })
     const locality = await h.db.auLocality.findFirstOrThrow({ where: { searchName: 'north sydney', retiredAt: null }, select: { id: true, suburb: true, state: true, postcode: true } })
     const res = await put('/v1/worker/profile/home-address', { streetLine: '12 Example St', localityId: locality.id })
     expect(res.json()).toEqual({ streetLine: '12 Example St', localityId: locality.id, suburb: locality.suburb, state: locality.state, postcode: locality.postcode })
     expect((await profile()).homeAddress).toEqual(res.json()) // the read returns it to its owner
-    expect(await h.db.workerProfile.findUniqueOrThrow({ where: { id: h.a.profileId }, select: LEGACY })).toEqual(before)
     expect(await h.db.workerLocation.findFirst({ where: { workerProfileId: h.a.profileId, kind: 'HOME' } })).toEqual(homeBefore)
     expect((await put('/v1/worker/profile/home-address', { streetLine: '1 A St', localityId: 999_999_999 })).json().error.fields).toHaveProperty('localityId')
     // The street line is optional (2026-10-16): a suburb alone is saved and read back with no street.
@@ -224,14 +221,12 @@ describe.skipIf(!local)('the section writes on PostGIS', () => {
     expect((await h.db.workerProfile.findUniqueOrThrow({ where: { id: h.a.profileId }, select: { homeStreetLine: true } })).homeStreetLine).toBeNull()
   })
 
-  it('P6: the service area places the worker (an unplaced one too), leaves the legacy columns as they were (FR-10), and the reconciler keeps it', async () => {
+  it('P6: the service area places the worker (an unplaced one too), and the reconciler keeps it', async () => {
     const north = await h.db.auLocality.findFirstOrThrow({ where: { searchName: 'north sydney', retiredAt: null }, select: { id: true } })
-    const before = await h.db.workerProfile.findUniqueOrThrow({ where: { id: h.b.profileId }, select: LEGACY })
     const res = await put('/v1/worker/profile/service-area', { localityId: north.id, travelRadiusKm: 25 }, () => h.b.userId)
     expect(res.json()).toMatchObject({ localityId: north.id, travelRadiusKm: 25, precision: 'LOCALITY' })
     const home = await h.db.workerLocation.findFirstOrThrow({ where: { workerProfileId: h.b.profileId, kind: 'HOME' } })
     expect(home).toMatchObject({ localityId: north.id, source: 'ONBOARDING', travelRadiusKm: 25 })
-    expect(await h.db.workerProfile.findUniqueOrThrow({ where: { id: h.b.profileId }, select: LEGACY })).toEqual(before)
     await h.db.workerProfile.update({ where: { id: h.b.profileId }, data: { updatedAt: new Date() } }) // the reconciler's watermark sees it
     await onboardingReconcilerJob(h.db, pino({ level: 'silent' }), { everyMs: 60_000 }).run({ watermark: new Date(Date.now() - 60_000), now: new Date(), signal: new AbortController().signal })
     expect(await h.db.workerLocation.findFirstOrThrow({ where: { workerProfileId: h.b.profileId, kind: 'HOME' } })).toMatchObject({ localityId: north.id, source: 'ONBOARDING' })
