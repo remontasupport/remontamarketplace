@@ -5872,3 +5872,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-10-29):** "I go with your recommendations, fix them"
 
 **AI action (2026-10-29):** decisions: groups A-C as suggested (Toowoomba West -> Newtown QLD 4350), D with the two corrections (Gosnell -> Gosnells WA 6110; Alton Downs QLD 4702), E (4 empty, 4 overseas) left unplaced: 62 placements. The decisions file (worker ids) stays in the session scratchpad, not in git. One-off script `apps/api/scripts/_place-unplaced.ts` (untracked; dry run by default; skips a worker placed since; refuses a locality whose label differs from the reviewed one; the backfills' production guard; one transaction; HOME rows `source = 'ADMIN'`, 50 km; legacy columns not written). Rehearsed on the DEV branch: dry run 62/0/0; apply 62 created, 8 left without a HOME row; re-run 0 to place, 62 skipped. Production guard refused without `--allow-production`. Production run handed to the user.
+
+**User input (2026-10-29):** ran the production dry run (`ep-delicate-recipe`): "plan: 62 to place, 0 skipped, 0 refused" (the same rows as the DEV rehearsal); then `--apply`: "applied: 62 HOME rows created; workers without a HOME row now: 8"
+
+**AI action (2026-10-29):** U3 `place-unplaced` done in production (62 HOME rows, `source = 'ADMIN'`, 50 km; undo = delete those rows). The 8 left (4 empty, 4 overseas) show "Not specified" once the readers are home-only. Next: U4 `legacy-readers-app` plan.
