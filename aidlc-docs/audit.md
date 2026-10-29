@@ -5888,3 +5888,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **AI action (2026-10-29):** by refs `main` = `a39c0b7` (#150, contains `dd25872`). Vercel production builds watched. U5 `legacy-readers-api` plan written (`construction/plans/legacy-readers-api-code-generation-plan.md`); awaiting approval.
 
 **AI action (2026-10-29):** production after #150: Vercel builds success (remonta-app, remontamarketplace); app `/login` 200, www `/` 200. The signed-in screen checks on production are the user's.
+
+**User input (2026-10-29):** "approved" (the U5 plan)
+
+**AI action (2026-10-29):** U5 built on `feat/legacy-readers-api`: api readers HOME-only (admin search row/sort/state filter, admin lists, search cards), completion's location = HOME, the reconciler's home step and the S1 location backfill removed, sign-up and the service-area save stop writing the six columns, guard test, DB tests and docs updated. Gates green locally (DB tests are CI's). Pushed; PR to be opened by the user. Order: merge -> staging -> preview checklist -> promotion.
