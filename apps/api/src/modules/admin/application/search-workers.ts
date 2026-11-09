@@ -5,6 +5,7 @@ import { localityLabel } from '@remonta/schemas/data/locality'
 import type { Clock } from '../../../platform/clock'
 import { ApiError } from '../../../platform/errors'
 import type { Db } from '../../../platform/persistence/db'
+import { parseStoredFlags } from '../../worker/domain/persist-completion'
 import { paginationOf } from '../domain/pagination'
 import { appliedFiltersOf, normaliseQuery, type LocalityRef, type SearchQuery } from '../domain/search-query'
 import { runSearch, type RawWorkerRow, type SearchResult } from '../persistence/worker-search-sql'
@@ -29,7 +30,7 @@ export async function searchWorkers(deps: SearchDeps, raw: WorkerSearchQueryPars
   }
 
   const { rows, total, unplacedCount } = await (deps.run ?? runSearch)(deps.db, q, locality?.id)
-  const data = rows.map((r) => shapeRow(r, now, locality !== undefined, q.withActivation))
+  const data = rows.map((r) => shapeRow(r, now, locality !== undefined, { activation: q.withActivation, completion: q.withCompletion }))
   return {
     data,
     pagination: paginationOf(total, q.page, q.pageSize),
@@ -38,8 +39,11 @@ export async function searchWorkers(deps: SearchDeps, raw: WorkerSearchQueryPars
   }
 }
 
-/** R6: today's row plus the distance and the home suburb; nothing else leaves (G10). `activated` only on request (BR-6). */
-export function shapeRow(raw: RawWorkerRow, now: Date, withDistance: boolean, withActivation = false): WorkerRow {
+/**
+ * R6: today's row plus the distance and the home suburb; nothing else leaves (G10). `activated` (BR-6) and `completion`
+ * (admin-completion-filters FR-3) only on request.
+ */
+export function shapeRow(raw: RawWorkerRow, now: Date, withDistance: boolean, ask: { activation?: boolean; completion?: boolean } = {}): WorkerRow {
   const computedAge = raw.dateOfBirth ? calculateAge(raw.dateOfBirth, now) : null
   const languages = raw.infoLanguages && raw.infoLanguages.length > 0 ? raw.infoLanguages : (raw.languages ?? [])
   const row: WorkerRow = {
@@ -65,7 +69,8 @@ export function shapeRow(raw: RawWorkerRow, now: Date, withDistance: boolean, wi
     updatedAt: raw.updatedAt.toISOString(),
     isActive: raw.userStatus === 'ACTIVE',
   }
-  if (withActivation) row.activated = raw.activated === true
+  if (ask.activation) row.activated = raw.activated === true
+  if (ask.completion) row.completion = parseStoredFlags(raw.setupProgress)
   if (withDistance && raw.distance_m !== null && raw.distance_m !== undefined) row.distanceKm = Math.round(raw.distance_m / 100) / 10
   if (raw.homeSuburb && raw.homeState && raw.homePostcode && raw.precision && raw.travelRadiusKm !== null) {
     row.location = { localityLabel: localityLabel({ suburb: raw.homeSuburb, state: raw.homeState, postcode: raw.homePostcode }), precision: raw.precision, travelRadiusKm: raw.travelRadiusKm }

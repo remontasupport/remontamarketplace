@@ -54,7 +54,7 @@ describe('the row (BR-6, N1)', () => {
   it('P2 (unit): `activated` iff asked, equal to the column; without it the row is the one parsed today', () => {
     fc.assert(
       fc.property(fc.boolean(), fc.option(fc.boolean(), { nil: undefined }), fc.constantFrom('ACTIVE', 'SUSPENDED'), (ask, activated, userStatus) => {
-        const row = shapeRow(raw({ activated, userStatus }), NOW, false, ask)
+        const row = shapeRow(raw({ activated, userStatus }), NOW, false, { activation: ask })
         expect(workerRowSchema.safeParse(row).success).toBe(true)
         if (ask) expect(row.activated).toBe(activated === true)
         else {

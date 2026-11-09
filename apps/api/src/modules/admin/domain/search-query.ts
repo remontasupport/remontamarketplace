@@ -2,7 +2,7 @@
 // the contract's parsed query normalised into what the filters and the statement
 // read. Pure; the invariants that the contract cannot express are checked here and
 // answer 400 with the field named.
-import type { AppliedFilters, AuState, WorkerSearchQueryParsed } from '@remonta/api-contract'
+import { COMPLETION_FLAGS, type AppliedFilters, type AuState, type CompletionFilter, type CompletionFlag, type WorkerSearchQueryParsed } from '@remonta/api-contract'
 import { splitExperienceAreaPair } from '@remonta/schemas/data/experienceAreas'
 import { isToolService, toolSearchOf, toolServiceOf, type ToolSearch, type ToolService } from '@remonta/schemas/data/serviceTools'
 import { ApiError } from '../../../platform/errors'
@@ -60,6 +60,10 @@ export interface SearchQuery {
   withActivation: boolean
   /** The nursing answer on the worker's nursing-services row (2026-10-23); only with that type of support. */
   nursingType?: 'registered' | 'enrolled'
+  /** admin-completion-filters U1 (FR-1): the stored flags asked for; an absent key = both. */
+  completion: Partial<Record<CompletionFlag, CompletionFilter>>
+  /** FR-3: the rows carry `completion` (opt-in, as withActivation). */
+  withCompletion: boolean
 }
 
 export interface LocalityRef {
@@ -109,6 +113,9 @@ export function normaliseQuery(raw: WorkerSearchQueryParsed, now: Date): SearchQ
   // The nurse type narrows Nursing Services; without it the meaning would be unclear, so one meaning has one URL.
   if (raw.nursingType !== undefined && raw.typeOfSupport !== NURSING_SERVICE) throw new ApiError(400, 'nursingType without typeOfSupport=nursing-services', { nursingType: ['Choose Nursing Services first'] })
 
+  const completion: Partial<Record<CompletionFlag, CompletionFilter>> = {}
+  for (const flag of COMPLETION_FLAGS) if (raw[flag] !== undefined) completion[flag] = raw[flag]
+
   return {
     page: raw.page,
     pageSize: raw.pageSize,
@@ -136,6 +143,8 @@ export function normaliseQuery(raw: WorkerSearchQueryParsed, now: Date): SearchQ
     ...(raw.activation !== undefined ? { activation: raw.activation } : {}),
     withActivation: raw.withActivation === true,
     ...(raw.nursingType !== undefined ? { nursingType: raw.nursingType } : {}),
+    completion,
+    withCompletion: raw.withCompletion === true,
   }
 }
 
@@ -192,5 +201,6 @@ export function appliedFiltersOf(q: SearchQuery, locality?: LocalityRef): Applie
     ...(q.toolSearch ? { toolSearch: q.toolSearch.text } : {}),
     ...(q.activation !== undefined ? { activation: q.activation } : {}),
     ...(q.nursingType !== undefined ? { nursingType: q.nursingType } : {}),
+    ...q.completion,
   }
 }
