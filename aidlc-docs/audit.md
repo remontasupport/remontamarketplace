@@ -6014,3 +6014,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-09):** "Done merging"
 
 **AI action (2026-11-09):** by refs `main` = `fc194e8` (#154, contains U1 `5cd7018`); the PR head's checks all green incl. API Quality (Node 20/22, the PostGIS tests: the new completion-filters.int.test ran there). deploy-api 42543748113 (staging) watched. U2 `completion-filters-app` built on `feat/completion-filters-app` (`main` `fc194e8` + 1 commit, 7 files, +138/-14): `COMPLETION_OPTIONS` (checklist labels/order), `AdminFilters.completion`, toQuery/filtersFromURL, `searchRequestOf` adds `withCompletion: true`, `unfinishedOf`; four selects after Worker Type (Any / Complete / Incomplete, applied with Apply Filters, in the URL); card badges (amber "<item> ✗", or green "Profile complete"); the Contractors CSV's four extra columns through `useContactsExport`'s new `extraColumns` (`contactsCsv(rows, extra)`); docs/admin/README.md. Gates: app baselines OK (54 / 273), 744 tests (+4); build OK; regenerated Prisma clients discarded. Pushed; not to merge before U1's promotion.
+
+**User input (2026-11-09):** ran `gcloud auth login` (support account).
+
+**AI action (2026-11-09):** staging `remonta-api-staging-00076-zrm` 100 % = image `fc194e8...` (U1); health 200; no ERROR entries since 01:13Z. Production unchanged: `remonta-api-00028-bcq` = `6551489...`. Next: the U2 preview check on staging, then the U1 promotion (`fc194e8f353176e2cefe64de67b5f7d3ada41f4e`), then the U2 merge.
