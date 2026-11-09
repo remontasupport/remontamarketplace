@@ -6044,3 +6044,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **AI action (2026-11-09):** production api logs: no `/v1/admin/workers` request since 01:34Z (no admin failure so far); watching for the new revision.
 
 **AI action (2026-11-09):** deploy-api dispatch 42547053046 (01:43:21Z) success. Production `remonta-api-00029-xw2` 100 % = image `fc194e8...` (U1); health 200; no ERROR entries since 01:30Z; no 400 on `/v1/admin/workers` at any time (no admin search reached the old revision between the U2 merge and the promotion). From 01:45:09Z production admin searches carry `withCompletion=true` (the U2 app live) and answer 200 on `00029-xw2`. Rollback: api `6551489240b6607d157a5eeec44345ee0ce46e67` (`00028-bcq`) only together with a Vercel promote of the `2f8dcf1` app build (U2's app needs U1).
+
+**User input (2026-11-09):** "all works! before closing, what table did the profile status stored?"
+
+**AI action (2026-11-09):** user confirmed the production check. Answered: `worker_profiles."setupProgress"` (JSON, the four flags) and `"profileCompleted"` (boolean), written by `persistCompletion` and the `completion-sync` job from the worker's rows in `verification_requirements`, `worker_services`, `worker_locations` and the profile sections.
