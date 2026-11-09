@@ -3,8 +3,8 @@
 ## Project Information
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
-- **Current Cycle**: none (search-locations closed 2026-10-29; archive `aidlc-docs/archive/search-locations/`). The next cycle branches from `aidlc/search-locations` as `aidlc/<name>`.
-- **Current Stage**: between cycles. **At the start of the next AI-DLC, recommend U7 first** (the pending task below, user 2026-10-29).
+- **Current Cycle**: admin-completion-filters (started 2026-11-09, branch `aidlc/admin-completion-filters`): admin search filters and card badges for the four stored completion flags.
+- **Current Stage**: INCEPTION -- requirements and execution plan written, awaiting approval. U7 still pending (recommend at every start).
 
 ## Previous cycles (archived, read-only)
 
