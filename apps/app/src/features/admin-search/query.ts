@@ -64,7 +64,7 @@ export interface AdminFilters {
 
 /** FR-4: the four dropdowns, named and ordered as the worker's own dashboard checklist (ProfileCompletionReminder). */
 export const COMPLETION_OPTIONS: ReadonlyArray<{ flag: CompletionFlag; label: string }> = [
-  { flag: 'accountDetails', label: 'Account Details' },
+  { flag: 'accountDetails', label: 'Profile Creation' }, // the worker's checklist calls it Account Details (user 2026-11-09: renamed for admins)
   { flag: 'compliance', label: 'Compliance' },
   { flag: 'trainings', label: 'Trainings' },
   { flag: 'services', label: 'My Services' },

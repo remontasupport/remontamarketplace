@@ -239,7 +239,7 @@ describe('the completion dropdowns and badges (admin-completion-filters FR-4, FR
         expect(toggleCompletion(next, flag, value)[flag]).toBe(start[flag] === value ? value : undefined)
       }),
     )
-    expect(completionChips({ trainings: 'incomplete', accountDetails: 'complete' }).map((c) => c.text)).toEqual(['Account Details: Complete', 'Trainings: Incomplete'])
+    expect(completionChips({ trainings: 'incomplete', accountDetails: 'complete' }).map((c) => c.text)).toEqual(['Profile Creation: Complete', 'Trainings: Incomplete'])
     expect(completionChips({})).toEqual([])
   })
 
@@ -247,7 +247,7 @@ describe('the completion dropdowns and badges (admin-completion-filters FR-4, FR
     expect(COMPLETION_OPTIONS.map((o) => o.flag)).toEqual([...COMPLETION_FLAGS])
     expect(unfinishedOf({ completion: { accountDetails: true, compliance: false, trainings: false, services: true } })).toEqual(['Compliance', 'Trainings'])
     expect(unfinishedOf({ completion: { accountDetails: true, compliance: true, trainings: true, services: true } })).toEqual([])
-    expect(unfinishedOf({ completion: { accountDetails: false, compliance: false, trainings: false, services: false } })).toEqual(['Account Details', 'Compliance', 'Trainings', 'My Services'])
+    expect(unfinishedOf({ completion: { accountDetails: false, compliance: false, trainings: false, services: false } })).toEqual(['Profile Creation', 'Compliance', 'Trainings', 'My Services'])
     expect(unfinishedOf({})).toBeNull()
   })
 })
