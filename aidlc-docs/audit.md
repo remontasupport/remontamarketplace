@@ -6018,3 +6018,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-09):** ran `gcloud auth login` (support account).
 
 **AI action (2026-11-09):** staging `remonta-api-staging-00076-zrm` 100 % = image `fc194e8...` (U1); health 200; no ERROR entries since 01:13Z. Production unchanged: `remonta-api-00028-bcq` = `6551489...`. Next: the U2 preview check on staging, then the U1 promotion (`fc194e8f353176e2cefe64de67b5f7d3ada41f4e`), then the U2 merge.
+
+**User input (2026-11-09):** "for the dropdowns, Do not seperate them, may be a one dropdown but can choose multiple items"
+
+**AI action (2026-11-09):** U2 changed on `feat/completion-filters-app` (second commit): the four selects replaced by one "Profile completion" dropdown in the Languages dropdown's style -- each checklist item with Complete / Incomplete buttons, several items at once, the same choice again clears it (`toggleCompletion`), the choices as removable chips (`completionChips`); query, URL and api parameters unchanged. Tests +1 (PBT of the toggle; chips). App gate: baselines OK, 745 tests. docs/admin/README.md updated. Pushed.
