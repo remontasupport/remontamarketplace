@@ -3,7 +3,7 @@
 // <-> the state (`urlFromFilters`, `filtersFromURL`) through the contract's own
 // canonical serialisation, so the URL, the browser's cache key and the api's memo
 // key are the same string for the same filters. No React here; tested in node.
-import { AGE_RANGES, AU_STATES, AU_STATE_NAMES, CARE_DOMAINS, SORT_FIELDS, adminContract, canonicalQueryOf, workerSearchQuerySchema, type WorkerSearchQuery } from '@remonta/api-contract'
+import { AGE_RANGES, AU_STATES, AU_STATE_NAMES, CARE_DOMAINS, COMPLETION_FLAGS, SORT_FIELDS, adminContract, canonicalQueryOf, workerSearchQuerySchema, type CompletionFilter, type CompletionFlag, type WorkerRow, type WorkerSearchQuery } from '@remonta/api-contract'
 import { EXPERIENCE_AREA_SEPARATOR, experienceAreasOf, splitExperienceAreaPair } from '@remonta/schemas/data/experienceAreas'
 import { isToolService, SERVICE_TOOLS, TOOL_SEARCH_MAX_CHARS, TOOL_SERVICES, toolSearchOf, toolServiceOf, type ToolService } from '@remonta/schemas/data/serviceTools'
 
@@ -58,6 +58,22 @@ export interface AdminFilters {
   activation: 'all' | 'active' | 'inactive'
   /** The nurse type (2026-10-23): the worker's nursing answer; sent only with Nursing Services as the type of support. */
   nursingType: 'all' | 'registered' | 'enrolled'
+  /** admin-completion-filters (FR-4): the worker's checklist items asked for; an absent key is "Any". */
+  completion: Partial<Record<CompletionFlag, CompletionFilter>>
+}
+
+/** FR-4: the four dropdowns, named and ordered as the worker's own dashboard checklist (ProfileCompletionReminder). */
+export const COMPLETION_OPTIONS: ReadonlyArray<{ flag: CompletionFlag; label: string }> = [
+  { flag: 'accountDetails', label: 'Account Details' },
+  { flag: 'compliance', label: 'Compliance' },
+  { flag: 'trainings', label: 'Trainings' },
+  { flag: 'services', label: 'My Services' },
+]
+
+/** FR-5: the checklist items a row's worker has not finished, in checklist order; null when the row carries no flags. */
+export function unfinishedOf(row: Pick<WorkerRow, 'completion'>): string[] | null {
+  if (!row.completion) return null
+  return COMPLETION_OPTIONS.filter((o) => !row.completion![o.flag]).map((o) => o.label)
 }
 
 export const PAGE_SIZE = 6
@@ -92,6 +108,7 @@ export const DEFAULT_FILTERS: AdminFilters = {
   toolSearch: '',
   activation: 'all',
   nursingType: 'all',
+  completion: {},
 }
 
 /** The category whose row carries the nursing answer; the nurse type shows only with it as the type of support. */
@@ -173,15 +190,16 @@ export function toQuery(f: AdminFilters): WorkerSearchQuery {
   if (f.activation !== 'all') q.activation = f.activation
   // The nurse type narrows Nursing Services only (the api refuses it otherwise).
   if (f.typeOfSupport === NURSING_SERVICE_ID && f.nursingType !== 'all') q.nursingType = f.nursingType
+  for (const flag of COMPLETION_FLAGS) if (f.completion[flag]) q[flag] = f.completion[flag]
   return q
 }
 
 /**
- * What the dashboard sends (A2): the filters plus `withActivation`, so every row carries the flag the card's switch
- * shows. Kept out of toQuery so the URL bar holds filters only.
+ * What the dashboard sends (A2): the filters plus `withActivation` and `withCompletion`, so every row carries the flag
+ * the card's switch shows and the checklist the badges show. Kept out of toQuery so the URL bar holds filters only.
  */
 export function searchRequestOf(f: AdminFilters): WorkerSearchQuery {
-  return { ...toQuery(f), withActivation: true }
+  return { ...toQuery(f), withActivation: true, withCompletion: true }
 }
 
 /** The canonical query string of the state (R11.2). */
@@ -242,5 +260,7 @@ export function filtersFromURL(params: URLSearchParams): AdminFilters {
   f.toolSearch = toolGroupFor(f.typeOfSupport) ? (q.toolSearch ?? '') : ''
   if (q.activation) f.activation = q.activation
   if (f.typeOfSupport === NURSING_SERVICE_ID && q.nursingType) f.nursingType = q.nursingType
+  f.completion = {}
+  for (const flag of COMPLETION_FLAGS) if (q[flag]) f.completion[flag] = q[flag]
   return f
 }

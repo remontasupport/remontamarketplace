@@ -23,6 +23,7 @@ import { allPages } from '@/lib/api/allPages'
 import CsvDownloadBar from '@/features/admin-export/CsvDownloadBar'
 import { useContactsExport } from '@/features/admin-export/useContactsExport'
 import {
+  COMPLETION_OPTIONS,
   DEFAULT_FILTERS,
   EXPERIENCE_OPTIONS,
   STATE_OPTIONS,
@@ -36,9 +37,11 @@ import {
   filtersFromURL,
   searchRequestOf,
   NURSING_SERVICE_ID,
+  unfinishedOf,
   urlFromFilters,
   type AdminFilters,
 } from '@/features/admin-search/query'
+import type { ExtraColumn } from '@/features/admin-export/contactsCsv'
 import { estimatedDriveMinutes, formatDrive } from '@/features/admin-search/travel'
 import { suburbSuggestions } from '@/lib/api/localities'
 
@@ -59,8 +62,14 @@ interface SuburbMatch {
 /** The panel's draft until "Apply Filters" (E7 pendingFilters). */
 type PendingFilters = Pick<
   AdminFilters,
-  'locality' | 'withinKm' | 'state' | 'typeOfSupport' | 'gender' | 'hasVehicle' | 'workerType' | 'languages' | 'age' | 'therapeuticSubcategories' | 'experienceWith' | 'experienceAreas' | 'tools' | 'toolSearch' | 'nursingType'
+  'locality' | 'withinKm' | 'state' | 'typeOfSupport' | 'gender' | 'hasVehicle' | 'workerType' | 'languages' | 'age' | 'therapeuticSubcategories' | 'experienceWith' | 'experienceAreas' | 'tools' | 'toolSearch' | 'nursingType' | 'completion'
 >
+
+/** admin-completion-filters (FR-6): the worker's checklist items in the Contractors CSV, after the four columns. */
+const COMPLETION_CSV_COLUMNS: ReadonlyArray<ExtraColumn<Contractor>> = COMPLETION_OPTIONS.map(({ flag, label }) => ({
+  header: label,
+  value: (w) => (w.completion ? (w.completion[flag] ? 'Complete' : 'Incomplete') : ''),
+}))
 
 const ACTIVATION_TABS: ReadonlyArray<{ value: AdminFilters['activation']; label: string }> = [
   { value: 'all', label: 'All' },
@@ -84,6 +93,7 @@ const pendingOf = (f: AdminFilters): PendingFilters => ({
   tools: f.tools,
   toolSearch: f.toolSearch,
   nursingType: f.nursingType,
+  completion: f.completion,
 })
 
 const suburbLabel = (s: SuburbMatch) => `${s.name} ${s.state.abbreviation} ${s.postcode}`
@@ -291,6 +301,7 @@ export default function AdminDashboard() {
     name: 'contractors',
     keyOf: (w) => w.id,
     fetchAll: () => allPages((page) => adminApi.searchWorkers({ ...searchRequestOf(filters), page, pageSize: PAGE_SIZE_MAX }, { cache: 'reload' })),
+    extraColumns: COMPLETION_CSV_COLUMNS,
   })
 
   const reload = useCallback(() => {
@@ -1011,6 +1022,33 @@ export default function AdminDashboard() {
               </select>
             </div>
 
+            {/* admin-completion-filters (FR-4): the worker's own checklist items, as stored; applied with the other filters */}
+            {COMPLETION_OPTIONS.map(({ flag, label }) => (
+              <div key={flag} className="mb-4">
+                <label htmlFor={`completion-${flag}`} className="text-sm font-medium text-gray-700 mb-1 block">
+                  {label}
+                </label>
+                <select
+                  id={`completion-${flag}`}
+                  value={pendingFilters.completion[flag] ?? 'any'}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    setPendingFilters(prev => {
+                      const completion = { ...prev.completion }
+                      if (value === 'complete' || value === 'incomplete') completion[flag] = value
+                      else delete completion[flag]
+                      return { ...prev, completion }
+                    })
+                  }}
+                  className="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+                >
+                  <option value="any">Any</option>
+                  <option value="complete">Complete</option>
+                  <option value="incomplete">Incomplete</option>
+                </select>
+              </div>
+            ))}
+
             {/* Suspended accounts (worker-activation A4: was "Show Inactive Workers") */}
             <div className="pt-4 border-t border-gray-200">
               <button
@@ -1230,6 +1268,25 @@ export default function AdminDashboard() {
                               {contractor.services.join(' / ')}
                             </p>
                           )}
+
+                          {/* admin-completion-filters (FR-5): the checklist items the worker has not finished */}
+                          {(() => {
+                            const unfinished = unfinishedOf(contractor)
+                            if (unfinished === null) return null
+                            return (
+                              <div className="flex flex-wrap gap-1.5 mb-2" data-testid="admin-completion-badges">
+                                {unfinished.length === 0 ? (
+                                  <span className="text-xs font-medium px-2 py-0.5 rounded-full border text-green-700 bg-green-50 border-green-200">Profile complete</span>
+                                ) : (
+                                  unfinished.map((label) => (
+                                    <span key={label} className="text-xs font-medium px-2 py-0.5 rounded-full border text-amber-800 bg-amber-50 border-amber-200" title={`${label} is not complete`}>
+                                      {label} ✗
+                                    </span>
+                                  ))
+                                )}
+                              </div>
+                            )
+                          })()}
 
                           {/* Details Row */}
                           <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600">

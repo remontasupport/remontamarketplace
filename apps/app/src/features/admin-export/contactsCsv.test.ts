@@ -10,6 +10,11 @@ describe('the admin contact list CSV', () => {
     )
   })
 
+  it("a tab's extra columns follow the four, in the order given", () => {
+    const extra = [{ header: 'Compliance', value: (r: { email: string | null }) => (r.email ? 'Complete' : 'Incomplete') }]
+    expect(contactsCsv([row('Ann', 'Lee', 'ann@x.au', '1'), row('Cy', 'Ng', null, '2')], extra)).toBe('First name,Last name,Email,Mobile,Compliance\r\nAnn,Lee,ann@x.au,1,Complete\r\nCy,Ng,,2,Incomplete\r\n')
+  })
+
   it('names the file after the tab and the day', () => {
     expect(datedCsvName('clients', new Date(2026, 9, 28))).toBe('clients-2026-10-28.csv')
     expect(datedCsvName('contractors', new Date(2026, 0, 5))).toBe('contractors-2026-01-05.csv')
