@@ -5992,3 +5992,5 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-09):** "start ai dlc"
 
 **AI action (2026-11-09):** by refs `main` = `2f8dcf1` (#153), unchanged since the search-locations close; the newest migration on `main` is `20261028120000_admin_clients_audit_actions`, so U7 (the drop) has not been done; `docs/rollback-rows-2026-10-29` is still unmerged. Recommended U7 first (the standing instruction of 2026-10-29) and asked the user to choose the cycle.
+
+**User input (2026-11-09):** "In the current schema of the workers dashboard. I want to have a filter in admin dashboard that says who has completed their profile, who has lacking documents in the compliance,who didnt completed their trainings documents, as well as the Services, is that possible?"
