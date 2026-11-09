@@ -1,6 +1,7 @@
 'use client'
 
-// The download toolbar above an admin list: the ticked count with Clear, "Download selected" and "Download all".
+// The download toolbar above an admin list: the ticked count with Clear, "Download selected" and "Download results"
+// (every row of the current search and filters, all pages; named so on 2026-11-09, was "Download all").
 // `pageRows`, for a list without a header checkbox (the contractor cards), adds "Select this page".
 import type { ContactsExport } from './useContactsExport'
 
@@ -32,10 +33,10 @@ export default function CsvDownloadBar<R>({ exp, total, pageRows }: { exp: Conta
         <button
           onClick={() => void exp.downloadAll()}
           disabled={exp.exporting || !total}
-          title="Everyone matching the current search and filters"
+          title="Every result of the current search and filters, all pages"
           className="rounded-md bg-indigo-600 px-3 py-1.5 font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {exp.exporting ? 'Preparing…' : `Download all${total !== undefined ? ` (${total})` : ''}`}
+          {exp.exporting ? 'Preparing…' : `Download results${total !== undefined ? ` (${total})` : ''}`}
         </button>
       </div>
       {exp.notice && <p className="mb-3 text-sm text-red-700">{exp.notice}</p>}

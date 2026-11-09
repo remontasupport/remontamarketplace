@@ -6,7 +6,7 @@
 // autocomplete), "Within" is a radius from its centre computed by PostGIS, every
 // other filter combines with it, and workers with no mapped suburb are counted
 // and listable. Repeats within a minute come from the browser's private cache and
-// the api's memo; the refresh button and every admin action reload past both.
+// the api's memo; every admin action reloads past both.
 // Rules: construction/admin-search/functional-design/business-rules.md R11.
 // The cards can be ticked and downloaded as CSV, or every worker matching the filters (features/admin-export).
 
@@ -283,7 +283,7 @@ export default function AdminDashboard() {
   // The search itself: one canonical key per set of filters; `reload` after a refresh or an admin action (R11.5, R11.7)
   const reloadRef = useRef(false)
   const canonical = canonicalOf(filters)
-  const { data: outcome, isLoading, isFetching, refetch, dataUpdatedAt } = useQuery<ApiOutcome<WorkerSearchResponse>>({
+  const { data: outcome, isLoading, isFetching, refetch } = useQuery<ApiOutcome<WorkerSearchResponse>>({
     queryKey: [QUERY_KEY, canonical],
     queryFn: async () => {
       const reload = reloadRef.current
@@ -296,13 +296,9 @@ export default function AdminDashboard() {
 
   // The last successful response stays on screen through any other outcome (R11.6)
   const [results, setResults] = useState<WorkerSearchResponse | null>(null)
-  const [fetchedAt, setFetchedAt] = useState<number | null>(null)
   useEffect(() => {
-    if (outcome?.kind === 'ok') {
-      setResults(outcome.body)
-      setFetchedAt(dataUpdatedAt)
-    }
-  }, [outcome, dataUpdatedAt])
+    if (outcome?.kind === 'ok') setResults(outcome.body)
+  }, [outcome])
 
   const exp = useContactsExport<Contractor>({
     name: 'contractors',
@@ -1188,7 +1184,7 @@ export default function AdminDashboard() {
                 <div className="h-1 bg-indigo-600 animate-pulse rounded mb-4"></div>
               )}
 
-              {/* Results Count, freshness, the unmapped line (R11.4, R11.5) */}
+              {/* Results Count and the unmapped line (R11.4; the freshness line and its Refresh went on 2026-11-09, user) */}
               <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
                 <p className="text-lg font-semibold text-gray-900">
                   {results.pagination.total} contractors found
@@ -1198,19 +1194,6 @@ export default function AdminDashboard() {
                     </span>
                   )}
                   {filters.unplaced && <span className="ml-2 text-sm font-normal text-gray-500">with no mapped suburb</span>}
-                </p>
-                <p className="text-xs text-gray-500">
-                  Results may be up to a minute old
-                  {fetchedAt ? ` · fetched ${new Date(fetchedAt).toLocaleTimeString()}` : ''}
-                  <button
-                    type="button"
-                    onClick={reload}
-                    disabled={isFetching}
-                    data-testid="admin-search-refresh-button"
-                    className="ml-2 font-medium text-indigo-600 hover:underline disabled:opacity-50"
-                  >
-                    Refresh
-                  </button>
                 </p>
               </div>
               {!filters.unplaced && results.unplacedCount > 0 && (
