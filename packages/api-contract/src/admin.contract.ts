@@ -37,6 +37,14 @@ export const AU_STATE_NAMES: Record<AuState, string> = {
 export const NURSING_TYPE_FILTERS = ['registered', 'enrolled'] as const
 /** worker-activation U1 (BR-5): the admin search's activation filter values. */
 export const ACTIVATION_FILTERS = ['active', 'inactive'] as const
+/**
+ * admin-completion-filters U1: the four stored completion flags (worker_profiles.setupProgress), the worker's own
+ * checklist in its order (Account Details, Compliance, Trainings, My Services), and the values each filter takes.
+ */
+export const COMPLETION_FLAGS = ['accountDetails', 'compliance', 'trainings', 'services'] as const
+export type CompletionFlag = (typeof COMPLETION_FLAGS)[number]
+export const COMPLETION_FILTERS = ['complete', 'incomplete'] as const
+export type CompletionFilter = (typeof COMPLETION_FILTERS)[number]
 export const WORKER_SEARCH_LIMITS = { user: 120, ip: 300 } as const
 /** An admin working down a page of cards switches many in a minute; suspension is rarer. */
 export const ACTIVATION_WRITE_LIMITS = { user: 120, ip: 300 } as const
@@ -64,6 +72,8 @@ const csv = <T extends z.ZodType<string>>(item: T, max = 20) =>
 const flag = z.preprocess((v) => (v === 'true' ? true : v === 'false' ? false : v), z.boolean())
 
 const positiveInt = z.coerce.number().int().min(1)
+/** admin-completion-filters U1 (FR-1): one stored flag complete or incomplete; absent = both. */
+const completionFilter = z.enum(COMPLETION_FILTERS).optional()
 
 export const workerSearchQuerySchema = z.strictObject({
   page: positiveInt.default(1),
@@ -113,6 +123,13 @@ export const workerSearchQuerySchema = z.strictObject({
    * nursing-services row. Only with typeOfSupport=nursing-services (the api answers 400 otherwise).
    */
   nursingType: z.enum(NURSING_TYPE_FILTERS).optional(),
+  /** admin-completion-filters U1 (FR-1, FR-2): the stored flags as the worker's checklist shows them; they AND. */
+  accountDetails: completionFilter,
+  compliance: completionFilter,
+  trainings: completionFilter,
+  services: completionFilter,
+  /** admin-completion-filters U1 (FR-3): each row carries `completion`; opt-in for the reason `withActivation` is. */
+  withCompletion: flag.optional(),
   /**
    * worker-activation U1 (BR-6): each row carries `activated`. Opt-in because the app on production parses rows
    * strictly and would refuse the new key; to become unconditional once no pre-activation build can be promoted.
@@ -149,6 +166,8 @@ export const workerRowSchema = z.strictObject({
   isActive: z.boolean(),
   /** worker-activation U1 (BR-6): the admin-set flag, present only when the query had `withActivation`. */
   activated: z.boolean().optional(),
+  /** admin-completion-filters U1 (FR-3): the four stored flags, present only when the query had `withCompletion`. */
+  completion: z.strictObject({ accountDetails: z.boolean(), compliance: z.boolean(), trainings: z.boolean(), services: z.boolean() }).optional(),
   /** Present when a suburb was given and the worker is placed; one decimal (R6.4). */
   distanceKm: z.number().optional(),
   /** Present when the worker has a HOME row (R6.5). */
@@ -197,6 +216,11 @@ export const appliedFiltersSchema = z.strictObject({
   activation: z.enum(ACTIVATION_FILTERS).optional(),
   /** Present only when the query had a nurse type (today's app never sends it). */
   nursingType: z.enum(NURSING_TYPE_FILTERS).optional(),
+  /** Present only when the query had that completion filter (today's app never sends one). */
+  accountDetails: z.enum(COMPLETION_FILTERS).optional(),
+  compliance: z.enum(COMPLETION_FILTERS).optional(),
+  trainings: z.enum(COMPLETION_FILTERS).optional(),
+  services: z.enum(COMPLETION_FILTERS).optional(),
 })
 export type AppliedFilters = z.output<typeof appliedFiltersSchema>
 

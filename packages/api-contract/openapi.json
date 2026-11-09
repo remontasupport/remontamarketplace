@@ -1573,6 +1573,62 @@
             }
           },
           {
+            "name": "accountDetails",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "complete",
+                "incomplete"
+              ]
+            }
+          },
+          {
+            "name": "compliance",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "complete",
+                "incomplete"
+              ]
+            }
+          },
+          {
+            "name": "trainings",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "complete",
+                "incomplete"
+              ]
+            }
+          },
+          {
+            "name": "services",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "complete",
+                "incomplete"
+              ]
+            }
+          },
+          {
+            "name": "withCompletion",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "withActivation",
             "in": "query",
             "required": false,
@@ -1702,6 +1758,30 @@
                           },
                           "activated": {
                             "type": "boolean"
+                          },
+                          "completion": {
+                            "type": "object",
+                            "properties": {
+                              "accountDetails": {
+                                "type": "boolean"
+                              },
+                              "compliance": {
+                                "type": "boolean"
+                              },
+                              "trainings": {
+                                "type": "boolean"
+                              },
+                              "services": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "accountDetails",
+                              "compliance",
+                              "trainings",
+                              "services"
+                            ],
+                            "additionalProperties": false
                           },
                           "distanceKm": {
                             "type": "number"
@@ -1912,6 +1992,34 @@
                           "enum": [
                             "registered",
                             "enrolled"
+                          ]
+                        },
+                        "accountDetails": {
+                          "type": "string",
+                          "enum": [
+                            "complete",
+                            "incomplete"
+                          ]
+                        },
+                        "compliance": {
+                          "type": "string",
+                          "enum": [
+                            "complete",
+                            "incomplete"
+                          ]
+                        },
+                        "trainings": {
+                          "type": "string",
+                          "enum": [
+                            "complete",
+                            "incomplete"
+                          ]
+                        },
+                        "services": {
+                          "type": "string",
+                          "enum": [
+                            "complete",
+                            "incomplete"
                           ]
                         }
                       },
@@ -2359,6 +2467,30 @@
                           },
                           "activated": {
                             "type": "boolean"
+                          },
+                          "completion": {
+                            "type": "object",
+                            "properties": {
+                              "accountDetails": {
+                                "type": "boolean"
+                              },
+                              "compliance": {
+                                "type": "boolean"
+                              },
+                              "trainings": {
+                                "type": "boolean"
+                              },
+                              "services": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "accountDetails",
+                              "compliance",
+                              "trainings",
+                              "services"
+                            ],
+                            "additionalProperties": false
                           },
                           "distanceKm": {
                             "type": "number"

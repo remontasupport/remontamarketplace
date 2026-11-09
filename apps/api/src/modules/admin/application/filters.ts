@@ -162,6 +162,21 @@ export const FILTERS: readonly FilterSpec[] = [
     applies: (q) => q.activation !== undefined,
     sql: (q) => Prisma.sql`p."isActivated" = ${q.activation === 'active'}`,
   },
+  {
+    // admin-completion-filters U1 (FR-1, FR-2): the stored flags, read as parseStoredFlags reads them -- complete is
+    // the JSON value true; anything else (false, no key, no setupProgress) is incomplete. The key is from a fixed list.
+    name: 'completion',
+    applies: (q) => Object.keys(q.completion).length > 0,
+    sql: (q) =>
+      Prisma.join(
+        Object.entries(q.completion).map(([flag, want]) =>
+          want === 'complete'
+            ? Prisma.sql`p."setupProgress" -> ${flag}::text = 'true'::jsonb`
+            : Prisma.sql`p."setupProgress" -> ${flag}::text IS DISTINCT FROM 'true'::jsonb`,
+        ),
+        ' AND ',
+      ),
+  },
 ]
 
 /** R3.10: the base condition every list shares. */

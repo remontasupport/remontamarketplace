@@ -9,6 +9,7 @@ import * as z from 'zod'
 import {
   activationViewSchema,
   adminContract,
+  COMPLETION_FLAGS,
   profileSchema,
   suspendedListResponseSchema,
   workerActivationBodySchema,
@@ -22,12 +23,18 @@ type Obj = { properties: Record<string, Obj & Record<string, unknown>>; required
 const js = (s: z.ZodType) => z.toJSONSchema(s, { io: 'output', unrepresentable: 'any' }) as unknown as Obj
 const compat = JSON.parse(readFileSync(new URL('./fixtures/compat-2026-10-23.json', import.meta.url), 'utf8'))
 
-/** The row schema inside a list response, with the optional `activated` checked and removed. */
+/**
+ * The row schema inside a list response, with the optional `activated` and `completion` (admin-completion-filters FR-3,
+ * sent only with `withCompletion`) checked and removed.
+ */
 function withoutActivated(response: Obj): Obj {
   const row = response.properties.data!.items!
   expect(row.properties.activated).toEqual({ type: 'boolean' })
   expect(row.required ?? []).not.toContain('activated')
   delete row.properties.activated
+  expect(row.properties.completion).toMatchObject({ type: 'object', required: ['accountDetails', 'compliance', 'trainings', 'services'] })
+  expect(row.required ?? []).not.toContain('completion')
+  delete row.properties.completion
   return response
 }
 
@@ -46,6 +53,12 @@ describe('N1: the strictly parsed responses are unchanged', () => {
     expect(applied.properties.nursingType).toEqual({ type: 'string', enum: ['registered', 'enrolled'] })
     expect(applied.required ?? []).not.toContain('nursingType')
     delete applied.properties.nursingType
+    // admin-completion-filters U1: the four completion filters, optional, echoed only when queried.
+    for (const flag of COMPLETION_FLAGS) {
+      expect(applied.properties[flag]).toEqual({ type: 'string', enum: ['complete', 'incomplete'] })
+      expect(applied.required ?? []).not.toContain(flag)
+      delete applied.properties[flag]
+    }
     expect(now).toEqual(compat.searchResponse)
   })
 
