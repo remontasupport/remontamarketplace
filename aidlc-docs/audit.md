@@ -6022,3 +6022,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-09):** "for the dropdowns, Do not seperate them, may be a one dropdown but can choose multiple items"
 
 **AI action (2026-11-09):** U2 changed on `feat/completion-filters-app` (second commit): the four selects replaced by one "Profile completion" dropdown in the Languages dropdown's style -- each checklist item with Complete / Incomplete buttons, several items at once, the same choice again clears it (`toggleCompletion`), the choices as removable chips (`completionChips`); query, URL and api parameters unchanged. Tests +1 (PBT of the toggle; chips). App gate: baselines OK, 745 tests. docs/admin/README.md updated. Pushed.
+
+**User input (2026-11-09):** "Can you rename the Account Details to Profile Creation"
+
+**AI action (2026-11-09):** U2 third commit: `COMPLETION_OPTIONS`' label for `accountDetails` is "Profile Creation" (the dropdown, chips, card badges and CSV column follow it); the worker's own checklist keeps "Account Details"; the api parameter stays `accountDetails`. Tests updated (26 in admin-search pass), tsc baseline unchanged (54); docs/admin/README.md. Pushed.
