@@ -6030,3 +6030,15 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-09):** "perfect. Now I want to fix something first, in the Download all button, instead of downloading all the contractors, can you make it a download all based on the any search results, for example if the search filter is in suburb nsw, the download all will download all the results and not all the contractors in the database, also remove this "Results may be up to a minute old · fetched 9:27:20 AMRefresh""
 
 **AI action (2026-11-09):** checked: "Download all" already reads every page of the current search with its filters (`fetchAll` = `searchRequestOf(filters)` 100 per page; production logs show the filters on download requests, e.g. `participants=with&role=COORDINATOR`), and its count is the result total. Fix outside the cycle on `fix/admin-download-results` from `main` `fc194e8` (1 commit, 3 files, +11/-27): the button reads "Download results (N)" (shared bar: Contractors, Clients, Support Coordinators); the freshness line and its Refresh removed (`fetchedAt` state gone). App gate: baselines OK, 740 tests. No api change. Pushed; can merge before U2 (U2 will need a merge of main: same file, other lines).
+
+**User input (2026-11-09):** "dID YOU REMOVE THE PROFILE COMPLETION FILTER?"
+
+**AI action (2026-11-09):** answered: no; the fix branch was cut from `main` without U2, so its preview has no completion filter; U2 is on its own branch.
+
+**User input (2026-11-09):** "the 2 PRs are merged already"
+
+**AI action (2026-11-09):** by refs `main` = `972ff6b` (#156 U2 `ca84c22`, #155 the fix). U2 reached `main` before U1's promotion: the production app sends `withCompletion=true`, which the production api (`00028-bcq`, strict query) refuses -> the admin Contractors search would fail once Vercel deploys. Asked the user to promote U1 at once (`fc194e8f353176e2cefe64de67b5f7d3ada41f4e`); fallback a Vercel promote of the `2f8dcf1` build. (Follow-up 32's merge-order risk, realised.)
+
+**User input (2026-11-09):** "promotion is running"
+
+**AI action (2026-11-09):** production api logs: no `/v1/admin/workers` request since 01:34Z (no admin failure so far); watching for the new revision.
