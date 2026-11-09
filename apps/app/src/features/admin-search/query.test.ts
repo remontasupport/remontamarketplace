@@ -3,9 +3,13 @@
 // state, filtersFromURL(urlFromFilters(f)) builds the same URL again.
 import { describe, expect, it } from 'vitest'
 import * as fc from 'fast-check'
-import { AGE_RANGES, workerSearchQuerySchema } from '@remonta/api-contract'
+import { AGE_RANGES, COMPLETION_FLAGS, workerSearchQuerySchema } from '@remonta/api-contract'
 import { SERVICE_TOOLS, TOOL_IDS, TOOL_SERVICES, toolSearchOf } from '@remonta/schemas/data/serviceTools'
-import { canonicalOf, DEFAULT_FILTERS, searchRequestOf, TOOL_GROUPS, toolGroupFor, toolSearchView, EXPERIENCE_OPTIONS, experienceAreasOfLabel, filtersFromURL, toQuery, urlFromFilters, type AdminFilters } from './query'
+import { canonicalOf, COMPLETION_OPTIONS, completionChips, DEFAULT_FILTERS, searchRequestOf, TOOL_GROUPS, toggleCompletion, unfinishedOf, toolGroupFor, toolSearchView, EXPERIENCE_OPTIONS, experienceAreasOfLabel, filtersFromURL, toQuery, urlFromFilters, type AdminFilters } from './query'
+
+/** Any combination of the four dropdowns ("Any" = the key left out). */
+const filterValue = fc.constantFrom('complete' as const, 'incomplete' as const)
+const completionArb: fc.Arbitrary<AdminFilters['completion']> = fc.record({ accountDetails: filterValue, compliance: filterValue, trainings: filterValue, services: filterValue }, { requiredKeys: [] })
 
 describe('toQuery (R11.1)', () => {
   it('maps display values to canonical ones and omits all/none', () => {
@@ -117,6 +121,7 @@ describe('the URL state (R11.2)', () => {
       toolSearch: fc.constantFrom('', 'gurney', 'pressure washer', 'mowers', '&', 'Saw'),
       activation: fc.constantFrom('all' as const, 'active' as const, 'inactive' as const),
       nursingType: fc.constantFrom('all' as const, 'registered' as const, 'enrolled' as const),
+      completion: completionArb,
     })
     .map((f) => ({ ...f, pageSize: 6 }))
 
@@ -206,6 +211,47 @@ describe('the tool search box (tool search TS-5)', () => {
 })
 
 
+describe('the completion dropdowns and badges (admin-completion-filters FR-4, FR-5)', () => {
+  it('Any sends nothing; each choice is sent under its flag and kept in the URL', () => {
+    fc.assert(
+      fc.property(completionArb, (completion) => {
+        const f = { ...DEFAULT_FILTERS, completion }
+        const q = toQuery(f)
+        for (const flag of COMPLETION_FLAGS) expect(q[flag]).toBe(completion[flag])
+        expect(filtersFromURL(new URLSearchParams(urlFromFilters(f))).completion).toEqual(completion)
+      }),
+    )
+    expect(filtersFromURL(new URLSearchParams('compliance=bogus')).completion).toEqual({})
+  })
+
+  it('every request asks for the rows\' flags, and the URL bar never carries it', () => {
+    const f = { ...DEFAULT_FILTERS, completion: { trainings: 'incomplete' as const } }
+    expect(searchRequestOf(f)).toEqual({ ...toQuery(f), withActivation: true, withCompletion: true })
+    expect(urlFromFilters(f)).not.toContain('withCompletion')
+  })
+
+  it('one dropdown: a pick sets its item, the same pick again clears it, other items untouched; chips in checklist order', () => {
+    fc.assert(
+      fc.property(completionArb, fc.constantFrom(...COMPLETION_FLAGS), filterValue, (start, flag, value) => {
+        const next = toggleCompletion(start, flag, value)
+        expect(next[flag]).toBe(start[flag] === value ? undefined : value)
+        for (const other of COMPLETION_FLAGS) if (other !== flag) expect(next[other]).toBe(start[other])
+        expect(toggleCompletion(next, flag, value)[flag]).toBe(start[flag] === value ? value : undefined)
+      }),
+    )
+    expect(completionChips({ trainings: 'incomplete', accountDetails: 'complete' }).map((c) => c.text)).toEqual(['Profile Creation: Complete', 'Trainings: Incomplete'])
+    expect(completionChips({})).toEqual([])
+  })
+
+  it('the badges are the unfinished items in checklist order; none for a complete worker; null without flags', () => {
+    expect(COMPLETION_OPTIONS.map((o) => o.flag)).toEqual([...COMPLETION_FLAGS])
+    expect(unfinishedOf({ completion: { accountDetails: true, compliance: false, trainings: false, services: true } })).toEqual(['Compliance', 'Trainings'])
+    expect(unfinishedOf({ completion: { accountDetails: true, compliance: true, trainings: true, services: true } })).toEqual([])
+    expect(unfinishedOf({ completion: { accountDetails: false, compliance: false, trainings: false, services: false } })).toEqual(['Profile Creation', 'Compliance', 'Trainings', 'My Services'])
+    expect(unfinishedOf({})).toBeNull()
+  })
+})
+
 describe('the activation tab (worker-activation A2, A3)', () => {
   it('All sends nothing; Active and Inactive send the flag; the URL keeps it', () => {
     expect(toQuery(DEFAULT_FILTERS)).not.toHaveProperty('activation')
@@ -218,7 +264,7 @@ describe('the activation tab (worker-activation A2, A3)', () => {
     fc.assert(
       fc.property(fc.constantFrom('all' as const, 'active' as const, 'inactive' as const), (activation) => {
         const f = { ...DEFAULT_FILTERS, activation }
-        expect(searchRequestOf(f)).toEqual({ ...toQuery(f), withActivation: true })
+        expect(searchRequestOf(f)).toEqual({ ...toQuery(f), withActivation: true, withCompletion: true })
         expect(urlFromFilters(f)).not.toContain('withActivation')
       }),
     )

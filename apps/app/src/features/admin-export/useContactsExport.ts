@@ -4,7 +4,7 @@ import { useState } from 'react'
 import type { ApiOutcome } from '@/lib/api/outcome'
 import { noticeText, noticeTitle } from '@/lib/api/outcome-notice'
 import { downloadCsv } from '@/lib/csv'
-import { contactsCsv, datedCsvName, type ContactRow } from './contactsCsv'
+import { contactsCsv, datedCsvName, type ContactRow, type ExtraColumn } from './contactsCsv'
 
 const DOWNLOAD_NOTICE = { name: 'download', plural: 'downloads' }
 
@@ -20,11 +20,13 @@ export interface ContactsExport<R> {
   notice: string | null
 }
 
-export function useContactsExport<R extends ContactRow>({ name, keyOf, fetchAll }: {
+export function useContactsExport<R extends ContactRow>({ name, keyOf, fetchAll, extraColumns = [] }: {
   /** The file's prefix: the tab's name. */
   name: string
   keyOf: (row: R) => string
   fetchAll: () => Promise<ApiOutcome<R[]>>
+  /** The tab's own columns after the four. */
+  extraColumns?: readonly ExtraColumn<R>[]
 }): ContactsExport<R> {
   const [selected, setSelected] = useState<ReadonlyMap<string, R>>(new Map())
   const [exporting, setExporting] = useState(false)
@@ -41,13 +43,13 @@ export function useContactsExport<R extends ContactRow>({ name, keyOf, fetchAll 
         return next
       }),
     clear: () => setSelected(new Map()),
-    downloadSelected: () => downloadCsv(datedCsvName(name), contactsCsv([...selected.values()])),
+    downloadSelected: () => downloadCsv(datedCsvName(name), contactsCsv([...selected.values()], extraColumns)),
     downloadAll: async () => {
       setExporting(true)
       setNotice(null)
       const all = await fetchAll()
       setExporting(false)
-      if (all.kind === 'ok') downloadCsv(datedCsvName(name), contactsCsv(all.body))
+      if (all.kind === 'ok') downloadCsv(datedCsvName(name), contactsCsv(all.body, extraColumns))
       else setNotice(`${noticeTitle(all, DOWNLOAD_NOTICE)}. ${noticeText(all)}`)
     },
     exporting,

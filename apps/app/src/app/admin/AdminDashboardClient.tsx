@@ -23,6 +23,7 @@ import { allPages } from '@/lib/api/allPages'
 import CsvDownloadBar from '@/features/admin-export/CsvDownloadBar'
 import { useContactsExport } from '@/features/admin-export/useContactsExport'
 import {
+  COMPLETION_OPTIONS,
   DEFAULT_FILTERS,
   EXPERIENCE_OPTIONS,
   STATE_OPTIONS,
@@ -36,9 +37,13 @@ import {
   filtersFromURL,
   searchRequestOf,
   NURSING_SERVICE_ID,
+  completionChips,
+  toggleCompletion,
+  unfinishedOf,
   urlFromFilters,
   type AdminFilters,
 } from '@/features/admin-search/query'
+import type { ExtraColumn } from '@/features/admin-export/contactsCsv'
 import { estimatedDriveMinutes, formatDrive } from '@/features/admin-search/travel'
 import { suburbSuggestions } from '@/lib/api/localities'
 
@@ -59,8 +64,14 @@ interface SuburbMatch {
 /** The panel's draft until "Apply Filters" (E7 pendingFilters). */
 type PendingFilters = Pick<
   AdminFilters,
-  'locality' | 'withinKm' | 'state' | 'typeOfSupport' | 'gender' | 'hasVehicle' | 'workerType' | 'languages' | 'age' | 'therapeuticSubcategories' | 'experienceWith' | 'experienceAreas' | 'tools' | 'toolSearch' | 'nursingType'
+  'locality' | 'withinKm' | 'state' | 'typeOfSupport' | 'gender' | 'hasVehicle' | 'workerType' | 'languages' | 'age' | 'therapeuticSubcategories' | 'experienceWith' | 'experienceAreas' | 'tools' | 'toolSearch' | 'nursingType' | 'completion'
 >
+
+/** admin-completion-filters (FR-6): the worker's checklist items in the Contractors CSV, after the four columns. */
+const COMPLETION_CSV_COLUMNS: ReadonlyArray<ExtraColumn<Contractor>> = COMPLETION_OPTIONS.map(({ flag, label }) => ({
+  header: label,
+  value: (w) => (w.completion ? (w.completion[flag] ? 'Complete' : 'Incomplete') : ''),
+}))
 
 const ACTIVATION_TABS: ReadonlyArray<{ value: AdminFilters['activation']; label: string }> = [
   { value: 'all', label: 'All' },
@@ -84,6 +95,7 @@ const pendingOf = (f: AdminFilters): PendingFilters => ({
   tools: f.tools,
   toolSearch: f.toolSearch,
   nursingType: f.nursingType,
+  completion: f.completion,
 })
 
 const suburbLabel = (s: SuburbMatch) => `${s.name} ${s.state.abbreviation} ${s.postcode}`
@@ -137,6 +149,8 @@ export default function AdminDashboard() {
   const [languageSearch, setLanguageSearch] = useState('')
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false)
   const languageDropdownRef = useRef<HTMLDivElement>(null)
+  const [showCompletionDropdown, setShowCompletionDropdown] = useState(false)
+  const completionDropdownRef = useRef<HTMLDivElement>(null)
 
   // Available languages (from registration)
   const AVAILABLE_LANGUAGES = [
@@ -176,6 +190,9 @@ export default function AdminDashboard() {
       }
       if (languageDropdownRef.current && !languageDropdownRef.current.contains(target)) {
         setShowLanguageDropdown(false)
+      }
+      if (completionDropdownRef.current && !completionDropdownRef.current.contains(target)) {
+        setShowCompletionDropdown(false)
       }
       if (therapeuticSubcategoryDropdownRef.current && !therapeuticSubcategoryDropdownRef.current.contains(target)) {
         setShowTherapeuticSubcategoryDropdown(false)
@@ -291,6 +308,7 @@ export default function AdminDashboard() {
     name: 'contractors',
     keyOf: (w) => w.id,
     fetchAll: () => allPages((page) => adminApi.searchWorkers({ ...searchRequestOf(filters), page, pageSize: PAGE_SIZE_MAX }, { cache: 'reload' })),
+    extraColumns: COMPLETION_CSV_COLUMNS,
   })
 
   const reload = useCallback(() => {
@@ -1011,6 +1029,67 @@ export default function AdminDashboard() {
               </select>
             </div>
 
+            {/* admin-completion-filters (FR-4): one dropdown for the worker's own checklist items, several at once (user
+                2026-11-09); each item Complete or Incomplete, the same choice again clears it; applied with the other filters */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Profile completion
+              </label>
+              <div className="relative" ref={completionDropdownRef}>
+                <div
+                  onClick={() => setShowCompletionDropdown(!showCompletionDropdown)}
+                  data-testid="admin-completion-dropdown"
+                  className="min-h-[42px] rounded-md border border-gray-300 px-4 py-2 text-sm bg-white cursor-pointer"
+                >
+                  {completionChips(pendingFilters.completion).length === 0 ? (
+                    <span className="text-gray-400">Any</span>
+                  ) : (
+                    <div className="flex flex-wrap gap-1">
+                      {completionChips(pendingFilters.completion).map(({ flag, text }) => (
+                        <span key={flag} className="inline-flex items-center gap-1 bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded text-xs font-medium">
+                          {text}
+                          <button
+                            type="button"
+                            aria-label={`Remove ${text}`}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setPendingFilters(prev => ({ ...prev, completion: toggleCompletion(prev.completion, flag, prev.completion[flag]!) }))
+                            }}
+                            className="hover:text-indigo-600"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {showCompletionDropdown && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+                    {COMPLETION_OPTIONS.map(({ flag, label }) => (
+                      <div key={flag} className="flex items-center justify-between gap-2 px-3 py-1.5 text-sm">
+                        <span className="text-gray-700">{label}</span>
+                        <div className="inline-flex rounded-md border border-gray-300 p-0.5">
+                          {(['complete', 'incomplete'] as const).map((value) => (
+                            <button
+                              key={value}
+                              type="button"
+                              aria-pressed={pendingFilters.completion[flag] === value}
+                              onClick={() => setPendingFilters(prev => ({ ...prev, completion: toggleCompletion(prev.completion, flag, value) }))}
+                              className={`px-2 py-0.5 text-xs font-medium rounded ${pendingFilters.completion[flag] === value ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
+                            >
+                              {value === 'complete' ? 'Complete' : 'Incomplete'}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
             {/* Suspended accounts (worker-activation A4: was "Show Inactive Workers") */}
             <div className="pt-4 border-t border-gray-200">
               <button
@@ -1230,6 +1309,25 @@ export default function AdminDashboard() {
                               {contractor.services.join(' / ')}
                             </p>
                           )}
+
+                          {/* admin-completion-filters (FR-5): the checklist items the worker has not finished */}
+                          {(() => {
+                            const unfinished = unfinishedOf(contractor)
+                            if (unfinished === null) return null
+                            return (
+                              <div className="flex flex-wrap gap-1.5 mb-2" data-testid="admin-completion-badges">
+                                {unfinished.length === 0 ? (
+                                  <span className="text-xs font-medium px-2 py-0.5 rounded-full border text-green-700 bg-green-50 border-green-200">Profile complete</span>
+                                ) : (
+                                  unfinished.map((label) => (
+                                    <span key={label} className="text-xs font-medium px-2 py-0.5 rounded-full border text-amber-800 bg-amber-50 border-amber-200" title={`${label} is not complete`}>
+                                      {label} ✗
+                                    </span>
+                                  ))
+                                )}
+                              </div>
+                            )
+                          })()}
 
                           {/* Details Row */}
                           <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600">
