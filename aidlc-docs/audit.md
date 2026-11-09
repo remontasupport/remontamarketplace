@@ -6000,3 +6000,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-09):** answers: "Four Complete/Incomplete dropdowns (Recommended)"; "Match the worker's checklist (Recommended)"; "Yes, small badges (Recommended)".
 
 **AI action (2026-11-09):** correction of my own question: the worker's dashboard checklist today (`ProfileCompletionReminder.tsx`) shows the four legacy flags (Account Details, Compliance, Trainings, My Services) from `completionOf`, and production's stored flags are `legacy` = the same rules. So "match the worker's checklist" means the stored flags as they are; C2 (`groups`) is not needed and would make them differ. Cycle `admin-completion-filters` opened on `aidlc/admin-completion-filters`: requirements (`inception/requirements/admin-completion-filters-requirements.md`, FR-1..FR-7) and execution plan (U1 `completion-filters-api`, U2 `completion-filters-app`) written; awaiting approval.
+
+**User input (2026-11-09):** "approve and start"
+
+**AI action (2026-11-09):** inception approved (extensions carried: Security blocking, Resiliency blocking, PBT full). CONSTRUCTION U1 `completion-filters-api` started on `feat/completion-filters-api` from `main` `2f8dcf1`.
