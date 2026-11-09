@@ -37,6 +37,8 @@ import {
   filtersFromURL,
   searchRequestOf,
   NURSING_SERVICE_ID,
+  completionChips,
+  toggleCompletion,
   unfinishedOf,
   urlFromFilters,
   type AdminFilters,
@@ -147,6 +149,8 @@ export default function AdminDashboard() {
   const [languageSearch, setLanguageSearch] = useState('')
   const [showLanguageDropdown, setShowLanguageDropdown] = useState(false)
   const languageDropdownRef = useRef<HTMLDivElement>(null)
+  const [showCompletionDropdown, setShowCompletionDropdown] = useState(false)
+  const completionDropdownRef = useRef<HTMLDivElement>(null)
 
   // Available languages (from registration)
   const AVAILABLE_LANGUAGES = [
@@ -186,6 +190,9 @@ export default function AdminDashboard() {
       }
       if (languageDropdownRef.current && !languageDropdownRef.current.contains(target)) {
         setShowLanguageDropdown(false)
+      }
+      if (completionDropdownRef.current && !completionDropdownRef.current.contains(target)) {
+        setShowCompletionDropdown(false)
       }
       if (therapeuticSubcategoryDropdownRef.current && !therapeuticSubcategoryDropdownRef.current.contains(target)) {
         setShowTherapeuticSubcategoryDropdown(false)
@@ -1022,32 +1029,66 @@ export default function AdminDashboard() {
               </select>
             </div>
 
-            {/* admin-completion-filters (FR-4): the worker's own checklist items, as stored; applied with the other filters */}
-            {COMPLETION_OPTIONS.map(({ flag, label }) => (
-              <div key={flag} className="mb-4">
-                <label htmlFor={`completion-${flag}`} className="text-sm font-medium text-gray-700 mb-1 block">
-                  {label}
-                </label>
-                <select
-                  id={`completion-${flag}`}
-                  value={pendingFilters.completion[flag] ?? 'any'}
-                  onChange={(e) => {
-                    const value = e.target.value
-                    setPendingFilters(prev => {
-                      const completion = { ...prev.completion }
-                      if (value === 'complete' || value === 'incomplete') completion[flag] = value
-                      else delete completion[flag]
-                      return { ...prev, completion }
-                    })
-                  }}
-                  className="w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+            {/* admin-completion-filters (FR-4): one dropdown for the worker's own checklist items, several at once (user
+                2026-11-09); each item Complete or Incomplete, the same choice again clears it; applied with the other filters */}
+            <div className="mb-4">
+              <label className="text-sm font-medium text-gray-700 mb-1 block">
+                Profile completion
+              </label>
+              <div className="relative" ref={completionDropdownRef}>
+                <div
+                  onClick={() => setShowCompletionDropdown(!showCompletionDropdown)}
+                  data-testid="admin-completion-dropdown"
+                  className="min-h-[42px] rounded-md border border-gray-300 px-4 py-2 text-sm bg-white cursor-pointer"
                 >
-                  <option value="any">Any</option>
-                  <option value="complete">Complete</option>
-                  <option value="incomplete">Incomplete</option>
-                </select>
+                  {completionChips(pendingFilters.completion).length === 0 ? (
+                    <span className="text-gray-400">Any</span>
+                  ) : (
+                    <div className="flex flex-wrap gap-1">
+                      {completionChips(pendingFilters.completion).map(({ flag, text }) => (
+                        <span key={flag} className="inline-flex items-center gap-1 bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded text-xs font-medium">
+                          {text}
+                          <button
+                            type="button"
+                            aria-label={`Remove ${text}`}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setPendingFilters(prev => ({ ...prev, completion: toggleCompletion(prev.completion, flag, prev.completion[flag]!) }))
+                            }}
+                            className="hover:text-indigo-600"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {showCompletionDropdown && (
+                  <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg py-1">
+                    {COMPLETION_OPTIONS.map(({ flag, label }) => (
+                      <div key={flag} className="flex items-center justify-between gap-2 px-3 py-1.5 text-sm">
+                        <span className="text-gray-700">{label}</span>
+                        <div className="inline-flex rounded-md border border-gray-300 p-0.5">
+                          {(['complete', 'incomplete'] as const).map((value) => (
+                            <button
+                              key={value}
+                              type="button"
+                              aria-pressed={pendingFilters.completion[flag] === value}
+                              onClick={() => setPendingFilters(prev => ({ ...prev, completion: toggleCompletion(prev.completion, flag, value) }))}
+                              className={`px-2 py-0.5 text-xs font-medium rounded ${pendingFilters.completion[flag] === value ? 'bg-indigo-600 text-white' : 'text-gray-700 hover:bg-gray-100'}`}
+                            >
+                              {value === 'complete' ? 'Complete' : 'Incomplete'}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            ))}
+            </div>
 
             {/* Suspended accounts (worker-activation A4: was "Show Inactive Workers") */}
             <div className="pt-4 border-t border-gray-200">

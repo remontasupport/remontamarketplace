@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import * as fc from 'fast-check'
 import { AGE_RANGES, COMPLETION_FLAGS, workerSearchQuerySchema } from '@remonta/api-contract'
 import { SERVICE_TOOLS, TOOL_IDS, TOOL_SERVICES, toolSearchOf } from '@remonta/schemas/data/serviceTools'
-import { canonicalOf, COMPLETION_OPTIONS, DEFAULT_FILTERS, searchRequestOf, TOOL_GROUPS, unfinishedOf, toolGroupFor, toolSearchView, EXPERIENCE_OPTIONS, experienceAreasOfLabel, filtersFromURL, toQuery, urlFromFilters, type AdminFilters } from './query'
+import { canonicalOf, COMPLETION_OPTIONS, completionChips, DEFAULT_FILTERS, searchRequestOf, TOOL_GROUPS, toggleCompletion, unfinishedOf, toolGroupFor, toolSearchView, EXPERIENCE_OPTIONS, experienceAreasOfLabel, filtersFromURL, toQuery, urlFromFilters, type AdminFilters } from './query'
 
 /** Any combination of the four dropdowns ("Any" = the key left out). */
 const filterValue = fc.constantFrom('complete' as const, 'incomplete' as const)
@@ -228,6 +228,19 @@ describe('the completion dropdowns and badges (admin-completion-filters FR-4, FR
     const f = { ...DEFAULT_FILTERS, completion: { trainings: 'incomplete' as const } }
     expect(searchRequestOf(f)).toEqual({ ...toQuery(f), withActivation: true, withCompletion: true })
     expect(urlFromFilters(f)).not.toContain('withCompletion')
+  })
+
+  it('one dropdown: a pick sets its item, the same pick again clears it, other items untouched; chips in checklist order', () => {
+    fc.assert(
+      fc.property(completionArb, fc.constantFrom(...COMPLETION_FLAGS), filterValue, (start, flag, value) => {
+        const next = toggleCompletion(start, flag, value)
+        expect(next[flag]).toBe(start[flag] === value ? undefined : value)
+        for (const other of COMPLETION_FLAGS) if (other !== flag) expect(next[other]).toBe(start[other])
+        expect(toggleCompletion(next, flag, value)[flag]).toBe(start[flag] === value ? value : undefined)
+      }),
+    )
+    expect(completionChips({ trainings: 'incomplete', accountDetails: 'complete' }).map((c) => c.text)).toEqual(['Account Details: Complete', 'Trainings: Incomplete'])
+    expect(completionChips({})).toEqual([])
   })
 
   it('the badges are the unfinished items in checklist order; none for a complete worker; null without flags', () => {

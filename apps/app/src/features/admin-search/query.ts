@@ -70,6 +70,22 @@ export const COMPLETION_OPTIONS: ReadonlyArray<{ flag: CompletionFlag; label: st
   { flag: 'services', label: 'My Services' },
 ]
 
+/**
+ * The one "Profile completion" dropdown (user 2026-11-09: one dropdown, several items): picking a value sets that item,
+ * picking the item's current value again clears it (back to Any); the other items are untouched.
+ */
+export function toggleCompletion(current: AdminFilters['completion'], flag: CompletionFlag, value: CompletionFilter): AdminFilters['completion'] {
+  const next = { ...current }
+  if (next[flag] === value) delete next[flag]
+  else next[flag] = value
+  return next
+}
+
+/** The dropdown's chips, in checklist order: "Compliance: Incomplete". */
+export function completionChips(completion: AdminFilters['completion']): { flag: CompletionFlag; text: string }[] {
+  return COMPLETION_OPTIONS.filter((o) => completion[o.flag]).map((o) => ({ flag: o.flag, text: `${o.label}: ${completion[o.flag] === 'complete' ? 'Complete' : 'Incomplete'}` }))
+}
+
 /** FR-5: the checklist items a row's worker has not finished, in checklist order; null when the row carries no flags. */
 export function unfinishedOf(row: Pick<WorkerRow, 'completion'>): string[] | null {
   if (!row.completion) return null
