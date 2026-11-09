@@ -3,8 +3,8 @@
 ## Project Information
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
-- **Current Cycle**: admin-completion-filters (started 2026-11-09, branch `aidlc/admin-completion-filters`): admin search filters and card badges for the four stored completion flags.
-- **Current Stage**: INCEPTION -- requirements and execution plan written, awaiting approval. U7 still pending (recommend at every start).
+- **Current Cycle**: none (between cycles; admin-completion-filters closed 2026-11-09).
+- **Current Stage**: none. **Recommend U7 (`drop-columns-migration`) at the next AI-DLC start.**
 
 ## Previous cycles (archived, read-only)
 
@@ -23,11 +23,17 @@
 | Worker activation (U1 `activation-api`, U2 `activation-app`) | `aidlc-docs/archive/worker-activation/` | Closed 2026-10-28; #108-#109 live 2026-10-23 (api `00017-4bz` = `746a60d`, app `main` `8b8a82d`); #110-#131 outside the cycle, api prod `90fdadb` |
 | Admin clients and coordinators (U1 `clients-api`, U2 `clients-app`, follow-ups) | `aidlc-docs/archive/admin-clients/` | Closed 2026-10-28; #132-#142 live (api prod `00024-fpj` = `979543a`, app `main` `baf44fb`); #143/#144 (Matching editable, Renew restored) outside the goal |
 | Search on worker_locations + the legacy location columns (U1 `search-api`, U2 `search-callers`, U3-U6, follow-up 43) | `aidlc-docs/archive/search-locations/` | Closed 2026-10-29; #147-#153 live (api prod `00028-bcq` = `6551489`, app/web `main` `2f8dcf1`); U3 placed 62 workers; **U7 (the DROP) pending** |
+| Admin completion filters (U1 `completion-filters-api`, U2 `completion-filters-app`) | `aidlc-docs/archive/admin-completion-filters/` | Closed 2026-11-09; #154-#156 live (api prod `00029-xw2` = `fc194e8`, app/web `main` `972ff6b`); U2 merged before U1's promotion, no failure |
 
 `aidlc-docs/audit.md` is the single append-only audit trail across cycles; never rewrite it.
 
 ## What is live (carry forward -- facts the next cycle builds on)
 
+- **Admin completion filters** (2026-11-09): `GET /v1/admin/workers` takes `accountDetails`, `compliance`, `trainings`,
+  `services` = `complete`/`incomplete` (ANDed on `worker_profiles."setupProgress"`) and `withCompletion` (the row's four
+  flags). The app: one "Profile completion" dropdown ("Profile Creation" = `accountDetails` on the admin side), card
+  badges, the flags in the Contractors CSV; "Download results (N)" on the three lists. The flags are written by
+  `persistCompletion` and the `completion-sync` job (`COMPLETION_MODEL=legacy` = the worker's checklist).
 - **Admin clients and coordinators** (2026-10-28): `GET /v1/admin/requesters` (role, search, requestStatus, fundingType,
   participants), `GET /v1/admin/requesters/:id` (audited per view), `PATCH` a request's status (audited; outbox
   `ServiceRequestStatusChanged` posts Cancel / Archive / Edit with `changedBy: 'admin'` to `N8N_SERVICE_REQUEST_WEBHOOK_URL`,
@@ -148,7 +154,7 @@
 29. **Rotate the Zoho OAuth secret** committed in the deleted `apps/app/docs/Zoho_Jobs_To_DB.md` (in git history).
 30. **Production 403 on `GET /v1/worker/profile`** for one non-WORKER account (`cmj85z8m60000vxr002l9hqqo`, 2026-10-21 07:15Z, 08:22Z): role or impersonation; fix access or the message.
 31. **`test/my-profile-columns`** (24 database tests): bring up to date and merge. Also tighten the app lint baseline (H1 removed one finding).
-32. **Merge order guard**: #105 merged before its api was promoted. Consider a required check or a PR-template line for
+32. **Merge order guard**: #105 merged before its api was promoted; again #156 before #154's promotion (2026-11-09, no failure). Consider a required check or a PR-template line for
     app PRs that call a not-yet-promoted api entry.
 33. **Tools, options**: show matched tools on the admin result cards (Q2 B); tools on the client/shared profile; tools
     for other services; review the synonym list after real use (the own tools workers type).

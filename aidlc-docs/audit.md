@@ -6056,3 +6056,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-09):** "nevermind. My CEO ask what stack I am using for this project, can you list all of them"
 
 **AI action (2026-11-09):** the share-link option dropped (user: "nevermind"); the stack listed from the package manifests, workflows and infra.
+
+**User input (2026-11-09):** "close the ai dlc now"
+
+**AI action (2026-11-09):** admin-completion-filters closed. Archive `aidlc-docs/archive/admin-completion-filters/` (README, requirements, execution plan, build-and-test summary, state at close); `aidlc-state.md` between cycles (table row, what is live, follow-up 32 noted again), U7 still recommended at the next start. Rollback rows re-recorded on `docs/rollback-rows-2026-11-09` (`64a8625`, from `main` `972ff6b`; app build `remonta-gvwvzdldn`, web `remontamarketplace-3onb5g8pl`, api `00029-xw2` = `fc194e8`), supersedes `docs/rollback-rows-2026-10-29`; PR to open by the user.
