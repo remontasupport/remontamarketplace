@@ -72,7 +72,7 @@ describe.skipIf(!local)('U3b service documents on PostGIS', () => {
     expect((await send('DELETE', `/v1/worker/service-documents/${first}`, undefined, () => h.a.userId)).statusCode).toBe(404)
   })
 
-  it('a new upload of the same type replaces it: the same row, SUBMITTED again, the old file deleted', async () => {
+  it('a new upload of the same type replaces it: the same row, SUBMITTED again; the old file kept as a version (document-history)', async () => {
     await h.db.verificationRequirement.update({ where: { id: first }, data: { status: 'APPROVED', approvedAt: new Date(), reviewedBy: 'admin' } })
     const uploadId = await upload()
     const res = await confirm(uploadId, { fileName: 'AHPRA renewed.pdf' })
@@ -80,9 +80,16 @@ describe.skipIf(!local)('U3b service documents on PostGIS', () => {
     expect(res.json().id).toBe(first)
     const row = await h.db.verificationRequirement.findUniqueOrThrow({ where: { id: first } })
     expect(row).toMatchObject({ status: 'SUBMITTED', approvedAt: null, reviewedBy: null })
-    expect(bucket.objects.has(firstKey)).toBe(false)
+    expect(bucket.objects.has(firstKey)).toBe(true)
+    const versions = await h.db.documentVersion.findMany({ where: { requirementId: first } })
+    expect(versions).toHaveLength(1)
+    expect(versions[0]).toMatchObject({ workerProfileId: h.b.profileId, reason: 'REPLACED', status: 'APPROVED', reviewedBy: 'admin', requirementType: 'Nursing Services:ahpra-registration', documentCategory: 'SERVICE_QUALIFICATION' })
+    expect(versions[0]!.metadata).toMatchObject({ storageKey: firstKey, fileName: 'AHPRA 2026.pdf' })
     firstKey = (row.metadata as { storageKey: string }).storageKey
     expect(bucket.objects.has(firstKey)).toBe(true)
+    // A retry of that confirm keeps nothing more.
+    expect((await confirm(uploadId, { fileName: 'AHPRA renewed.pdf' })).statusCode).toBe(201)
+    expect(await h.db.documentVersion.count({ where: { requirementId: first } })).toBe(1)
   })
 
   it('refused: a type the service does not ask for (400), a service not chosen (404), an upload never made (409); nothing recorded', async () => {
@@ -118,30 +125,35 @@ describe.skipIf(!local)('U3b service documents on PostGIS', () => {
         expect(r.json().error.fields).toHaveProperty('requirementType')
       }
       expect(await h.db.verificationRequirement.count({ where: { workerProfileId: h.b.profileId } })).toBe(before)
-      // Another worker cannot reach it; the owner deletes it with its file.
+      // Another worker cannot reach it; the owner deletes it, and the file is kept as a version.
       expect((await send('DELETE', `/v1/worker/service-documents/${row.id}`, undefined, () => h.a.userId)).statusCode).toBe(404)
       const key = (row.metadata as { storageKey: string }).storageKey
       expect((await send('DELETE', `/v1/worker/service-documents/${row.id}`)).statusCode).toBe(200)
-      expect(bucket.objects.has(key)).toBe(false)
+      expect(bucket.objects.has(key)).toBe(true)
+      expect(await h.db.documentVersion.count({ where: { requirementId: row.id, reason: 'DELETED_BY_WORKER' } })).toBe(1)
     } finally {
       if (made.length) await h.db.document.deleteMany({ where: { id: { in: made } } })
     }
   })
 
-  it('delete: the row and its file', async () => {
+  it('delete: the row goes; it and its file are kept as a version', async () => {
     const res = await send('DELETE', `/v1/worker/service-documents/${first}`)
     expect(res.statusCode, res.body).toBe(200)
     expect(await h.db.verificationRequirement.findUnique({ where: { id: first } })).toBeNull()
-    expect(bucket.objects.has(firstKey)).toBe(false)
+    expect(bucket.objects.has(firstKey)).toBe(true)
+    const kept = await h.db.documentVersion.findFirstOrThrow({ where: { requirementId: first, reason: 'DELETED_BY_WORKER' } })
+    expect(kept.metadata).toMatchObject({ storageKey: firstKey, fileName: 'AHPRA renewed.pdf' })
+    expect(await h.db.documentVersion.count({ where: { requirementId: first } })).toBe(2) // the replaced one and this one
   })
 
-  it('D2 with the bucket: removing the service deletes its documents and their files', async () => {
+  it('D2 with the bucket: removing the service deletes its documents; they and their files are kept as versions', async () => {
     const res = await confirm(await upload(), { requirementType: 'qualification-certificate', fileName: 'Nursing degree.pdf' })
     expect(res.statusCode, res.body).toBe(201)
     const key = ((await h.db.verificationRequirement.findUniqueOrThrow({ where: { id: res.json().id } })).metadata as { storageKey: string }).storageKey
     const removed = await send('PUT', '/v1/worker/services', { services: [`${h.prefix}care`], subcategoryIds: [] })
     expect(removed.statusCode, removed.body).toBe(200)
     expect(await h.db.verificationRequirement.count({ where: { workerProfileId: h.b.profileId, requirementType: { startsWith: 'Nursing Services:' } } })).toBe(0)
-    expect(bucket.objects.has(key)).toBe(false)
+    expect(bucket.objects.has(key)).toBe(true)
+    expect(await h.db.documentVersion.count({ where: { requirementId: res.json().id, reason: 'SERVICE_REMOVED' } })).toBe(1)
   })
 })

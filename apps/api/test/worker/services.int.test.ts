@@ -74,7 +74,7 @@ describe.skipIf(!local)('U3a services on PostGIS', () => {
     expect((await profile()).serviceRegistrations).toEqual([nurse])
   })
 
-  it('D2: removing a service deletes it entirely: the row, its registration, its documents; own files only, after the commit', async () => {
+  it('D2: removing a service deletes it entirely: the row, its registration, its documents; the documents kept as versions, no file deleted', async () => {
     const blob = 'https://abc.public.blob.vercel-storage.com'
     const doc = (requirementType: string, documentUrl: string) =>
       ({ workerProfileId: h.b.profileId, requirementType, requirementName: 'x', status: 'SUBMITTED' as const, documentCategory: 'SERVICE_QUALIFICATION' as const, documentUrl, updatedAt: new Date() })
@@ -91,7 +91,10 @@ describe.skipIf(!local)('U3a services on PostGIS', () => {
     expect((await profile()).serviceRegistrations).toEqual([])
     const left = await h.db.verificationRequirement.findMany({ where: { workerProfileId: h.b.profileId, documentCategory: 'SERVICE_QUALIFICATION' }, select: { requirementType: true } })
     expect(left.map((r) => r.requirementType).sort()).toEqual(['Harness Care worker-services.test:qual', 'Other Documents:misc'])
-    expect(blobDeletes.sort()).toEqual([old, own].sort()) // another worker's file is never deleted
+    // document-history: no file is deleted; the three removed documents are kept as versions, URLs included.
+    expect(blobDeletes).toEqual([])
+    const kept = await h.db.documentVersion.findMany({ where: { workerProfileId: h.b.profileId, reason: 'SERVICE_REMOVED', requirementType: { startsWith: 'Nursing Services:' } }, select: { requirementType: true, documentUrl: true } })
+    expect(kept.map((v) => v.documentUrl).sort()).toEqual([own, old, foreign].sort())
 
     // Chosen again: a fresh service, nothing comes back.
     const back = await put('/v1/worker/services', { services: [care(), 'nursing-services'], subcategoryIds: [] })

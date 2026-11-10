@@ -38,6 +38,7 @@ import { purgeUnclaimedPhotosJob } from './modules/registration/jobs/purge-photo
 import { LogMailer, ResendMailer, type Mailer } from './platform/email/mailer'
 import { Scheduler, type Job } from './platform/jobs/scheduler'
 import { outboxRetentionJob } from './platform/outbox/retention'
+import { documentVersionRetentionJob } from './modules/worker/document-version-retention.job'
 
 async function main() {
   const config = loadConfig(process.env)
@@ -57,7 +58,7 @@ async function main() {
   const handlerSets = [
     platformHandlers({ db, clock: systemClock }),
     // The admin lists (U2): behind the api token; the search is memoised per instance.
-    adminHandlers({ db, clock: systemClock, bucket }),
+    adminHandlers({ db, clock: systemClock, bucket, blob: blobStore }),
     // The worker's own profile (worker-profile-api U1): per-user bodies, never memoised.
     workerHandlers({ db, clock: systemClock, completionModel: config.COMPLETION_MODEL, photos: { bucket, publicBaseUrl: config.PHOTO_PUBLIC_BASE_URL, ipHashSecret: config.IP_HASH_SECRET, blob: blobStore } }),
     // The worker search for clients, coordinators and the marketing site (search-locations U1): memoised, as the bodies do not depend on the caller.
@@ -120,6 +121,8 @@ async function main() {
     completionSyncJob({ db, log, model: config.COMPLETION_MODEL, everyMs: config.COMPLETION_SYNC_INTERVAL_MS }),
     purgeUnclaimedPhotosJob(db, { gcs: bucket }),
     outboxRetentionJob(db),
+    // document-history U1 (R5): seven years, then the version and its file; `report` counts only.
+    documentVersionRetentionJob({ db, stores: { bucket, blob: blobStore }, log, mode: config.DOCUMENT_VERSION_RETENTION }),
     {
       name: 'rate-limit-purge',
       everyMs: 10 * 60_000,

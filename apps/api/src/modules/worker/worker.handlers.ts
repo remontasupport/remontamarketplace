@@ -18,10 +18,10 @@ import { replaceSection } from './application/replace-section'
 import { GROUPS_WITH_COMPLETION, writeAdditionalInfo, writeBankAccount } from './application/sections/additional-info'
 import { deleteEducationEntry, deleteExperienceArea, deleteJobHistoryEntry, writeAvailability, writeEducation, writeExperience, writeJobHistory } from './application/sections/lists'
 import { ApiError } from '../../platform/errors'
-import { ownServiceDocument, writeServiceRegistration, writeServices } from './application/sections/services'
+import { writeServiceRegistration, writeServices } from './application/sections/services'
 import { readServiceTools, writeServiceTools } from './application/sections/service-tools'
-import { complianceAlreadyRecorded, complianceTargetOf, ownComplianceBlobUrl, recordComplianceDocument, removeComplianceDocument, writeCitizenship } from './application/compliance-documents'
-import { alreadyRecorded, confirmTargetOf, createDocumentTicket, deleteDocumentFiles, DOCUMENT_UPLOAD_INCOMPLETE, linkFor, recordDocument, removeDocument, stageDocument, type DocumentFile } from './application/service-documents'
+import { complianceAlreadyRecorded, complianceTargetOf, recordComplianceDocument, removeComplianceDocument, writeCitizenship } from './application/compliance-documents'
+import { alreadyRecorded, confirmTargetOf, createDocumentTicket, DOCUMENT_UPLOAD_INCOMPLETE, linkFor, recordDocument, removeDocument, stageDocument } from './application/service-documents'
 import { writeAbn, writeSignedEngagement, writeBio, writeDateOfBirth, writeGender, writeName, writeVehicle } from './application/sections/profile'
 import { readActivation } from './application/sections/activation'
 import { assertNotImpersonating, markTourSeen, readTour } from './application/sections/tour'
@@ -41,7 +41,6 @@ export interface WorkerModuleDeps {
 export function workerHandlers(deps: WorkerModuleDeps) {
   const s = { db: deps.db, clock: deps.clock, completionModel: deps.completionModel }
   // The bucket (documents, U3b) and the Blob store (legacy files): absent in a test or a local run without them.
-  const stores = () => ({ bucket: deps.photos?.bucket, blob: deps.photos?.blob })
   const photoDeps = () => {
     if (!deps.photos) throw new Error('worker photos: the photo store is not configured')
     return deps.photos
@@ -142,8 +141,8 @@ export function workerHandlers(deps: WorkerModuleDeps) {
     // U3a: the services decide the requirement groups and the services flag; a registration can complete a service.
     putServices: async (req, ctx) => {
       const out = await replaceSection(s, ctx, { section: 'putServices', completion: true }, (tx, p) => writeServices(tx, p.id, req.body, deps.clock()))
-      // A removed service's documents went with it (D2); their files follow after the commit, own folders only.
-      if (out.files.length) await deleteDocumentFiles(stores(), out.files, { userId: ctx.principal!.userId, profileId: out.profileId }, ownServiceDocument, ctx.log)
+      // A removed service's documents went with it (D2) and were kept as versions, files included (document-history).
+      if (out.keptVersions) ctx.log.info({ entry: 'worker.putServices', keptVersions: out.keptVersions }, 'removed service documents kept')
       return { status: 200, body: out.body }
     },
     putServiceRegistration: async (req, ctx) => ({
@@ -181,29 +180,20 @@ export function workerHandlers(deps: WorkerModuleDeps) {
         }
         throw new ApiError(409, 'document upload incomplete', { file: [DOCUMENT_UPLOAD_INCOMPLETE] })
       }
-      let replaced: DocumentFile | null = null
       let view
       try {
-        view = await replaceSection(s, ctx, { section: 'confirmServiceDocument', completion: true }, async (tx) => {
-          const out = await recordDocument(tx, target, req.body, staged, deps.clock())
-          replaced = out.replaced
-          return out.view
-        })
+        // A replaced file is kept as a version (document-history), never deleted here.
+        view = await replaceSection(s, ctx, { section: 'confirmServiceDocument', completion: true }, (tx) => recordDocument(tx, target, req.body, staged, deps.clock()))
       } catch (err) {
         // Not recorded: the copy is nobody's file.
         await bucket.delete(staged.key).catch(() => undefined)
         throw err
       }
-      if (replaced) await deleteDocumentFiles(stores(), [replaced], { userId: ctx.principal!.userId, profileId: target.profileId }, ownServiceDocument, ctx.log)
       return { status: 201, body: view }
     },
     deleteServiceDocument: async (req, ctx) => {
-      let profileId = ''
-      const file = await replaceSection(s, ctx, { section: 'deleteServiceDocument', completion: true }, (tx, p) => {
-        profileId = p.id
-        return removeDocument(tx, p.id, req.params.documentId)
-      })
-      await deleteDocumentFiles(stores(), [file], { userId: ctx.principal!.userId, profileId }, ownServiceDocument, ctx.log)
+      // The row and its file are kept as a version for the admins (document-history).
+      await replaceSection(s, ctx, { section: 'deleteServiceDocument', completion: true }, (tx, p) => removeDocument(tx, p.id, req.params.documentId, deps.clock()))
       return { status: 200, body: { documentId: req.params.documentId } }
     },
     getServiceDocumentLink: async (req, ctx) => {
@@ -230,19 +220,13 @@ export function workerHandlers(deps: WorkerModuleDeps) {
         }
         throw new ApiError(409, 'document upload incomplete', { file: [DOCUMENT_UPLOAD_INCOMPLETE] })
       }
-      let replaced: DocumentFile | null = null
       let view
       try {
-        view = await replaceSection(s, ctx, { section: `confirmComplianceDocument.${target.type}`, completion: true }, async (tx) => {
-          const out = await recordComplianceDocument(tx, target, req.body, staged, deps.clock())
-          replaced = out.replaced
-          return out.view
-        })
+        view = await replaceSection(s, ctx, { section: `confirmComplianceDocument.${target.type}`, completion: true }, (tx) => recordComplianceDocument(tx, target, req.body, staged, deps.clock()))
       } catch (err) {
         await bucket.delete(staged.key).catch(() => undefined)
         throw err
       }
-      if (replaced) await deleteDocumentFiles(stores(), [replaced], { userId: ctx.principal!.userId, profileId: target.profileId }, ownComplianceBlobUrl, ctx.log)
       return { status: 201, body: view }
     },
     signContract: async (req, ctx) => {
@@ -261,28 +245,20 @@ export function workerHandlers(deps: WorkerModuleDeps) {
         }
         throw new ApiError(409, 'document upload incomplete', { file: [DOCUMENT_UPLOAD_INCOMPLETE] })
       }
-      let replaced: DocumentFile | null = null
       let body
       try {
-        body = await replaceSection(s, ctx, { section: `signContract.${req.body.engagementType}`, completion: true }, async (tx, p) => {
-          const out = await recordComplianceDocument(tx, target, doc, staged, deps.clock())
-          replaced = out.replaced
-          return { document: out.view, engagement: await writeSignedEngagement(tx, p.id, req.body.engagementType) }
-        })
+        body = await replaceSection(s, ctx, { section: `signContract.${req.body.engagementType}`, completion: true }, async (tx, p) => ({
+          document: await recordComplianceDocument(tx, target, doc, staged, deps.clock()),
+          engagement: await writeSignedEngagement(tx, p.id, req.body.engagementType),
+        }))
       } catch (err) {
         await bucket.delete(staged.key).catch(() => undefined)
         throw err
       }
-      if (replaced) await deleteDocumentFiles(stores(), [replaced], { userId: ctx.principal!.userId, profileId: target.profileId }, ownComplianceBlobUrl, ctx.log)
       return { status: 201, body }
     },
     deleteComplianceDocument: async (req, ctx) => {
-      let profileId = ''
-      const file = await replaceSection(s, ctx, { section: 'deleteComplianceDocument', completion: true }, (tx, p) => {
-        profileId = p.id
-        return removeComplianceDocument(tx, p.id, req.params.documentId)
-      })
-      await deleteDocumentFiles(stores(), [file], { userId: ctx.principal!.userId, profileId }, ownComplianceBlobUrl, ctx.log)
+      await replaceSection(s, ctx, { section: 'deleteComplianceDocument', completion: true }, (tx, p) => removeComplianceDocument(tx, p.id, req.params.documentId, deps.clock()))
       return { status: 200, body: { documentId: req.params.documentId } }
     },
     putCitizenship: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putCitizenship', completion: true }, (tx, p) => writeCitizenship(tx, p.id, req.body.isCitizen, deps.clock())) }),

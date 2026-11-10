@@ -3,8 +3,8 @@
 //
 // Removing a service deletes it entirely (D2, user 2026-10-15): its worker_services row with the registration in its
 // metadata, and its documents -- the SERVICE_QUALIFICATION rows keyed "<service name>:<type>" -- in the same
-// transaction; their files after the commit, only the worker's own (deleteDocumentFiles: the api's bucket key, or a
-// legacy Blob URL in the worker's own folder, ownServiceDocument).
+// transaction. Since document-history those documents are kept as versions, files included (the admin's history);
+// ownServiceDocument still decides which legacy Blob files an admin's version delete may remove.
 import {
   REGISTRATION_SERVICES,
   type RegistrationService,
@@ -16,7 +16,7 @@ import { ApiError } from '../../../../platform/errors'
 import { Prisma, type Tx } from '../../../../platform/persistence/db'
 import { resolveServices } from '../../../registration/application/resolve-services'
 import { isBlobUrl } from '../photos'
-import { fileOf, type DocumentFile } from '../service-documents'
+import { keepVersions, VERSION_SOURCE_SELECT } from '../document-versions'
 
 const SERVICE_SELECT = { categoryId: true, categoryName: true, subcategoryIds: true, subcategoryNames: true } as const
 
@@ -25,9 +25,8 @@ const isObject = (m: Metadata): m is Prisma.JsonObject => typeof m === 'object' 
 
 export interface ServicesWrite {
   body: { services: { categoryId: string; categoryName: string; subcategoryIds: string[]; subcategoryNames: string[] }[] }
-  /** The removed services' document files, to delete after the commit (deleteDocumentFiles). */
-  files: DocumentFile[]
-  profileId: string
+  /** How many of the removed services' documents were kept as versions. */
+  keptVersions: number
 }
 
 export async function writeServices(tx: Tx, profileId: string, body: ServicesBody, now: Date): Promise<ServicesWrite> {
@@ -41,11 +40,11 @@ export async function writeServices(tx: Tx, profileId: string, body: ServicesBod
   const keep = new Set(chosen.map((c) => c.categoryId))
 
   const removed = existing.filter((r) => !keep.has(r.categoryId))
-  let files: DocumentFile[] = []
+  let keptVersions = 0
   if (removed.length) {
     const docs = { workerProfileId: profileId, documentCategory: 'SERVICE_QUALIFICATION' as const, OR: removed.map((r) => ({ requirementType: { startsWith: `${r.categoryName}:` } })) }
-    const rows = await tx.verificationRequirement.findMany({ where: docs, select: { documentUrl: true, metadata: true } })
-    files = rows.map(fileOf)
+    const rows = await tx.verificationRequirement.findMany({ where: docs, select: VERSION_SOURCE_SELECT })
+    keptVersions = await keepVersions(tx, rows, 'SERVICE_REMOVED', now)
     await tx.verificationRequirement.deleteMany({ where: docs })
     await tx.workerService.deleteMany({ where: { id: { in: removed.map((r) => r.id) } } })
   }
@@ -68,7 +67,7 @@ export async function writeServices(tx: Tx, profileId: string, body: ServicesBod
     await tx.workerService.create({ data: { workerProfileId: profileId, ...c, createdAt: new Date(now.getTime() + added.length) }, select: { id: true } })
     added.push({ categoryId: c.categoryId, categoryName: c.categoryName, subcategoryIds: c.subcategoryIds, subcategoryNames: c.subcategoryNames })
   }
-  return { body: { services: [...services, ...added] }, files, profileId }
+  return { body: { services: [...services, ...added] }, keptVersions }
 }
 
 /**

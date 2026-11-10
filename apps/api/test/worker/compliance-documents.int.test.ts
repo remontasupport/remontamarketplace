@@ -77,12 +77,16 @@ describe.skipIf(!local)('U4a compliance documents on PostGIS', () => {
     expect(bad.json().error.fields).toHaveProperty('requirementType')
   })
 
-  it('a new file of the same type: the same row, SUBMITTED again, the review cleared, the old file deleted', async () => {
+  it('a new file of the same type: the same row, SUBMITTED again, the review cleared; the old one kept as a version with its review', async () => {
     await h.db.verificationRequirement.update({ where: { id: police }, data: { status: 'APPROVED', approvedAt: new Date(), reviewedBy: 'admin' } })
     const res = await confirm({ requirementType: 'police-check' })
     expect(res.json().id).toBe(police)
     expect(await h.db.verificationRequirement.findUniqueOrThrow({ where: { id: police } })).toMatchObject({ status: 'SUBMITTED', approvedAt: null, reviewedBy: null })
-    expect(bucket.objects.has(policeKey)).toBe(false)
+    expect(bucket.objects.has(policeKey)).toBe(true)
+    const v = await h.db.documentVersion.findFirstOrThrow({ where: { requirementId: police } })
+    expect(v).toMatchObject({ reason: 'REPLACED', status: 'APPROVED', reviewedBy: 'admin', requirementType: 'police-check', requirementName: 'National Police Check' })
+    expect(v.approvedAt).not.toBeNull()
+    expect(v.metadata).toMatchObject({ storageKey: policeKey })
   })
 
   it('the link: the owner gets one for any own row; another worker gets 404 for the link and the delete', async () => {
@@ -115,11 +119,12 @@ describe.skipIf(!local)('U4a compliance documents on PostGIS', () => {
     const row = await h.db.verificationRequirement.findUniqueOrThrow({ where: { id: abn.json().document.id } })
     const key = (row.metadata as { storageKey: string }).storageKey
     expect(key).toMatch(new RegExp(`^documents/${h.b.profileId}/`))
-    // Signing again as TFN: the same row, the old file gone, the engagement TFN with no number.
+    // Signing again as TFN: the same row, the old contract kept as a version, the engagement TFN with no number.
     const tfn = await sign('tfn')
     expect(tfn.statusCode, tfn.body).toBe(201)
     expect(tfn.json().document.id).toBe(row.id)
-    expect(bucket.objects.has(key)).toBe(false)
+    expect(bucket.objects.has(key)).toBe(true)
+    expect(await h.db.documentVersion.count({ where: { requirementId: row.id, reason: 'REPLACED' } })).toBe(1)
     p = await h.db.workerProfile.findUniqueOrThrow({ where: { id: h.b.profileId }, select: { abn: true } })
     expect(p.abn).toEqual({ workerEngagementType: { type: 'tfn', signed: true } })
     // Refused before anything is written: a type that is neither, a tax number in the body, nothing uploaded.
@@ -131,10 +136,15 @@ describe.skipIf(!local)('U4a compliance documents on PostGIS', () => {
     expect(await h.db.workerProfile.findUniqueOrThrow({ where: { id: h.b.profileId }, select: { abn: true, updatedAt: true } })).toEqual(before)
   })
 
-  it('delete: the row and its file; a service document is not this entry', async () => {
+  it('delete: the row goes, kept as a version with its file; a fileless claim keeps nothing; a service document is not this entry', async () => {
     const del = await send('DELETE', `/v1/worker/compliance-documents/${police}`)
     expect(del.statusCode, del.body).toBe(200)
     expect(await h.db.verificationRequirement.findUnique({ where: { id: police } })).toBeNull()
+    expect(await h.db.documentVersion.count({ where: { requirementId: police, reason: 'DELETED_BY_WORKER' } })).toBe(1)
+    // a's right-to-work row is a citizenship answer with no file: deleting it keeps no version.
+    const claim = await h.db.verificationRequirement.findFirstOrThrow({ where: { workerProfileId: h.a.profileId, requirementType: 'right-to-work' } })
+    expect((await send('DELETE', `/v1/worker/compliance-documents/${claim.id}`, undefined, () => h.a.userId)).statusCode).toBe(200)
+    expect(await h.db.documentVersion.count({ where: { requirementId: claim.id } })).toBe(0)
     const sq = await h.db.verificationRequirement.findFirstOrThrow({ where: { workerProfileId: h.a.profileId, documentCategory: 'SERVICE_QUALIFICATION' } })
     expect((await send('DELETE', `/v1/worker/compliance-documents/${sq.id}`, undefined, () => h.a.userId)).statusCode).toBe(404)
   })

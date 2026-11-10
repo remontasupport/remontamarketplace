@@ -289,6 +289,44 @@ const recordId = (what: string) => z.string().regex(/^[A-Za-z0-9_-]{1,40}$/, `No
 export const adminDocumentParamsSchema = z.strictObject({ documentId: recordId('document') })
 export const adminDocumentLinkSchema = z.strictObject({ url: z.url().max(4096), expiresAt: z.iso.datetime({ offset: true }).nullable() })
 
+/**
+ * document-history U1: a worker document as it was just before a re-upload replaced it, the worker deleted it, or the
+ * worker removed its service. Admins only; the file's storage key never leaves the api (open it through the link).
+ */
+export const DOCUMENT_VERSION_REASONS = ['REPLACED', 'DELETED_BY_WORKER', 'SERVICE_REMOVED'] as const
+export type DocumentVersionReason = (typeof DOCUMENT_VERSION_REASONS)[number]
+/** At most this many versions per worker in one answer (newest first); `truncated` says more exist. */
+export const DOCUMENT_VERSIONS_MAX = 1000
+const isoOrNull = z.iso.datetime({ offset: true }).nullable()
+export const documentVersionParamsSchema = z.strictObject({ versionId: recordId('document version') })
+export const documentVersionSchema = z.strictObject({
+  id: z.string(),
+  /** The verification_requirements row it was (it may be gone). */
+  requirementId: z.string(),
+  requirementType: z.string(),
+  name: z.string(),
+  documentCategory: z.string().nullable(),
+  status: z.string(),
+  fileName: z.string().nullable(),
+  uploadedAt: isoOrNull,
+  expiresAt: isoOrNull,
+  reviewedAt: isoOrNull,
+  reviewedBy: z.string().nullable(),
+  approvedAt: isoOrNull,
+  rejectedAt: isoOrNull,
+  rejectionReason: z.string().nullable(),
+  reason: z.enum(DOCUMENT_VERSION_REASONS),
+  supersededAt: z.iso.datetime({ offset: true }),
+})
+export type DocumentVersion = z.output<typeof documentVersionSchema>
+export const documentVersionListSchema = z.strictObject({
+  workerId: z.string(),
+  versions: z.array(documentVersionSchema).max(DOCUMENT_VERSIONS_MAX),
+  truncated: z.boolean(),
+})
+export type DocumentVersionList = z.output<typeof documentVersionListSchema>
+export const documentVersionDeletedSchema = z.strictObject({ versionId: z.string() })
+
 /** worker-tools U1 (E3, Q1 B): one worker's services and their tools, for the worker's admin page. */
 export const adminWorkerParamsSchema = z.strictObject({ workerId: recordId('worker') })
 /** worker-activation U1: the two admin switches. The target state travels in the body, so a repeat is harmless. */
@@ -436,6 +474,34 @@ export const adminContract = defineContract('admin', {
     pathParams: adminDocumentParamsSchema,
     responses: { 200: adminDocumentLinkSchema },
     meta: adminRead({ user: 120, ip: 300 }),
+  },
+
+  // document-history U1 (R3, R4): the admin's history page.
+  listDocumentVersions: {
+    method: 'GET',
+    path: '/v1/admin/workers/:workerId/document-versions',
+    summary: "One worker's past documents (replaced, deleted by the worker, or of a removed service), newest first, with the review each had; 404 when no worker has that id.",
+    pathParams: adminWorkerParamsSchema,
+    responses: { 200: documentVersionListSchema },
+    meta: adminRead({ user: 120, ip: 300 }),
+  },
+
+  getDocumentVersionLink: {
+    method: 'GET',
+    path: '/v1/admin/document-versions/:versionId/link',
+    summary: 'A five-minute link to view one past document (a private file), or the stored URL of a legacy public one.',
+    pathParams: documentVersionParamsSchema,
+    responses: { 200: adminDocumentLinkSchema },
+    meta: adminRead({ user: 120, ip: 300 }),
+  },
+
+  deleteDocumentVersion: {
+    method: 'DELETE',
+    path: '/v1/admin/document-versions/:versionId',
+    summary: 'Delete one past document for good: the version and its file (unless a current document still uses that file). Audited. 404 when no version has that id.',
+    pathParams: documentVersionParamsSchema,
+    responses: { 200: documentVersionDeletedSchema },
+    meta: adminMeta({ user: 30, ip: 60 }, { audit: 'DOCUMENT_VERSION_DELETE' }),
   },
 
   getWorkerServices: {

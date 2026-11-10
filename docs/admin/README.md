@@ -114,6 +114,24 @@ chosen service in the worker's order; `toolIds` (list order, ids no longer liste
 for a service without a tool list. `:workerId` is the worker **profile** id (the admin page's `[id]`); 404 when none.
 Limits 120 / 300 per minute; privately cacheable for a minute. Logged with the profile id.
 
+### Past documents (document-history U1, 2026-11-11)
+
+A worker's re-upload, a worker's delete and a removed service no longer delete anything: the old
+`verification_requirements` row is copied to `document_versions` in the same transaction (its file, `status`, review
+fields, expiry, and `reason` `REPLACED` | `DELETED_BY_WORKER` | `SERVICE_REMOVED`), and its file stays where it was.
+Workers never see versions. Only these two ways delete a kept file, each after its commit and only when no current
+document or other version still uses that file and the file is provably the worker's (`deleteDocumentFiles`):
+
+| Entry | What |
+|---|---|
+| `GET /v1/admin/workers/:workerId/document-versions` | `{workerId, versions[], truncated}`: newest first (`supersededAt`), at most 1,000 (`truncated` says more exist). A version: `{id, requirementId, requirementType, name, documentCategory, status, fileName, uploadedAt, expiresAt, reviewedAt, reviewedBy, approvedAt, rejectedAt, rejectionReason, reason, supersededAt}`; never a storage key or URL. `:workerId` is the profile id; 404 when none. 120 / 300 per minute, privately cacheable for a minute; logged with ids and counts |
+| `GET /v1/admin/document-versions/:versionId/link` | a five-minute signed link to the private file, or the stored URL of a legacy public one (`linkFor`, as the current-document link); 404 when no version |
+| `DELETE /v1/admin/document-versions/:versionId` | the version for good, then its file (unless still used). Audited `DOCUMENT_VERSION_DELETE` (`{versionId, workerProfileId, fileDeleted}`) with the admin. 30 / 60 per minute. 404 when no version (a repeat) |
+
+**Retention** (`document-version-retention`, daily): versions superseded more than seven calendar years ago are deleted
+the same way, 500 per run. `DOCUMENT_VERSION_RETENTION=report` (the default) only counts them (`summary.due` in
+`scheduled_jobs`); `apply` deletes. A worker profile deleted takes its versions with it (cascade); their files stay.
+
 ### `PUT /v1/admin/workers/:workerId/activation` and `.../suspension` -- the two switches (worker-activation U1)
 
 Two separate admin decisions on one worker (`:workerId` = the worker **profile** id), each writing its own column only;

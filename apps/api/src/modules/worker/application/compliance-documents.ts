@@ -12,7 +12,8 @@ import { ApiError } from '../../../platform/errors'
 import type { Prisma, Tx } from '../../../platform/persistence/db'
 import { complianceSpecOf, LEGACY_COMPLIANCE_FOLDERS, type ComplianceDocumentSpec } from '../domain/compliance-documents'
 import { isBlobUrl } from './photos'
-import { documentPath, fileOf, type DocumentFile, type StagedDocument } from './service-documents'
+import { keepVersions, VERSION_SOURCE_SELECT } from './document-versions'
+import { documentPath, isReplaced, type StagedDocument } from './service-documents'
 
 const metaOf = (m: Prisma.JsonValue | null | undefined): Record<string, unknown> => (m && typeof m === 'object' && !Array.isArray(m) ? (m as Record<string, unknown>) : {})
 
@@ -71,17 +72,17 @@ export async function complianceTargetOf(db: Tx | Prisma.TransactionClient, user
   return { profileId: profile.id, type: body.requirementType, spec }
 }
 
-/** Records the file as the row of its type; returns the view and the file it replaced (deleted after the commit). */
+/** Records the file as the row of its type; the row it replaces is kept as a version, file included (document-history). */
 export async function recordComplianceDocument(
   tx: Tx,
   target: ComplianceTarget,
   body: ConfirmComplianceDocumentBody,
   staged: StagedDocument,
   now: Date,
-): Promise<{ view: ComplianceDocument; replaced: DocumentFile | null }> {
+): Promise<ComplianceDocument> {
   const existing = await tx.verificationRequirement.findFirst({
     where: { workerProfileId: target.profileId, requirementType: target.type, ...NOT_A_SERVICE_DOCUMENT },
-    select: { id: true, documentUrl: true, metadata: true },
+    select: VERSION_SOURCE_SELECT,
     orderBy: { updatedAt: 'desc' },
   })
   const id = existing?.id ?? randomUUID()
@@ -116,8 +117,8 @@ export async function recordComplianceDocument(
     : await tx.verificationRequirement.create({ data: { id, workerProfileId: target.profileId, requirementType: target.type, isRequired: target.spec.required, ...data }, select: COMPLIANCE_ROW_SELECT })
   // As today: a new document puts the worker in the review queue.
   await tx.workerProfile.update({ where: { id: target.profileId }, data: { verificationStatus: 'PENDING_REVIEW' }, select: { id: true } })
-  const old = existing ? fileOf(existing) : null
-  return { view: complianceView(row), replaced: old && (old.storageKey !== staged.key || old.url !== row.documentUrl) ? old : null }
+  if (existing && isReplaced(existing, staged.key, row.documentUrl)) await keepVersions(tx, [existing], 'REPLACED', now)
+  return complianceView(row)
 }
 
 /** A retry of a confirm already recorded (the staging object has moved): its row, or null. */
@@ -129,15 +130,18 @@ export async function complianceAlreadyRecorded(db: Tx | Prisma.TransactionClien
   return row ? complianceView(row) : null
 }
 
-/** Deletes one of the worker's compliance rows (never a service document: those have their own entry). */
-export async function removeComplianceDocument(tx: Tx, profileId: string, documentId: string): Promise<DocumentFile> {
+/**
+ * Deletes one of the worker's compliance rows (never a service document: those have their own entry); the row and its
+ * file are kept as a version (document-history).
+ */
+export async function removeComplianceDocument(tx: Tx, profileId: string, documentId: string, now: Date): Promise<void> {
   const row = await tx.verificationRequirement.findFirst({
     where: { id: documentId, workerProfileId: profileId, ...NOT_A_SERVICE_DOCUMENT },
-    select: { id: true, documentUrl: true, metadata: true },
+    select: VERSION_SOURCE_SELECT,
   })
   if (!row) throw new ApiError(404, 'compliance document not found') // another worker's is never revealed
+  await keepVersions(tx, [row], 'DELETED_BY_WORKER', now)
   await tx.verificationRequirement.delete({ where: { id: row.id } })
-  return fileOf(row)
 }
 
 /**
