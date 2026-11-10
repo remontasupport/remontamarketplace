@@ -6122,3 +6122,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-10):** "Merged. I want to start a new ai dlc"
 
 **AI action (2026-11-10):** by refs `main` = `ed1c487` (#159, the rollback rows of 2026-11-10). New AI-DLC start: recommended U7 first (standing instruction), with the alternatives; awaiting the user's choice.
+
+**User input (2026-11-10):** "Yes let's do the U7 but make sure double check and production won't compromise"
+
+**AI action (2026-11-10):** cycle `drop-legacy-location-columns` (U7) on `aidlc/drop-legacy-location-columns`. Pre-flight: code scan (generated clients, every SQL template, guard tests) clean; a read-only production catalogue check was refused by the permission layer (production reads); the same check on the developer copy: only the five indexes depend on the columns, 7 profiles hold legacy values without a HOME row. Built `feat/drop-legacy-location-columns` `37c65ed` (migration + down.sql under lock_timeout, one ALTER; database test; bench seed; docs) and pushed. Rehearsed on the developer copy: migrate deploy; local api location paths 11/11 PASS; down.sql restores 6 columns + 5 indexes; re-apply idempotent. Inception: `inception/requirements/requirements.md`, `inception/plans/execution-plan.md`. Asked the user for the production read-only check and about outside readers.
