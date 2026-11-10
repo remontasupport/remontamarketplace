@@ -6088,3 +6088,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-10):** "ahh, ok. Do not switch"
 
 **AI action (2026-11-10):** design kept (the event from `persistCompletion`, U1 as built). Next: the user adds the two secrets, then the PR.
+
+**User input (2026-11-10):** "how to create the secrets?" / "do I need to paste the actual n8n url?" / "Yeah, I already created the n8n webhook workflow" (and the user's own gcloud commands; the first `versions add` failed NOT_FOUND: the secret had not been created).
+
+**AI action (2026-11-10):** gave the commands; then created both secrets `remonta-api[-staging]-N8N_WORKER_PROFILE_WEBHOOK_URL` (australia-southeast1, labels staging/prod) with `secretAccessor` for each stage's `-run` account, and staging version 1 = `off`. The user added production version 1 (the n8n Production webhook URL; it appeared in the session via the `!` command: rotating the n8n path was offered as optional). Verified: both secrets have version 1 enabled. PR ready: 2 commits, 18 files.
