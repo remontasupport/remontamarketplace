@@ -4,8 +4,8 @@ SELECT 'u' || g, 'worker' || g || '@bench.example', '$2b$12$abcdefghijklmnopqrst
        now() - (g % 1000) * interval '1 hour', now() - (g % 900) * interval '1 day',
        CASE WHEN g % 3 = 0 THEN NULL ELSE now() - (g % 500) * interval '1 hour' END
 FROM generate_series(1, 100000) g;
-INSERT INTO worker_profiles (id, "userId", "firstName", "lastName", mobile, location, city, state, "postalCode", "isPublished", "updatedAt", "createdAt")
-SELECT 'p' || g, 'u' || g, 'First' || g, 'Last' || g, '+614' || lpad((g % 100000000)::text, 8, '0'), 'Parramatta, NSW 2150', 'Parramatta', 'NSW', '2150',
+INSERT INTO worker_profiles (id, "userId", "firstName", "lastName", mobile, "isPublished", "updatedAt", "createdAt")
+SELECT 'p' || g, 'u' || g, 'First' || g, 'Last' || g, '+614' || lpad((g % 100000000)::text, 8, '0'),
        g % 4 = 0, now() - (g % 1000) * interval '1 hour', now() - (g % 900) * interval '1 day'
 FROM generate_series(1, 100000) g;
 INSERT INTO verification_requirements (id, "workerProfileId", "requirementType", "requirementName", "isRequired", status, "updatedAt", "submittedAt", "reviewedAt", "expiresAt")
