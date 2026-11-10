@@ -6144,3 +6144,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-10):** "Yes there is still using a Postgres account" + a screenshot of the n8n credential "Postgres account" (production auth database `workerprofiles` on `ep-delicate-recipe`, user `neondb_owner`); then "ahh there is no workflow using it" (read as: no workflow other than the fixed "Query workers").
 
 **AI action (2026-11-10):** outside readers settled: only "Query workers", already moved to worker_locations + au_localities and running. New follow-up: n8n connects to production as the owner role; give it a read-only role. Clear to open the U7 PR.
+
+**User input (2026-11-10):** "PR is created" (#160) / "CI is green" / "Merged" (`main` `1e4d74e`).
+
+**AI action (2026-11-10):** CI on #160 all success (API Quality Node 20/22 applies every migration to a fresh PostGIS and runs the new database test). deploy-api run 42768266060 success: "Apply pending migrations to the staging database" success, health success; staging `remonta-api-staging-00079-fm9` = `1e4d74e`. Staging database (rehearse-w1, read only): the six columns, the five indexes and every dependent object gone. Staging after 06:24Z: no WARNING/ERROR; health, localities, public search 200; completion-sync and onboarding-reconciler 0 failed. Production untouched (api `167bc28`, columns present). Next: the user's preview checklist, the Neon backup branch, the promotion of `1e4d74e7d2e46cb8b1d3df8f107b7bcc7f6bfe01`.
