@@ -163,6 +163,33 @@ describe.skipIf(!local)('GET /v1/worker/profile on PostGIS', () => {
     expect(await unitOfWork(h.db, (tx) => persistCompletion(tx, h.b.profileId, bCompletion))).toEqual({ changed: false, verificationStatus: 'NOT_STARTED' })
   })
 
+  it('worker-zoho-sync FR-1: an Account Details change queues one event with the write, either way, and rolls back with it', async () => {
+    const { completionInputOf } = await import('../../src/modules/worker/application/get-profile')
+    const { completionOf } = await import('../../src/modules/worker/domain/completion')
+    const complete = completionOf(completionInputOf((await readProfileRows(h.db, h.a.userId))!))
+    const bare = completionOf(completionInputOf((await readProfileRows(h.db, h.b.userId))!))
+    expect([complete.accountDetails, bare.accountDetails]).toEqual([true, false])
+    const where = { type: 'WorkerAccountDetailsChanged', payload: { path: ['workerProfileId'], equals: h.a.profileId } }
+    await h.db.outboxEvent.deleteMany({ where })
+    await h.db.workerProfile.update({ where: { id: h.a.profileId }, data: { setupProgress: Prisma.JsonNull } })
+    // A failed write leaves no event.
+    await expect(
+      unitOfWork(h.db, async (tx) => {
+        await persistCompletion(tx, h.a.profileId, complete)
+        throw new Error('rolled back')
+      }),
+    ).rejects.toThrow('rolled back')
+    expect(await h.db.outboxEvent.count({ where })).toBe(0)
+    // false -> true: one event; the same flags again: none.
+    await unitOfWork(h.db, (tx) => persistCompletion(tx, h.a.profileId, complete))
+    await unitOfWork(h.db, (tx) => persistCompletion(tx, h.a.profileId, complete))
+    expect(await h.db.outboxEvent.count({ where })).toBe(1)
+    // true -> false: a second event.
+    await unitOfWork(h.db, (tx) => persistCompletion(tx, h.a.profileId, bare))
+    expect(await h.db.outboxEvent.count({ where })).toBe(2)
+    await h.db.outboxEvent.deleteMany({ where })
+  })
+
   it('P13 b: a statement past its timeout is 503 with Retry-After and reason timeout; the next read succeeds', async () => {
     const slow = await workerHarness('worker-timeout.test', {
       read: (db, userId) =>

@@ -91,6 +91,7 @@ secret **values** for the stage about to deploy:
 printf '%s' '<value>' | gcloud secrets versions add remonta-api-staging-AUTH_DATABASE_URL --data-file=-
 # … RECAPTCHA_SECRET_KEY, RESEND_API_KEY, IP_HASH_SECRET (openssl rand -hex 32), BLOB_READ_WRITE_TOKEN, N8N_REGISTRATION_WEBHOOK_URL
 # N8N_SERVICE_REQUEST_WEBHOOK_URL: prod = the value of Vercel's Cancel_Archive_Webhook; staging = off (never the live webhook)
+# N8N_WORKER_PROFILE_WEBHOOK_URL: prod = the n8n workflow that updates the worker's Zoho record; staging = off or a test workflow
 ```
 
 Staging's `AUTH_DATABASE_URL` is the `rehearse-w1` Neon branch's **pooled** string; its reCAPTCHA secret is

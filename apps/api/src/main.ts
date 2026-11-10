@@ -27,6 +27,8 @@ import { photoUploadedHandler } from './modules/registration/application/photo-p
 import { PHOTO_UPLOADED } from './modules/registration/domain/events'
 import { SERVICE_REQUEST_STATUS_CHANGED } from './modules/admin/domain/events'
 import { serviceRequestWebhookHandler } from './modules/admin/outbox/service-request-webhook'
+import { WORKER_ACCOUNT_DETAILS_CHANGED } from './modules/worker/domain/events'
+import { accountDetailsWebhookHandler } from './modules/worker/outbox/account-details-webhook'
 import { registrationHandlers } from './modules/registration/registration.handlers'
 import { WorkerPoolHasher } from './platform/security/password-hasher'
 import { notificationHandlers } from './modules/notifications/notification.handlers'
@@ -109,6 +111,7 @@ async function main() {
   if (config.rateLimitExemptIps.size > 0) log.warn({ exemptIps: config.rateLimitExemptIps.size }, 'per-IP rate limits are skipped for RATE_LIMIT_EXEMPT_IPS (a load-test override; redeploy to remove)')
   outboxHandlers.set(PHOTO_UPLOADED, photoUploadedHandler({ db, bucket, blob: blobStore, log, concurrency: config.PHOTO_PROCESS_CONCURRENCY }))
   outboxHandlers.set(SERVICE_REQUEST_STATUS_CHANGED, serviceRequestWebhookHandler({ db, http, url: config.N8N_SERVICE_REQUEST_WEBHOOK_URL, log }))
+  outboxHandlers.set(WORKER_ACCOUNT_DETAILS_CHANGED, accountDetailsWebhookHandler({ db, http, url: config.N8N_WORKER_PROFILE_WEBHOOK_URL, log }))
   const dispatcher = new OutboxDispatcher(db, outboxHandlers, log)
   dispatcher.start(config.OUTBOX_POLL_MS)
   const jobs: Job[] = [

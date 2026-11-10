@@ -3,10 +3,13 @@
 // `verificationStatus` from NOT_STARTED to IN_PROGRESS when any flag becomes true
 // (today's intended updateSectionCompletion, minus its PENDING_REVIEW branch, which the
 // document paths own). Called inside the writer's transaction by every write that can
-// change a flag (U2-U4); U1 ships it with the backfill. Idempotent (P7).
+// change a flag (U2-U4); U1 ships it with the backfill. Idempotent (P7). A change of
+// `accountDetails` also queues WorkerAccountDetailsChanged in the same transaction (worker-zoho-sync).
 import type { Completion } from '@remonta/api-contract'
+import { enqueue } from '../../../platform/outbox/outbox'
 import type { Tx } from '../../../platform/persistence/db'
 import { flagsOf, type CompletionFlags } from './completion'
+import { WORKER_ACCOUNT_DETAILS_CHANGED, type WorkerAccountDetailsChangedPayload } from './events'
 
 const FLAG_KEYS = ['accountDetails', 'compliance', 'trainings', 'services'] as const
 
@@ -18,6 +21,11 @@ export function parseStoredFlags(json: unknown): CompletionFlags {
 
 export function sameFlags(a: CompletionFlags, b: CompletionFlags): boolean {
   return FLAG_KEYS.every((k) => a[k] === b[k])
+}
+
+/** FR-1: the stored Account Details flag (anything not `true` is false) differs from the one about to be written. */
+export function accountDetailsChanged(storedSetupProgress: unknown, next: CompletionFlags): boolean {
+  return parseStoredFlags(storedSetupProgress).accountDetails !== next.accountDetails
 }
 
 export interface PersistOutcome {
@@ -48,5 +56,10 @@ export async function persistCompletion(tx: Tx, profileId: string, completion: C
     data: { setupProgress: next, profileCompleted: completion.profileCompleted, verificationStatus },
     select: { id: true },
   })
+  // worker-zoho-sync U1 (FR-1): Zoho is told of an Account Details change, either way, with this write (or not at all).
+  if (accountDetailsChanged(stored.setupProgress, next)) {
+    const payload: WorkerAccountDetailsChangedPayload = { workerProfileId: profileId }
+    await enqueue(tx, { type: WORKER_ACCOUNT_DETAILS_CHANGED, payload })
+  }
   return { changed: true, verificationStatus }
 }
