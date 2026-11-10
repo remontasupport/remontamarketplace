@@ -6168,3 +6168,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-11):** "start ai dlc"
 
 **AI action (2026-11-11):** between cycles (U7 closed 2026-11-10, no standing recommendation); `main` = `a8ead2c` by refs. Asked the user which follow-up or new goal the next cycle takes.
+
+**User input (2026-11-11):** "Currently the documents are being replaced and get deleted when being updated. I want to have a historical feature in the admin account. I want the admin to be still retrieve past documents, how can we implement this"
+
+**AI action (2026-11-11):** new cycle goal: document history for admins. Targeted look: one `verification_requirements` row per worker and type, overwritten in place on re-upload (`recordDocument` in `apps/api/src/modules/worker/application/service-documents.ts` and `compliance-documents.ts` return the `replaced` file; `worker.handlers.ts` deletes it after the commit via `deleteDocumentFiles`); a worker's delete and a removed service (`PUT /v1/worker/services`) delete row and file; the admin reset route (`apps/app/.../compliance/[id]/[documentId]/reset`) overwrites review fields. Proposed: an append-only version table + keep files instead of deleting + an admin history endpoint and panel. Asked the scope questions.
