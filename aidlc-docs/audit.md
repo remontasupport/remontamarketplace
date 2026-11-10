@@ -6092,3 +6092,13 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-10):** "how to create the secrets?" / "do I need to paste the actual n8n url?" / "Yeah, I already created the n8n webhook workflow" (and the user's own gcloud commands; the first `versions add` failed NOT_FOUND: the secret had not been created).
 
 **AI action (2026-11-10):** gave the commands; then created both secrets `remonta-api[-staging]-N8N_WORKER_PROFILE_WEBHOOK_URL` (australia-southeast1, labels staging/prod) with `secretAccessor` for each stage's `-run` account, and staging version 1 = `off`. The user added production version 1 (the n8n Production webhook URL; it appeared in the session via the `!` command: rotating the n8n path was offered as optional). Verified: both secrets have version 1 enabled. PR ready: 2 commits, 18 files.
+
+**User input (2026-11-10):** "Pr is created" (PR #157, merged 00:58:17Z -> `main` `6ae45a6`; staging `remonta-api-staging-00077-c57` = `6ae45a6`, deploy success 01:06Z, health 200).
+
+**User input (2026-11-10):** "I tested the PR now, but the webhook isnt triggered even if the account details changed, is it because we are on the test stage and not in the production table?"
+
+**AI action (2026-11-10):** staging logs: 01:06:19Z `worker.confirmPhoto` saved on `00077` and queued `WorkerAccountDetailsChanged` (the trigger works); 01:06:20Z the OLD revision `00076-zrm` (still up during the rollout, shut down 01:06:38Z) claimed it, had no handler and marked it DEAD on attempt 1 (event `3c93f428-...`). Answered: staging is `off` by design (nothing would reach n8n anyway), and the rollout race is a real defect that would recur at the production promotion and on any rollback. Proposed: the dispatcher claims only the types it handles.
+
+**User input (2026-11-10):** "go ahead"
+
+**AI action (2026-11-10):** `fix/outbox-claim-known-types` from `main` `6ae45a6` (1 commit, 2 files, +19/-5): `claim()` filters `type = ANY(<handler types>)`; the database test "no handler -> DEAD" becomes "left PENDING, then DONE by a dispatcher with the handler". API gate: 1166 passed (DB tests in CI). Pushed. Note for the promotion: production's current revision (`fc194e8`) lacks the fix, so the overlap can kill an event once; check for DEAD `WorkerAccountDetailsChanged` rows after the promotion and requeue them.
