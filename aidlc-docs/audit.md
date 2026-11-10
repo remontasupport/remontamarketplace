@@ -6152,3 +6152,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-10):** "checklist passed and backup branch created"; then ran `u7.sh` on production.
 
 **AI action (2026-11-10):** found the promotion had already run: deploy-api dispatch 42799399569 (10:28:11Z) success; "Apply pending migrations" to production success 10:28:49Z; health success; production `remonta-api-00031-9h4` = `1e4d74e7d2e46cb8b1d3df8f107b7bcc7f6bfe01` (previous `00030-89z` = `167bc28`). The user's production check: columns, indexes and dependents gone (`[]`); the data query fails as expected (`column p.location does not exist`). Production since 10:28Z: no ERROR and no 5xx; 00031 serves 200s (health probes), completion-sync and onboarding-reconciler 0 failed; public search and health 200 from outside. Asked the user to confirm the Neon backup branch was created before 10:28:49Z and still shows the `city` column (otherwise the old values are gone).
+
+**User input (2026-11-10):** "yes the city column is in the backup"
+
+**AI action (2026-11-10):** backup confirmed: the Neon branch `backup-before-u7-2026-11-10` of production holds `worker_profiles.city` (taken before the drop); keep it 30+ days (until at least 2026-12-10). U7 done and verified.
