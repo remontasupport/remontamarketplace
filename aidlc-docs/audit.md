@@ -6140,3 +6140,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-10):** "The workflow runs succesfully, what's next"; then ran the production read-only check (`scratchpad/u7.sh`, after a quoting fix: the app .env value is single-quoted).
 
 **AI action (2026-11-10):** production (`ep-delicate-recipe`) result = the developer copy's: the six columns and exactly the five indexes; dependents = those five indexes only; no function, view, publication; one generic trigger (`touch_updated_at`); replication slots are Neon's own (`wal_proposer_slot`, `wal_retention_slot`, no plugin); pg_stat_statements not installed; 1,934 profiles, 1,897 with legacy values (37 created since U5 have none), 7 with legacy values and no HOME row (their values survive only in the backup branch); 3.6 MB; last migration `20261028120000_admin_clients_audit_actions` (U7's is next). Clear to open the PR once the user confirms no other n8n workflow reads the columns.
+
+**User input (2026-11-10):** "Yes there is still using a Postgres account" + a screenshot of the n8n credential "Postgres account" (production auth database `workerprofiles` on `ep-delicate-recipe`, user `neondb_owner`); then "ahh there is no workflow using it" (read as: no workflow other than the fixed "Query workers").
+
+**AI action (2026-11-10):** outside readers settled: only "Query workers", already moved to worker_locations + au_localities and running. New follow-up: n8n connects to production as the owner role; give it a read-only role. Clear to open the U7 PR.
