@@ -271,6 +271,25 @@ the app's own routes included), recomputed and written when different; plus a fu
 `scheduled_jobs.lastResult`. A failed run logs `alert: "completion-sync-failed"`; three in 15 minutes raise the
 `completion-sync-failing` alert (production).
 
+**Zoho on an Account Details change** (worker-zoho-sync U1). Whenever `persistCompletion` writes an
+`accountDetails` different from the stored one (false -> true or true -> false; a missing or non-`true` value counts
+as false), it queues the outbox event `WorkerAccountDetailsChanged` `{ workerProfileId }` in the same transaction: no
+event for a write that rolled back, none when only the other flags change. The handler
+(`modules/worker/outbox/account-details-webhook.ts`) reads the worker at send time and POSTs to
+`N8N_WORKER_PROFILE_WEBHOOK_URL`:
+
+```json
+{ "event": "WorkerAccountDetailsChanged", "eventId": "<uuid, the idempotency key>", "accountDetails": true,
+  "workerProfileId": "...", "userId": "...", "email": "...", "firstName": "...", "lastName": "...", "zohoLeadId": "12345 | null" }
+```
+
+`accountDetails` is the value **at send time** (a quick true -> false -> true sends the current state twice). The n8n
+workflow finds the Zoho record (by `zohoLeadId`, else `email`) and sets the status field. Delivery: seconds after a
+worker's own save, up to 5 minutes after a change `completion-sync` makes; the dispatcher retries with backoff for about
+an hour, a 4xx other than 408/429 is final (DEAD). `off` (staging by default) completes the event with a warning,
+nothing sent. **Caution:** the backfill and a `COMPLETION_MODEL` switch write through `persistCompletion` too, so every
+worker whose flag they flip is sent to n8n: check the dry run's count of `accountDetails` changes first.
+
 ## 5. The requirement groups
 
 `requirements.mandatory` = the IDENTITY/BUSINESS/COMPLIANCE documents linked to the worker's services,

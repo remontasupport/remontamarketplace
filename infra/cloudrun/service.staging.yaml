@@ -111,6 +111,11 @@ spec:
                 secretKeyRef:
                   name: remonta-api-staging-N8N_SERVICE_REQUEST_WEBHOOK_URL
                   key: latest
+            - name: N8N_WORKER_PROFILE_WEBHOOK_URL
+              valueFrom:
+                secretKeyRef:
+                  name: remonta-api-staging-N8N_WORKER_PROFILE_WEBHOOK_URL
+                  key: latest
             - name: API_TOKEN_SECRET
               valueFrom:
                 secretKeyRef:

@@ -62,6 +62,11 @@ const envSchema = z.object({
    * value of Vercel's Cancel_Archive_Webhook). `off` (staging, NFR-6: never the live webhook) means none is sent.
    */
   N8N_SERVICE_REQUEST_WEBHOOK_URL: z.union([z.literal('off').transform(() => undefined), httpsUrl]).optional(),
+  /**
+   * worker-zoho-sync U1 (FR-2): the n8n workflow told of a change of a worker's Account Details flag (it updates the
+   * worker's Zoho record). `off` (staging, never the live webhook) means none is sent.
+   */
+  N8N_WORKER_PROFILE_WEBHOOK_URL: z.union([z.literal('off').transform(() => undefined), httpsUrl]).optional(),
 
   /** Keys the IP hash stored with staged photos, so raw IPs are never stored. */
   IP_HASH_SECRET: z.string().min(32, 'missing or shorter than 32 characters'),
@@ -151,7 +156,7 @@ export function loadConfig(env: Record<string, string | undefined>): Config {
       'www.google.com', // reCAPTCHA siteverify
       'api.resend.com',
       'api.pwnedpasswords.com', // HIBP k-anonymity range API
-      ...[e.N8N_REGISTRATION_WEBHOOK_URL, e.N8N_SERVICE_REQUEST_WEBHOOK_URL].flatMap((u) => (u ? [new URL(u).hostname] : [])),
+      ...[e.N8N_REGISTRATION_WEBHOOK_URL, e.N8N_SERVICE_REQUEST_WEBHOOK_URL, e.N8N_WORKER_PROFILE_WEBHOOK_URL].flatMap((u) => (u ? [new URL(u).hostname] : [])),
     ].filter((h, i, all) => all.indexOf(h) === i),
   }
 }

@@ -1,15 +1,14 @@
 // admin-clients U1 (BR-8, D3): an admin's status change, told to the n8n workflow the client's own changes reach
 // (Vercel's Cancel_Archive_Webhook), so Zoho stays in step. The body mirrors what the client's routes send for the
 // same status, plus `changedBy: 'admin'`. Built from the rows as they are at send time: the outbox holds ids only.
-// Delivery is the dispatcher's (retries with backoff, then DEAD); a 4xx other than 408/429 will not improve on retry.
+// Delivery is the dispatcher's (retries with backoff, then DEAD); the POST and its failure split are postWebhook's.
 import type { FastifyBaseLogger } from 'fastify'
 import { PermanentFailure } from '../../../platform/errors'
 import type { SafeHttpClient } from '../../../platform/http/safe-http-client'
 import type { OutboxEvent, OutboxHandler } from '../../../platform/outbox/outbox'
+import { postWebhook } from '../../../platform/outbox/webhook'
 import type { Db, Prisma } from '../../../platform/persistence/db'
 import { serviceRequestStatusChangedPayload } from '../domain/events'
-
-const WEBHOOK_TIMEOUT_MS = 10_000
 
 const REQUEST_SELECT = {
   id: true,
@@ -73,17 +72,6 @@ export function serviceRequestWebhookHandler(deps: ServiceRequestWebhookDeps): O
     }
     const request = await deps.db.serviceRequest.findUnique({ where: { id: p.data.serviceRequestId }, select: REQUEST_SELECT })
     if (!request) throw new PermanentFailure(`service request ${p.data.serviceRequestId} no longer exists`)
-    const res = await deps.http.request({
-      method: 'POST',
-      url: deps.url,
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(webhookBodyOf(request)),
-      timeoutMs: WEBHOOK_TIMEOUT_MS,
-    })
-    if (res.ok) return
-    const e = res.error
-    const permanent = e.kind === 'blocked' || (e.kind === 'status' && e.status >= 400 && e.status < 500 && e.status !== 408 && e.status !== 429)
-    const reason = `service request webhook failed: ${e.kind}${e.kind === 'status' ? ` ${e.status}` : ''}`
-    throw permanent ? new PermanentFailure(reason) : new Error(reason)
+    await postWebhook(deps.http, deps.url, webhookBodyOf(request), 'service request')
   }
 }

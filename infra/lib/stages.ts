@@ -36,6 +36,8 @@ export const SECRET_NAMES = [
   'N8N_REGISTRATION_WEBHOOK_URL',
   // admin-clients U1: the n8n workflow told of an admin's service request status change; staging holds `off` (never the live webhook).
   'N8N_SERVICE_REQUEST_WEBHOOK_URL',
+  // worker-zoho-sync U1: the n8n workflow told of a worker's Account Details change (Zoho); staging holds `off` unless a test workflow.
+  'N8N_WORKER_PROFILE_WEBHOOK_URL',
   'API_TOKEN_SECRET',
   'API_TOKEN_SECRET_PREVIOUS',
 ] as const
