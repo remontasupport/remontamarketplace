@@ -6156,3 +6156,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-10):** "yes the city column is in the backup"
 
 **AI action (2026-11-10):** backup confirmed: the Neon branch `backup-before-u7-2026-11-10` of production holds `worker_profiles.city` (taken before the drop); keep it 30+ days (until at least 2026-12-10). U7 done and verified.
+
+**User input (2026-11-10):** "close the ai dlc now"
+
+**AI action (2026-11-10):** drop-legacy-location-columns (U7) closed. Archive `aidlc-docs/archive/drop-legacy-location-columns/` (README, inception moved, build-and-test summary, state at close); `aidlc-state.md` between cycles with no standing recommendation (U7 done: the PENDING note, follow-ups 1 and 39 marked done), new follow-ups 45 (n8n read-only role) and 46 (delete the backup branch after 2026-12-10). Rollback rows re-recorded on `docs/rollback-rows-2026-11-10-u7` (`beee9fa`, from `main` `1e4d74e`: api `00031-9h4` = `1e4d74e`, previous `00030-89z` = `167bc28`; the database does not roll back with the code); PR to open by the user.

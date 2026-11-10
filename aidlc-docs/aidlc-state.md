@@ -3,8 +3,8 @@
 ## Project Information
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
-- **Current Cycle**: none (between cycles; worker-zoho-sync closed 2026-11-10).
-- **Current Stage**: none. **Recommend U7 (`drop-columns-migration`) at the next AI-DLC start.**
+- **Current Cycle**: none (between cycles; drop-legacy-location-columns (U7) closed 2026-11-10).
+- **Current Stage**: none. No standing recommendation: pick from the follow-ups.
 
 ## Previous cycles (archived, read-only)
 
@@ -25,6 +25,7 @@
 | Search on worker_locations + the legacy location columns (U1 `search-api`, U2 `search-callers`, U3-U6, follow-up 43) | `aidlc-docs/archive/search-locations/` | Closed 2026-10-29; #147-#153 live (api prod `00028-bcq` = `6551489`, app/web `main` `2f8dcf1`); U3 placed 62 workers; **U7 (the DROP) pending** |
 | Admin completion filters (U1 `completion-filters-api`, U2 `completion-filters-app`) | `aidlc-docs/archive/admin-completion-filters/` | Closed 2026-11-09; #154-#156 live (api prod `00029-xw2` = `fc194e8`, app/web `main` `972ff6b`); U2 merged before U1's promotion, no failure |
 | Worker Zoho sync (U1 `account-details-webhook`, + the dispatcher fix) | `aidlc-docs/archive/worker-zoho-sync/` | Closed 2026-11-10; #157-#158 live (api prod `00030-89z` = `167bc28`; app/web code unchanged, rollback point `972ff6b`); verified by the user in n8n/Zoho |
+| Drop the legacy location columns (search-locations U7) | `aidlc-docs/archive/drop-legacy-location-columns/` | Closed 2026-11-10; #160 live (migration `20261110120000_drop_worker_profiles_legacy_location`, api prod `00031-9h4` = `1e4d74e`); n8n "Query workers" moved to worker_locations first; backup Neon branch `backup-before-u7-2026-11-10` |
 
 `aidlc-docs/audit.md` is the single append-only audit trail across cycles; never rewrite it.
 
@@ -86,7 +87,8 @@
 - **The production auth database** (`workerprofiles`, host `ep-delicate-recipe-a7mbt4ef`) carries the S1 migrations,
   PostGIS 3.5, `au_localities` (15,467), `worker_locations`, `worker_onboarding` + transitions, the outbox, rate-limit
   buckets and scheduled jobs. Since 2026-10-29 nothing reads or writes `worker_profiles.location/city/state/postalCode/latitude/longitude`;
-  they are out of the Prisma schema (U6) and still in the database until U7.
+  they left the Prisma schema in U6 and the database in U7 (2026-11-10, with their five indexes; old values only in the
+  Neon branch `backup-before-u7-2026-11-10`, keep until 2026-12-10). n8n reads this database as `neondb_owner` (follow-up 45).
 - **Secrets** `remonta-api[-staging]-<NAME>`, six per stage, in Secret Manager; add versions with
   `printf '%s' | gcloud secrets versions add --data-file=-` (no trailing newline: follow-up 15).
 - **Quality gates (2026-10-09):** schemas 63 tests; api-contract 49; api 368 unit (+143 database-gated, CI); app
@@ -99,14 +101,9 @@
 
 ## Follow-ups left open (candidates for the next cycle or housekeeping)
 
-> **PENDING, RECOMMEND AT EVERY AI-DLC START (user 2026-10-29): U7 `drop-columns-migration`** (plan: `archive/search-locations/construction/plans/drop-columns-schema-code-generation-plan.md` §U7). Not before 2026-10-30
-> (soak after U5/U6). Drops `worker_profiles.location, city, state, postalCode, latitude, longitude` and their five
-> indexes (`city`, `latitude+longitude`, `postalCode`, `state`, `isPublished+city`). Preconditions: U6 live in app and
-> api (yes, `remonta-api-00028-bcq` = `6551489`); a Neon branch of production taken just before (the only way back);
-> after it, api rollback only to `6551489` or later. Steps: migration in `packages/db` -> PR -> staging (migrate runs
-> there) -> checklist -> promotion (migrate runs on prod). Irreversible.
+> ~~U7 `drop-columns-migration`~~ **done 2026-11-10** (#160; archive `drop-legacy-location-columns`).
 
-1. **Search slice, remainder**: done 2026-10-29 (search-locations U1-U6) except the column drop = U7 above.
+1. ~~**Search slice, remainder**~~: done (search-locations U1-U6 2026-10-29; the column drop U7 2026-11-10).
 2. **CRM notification** (n8n -> Zoho) for sign-ups: an outbox handler.
 3. **Form engine wording**: a reCAPTCHA token failure reads "We couldn't reach Remonta…".
 4. **Rotate exposed credentials**: the production auth db role; the production Blob token; the Prisma Accelerate key;
@@ -171,8 +168,11 @@
 37. ~~**Edit on a cancelled request**~~: Edit shown on Pending and Matching only (`fix/edit-pending-matching-only`, 2026-10-28).
 41. **The activation switch** (user 2026-10-28): the public worker list no longer reads `isActivated` (every unsuspended worker is listed); the admin dashboard's switch (worker-activation) now changes nothing anyone sees. Remove it, or give it a new meaning.
 40. **The admin and worker api clients' token loop** (search-locations U2): `apps/app/src/lib/api/admin.ts` and `features/worker/api.ts` still carry their own copy of the loop `lib/api/call.ts` now holds; move them onto it (with their cache modes and abort signals) in a refactor with its own tests.
-39. **Legacy location columns**: done in search-locations (U3-U6, 2026-10-29) except the DROP = U7 (pending, top of this list).
+39. ~~**Legacy location columns**~~: done (U3-U6 2026-10-29, the DROP U7 2026-11-10).
 38. **The n8n Cancel/Archive webhook URL** was shown in a session transcript (2026-10-28): rotate if that matters.
+45. **n8n's database role**: the n8n credential "Postgres account" reaches the production auth database as `neondb_owner`;
+    give it a read-only role limited to the tables its workflows read (today: "Query workers").
+46. **Neon backup branch** `backup-before-u7-2026-11-10`: delete after 2026-12-10 if no old value was needed.
 44. **Zoho sync, leftovers** (worker-zoho-sync): workers already complete before 2026-11-10 were never sent (a dry-run-first
     one-off send if wanted); the n8n worker-profile webhook URL appeared in the session (2026-11-10): change its path in n8n
     and add a secret version if that matters; before any backfill or `COMPLETION_MODEL` switch, count the `accountDetails`
