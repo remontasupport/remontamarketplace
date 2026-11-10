@@ -128,10 +128,17 @@ describe.skipIf(!local)('on PostGIS', () => {
       expect(await d.runOnce()).toBe(0) // DEAD is final
     })
 
-    it('an event type with no handler goes straight to DEAD', async () => {
+    it('an event type with no handler is left PENDING for a dispatcher that has one (a rollout overlap, 2026-11-10)', async () => {
       const id = await unitOfWork(db, (tx) => enqueue(tx, { type: 'test.unknown', payload: {} }))
-      await new OutboxDispatcher(db, new Map(), log).runOnce()
-      expect(await db.outboxEvent.findUniqueOrThrow({ where: { id } })).toMatchObject({ status: 'DEAD', attempts: 1 })
+      // The old revision: no handler for the type (and one with no handlers at all) claims nothing.
+      expect(await new OutboxDispatcher(db, new Map<string, OutboxHandler>([['test.other', async () => {}]]), log).runOnce()).toBe(0)
+      expect(await new OutboxDispatcher(db, new Map(), log).runOnce()).toBe(0)
+      expect(await db.outboxEvent.findUniqueOrThrow({ where: { id } })).toMatchObject({ status: 'PENDING', attempts: 0 })
+      // The new revision picks it up.
+      const seen: string[] = []
+      await new OutboxDispatcher(db, new Map<string, OutboxHandler>([['test.unknown', async (e) => void seen.push(e.id)]]), log).runOnce()
+      expect(seen).toEqual([id])
+      expect(await db.outboxEvent.findUniqueOrThrow({ where: { id } })).toMatchObject({ status: 'DONE', attempts: 1 })
     })
 
     it('a timed-out handler is a failure, retried later', async () => {
