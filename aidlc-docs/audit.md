@@ -6076,3 +6076,15 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-10):** "approved"
 
 **AI action (2026-11-10):** CONSTRUCTION U1 `account-details-webhook` on `feat/account-details-webhook` from `main` `972ff6b` (1 commit, 16 files, +278/-18), pushed. `persistCompletion` queues `WorkerAccountDetailsChanged` `{ workerProfileId }` in the writer's transaction when `accountDetails` changes either way (`accountDetailsChanged`); handler `modules/worker/outbox/account-details-webhook.ts` reads the worker at send time and POSTs `{ event, eventId, accountDetails, workerProfileId, userId, email, firstName, lastName, zohoLeadId }` to `N8N_WORKER_PROFILE_WEBHOOK_URL` (`off` = nothing sent). The POST and its permanent/retry split moved to `platform/outbox/webhook.ts`, now shared with the service request handler (CS: the copy removed, not duplicated). Deviation from the requirements: `changedAt` replaced by `eventId` (the idempotency key; the outbox row has no change time to give). Secret `N8N_WORKER_PROFILE_WEBHOOK_URL` added to `infra/lib/stages.ts` (render: both YAMLs), bootstrap, infra README; docs/worker/README.md §4 (body, timing, caution: a backfill or COMPLETION_MODEL switch sends every flipped worker). Gates: api quality 1166 passed / 253 skipped (DB tests skip locally: Docker down; the new database test runs in CI); infra 43 passed. Before merging: both secrets must exist with a version and the runtime accessor binding, or the staging deploy fails (by design). gcloud needs `gcloud auth login`.
+
+**User input (2026-11-10):** "where is the env located?"
+
+**AI action (2026-11-10):** answered: staging/prod values in Secret Manager (`remonta-api[-staging]-N8N_WORKER_PROFILE_WEBHOOK_URL`, not yet created); `apps/api/.env` is local only and needs nothing. Added commit `0d4ed79` on `feat/account-details-webhook`: `scripts/local/run-api.sh` forces the webhook `off`; `apps/api/.env.example` lists it as `off`.
+
+**User input (2026-11-10):** "change of design. Can I listen directly from Neon? Like either if I manually change the status in Neon database dashboard or in the app, the webhook will be trigger both"
+
+**AI action (2026-11-10):** answered: possible with a Postgres trigger on `worker_profiles` inserting the outbox event (catches every writer, Neon console included); LISTEN/NOTIFY and CDC not recommended (lossy / a new service). Caveat: a manual `accountDetails` edit the worker's rows do not support is recomputed back by `completion-sync` (daily full pass), sending a second event. Asked whether to switch.
+
+**User input (2026-11-10):** "ahh, ok. Do not switch"
+
+**AI action (2026-11-10):** design kept (the event from `persistCompletion`, U1 as built). Next: the user adds the two secrets, then the PR.
