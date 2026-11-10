@@ -75,7 +75,8 @@ Email look-ups use the index `users_lower_email_idx` on `lower(email)`.
 
 The legacy location columns (`location`, `city`, `state`, `postalCode`, `latitude`, `longitude`) are not
 written or read (search-locations, 2026-10-29): where the worker is lives in `worker_locations` (§2.4) only.
-They left the Prisma schema in U6; the database still holds them until the U7 migration drops them.
+They left the Prisma schema in U6 and the database in U7 (migration `20261110120000_drop_worker_profiles_legacy_location`,
+2026-11-10, with their five indexes); a Neon branch taken before it holds the last values.
 
 ### 2.3 `worker_services` — one row per chosen service
 
