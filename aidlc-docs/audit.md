@@ -6106,3 +6106,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-10):** "I tested again, but the webhook isnt triggered, note that the method in n8n webhook is POST, is it correct?"
 
 **AI action (2026-11-10):** POST confirmed correct. Staging logs (revision `00077-c57`): 01:19:10Z removePhoto, 01:20:12Z confirmPhoto, 01:20:43Z removePhoto, each followed within ~1 s by "worker profile webhook off: nothing sent" (one event per change, both directions; `off` by design). PR #158 merged (`main` `167bc28`); staging `remonta-api-staging-00078-q4g` = `167bc28`, no ERROR or outbox failure entries since 01:21Z. Offered: promote `167bc288da94aa91ea435d2ed7c2c28630e000cb` (A) or point staging at the n8n Test URL first (B).
+
+**User input (2026-11-10):** "Perfect. It works now!"
+
+**AI action (2026-11-10):** verified: production `remonta-api-00030-89z` 100 % = image `167bc288da94aa91ea435d2ed7c2c28630e000cb` (#157 + #158; previous `00029-xw2` = `fc194e8`). Production logs since 01:00Z: no ERROR, no "outbox event is DEAD", no retry warnings; saves on `00030` from 01:30:55Z (confirmPhoto, removePhoto) with no failure (a successful send logs nothing; the user confirmed the n8n/Zoho side). No event lost in the 00029 -> 00030 overlap. Rollback: api `fc194e8...` (`00029-xw2`); events queued meanwhile stay PENDING on it (it has no handler and lacks the claim filter: it would DEAD them -- requeue after rolling forward). App unchanged (`main` app code untouched by #157/#158).
