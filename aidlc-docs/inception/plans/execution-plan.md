@@ -50,6 +50,5 @@ empty page calling a missing endpoint, so U2 waits for the promotion (follow-up 
 
 ## Open (to settle in U1 Functional Design)
 
-- O2 Worker wording: a line in the worker's delete confirmation ("Remonta keeps a copy for compliance records")?
-- O3 If a worker profile is ever deleted (no code path does today; the FK cascades from users), do its versions go too
-  (cascade) or stay (block the delete)?
+- O2 Worker wording: none (user 2026-11-11: "no delete confirmation" -- the worker sees no new text).
+- O3 Profile deleted: versions go with it (user 2026-11-11): FK `onDelete: Cascade`, the files left to a later clean-up.
