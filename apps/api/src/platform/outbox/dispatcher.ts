@@ -7,6 +7,10 @@
 // SKIP LOCKED makes concurrent dispatchers pass over rows being claimed instead of
 // waiting on them (throughput, not correctness). Each claimed event runs with a timeout; success -> DONE, failure ->
 // PENDING with exponential back-off, and after MAX_ATTEMPTS -> DEAD plus an alert log.
+//
+// A dispatcher claims only the event types it has a handler for (2026-11-10): during a rollout the old revision
+// still runs, and an event a newer revision's code produced (a type the old one does not know) must wait for the
+// new revision, not go DEAD there. The same holds after a rollback. An event no revision handles stays PENDING.
 import type { FastifyBaseLogger } from 'fastify'
 import type { Db } from '../persistence/db'
 import { PermanentFailure } from '../errors'
@@ -65,12 +69,15 @@ export class OutboxDispatcher {
   private async claim(): Promise<OutboxEvent[]> {
     const now = this.now()
     const lease = new Date(now.getTime() + this.timeoutMs + 30_000)
+    const types = [...this.handlers.keys()]
+    if (types.length === 0) return []
     return this.db.$queryRaw<OutboxEvent[]>`
       UPDATE outbox_events SET status = 'PROCESSING', "lockedUntil" = ${lease}, attempts = attempts + 1
        WHERE id IN (
          SELECT id FROM outbox_events
-          WHERE (status = 'PENDING' AND "nextAttemptAt" <= ${now})
-             OR (status = 'PROCESSING' AND "lockedUntil" < ${now})
+          WHERE type = ANY(${types}::text[])
+            AND ((status = 'PENDING' AND "nextAttemptAt" <= ${now})
+              OR (status = 'PROCESSING' AND "lockedUntil" < ${now}))
           ORDER BY "nextAttemptAt"
           LIMIT ${this.batchSize}
           FOR UPDATE SKIP LOCKED)
