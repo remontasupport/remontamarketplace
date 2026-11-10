@@ -6060,3 +6060,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-09):** "close the ai dlc now"
 
 **AI action (2026-11-09):** admin-completion-filters closed. Archive `aidlc-docs/archive/admin-completion-filters/` (README, requirements, execution plan, build-and-test summary, state at close); `aidlc-state.md` between cycles (table row, what is live, follow-up 32 noted again), U7 still recommended at the next start. Rollback rows re-recorded on `docs/rollback-rows-2026-11-09` (`64a8625`, from `main` `972ff6b`; app build `remonta-gvwvzdldn`, web `remontamarketplace-3onb5g8pl`, api `00029-xw2` = `fc194e8`), supersedes `docs/rollback-rows-2026-10-29`; PR to open by the user.
+
+**User input (2026-11-10):** "start ai dlc"
+
+**AI action (2026-11-10):** new AI-DLC start. By refs: `main` = `972ff6b` (unchanged since the admin-completion-filters close); the record branch `aidlc/admin-completion-filters` = `5b20722` is the newest. State: between cycles. Recommended U7 `drop-columns-migration` first (standing instruction of 2026-10-29), with the alternatives from the open follow-ups; noted the rollback-rows docs PR `docs/rollback-rows-2026-11-09` (`64a8625`) is still unmerged and `apps/api/scripts/_admin-clients-local-check.ts` is untracked on the main checkout (origin unknown). Awaiting the user's choice of cycle.
