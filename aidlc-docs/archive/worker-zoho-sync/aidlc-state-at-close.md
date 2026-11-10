@@ -1,0 +1,202 @@
+# AI-DLC State Tracking
+
+## Project Information
+- **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
+- **Project Type**: Brownfield
+- **Current Cycle**: none (between cycles; worker-zoho-sync closed 2026-11-10).
+- **Current Stage**: none. **Recommend U7 (`drop-columns-migration`) at the next AI-DLC start.**
+
+## Previous cycles (archived, read-only)
+
+| Cycle | Archive | Outcome |
+|---|---|---|
+| Monorepo migration (U1-U8) | `aidlc-docs/archive/monorepo-migration/` | `apps/app`, `apps/web`, `packages/*` on pnpm + Turborepo; live |
+| Slice 1 -- worker registration on `apps/api` | `aidlc-docs/archive/s1-worker-registration/` | Live in production since 2026-10-02 10:20Z |
+| Sign-up draft + reCAPTCHA badge (2 units) | `aidlc-docs/archive/signup-draft-and-recaptcha-badge/` | PR #30 and PR #32 merged 2026-10-02; verified live |
+| Legacy sign-up removal (cut-over clean-up) | `aidlc-docs/archive/legacy-signup-removal/` | PR #34 merged 2026-10-02 (`a30946e`); verified live; Upstash switch key deleted |
+| Sign-up photo on Google Cloud Storage (U1 `alert-policy`, U3 `photo-gcs`) | `aidlc-docs/archive/signup-photo-gcs/` | PRs #36-#39 merged and verified live 2026-10-05; api revision `remonta-api-00005-j74` |
+| Admin worker search on `apps/api` (U1 `api-identity`, U2 `admin-search`, + experience sub-areas) | `aidlc-docs/archive/admin-search-api/` | PRs #41-#47 merged 2026-10-08/09; api image `024596f` on prod (dispatch 2026-10-09 02:41Z); the app on `main` `48a8a7e`; verified live by the user |
+| Worker profile on `apps/api` (U1 `worker-area`, U2 `edit-profile` in part) | `aidlc-docs/archive/worker-profile-api/` | **Parked 2026-10-14** with work open (`PARKED.md`); U1 live 2026-10-12, U2 PR 2 live; PR #57 held |
+| API review: the worker dashboard on `apps/api` (U3-U5, the State filter) | `aidlc-docs/archive/api-review/` | **Parked 2026-10-21** (`PARKED.md`); api #61-#85 live (prod `b8fe2eb`, 2026-10-19); the State filter live (#86); `feat/account-app` held |
+| Onboarding tour + profile completion (U1 `tour-seen-api`, U2 `tour-app`, C1 `completion-api`; H1/H2) | `aidlc-docs/archive/onboarding-tour/` | Closed 2026-10-22; #88-#103 live (api prod `00014-wdv` = `9fdcf6d`, app `main` `62e24f9`); C2 not built (follow-up 27) |
+| Worker tools (U1 `tools-api`, U2 `tools-app`, the tool search) | `aidlc-docs/archive/worker-tools/` | Closed 2026-10-22; #104-#107 live (api prod `bf9b966`, app `main` `8943f93`) |
+| Worker activation (U1 `activation-api`, U2 `activation-app`) | `aidlc-docs/archive/worker-activation/` | Closed 2026-10-28; #108-#109 live 2026-10-23 (api `00017-4bz` = `746a60d`, app `main` `8b8a82d`); #110-#131 outside the cycle, api prod `90fdadb` |
+| Admin clients and coordinators (U1 `clients-api`, U2 `clients-app`, follow-ups) | `aidlc-docs/archive/admin-clients/` | Closed 2026-10-28; #132-#142 live (api prod `00024-fpj` = `979543a`, app `main` `baf44fb`); #143/#144 (Matching editable, Renew restored) outside the goal |
+| Search on worker_locations + the legacy location columns (U1 `search-api`, U2 `search-callers`, U3-U6, follow-up 43) | `aidlc-docs/archive/search-locations/` | Closed 2026-10-29; #147-#153 live (api prod `00028-bcq` = `6551489`, app/web `main` `2f8dcf1`); U3 placed 62 workers; **U7 (the DROP) pending** |
+| Admin completion filters (U1 `completion-filters-api`, U2 `completion-filters-app`) | `aidlc-docs/archive/admin-completion-filters/` | Closed 2026-11-09; #154-#156 live (api prod `00029-xw2` = `fc194e8`, app/web `main` `972ff6b`); U2 merged before U1's promotion, no failure |
+| Worker Zoho sync (U1 `account-details-webhook`, + the dispatcher fix) | `aidlc-docs/archive/worker-zoho-sync/` | Closed 2026-11-10; #157-#158 live (api prod `00030-89z` = `167bc28`; app/web code unchanged, rollback point `972ff6b`); verified by the user in n8n/Zoho |
+
+`aidlc-docs/audit.md` is the single append-only audit trail across cycles; never rewrite it.
+
+## What is live (carry forward -- facts the next cycle builds on)
+
+- **Zoho on an Account Details change** (2026-11-10): `persistCompletion` queues `WorkerAccountDetailsChanged` when
+  `setupProgress.accountDetails` changes (either way); the handler posts the worker's identifiers and current flag to
+  `N8N_WORKER_PROFILE_WEBHOOK_URL` (prod: the user's n8n workflow, which updates Zoho; staging `off`). Seconds after a
+  worker's save, up to 5 min after a `completion-sync` change. Manual Neon edits send nothing. The outbox dispatcher
+  claims only the event types it handles (#158): an event no revision handles stays PENDING. Docs: `docs/worker/README.md` §4.
+- **Admin completion filters** (2026-11-09): `GET /v1/admin/workers` takes `accountDetails`, `compliance`, `trainings`,
+  `services` = `complete`/`incomplete` (ANDed on `worker_profiles."setupProgress"`) and `withCompletion` (the row's four
+  flags). The app: one "Profile completion" dropdown ("Profile Creation" = `accountDetails` on the admin side), card
+  badges, the flags in the Contractors CSV; "Download results (N)" on the three lists. The flags are written by
+  `persistCompletion` and the `completion-sync` job (`COMPLETION_MODEL=legacy` = the worker's checklist).
+- **Admin clients and coordinators** (2026-10-28): `GET /v1/admin/requesters` (role, search, requestStatus, fundingType,
+  participants), `GET /v1/admin/requesters/:id` (audited per view), `PATCH` a request's status (audited; outbox
+  `ServiceRequestStatusChanged` posts Cancel / Archive / Edit with `changedBy: 'admin'` to `N8N_SERVICE_REQUEST_WEBHOOK_URL`,
+  staging `off`). The app's Clients / Support Coordinators tabs (`features/admin-clients`), MATCHED not offered. CSV
+  download on those tabs and the Contractors tab from one module (`features/admin-export`, `lib/api/allPages`). The
+  client's PATCH edits PENDING and MATCHING only and archives COMPLETED and CANCELLED only (`EDITABLE_STATUSES`,
+  `ARCHIVABLE_STATUSES` in `features/service-requests/status.ts`, the page's buttons follow them); manage-request offers
+  Renew on a cancelled request.
+- **Worker tools** (2026-10-22): `packages/schemas/src/data/serviceTools.ts` (the lists, `TOOL_SYNONYMS`, `toolSearchOf`)
+  is the one source for the page and the api; `worker_services."toolIds"`/`"otherTools"`; the worker's "Your tools"
+  screen (Cleaning, Home and Yard), the admin `tools` (all of) and `toolSearch` filters, `GET /v1/admin/workers/:id/services`.
+  Not in completion; clients never see tools. **Vercel regenerates the app's Prisma client from `packages/db` at build**:
+  a new column is known to the app from the merge, before production's database has it (keep app queries on explicit
+  `select`). Production api `bf9b966`.
+- **The worker sign-up has one backend: `apps/api`** (NestJS 11 on Fastify 5, Cloud Run `remonta-api`,
+  `australia-southeast1`, project `remonta-api-510206`, URL `remonta-api-154148201608.australia-southeast1.run.app`).
+  The app finds it through `NEXT_PUBLIC_API_URL` + `NEXT_PUBLIC_RECAPTCHA_SITE_KEY`; with either missing the sign-up
+  page shows "Sign-up is temporarily unavailable". Rollback of an app change = Vercel promote; of the api = its
+  previous revision/image. The sign-up photo goes straight to a private Cloud Storage bucket by signed POST ticket,
+  then the outbox handler writes the clean copy and thumbnail to Vercel Blob (`docs/signup/`).
+- **The admin dashboard's lists read `apps/api`** (2026-10-08): `GET /v1/admin/workers` (one statement on
+  `worker_profiles` + `users` + `worker_locations` HOME + `au_localities` + `worker_additional_info`, with
+  `worker_services` and `worker_experience` per filter; PostGIS `ST_DWithin` for the radius; 120/min per admin),
+  `/v1/admin/users`, `/v1/admin/workers/suspended`; a bearer JWT the app mints at `GET /api/auth/api-token`
+  (`API_TOKEN_SECRET` per stage, Vercel scope <-> Secret Manager); private caching 60 s + ETag; the api's response
+  memo. The old Next.js admin routes are gone; `/api/admin/contractors/[id]` and `.../status` remain. Reference:
+  `docs/admin/README.md`.
+- **Experience sub-areas** (2026-10-09): the five care domains and their 39 specific areas live once in
+  `packages/schemas/src/data/experienceAreas.ts`; the edit-profile page offers them, `worker_experience.specificAreas`
+  stores them as labels, and the search takes `experienceAreas` (`DOMAIN:Area` pairs, any-of within a domain, all-of
+  across; a pair needs its domain in `experienceWith`). Checked on the staging copy: 38 distinct stored values, all in
+  the list. `otherAreas` is not read.
+- **Unplaced workers** (until 2026-10-29; now 8: 4 empty, 4 overseas, after U3 placed 62): 69 active workers had no HOME row (the S1 backfill's no-guess leftovers: city names such as
+  Sydney, Melbourne, Hervey Bay, Gold Coast with a suburb's postcode; misspelt suburbs; street addresses without a
+  suburb; four empty, four overseas). Since U5 the reconciler places nobody; a worker places themselves by saving a
+  suburb, or an admin adds a HOME row with `source = 'ADMIN'` (the U3 script's way, 2026-10-29). "Hervey Bay" is not a locality: 24 suburbs on 4655.
+- **Staging** `remonta-api-staging` deploys from every merge to `main` touching the api path (`rehearse-w1` Neon copy,
+  host `ep-wandering-shadow`); production moves only by `workflow_dispatch` promotion of an image already built.
+  Vercel Preview points at staging. `scripts/local/run-api.sh` + `run-app.sh` run the new code on a developer machine
+  against that copy (`REHEARSAL_DATABASE_URL` in `apps/api/.env`). **Still to remove by hand:** `REGISTRATION_BACKEND`
+  in Vercel's Preview scope.
+- **This machine (2026-10-09):** WSL answers "Class not registered", so Docker Desktop's Linux engine is down and the
+  database-gated tests skip locally; CI's API Quality job is the proof. `gcloud` needs a re-login for secrets.
+- **The production auth database** (`workerprofiles`, host `ep-delicate-recipe-a7mbt4ef`) carries the S1 migrations,
+  PostGIS 3.5, `au_localities` (15,467), `worker_locations`, `worker_onboarding` + transitions, the outbox, rate-limit
+  buckets and scheduled jobs. Since 2026-10-29 nothing reads or writes `worker_profiles.location/city/state/postalCode/latitude/longitude`;
+  they are out of the Prisma schema (U6) and still in the database until U7.
+- **Secrets** `remonta-api[-staging]-<NAME>`, six per stage, in Secret Manager; add versions with
+  `printf '%s' | gcloud secrets versions add --data-file=-` (no trailing newline: follow-up 15).
+- **Quality gates (2026-10-09):** schemas 63 tests; api-contract 49; api 368 unit (+143 database-gated, CI); app
+  142 type / 471 lint known / 119 tests; form-engine 58; infra 37. CodeQL and Semgrep on every PR.
+- **Rollback deployments** re-recorded in CLAUDE.md on 2026-10-09 (the deployment pages of the `main` `48a8a7e` builds).
+- **Driving minutes on the worker card** (PR #49 `e8889fa`, merged to `main` `c51d430` on 2026-10-09, outside a cycle):
+  the admin search card reads "about N min drive from the suburb centre", estimated in the app from the straight-line km
+  the api returns (`apps/app/src/features/admin-search/travel.ts`); the sort is unchanged. Its production verification
+  is not recorded in the audit; CLAUDE.md's rollback rows still name the `48a8a7e` builds.
+
+## Follow-ups left open (candidates for the next cycle or housekeeping)
+
+> **PENDING, RECOMMEND AT EVERY AI-DLC START (user 2026-10-29): U7 `drop-columns-migration`** (plan: `archive/search-locations/construction/plans/drop-columns-schema-code-generation-plan.md` §U7). Not before 2026-10-30
+> (soak after U5/U6). Drops `worker_profiles.location, city, state, postalCode, latitude, longitude` and their five
+> indexes (`city`, `latitude+longitude`, `postalCode`, `state`, `isPublished+city`). Preconditions: U6 live in app and
+> api (yes, `remonta-api-00028-bcq` = `6551489`); a Neon branch of production taken just before (the only way back);
+> after it, api rollback only to `6551489` or later. Steps: migration in `packages/db` -> PR -> staging (migrate runs
+> there) -> checklist -> promotion (migrate runs on prod). Irreversible.
+
+1. **Search slice, remainder**: done 2026-10-29 (search-locations U1-U6) except the column drop = U7 above.
+2. **CRM notification** (n8n -> Zoho) for sign-ups: an outbox handler.
+3. **Form engine wording**: a reCAPTCHA token failure reads "We couldn't reach Remonta…".
+4. **Rotate exposed credentials**: the production auth db role; the production Blob token; the Prisma Accelerate key;
+   the `rehearse-w1` role password. Then Vercel and the local env files.
+5. **Repository visibility**: the GitHub repository is public; confirm intended.
+6. **Generated Prisma clients**: settle the local-vs-committed difference; decide whether `src/generated/` stays in git.
+7. **Stale exports and docs**: `contractorFormSchema.ts`, the stale `UserRole` type, `apps/app/docs/*.md`.
+8. Smaller: SERVICE_OPTIONS stale vs the catalogue; two duplicate `users.email` indexes; the other hand-built forms
+   onto the form engine; admin users search `contains`; the 10 codes/h per IP decision; the production test accounts
+   of 2026-10-02 and 2026-10-05; stale branches (`aidlc/*`, `feat/*` merged, `app/main`); tighten the app lint baseline.
+9. **Observations**: the `latency-p95` policy (no email expected without 60+ requests in 5 min); a week of Cloud
+   Logging on the photo entries (by 2026-10-12).
+10. **Photo-era leftovers**: multipart-era unclaimed rows skipped by the purge; the test sign-up of 2026-10-05.
+11. **Dashboard uploads** (`/api/upload/worker-photo`): the ticket/confirm pattern later; out of scope by decision.
+12. **MFA for admin accounts** (SECURITY-12): the identity slice.
+13. **Profile column normalisation**: `gender`, `hasVehicle`, `dateOfBirth`, the worker type out of the `abn` JSON, one
+    language list.
+14. **A document-filter screen for the admin search** (category, status, type on one `verification_requirements` row).
+15. **Secret versions without a trailing newline**: say so in `infra/README.md`'s rotation runbook and the bootstrap.
+16. **The checklist runner and the paced replay** as the standard post-deploy check for the admin entries.
+17. **Unplaced workers (69)**: an admin set-suburb control (a contract entry + handler writing a HOME row with
+    `source = 'ADMIN'` and the legacy columns + a picker on the worker's admin page); and city-name help in the suburb
+    autocomplete (Hervey Bay, Gold Coast, Sunshine Coast, Toowoomba have no locality row: offer their suburbs).
+    Recommended as the next cycle.
+18. **Experience sub-areas, options**: (the profile page's limit of 3 went on 2026-10-13, PR #59) also match `otherAreas` (a toggle); show the matched areas on the result row;
+    the profile page's 3-per-domain limit hides a fourth condition from the search.
+19. **This machine**: repair WSL (`wsl --install` as admin, reboot) so the local PostGIS and the database-gated tests
+    run again; re-login `gcloud`.
+20. **The local client-side error** (2026-10-09, the local app against the staging copy): not reproduced on the preview
+    or production; if it returns, the browser console's first line is the lead.
+
+21. **Admin contractor page reads legacy columns** (found 2026-10-13): `/api/admin/contractors/[id]` and its page show
+    `worker_profiles.languages` / `hobbies` / `uniqueService`; the worker pages (old and new) write
+    `worker_additional_info`, so the admin view can be stale. Read the additional-info row (as the api's read does).
+22. **The services setup page's Next saves nothing** (verified 2026-10-13): it sends `update-step` `step: 100 + n` with
+    `{qualificationsByService, nursingRegistration}`; the route writes nothing for those steps (101 needs `services`,
+    102 `selectedQualifications`, 103+ default) and answers "Step N saved successfully". Check on the preview whether
+    the ticked qualifications survive a reload (they may be derived from the uploaded documents).
+23. **`verification_requirements` has no unique (workerProfileId, requirementType)**: the find-then-create upserts of
+    the compliance and service-document uploads can race into duplicates (subagent finding, to verify).
+24. **Two service-document upload paths** (`uploadServiceDocument` and `POST /api/upload/service-documents`) with
+    different `requirementType` keys, Blob paths and fields; some deletes (`identity-documents`, the service-document
+    ones) leave the Blob file (subagent finding, to verify).
+25. **Account**: the password change asks no current password and invalidates no session server-side; the email change
+    does not lower-case and needs no re-verification (subagent finding, to verify; SECURITY baseline).
+26. **No test covers the `apps/app` writes** of Services, Compliance and Account, and CI (app) has no database: see the
+    open question in Current Stage.
+
+27. **C2 `completion-app`** (onboarding-tour's last unit): Functional Design first; then `COMPLETION_MODEL` to `groups` + the backfill.
+28. **H3 published-only search** (local `fix/h3-published-workers-only-v2`, 1 ahead / 7 behind `main`): a product decision, 1 of 1,765 workers published.
+29. **Rotate the Zoho OAuth secret** committed in the deleted `apps/app/docs/Zoho_Jobs_To_DB.md` (in git history).
+30. **Production 403 on `GET /v1/worker/profile`** for one non-WORKER account (`cmj85z8m60000vxr002l9hqqo`, 2026-10-21 07:15Z, 08:22Z): role or impersonation; fix access or the message.
+31. **`test/my-profile-columns`** (24 database tests): bring up to date and merge. Also tighten the app lint baseline (H1 removed one finding).
+32. **Merge order guard**: #105 merged before its api was promoted; again #156 before #154's promotion (2026-11-09, no failure). Consider a required check or a PR-template line for
+    app PRs that call a not-yet-promoted api entry.
+33. **Tools, options**: show matched tools on the admin result cards (Q2 B); tools on the client/shared profile; tools
+    for other services; review the synonym list after real use (the own tools workers type).
+34. ~~**gcloud re-login**~~ done (2026-10-28: revision names read at the admin-clients close).
+35. ~~**Zoho for an admin status change**~~ confirmed by the user (2026-10-28). Was: change one request in production, then check n8n's execution and the Zoho record; if
+    Cancel/Archive work but other statuses do not, the n8n workflow must map `status` on `Edit` (a workflow change).
+36. ~~**n8n `Renew`**~~ (#144): confirmed by the user (2026-10-28).
+37. ~~**Edit on a cancelled request**~~: Edit shown on Pending and Matching only (`fix/edit-pending-matching-only`, 2026-10-28).
+41. **The activation switch** (user 2026-10-28): the public worker list no longer reads `isActivated` (every unsuspended worker is listed); the admin dashboard's switch (worker-activation) now changes nothing anyone sees. Remove it, or give it a new meaning.
+40. **The admin and worker api clients' token loop** (search-locations U2): `apps/app/src/lib/api/admin.ts` and `features/worker/api.ts` still carry their own copy of the loop `lib/api/call.ts` now holds; move them onto it (with their cache modes and abort signals) in a refactor with its own tests.
+39. **Legacy location columns**: done in search-locations (U3-U6, 2026-10-29) except the DROP = U7 (pending, top of this list).
+38. **The n8n Cancel/Archive webhook URL** was shown in a session transcript (2026-10-28): rotate if that matters.
+44. **Zoho sync, leftovers** (worker-zoho-sync): workers already complete before 2026-11-10 were never sent (a dry-run-first
+    one-off send if wanted); the n8n worker-profile webhook URL appeared in the session (2026-11-10): change its path in n8n
+    and add a secret version if that matters; before any backfill or `COMPLETION_MODEL` switch, count the `accountDetails`
+    flips (each is sent to Zoho); a stale-PENDING alert for outbox events no revision handles (none today).
+
+## Workspace State
+- **Existing Code**: Yes
+- **Programming Languages**: TypeScript
+- **Build System**: pnpm workspaces + Turborepo
+- **Project Structure**: Monorepo -- `apps/app` (Next.js application), `apps/web` (Next.js marketing site),
+  `apps/api` (NestJS + Fastify on Cloud Run), `packages/{config,schemas,api-contract,form-engine,db}`, `infra/`
+- **Workspace Root**: `C:\Users\floil\OneDrive\Documents\Projects\Remonta\remontamarketplace`
+- **Reverse Engineering**: the admin-search archive's `inception/reverse-engineering/` (2026-10-08) is the latest
+  whole-repo view; the targeted inventories (`admin-search-inventory.md`, the photo inventory) map their areas. A new
+  cycle on another area starts with a targeted inventory of that area.
+
+## Code Location Rules
+- **Application Code**: Workspace root (NEVER in aidlc-docs/)
+- **Documentation**: aidlc-docs/ only
+- **Structure patterns**: CLAUDE.md "Dynamic by default" (contract entries + handlers; form definitions)
+
+## Extension Configuration (carried from worker-activation; admin-clients kept the same)
+| Extension | Enabled | Decided At |
+|---|---|---|
+| Security Baseline | Yes, blocking | worker-activation, Requirements Analysis 2026-10-23 (Security A) |
+| Resiliency Baseline | Yes; SLA 99.9 %, RTO ≤ 30 min, RPO ≤ 5 min, single region (carried) | worker-activation, 2026-10-23 (Resiliency A) |
+| Property-Based Testing | Yes, full | worker-activation, 2026-10-23 (PBT A) |

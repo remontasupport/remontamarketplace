@@ -6110,3 +6110,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-10):** "Perfect. It works now!"
 
 **AI action (2026-11-10):** verified: production `remonta-api-00030-89z` 100 % = image `167bc288da94aa91ea435d2ed7c2c28630e000cb` (#157 + #158; previous `00029-xw2` = `fc194e8`). Production logs since 01:00Z: no ERROR, no "outbox event is DEAD", no retry warnings; saves on `00030` from 01:30:55Z (confirmPhoto, removePhoto) with no failure (a successful send logs nothing; the user confirmed the n8n/Zoho side). No event lost in the 00029 -> 00030 overlap. Rollback: api `fc194e8...` (`00029-xw2`); events queued meanwhile stay PENDING on it (it has no handler and lacks the claim filter: it would DEAD them -- requeue after rolling forward). App unchanged (`main` app code untouched by #157/#158).
+
+**User input (2026-11-10):** "close the ai dlc now"
+
+**AI action (2026-11-10):** worker-zoho-sync closed. Archive `aidlc-docs/archive/worker-zoho-sync/` (README, inception moved from `aidlc-docs/inception/`, build-and-test summary with deviations and known limits, state at close); `aidlc-state.md` between cycles (table row, what is live, follow-up 44), U7 still recommended at the next start. Rollback rows re-recorded on `docs/rollback-rows-2026-11-10` (`ea857fa`, from `main` `167bc28`: api `00030-89z` = `167bc28`, previous `00029-xw2` = `fc194e8` with the DEAD caveat; app/web rows the `972ff6b` builds, #157/#158 changed no app or web code); supersedes `docs/rollback-rows-2026-11-09` (never merged). PR to open by the user.

@@ -3,7 +3,7 @@
 ## Project Information
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
-- **Current Cycle**: none (between cycles; admin-completion-filters closed 2026-11-09).
+- **Current Cycle**: none (between cycles; worker-zoho-sync closed 2026-11-10).
 - **Current Stage**: none. **Recommend U7 (`drop-columns-migration`) at the next AI-DLC start.**
 
 ## Previous cycles (archived, read-only)
@@ -24,11 +24,17 @@
 | Admin clients and coordinators (U1 `clients-api`, U2 `clients-app`, follow-ups) | `aidlc-docs/archive/admin-clients/` | Closed 2026-10-28; #132-#142 live (api prod `00024-fpj` = `979543a`, app `main` `baf44fb`); #143/#144 (Matching editable, Renew restored) outside the goal |
 | Search on worker_locations + the legacy location columns (U1 `search-api`, U2 `search-callers`, U3-U6, follow-up 43) | `aidlc-docs/archive/search-locations/` | Closed 2026-10-29; #147-#153 live (api prod `00028-bcq` = `6551489`, app/web `main` `2f8dcf1`); U3 placed 62 workers; **U7 (the DROP) pending** |
 | Admin completion filters (U1 `completion-filters-api`, U2 `completion-filters-app`) | `aidlc-docs/archive/admin-completion-filters/` | Closed 2026-11-09; #154-#156 live (api prod `00029-xw2` = `fc194e8`, app/web `main` `972ff6b`); U2 merged before U1's promotion, no failure |
+| Worker Zoho sync (U1 `account-details-webhook`, + the dispatcher fix) | `aidlc-docs/archive/worker-zoho-sync/` | Closed 2026-11-10; #157-#158 live (api prod `00030-89z` = `167bc28`; app/web code unchanged, rollback point `972ff6b`); verified by the user in n8n/Zoho |
 
 `aidlc-docs/audit.md` is the single append-only audit trail across cycles; never rewrite it.
 
 ## What is live (carry forward -- facts the next cycle builds on)
 
+- **Zoho on an Account Details change** (2026-11-10): `persistCompletion` queues `WorkerAccountDetailsChanged` when
+  `setupProgress.accountDetails` changes (either way); the handler posts the worker's identifiers and current flag to
+  `N8N_WORKER_PROFILE_WEBHOOK_URL` (prod: the user's n8n workflow, which updates Zoho; staging `off`). Seconds after a
+  worker's save, up to 5 min after a `completion-sync` change. Manual Neon edits send nothing. The outbox dispatcher
+  claims only the event types it handles (#158): an event no revision handles stays PENDING. Docs: `docs/worker/README.md` §4.
 - **Admin completion filters** (2026-11-09): `GET /v1/admin/workers` takes `accountDetails`, `compliance`, `trainings`,
   `services` = `complete`/`incomplete` (ANDed on `worker_profiles."setupProgress"`) and `withCompletion` (the row's four
   flags). The app: one "Profile completion" dropdown ("Profile Creation" = `accountDetails` on the admin side), card
@@ -167,6 +173,10 @@
 40. **The admin and worker api clients' token loop** (search-locations U2): `apps/app/src/lib/api/admin.ts` and `features/worker/api.ts` still carry their own copy of the loop `lib/api/call.ts` now holds; move them onto it (with their cache modes and abort signals) in a refactor with its own tests.
 39. **Legacy location columns**: done in search-locations (U3-U6, 2026-10-29) except the DROP = U7 (pending, top of this list).
 38. **The n8n Cancel/Archive webhook URL** was shown in a session transcript (2026-10-28): rotate if that matters.
+44. **Zoho sync, leftovers** (worker-zoho-sync): workers already complete before 2026-11-10 were never sent (a dry-run-first
+    one-off send if wanted); the n8n worker-profile webhook URL appeared in the session (2026-11-10): change its path in n8n
+    and add a secret version if that matters; before any backfill or `COMPLETION_MODEL` switch, count the `accountDetails`
+    flips (each is sent to Zoho); a stale-PENDING alert for outbox events no revision handles (none today).
 
 ## Workspace State
 - **Existing Code**: Yes
