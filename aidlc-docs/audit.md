@@ -6102,3 +6102,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-10):** "go ahead"
 
 **AI action (2026-11-10):** `fix/outbox-claim-known-types` from `main` `6ae45a6` (1 commit, 2 files, +19/-5): `claim()` filters `type = ANY(<handler types>)`; the database test "no handler -> DEAD" becomes "left PENDING, then DONE by a dispatcher with the handler". API gate: 1166 passed (DB tests in CI). Pushed. Note for the promotion: production's current revision (`fc194e8`) lacks the fix, so the overlap can kill an event once; check for DEAD `WorkerAccountDetailsChanged` rows after the promotion and requeue them.
+
+**User input (2026-11-10):** "I tested again, but the webhook isnt triggered, note that the method in n8n webhook is POST, is it correct?"
+
+**AI action (2026-11-10):** POST confirmed correct. Staging logs (revision `00077-c57`): 01:19:10Z removePhoto, 01:20:12Z confirmPhoto, 01:20:43Z removePhoto, each followed within ~1 s by "worker profile webhook off: nothing sent" (one event per change, both directions; `off` by design). PR #158 merged (`main` `167bc28`); staging `remonta-api-staging-00078-q4g` = `167bc28`, no ERROR or outbox failure entries since 01:21Z. Offered: promote `167bc288da94aa91ea435d2ed7c2c28630e000cb` (A) or point staging at the n8n Test URL first (B).
