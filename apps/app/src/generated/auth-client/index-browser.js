@@ -235,6 +235,27 @@ exports.Prisma.VerificationRequirementScalarFieldEnum = {
   metadata: 'metadata'
 };
 
+exports.Prisma.DocumentVersionScalarFieldEnum = {
+  id: 'id',
+  workerProfileId: 'workerProfileId',
+  requirementId: 'requirementId',
+  requirementType: 'requirementType',
+  requirementName: 'requirementName',
+  documentCategory: 'documentCategory',
+  status: 'status',
+  documentUrl: 'documentUrl',
+  metadata: 'metadata',
+  uploadedAt: 'uploadedAt',
+  reviewedAt: 'reviewedAt',
+  reviewedBy: 'reviewedBy',
+  approvedAt: 'approvedAt',
+  rejectedAt: 'rejectedAt',
+  rejectionReason: 'rejectionReason',
+  expiresAt: 'expiresAt',
+  reason: 'reason',
+  supersededAt: 'supersededAt'
+};
+
 exports.Prisma.VerificationTokenScalarFieldEnum = {
   identifier: 'identifier',
   token: 'token',
@@ -613,7 +634,8 @@ exports.AuditAction = exports.$Enums.AuditAction = {
   IMPERSONATION_END: 'IMPERSONATION_END',
   ACCOUNT_REGISTERED: 'ACCOUNT_REGISTERED',
   ADMIN_RECORD_VIEW: 'ADMIN_RECORD_VIEW',
-  SERVICE_REQUEST_STATUS_CHANGE: 'SERVICE_REQUEST_STATUS_CHANGE'
+  SERVICE_REQUEST_STATUS_CHANGE: 'SERVICE_REQUEST_STATUS_CHANGE',
+  DOCUMENT_VERSION_DELETE: 'DOCUMENT_VERSION_DELETE'
 };
 
 exports.FundingType = exports.$Enums.FundingType = {
@@ -651,6 +673,12 @@ exports.DocumentCategory = exports.$Enums.DocumentCategory = {
   SECONDARY: 'SECONDARY',
   WORKING_RIGHTS: 'WORKING_RIGHTS',
   SERVICE_QUALIFICATION: 'SERVICE_QUALIFICATION'
+};
+
+exports.DocumentVersionReason = exports.$Enums.DocumentVersionReason = {
+  REPLACED: 'REPLACED',
+  DELETED_BY_WORKER: 'DELETED_BY_WORKER',
+  SERVICE_REMOVED: 'SERVICE_REMOVED'
 };
 
 exports.JobApplicationStatus = exports.$Enums.JobApplicationStatus = {
@@ -735,6 +763,7 @@ exports.Prisma.ModelName = {
   Session: 'Session',
   User: 'User',
   VerificationRequirement: 'VerificationRequirement',
+  DocumentVersion: 'DocumentVersion',
   VerificationToken: 'VerificationToken',
   WorkerProfile: 'WorkerProfile',
   Document: 'Document',
