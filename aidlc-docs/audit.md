@@ -6114,3 +6114,11 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-10):** "close the ai dlc now"
 
 **AI action (2026-11-10):** worker-zoho-sync closed. Archive `aidlc-docs/archive/worker-zoho-sync/` (README, inception moved from `aidlc-docs/inception/`, build-and-test summary with deviations and known limits, state at close); `aidlc-state.md` between cycles (table row, what is live, follow-up 44), U7 still recommended at the next start. Rollback rows re-recorded on `docs/rollback-rows-2026-11-10` (`ea857fa`, from `main` `167bc28`: api `00030-89z` = `167bc28`, previous `00029-xw2` = `fc194e8` with the DEAD caveat; app/web rows the `972ff6b` builds, #157/#158 changed no app or web code); supersedes `docs/rollback-rows-2026-11-09` (never merged). PR to open by the user.
+
+**User input (2026-11-10):** "can we delete the aside folder? I think it was created" / "delete it" / "check it first" / "delete it"
+
+**AI action (2026-11-10):** deleted `../aside/` (it held only the user's `_u2-staging-writes.ts`, the only copy, confirmed by the user) and, after showing its content and origin (an assistant script of 2026-10-28, admin-clients U1 local checklist, audit line of that date), `apps/api/scripts/_admin-clients-local-check.ts`.
+
+**User input (2026-11-10):** "Merged. I want to start a new ai dlc"
+
+**AI action (2026-11-10):** by refs `main` = `ed1c487` (#159, the rollback rows of 2026-11-10). New AI-DLC start: recommended U7 first (standing instruction), with the alternatives; awaiting the user's choice.
