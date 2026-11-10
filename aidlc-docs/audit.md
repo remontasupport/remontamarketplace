@@ -6176,3 +6176,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-11):** answers: deletes "Keep deletes too (Recommended)"; retention "7 years but the admin can delete if they want. Maybe we should add another page for this"; visibility "Admins only (Recommended)"; review log "Files only (Recommended)".
 
 **AI action (2026-11-11):** cycle `document-history` opened on record branch `aidlc/document-history` (from `aidlc/drop-legacy-location-columns`). Requirements draft `aidlc-docs/inception/requirements/requirements.md` (D1-D4, R1-R7; open O1 extensions, O2 worker privacy wording). Asked the user to approve the requirements and answer O1/O2.
+
+**User input (2026-11-11):** "approved"
+
+**AI action (2026-11-11):** requirements approved; extensions carried (Security blocking, Resiliency, PBT full), O2 moved to U1 Functional Design. Inventory: all five file-losing paths are in `worker.handlers.ts` (`confirmServiceDocument`, `confirmComplianceDocument`/`signContract`, both deletes, `putServices`), each holding the old row in its transaction. Execution plan `inception/plans/execution-plan.md`: U1 `history-api` (table `document_versions`, `keepVersion` at the five steps, three admin contract entries, a daily 7-year retention job starting in report mode), U2 `history-app` (admin page `/admin/compliance/[id]/history`) after U1's promotion. Open: O2 worker wording, O3 versions on a profile delete. State updated.
