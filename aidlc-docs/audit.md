@@ -6196,3 +6196,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-11):** "what is the link of the staging only?" (answered: the PR #162 app preview `remonta-app-git-feat-document-history-api-remontas-projects.vercel.app`; a staging-only user = a new sign-up on that preview) / "Promoted"
 
 **AI action (2026-11-11):** deploy-api dispatch 42930455127 (00:19:38Z, `e73524c`) found in progress; production before it: health 200, the history route 404. No preview checklist result was reported before the promotion: to confirm afterwards (staging logs for the user's requests, versions written).
+
+**User input (2026-11-11):** "Yes I did" (the preview checklist).
+
+**AI action (2026-11-11):** could not read staging logs (gcloud needs `gcloud auth login`); offered the login or a read-only `document_versions` count on staging. Promotion 42930455127 success: image exists, "Apply pending migrations" to production success (document_versions created), service applied, health success. Production from outside: /v1/health 200, the history route 401 without a token (was 404): `e73524c` serves. Revision name not read (gcloud). Worker files stop being deleted from now. Rollback: the previous image `1e4d74e7d2e46cb8b1d3df8f107b7bcc7f6bfe01` (it ignores the new table; files deleted meanwhile are not, files replaced under it are deleted again). Next: U2 `history-app`.
