@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ChevronDown, ChevronRight, FileText, CheckCircle, XCircle, Clock, AlertCircle, ArrowLeft } from 'lucide-react'
+import { ChevronDown, ChevronRight, FileText, CheckCircle, XCircle, Clock, AlertCircle, ArrowLeft, History } from 'lucide-react'
 
 interface VerificationDocument {
   id: string
@@ -570,7 +570,17 @@ export default function CompliancePage() {
             <ArrowLeft className="w-5 h-5" />
             Back to Check Compliance
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Compliance Documents</h1>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h1 className="text-3xl font-bold text-gray-900">Compliance Documents</h1>
+            {/* document-history U2: past documents the worker replaced or deleted. */}
+            <Link
+              href={`/admin/compliance/${contractorId}/history`}
+              className="inline-flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              <History className="w-4 h-4" />
+              Document history
+            </Link>
+          </div>
           <p className="mt-2 text-sm text-gray-600">Review and manage worker verification documents</p>
         </div>
 

@@ -189,3 +189,25 @@ describe('the two switches (worker-activation U2, A1/A4/A5)', () => {
     expect(await missing.api.setWorkerActivation('nope', true)).toMatchObject({ kind: 'failed', status: 404 })
   })
 })
+
+describe('document history (document-history U2)', () => {
+  const list = { workerId: 'w1', versions: [], truncated: false }
+
+  it('lists by profile id; opens a link never from the browser cache; deletes by version id', async () => {
+    const h = harness([{ status: 200, body: list }, { status: 200, body: { url: 'https://storage.test/x', expiresAt: '2026-11-11T00:05:00.000Z' } }, { status: 200, body: { versionId: 'v1' } }])
+    expect(await h.api.listDocumentVersions('w1')).toEqual({ kind: 'ok', body: list })
+    expect(h.seen[0]!.url).toBe('https://api.example/v1/admin/workers/w1/document-versions')
+    expect((await h.api.getDocumentVersionLink('v1')).kind).toBe('ok')
+    expect(h.seen[1]!.url).toBe('https://api.example/v1/admin/document-versions/v1/link')
+    expect(h.seen[1]!.init.cache).toBe('reload')
+    expect(await h.api.deleteDocumentVersion('v1')).toEqual({ kind: 'ok', body: { versionId: 'v1' } })
+    expect(h.seen[2]!.url).toBe('https://api.example/v1/admin/document-versions/v1')
+    expect(h.seen[2]!.init.method).toBe('DELETE')
+    expect(new Headers(h.seen[2]!.init.headers).get('authorization')).toMatch(/^Bearer tok/)
+  })
+
+  it('a missing version is a 404 failure', async () => {
+    const h = harness([{ status: 404, body: { error: { code: 'NOT_FOUND', message: 'x', requestId: 'r' } } }])
+    expect(await h.api.deleteDocumentVersion('gone')).toMatchObject({ kind: 'failed', status: 404 })
+  })
+})

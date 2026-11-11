@@ -11,6 +11,8 @@ import {
   createClient,
   serializeCanonical,
   type AdminWorkerServices,
+  type DocumentLink,
+  type DocumentVersionList,
   type RequesterDetail,
   type RequesterListQuery,
   type RequesterListResponse,
@@ -52,6 +54,12 @@ export interface AdminApi {
   getRequester(userId: string, opts?: CallOptions): Promise<ApiOutcome<RequesterDetail>>
   /** Any status on one request; the api tells the CRM. */
   setRequestStatus(requestId: string, status: ServiceRequestStatus): Promise<ApiOutcome<RequestStatus>>
+  /** document-history U2: one worker's past documents (newest first), by the worker profile id. */
+  listDocumentVersions(workerId: string, opts?: CallOptions): Promise<ApiOutcome<DocumentVersionList>>
+  /** A five-minute link to open one past document. */
+  getDocumentVersionLink(versionId: string): Promise<ApiOutcome<DocumentLink>>
+  /** Delete one past document for good (the api audits it and removes the file). */
+  deleteDocumentVersion(versionId: string): Promise<ApiOutcome<{ versionId: string }>>
   /** The canonical query string of a search (R8.5): what the URL bar and the cache key carry. */
   canonicalSearch(query: WorkerSearchQuery): string
 }
@@ -63,7 +71,7 @@ export interface AdminApiDeps {
 }
 
 type QueryEntryName = 'searchWorkers' | 'listUsers' | 'listSuspendedWorkers' | 'listRequesters'
-type EntryName = QueryEntryName | 'getWorkerServices' | 'setWorkerActivation' | 'setWorkerSuspension' | 'getRequester' | 'setRequestStatus'
+type EntryName = QueryEntryName | 'getWorkerServices' | 'setWorkerActivation' | 'setWorkerSuspension' | 'getRequester' | 'setRequestStatus' | 'listDocumentVersions' | 'getDocumentVersionLink' | 'deleteDocumentVersion'
 const QUERY_ENTRIES: ReadonlySet<EntryName> = new Set<EntryName>(['searchWorkers', 'listUsers', 'listSuspendedWorkers', 'listRequesters'])
 
 export function createAdminApi(deps: AdminApiDeps): AdminApi {
@@ -136,6 +144,10 @@ export function createAdminApi(deps: AdminApiDeps): AdminApi {
     listRequesters: (query, opts) => call('listRequesters', query, opts),
     getRequester: (userId, opts) => call('getRequester', undefined, opts, { userId }),
     setRequestStatus: (requestId, status) => call('setRequestStatus', undefined, undefined, { requestId }, { status }),
+    listDocumentVersions: (workerId, opts) => call('listDocumentVersions', undefined, opts, { workerId }),
+    // A link expires in five minutes: never from the browser cache.
+    getDocumentVersionLink: (versionId) => call('getDocumentVersionLink', undefined, { cache: 'reload' }, { versionId }),
+    deleteDocumentVersion: (versionId) => call('deleteDocumentVersion', undefined, undefined, { versionId }),
     canonicalSearch: (query) => {
       const q = canonical('searchWorkers', query)
       return 'fields' in q && typeof q.fields === 'object' ? '' : new URLSearchParams(q as Record<string, string>).toString()
