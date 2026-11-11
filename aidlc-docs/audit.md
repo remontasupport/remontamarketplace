@@ -6208,3 +6208,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-11):** "merged"
 
 **AI action (2026-11-11):** by refs `main` = `3cb3206` (#163, `29d084f`). PR CI all success (App Quality Node 20/22, Supply chain, CodeQL, Semgrep). Vercel production remonta-app and remontamarketplace success; `/admin/compliance/x/history` 200 on app.remontaservices.com.au (404 before the build finished). Asked the user for the production check; cycle close next.
+
+**User input (2026-11-11):** "I tested to delete, but in the History and opening the document, it says blob not found"
+
+**AI action (2026-11-11):** investigating. No code path deletes a document file outside `deleteDocumentFiles` (admin version delete, retention job) and the staged copy of a failed confirm (grep of apps/app and apps/api). "Blob not found" is Vercel Blob's wording (the private bucket answers XML NoSuchKey): the version points at a legacy public Blob URL whose file is missing. Leading explanations: (a) on the preview, rehearse-w1 is an older copy of production whose legacy URLs may point at files production has since deleted; (b) a legacy file already missing before the delete (the current document would not open either). Asked the user where (preview or production) and for the opened URL's host.
