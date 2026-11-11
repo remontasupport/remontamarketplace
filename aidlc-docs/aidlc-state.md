@@ -3,8 +3,8 @@
 ## Project Information
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
-- **Current Cycle**: document-history (opened 2026-11-11): admins keep and retrieve past worker documents.
-- **Current Stage**: CONSTRUCTION done (U1 live 2026-11-11 api `e73524c`; U2 live 2026-11-11 app `main` `3cb3206`, #163). To do: the user's production check, then close the cycle (archive, rollback rows).
+- **Current Cycle**: none (between cycles; document-history closed 2026-11-11).
+- **Current Stage**: none. No standing recommendation: pick from the follow-ups.
 
 ## Previous cycles (archived, read-only)
 
@@ -26,11 +26,18 @@
 | Admin completion filters (U1 `completion-filters-api`, U2 `completion-filters-app`) | `aidlc-docs/archive/admin-completion-filters/` | Closed 2026-11-09; #154-#156 live (api prod `00029-xw2` = `fc194e8`, app/web `main` `972ff6b`); U2 merged before U1's promotion, no failure |
 | Worker Zoho sync (U1 `account-details-webhook`, + the dispatcher fix) | `aidlc-docs/archive/worker-zoho-sync/` | Closed 2026-11-10; #157-#158 live (api prod `00030-89z` = `167bc28`; app/web code unchanged, rollback point `972ff6b`); verified by the user in n8n/Zoho |
 | Drop the legacy location columns (search-locations U7) | `aidlc-docs/archive/drop-legacy-location-columns/` | Closed 2026-11-10; #160 live (migration `20261110120000_drop_worker_profiles_legacy_location`, api prod `00031-9h4` = `1e4d74e`); n8n "Query workers" moved to worker_locations first; backup Neon branch `backup-before-u7-2026-11-10` |
+| Document history (U1 `history-api`, U2 `history-app`) | `aidlc-docs/archive/document-history/` | Closed 2026-11-11; #162-#163 live (api prod image `e73524c`, previous `1e4d74e`; app `main` `3cb3206`); #164 (client dashboard relationship field) outside the goal, app/web `main` `1f8d27f` |
 
 `aidlc-docs/audit.md` is the single append-only audit trail across cycles; never rewrite it.
 
 ## What is live (carry forward -- facts the next cycle builds on)
 
+- **Document history** (2026-11-11): a worker's replace, delete or service removal writes a `document_versions` row
+  and keeps the file (bucket key or legacy Blob URL); nothing in the worker handlers deletes a document file any more.
+  Admins: `GET /v1/admin/workers/:workerId/document-versions`, `GET /v1/admin/document-versions/:id/link`, `DELETE
+  /v1/admin/document-versions/:id` (audited `DOCUMENT_VERSION_DELETE`); page `/admin/compliance/[id]/history`. Versions
+  cascade with the worker profile. Job `document-version-retention` counts versions older than 7 years
+  (`DOCUMENT_VERSION_RETENTION=report`); only `apply` deletes. Docs: `docs/worker/README.md`, `docs/admin/README.md`.
 - **Zoho on an Account Details change** (2026-11-10): `persistCompletion` queues `WorkerAccountDetailsChanged` when
   `setupProgress.accountDetails` changes (either way); the handler posts the worker's identifiers and current flag to
   `N8N_WORKER_PROFILE_WEBHOOK_URL` (prod: the user's n8n workflow, which updates Zoho; staging `off`). Seconds after a
@@ -173,6 +180,11 @@
 45. **n8n's database role**: the n8n credential "Postgres account" reaches the production auth database as `neondb_owner`;
     give it a read-only role limited to the tables its workflows read (today: "Query workers").
 46. **Neon backup branch** `backup-before-u7-2026-11-10`: delete after 2026-12-10 if no old value was needed.
+47. **Document-version retention**: switch `DOCUMENT_VERSION_RETENTION` to `apply` (Secret/config, redeploy) before the
+    first versions turn 7 years old (2033-11); until then the job only counts.
+48. **Legacy Blob files already missing** (2026-11-11): one History entry pointed at a Vercel Blob file deleted before the
+    cycle (shared URL, old delete behaviour). The user accepted it. Optional: a read-only HEAD check of every legacy URL on
+    current rows; the api could answer "file missing" instead of handing out a dead link.
 44. **Zoho sync, leftovers** (worker-zoho-sync): workers already complete before 2026-11-10 were never sent (a dry-run-first
     one-off send if wanted); the n8n worker-profile webhook URL appeared in the session (2026-11-10): change its path in n8n
     and add a secret version if that matters; before any backfill or `COMPLETION_MODEL` switch, count the `accountDetails`

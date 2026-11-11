@@ -6227,3 +6227,9 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User Input**: "merged. whats next"
 **AI Response**: Confirmed on main as #164 (merge 1f8d27f). Next: production check of the client dashboard, the blob-not-found read-only queries, then the document-history cycle close.
 **Context**: Side fix live (app only, Vercel).
+
+## Cycle close: document-history
+**Timestamp**: 2026-11-11
+**User Input**: "close the cycle, the blob not found is ok already"
+**AI Response**: Closed the cycle. Archived `inception/` and `construction/` under `aidlc-docs/archive/document-history/` with a README, the outcomes in both construction notes and `aidlc-state-at-close.md`; state set to between cycles (row added, "Document history" carried forward, follow-ups 47 retention `apply` before 2033-11 and 48 legacy Blob files already missing). Docs PR `docs/rollback-rows-2026-11-11` re-records CLAUDE.md's rollback rows (api `e73524c`, previous `1e4d74e`; app/web `main` `1f8d27f`). Cloud Run revision name not read (gcloud not logged in).
+**Context**: Cycle closed; the blob-not-found report accepted by the user.

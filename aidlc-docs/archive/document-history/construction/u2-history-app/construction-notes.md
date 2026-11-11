@@ -12,3 +12,10 @@ Branch `feat/document-history-app` (from `main` `e73524c`): `29d084f`. The api i
 - Gates: app quality (54 type / 273 lint known, 753 tests), lint clean on the new files, app build lists the route.
 - Preview checklist: sign in as admin, open a worker with a replaced/deleted document, the history lists it, Open shows
   the file, Delete removes it (and the audit row), the compliance page link works; production unchanged.
+
+## Outcome (2026-11-11)
+Merged #163 (`main` `3cb3206`); CI green, Vercel production built, `/admin/compliance/x/history` answers 200. The
+user tested it in production. One report: a legacy Vercel Blob file (uploaded 2026-09-24) answered "blob not found"
+from the History page. Traced: the worker's delete went through the new code (a version row exists, no file delete
+in that path); the file was already gone (most likely a URL shared with another row, deleted under the old
+behaviour). Not a regression; the user accepted it ("the blob not found is ok already").

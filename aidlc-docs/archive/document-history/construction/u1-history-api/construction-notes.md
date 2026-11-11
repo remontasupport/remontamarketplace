@@ -23,3 +23,8 @@ app quality 745; infra render:check; `turbo run build` both apps. Generated clie
   admin entries (list, link opens, delete removes row + file + audit row); retention summary `report` in
   `scheduled_jobs`; production unchanged. Then promote the full sha.
 - `apply` for retention: a later config change (nothing is 7 years old before 2033).
+
+## Outcome (2026-11-11)
+Merged #162 (`main` `e73524c`); PR CI green with the database tests. Staging deploy 42928560306 (migration applied);
+production promotion dispatch 42930455127 (migration applied); production health 200, the history route 401 (404
+before). Previous production image `1e4d74e7d2e46cb8b1d3df8f107b7bcc7f6bfe01`. Retention runs in `report` mode.
