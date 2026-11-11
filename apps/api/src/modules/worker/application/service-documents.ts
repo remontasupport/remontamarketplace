@@ -18,6 +18,7 @@ import { StoreUnavailable, type PhotoStore } from '../../registration/adapters/p
 import { stagingKey, TICKET_TTL_MS } from '../../registration/domain/photo-upload'
 import { uploadableDocuments } from '../domain/service-requirements'
 import { ADDITIONAL_CATEGORIES, OTHER_DOCUMENTS_NAME } from '../domain/requirement-groups'
+import { keepVersions, VERSION_SOURCE_SELECT } from './document-versions'
 
 export const DOCUMENT_LINK_TTL_MS = 5 * 60_000
 export const DOCUMENTS_PREFIX = 'documents/'
@@ -171,8 +172,9 @@ export function documentView(row: { id: string; requirementType: string; require
 }
 
 /**
- * Records the confirmed document as the row of its service and type (found, then updated or created, as today). A
- * replaced file is returned for deletion after the commit. A new upload is SUBMITTED again: the review fields go.
+ * Records the confirmed document as the row of its service and type (found, then updated or created, as today). The
+ * row it replaces is kept as a version, file included (document-history). A new upload is SUBMITTED again: the review
+ * fields go.
  */
 export async function recordDocument(
   tx: Tx,
@@ -180,11 +182,11 @@ export async function recordDocument(
   body: ConfirmServiceDocumentBody,
   staged: StagedDocument,
   now: Date,
-): Promise<{ view: ServiceDocument; replaced: DocumentFile | null }> {
+): Promise<ServiceDocument> {
   const requirementType = `${target.categoryName}:${body.requirementType}`
   const existing = await tx.verificationRequirement.findFirst({
     where: { workerProfileId: target.profileId, requirementType, documentCategory: 'SERVICE_QUALIFICATION' },
-    select: { id: true, documentUrl: true, metadata: true },
+    select: VERSION_SOURCE_SELECT,
     orderBy: { updatedAt: 'desc' },
   })
   const id = existing?.id ?? randomUUID()
@@ -215,8 +217,14 @@ export async function recordDocument(
   const row = existing
     ? await tx.verificationRequirement.update({ where: { id }, data, select: ROW_SELECT })
     : await tx.verificationRequirement.create({ data: { id, workerProfileId: target.profileId, requirementType, isRequired: target.required, ...data }, select: ROW_SELECT })
-  const old = existing ? fileOf(existing) : null
-  return { view: documentView(row), replaced: old && (old.storageKey !== staged.key || old.url !== row.documentUrl) ? old : null }
+  if (existing && isReplaced(existing, staged.key, row.documentUrl)) await keepVersions(tx, [existing], 'REPLACED', now)
+  return documentView(row)
+}
+
+/** Did a re-upload put another file on a row that had one (not the same upload confirmed again)? */
+export function isReplaced(old: { documentUrl: string | null; metadata: Prisma.JsonValue | null }, newKey: string, newUrl: string | null): boolean {
+  const f = fileOf(old)
+  return (f.storageKey !== null || f.url !== null) && (f.storageKey !== newKey || f.url !== newUrl)
 }
 
 /** The confirm of an upload already recorded (a retry after the staging object was moved): its row, or null. */
@@ -228,11 +236,12 @@ export async function alreadyRecorded(tx: Tx | Prisma.TransactionClient, profile
   return row ? documentView(row) : null
 }
 
-export async function removeDocument(tx: Tx, profileId: string, documentId: string): Promise<DocumentFile> {
-  const row = await tx.verificationRequirement.findFirst({ where: { id: documentId, workerProfileId: profileId, documentCategory: 'SERVICE_QUALIFICATION' }, select: { id: true, documentUrl: true, metadata: true } })
+/** Deletes one of the worker's service documents; the row and its file are kept as a version (document-history). */
+export async function removeDocument(tx: Tx, profileId: string, documentId: string, now: Date): Promise<void> {
+  const row = await tx.verificationRequirement.findFirst({ where: { id: documentId, workerProfileId: profileId, documentCategory: 'SERVICE_QUALIFICATION' }, select: VERSION_SOURCE_SELECT })
   if (!row) throw new ApiError(404, 'service document not found') // another worker's is never revealed
+  await keepVersions(tx, [row], 'DELETED_BY_WORKER', now)
   await tx.verificationRequirement.delete({ where: { id: row.id } })
-  return fileOf(row)
 }
 
 /** A short link for a row: a signed GET for the api's own file, the stored URL for a legacy public one. */
@@ -259,7 +268,8 @@ export async function linkFor(
 }
 
 /**
- * After a commit, best-effort: each file is deleted only where the api can prove it is this worker's -- its own key in
+ * Since document-history only an admin's version delete and the retention job delete a worker's file.
+ * Best-effort: each file is deleted only where the api can prove it is this worker's -- its own key in
  * the bucket, or a legacy Blob URL in the worker's own folder (ownServiceDocument). Anything else is left and logged.
  */
 export async function deleteDocumentFiles(

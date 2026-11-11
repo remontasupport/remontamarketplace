@@ -8,6 +8,7 @@ import type { Db } from '../../platform/persistence/db'
 import { ApiError } from '../../platform/errors'
 import type { PhotoStore } from '../registration/adapters/photo-store'
 import { linkFor } from '../worker/application/service-documents'
+import { deleteDocumentVersion, documentVersionLink, listDocumentVersions } from './application/document-versions'
 import { listSuspendedWorkers, listUsers } from './application/lists'
 import { getRequester, listRequesters, setRequestStatus } from './application/requesters'
 import { searchWorkers } from './application/search-workers'
@@ -19,6 +20,8 @@ export interface AdminModuleDeps {
   clock: Clock
   /** The private bucket (U3b): service documents are viewed through a signed link. Absent: their links answer 503. */
   bucket?: PhotoStore
+  /** Vercel Blob (legacy document files): an admin's version delete removes a worker's own legacy file. */
+  blob?: { delete(urlOrKey: string): Promise<void> }
 }
 
 export function adminHandlers(deps: AdminModuleDeps) {
@@ -41,6 +44,25 @@ export function adminHandlers(deps: AdminModuleDeps) {
       if (!row) throw new ApiError(404, 'document not found')
       ctx.log.info({ entry: 'admin.getDocumentLink', documentId: req.params.documentId, workerProfileId: row.workerProfileId }, 'admin document link')
       return { status: 200, body: await linkFor(deps.bucket, row, deps.clock()) }
+    },
+
+    // document-history U1 (R3, R4): the history page. Reads logged with ids and counts; the delete audited.
+    listDocumentVersions: async (req, ctx) => {
+      const body = await listDocumentVersions(deps, req.params.workerId)
+      ctx.log.info({ entry: 'admin.listDocumentVersions', adminUserId: ctx.principal!.userId, workerProfileId: req.params.workerId, versions: body.versions.length, truncated: body.truncated }, 'admin document versions')
+      return { status: 200, body }
+    },
+
+    getDocumentVersionLink: async (req, ctx) => {
+      const { link, workerProfileId } = await documentVersionLink(deps, req.params.versionId)
+      ctx.log.info({ entry: 'admin.getDocumentVersionLink', adminUserId: ctx.principal!.userId, versionId: req.params.versionId, workerProfileId }, 'admin document version link')
+      return { status: 200, body: link }
+    },
+
+    deleteDocumentVersion: async (req, ctx) => {
+      const out = await deleteDocumentVersion({ db: deps.db, stores: { bucket: deps.bucket, blob: deps.blob }, log: ctx.log }, ctx.audit, ctx.principal!.userId, req.params.versionId)
+      ctx.log.info({ entry: 'admin.deleteDocumentVersion', adminUserId: ctx.principal!.userId, versionId: req.params.versionId, workerProfileId: out.workerProfileId, fileDeleted: out.fileDeleted }, 'admin document version deleted')
+      return { status: 200, body: { versionId: req.params.versionId } }
     },
 
     // worker-tools U1 (BR-14): the worker's admin page; logged with the profile id, as the document link.

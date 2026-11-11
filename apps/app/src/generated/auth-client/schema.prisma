@@ -219,6 +219,42 @@ model VerificationRequirement {
   @@map("verification_requirements")
 }
 
+/// document-history U1: a worker document as it was just before a re-upload replaced it, the worker deleted it, or the
+/// worker removed its service. Written in the same transaction as that change; never updated. Admins only. The file
+/// it points at (metadata.storageKey, or a legacy documentUrl) is kept until the 7-year retention job or an admin
+/// deletes the version. requirementId is not a foreign key: the requirement row may be gone.
+model DocumentVersion {
+  id               String                @id @default(cuid())
+  workerProfileId  String
+  requirementId    String
+  requirementType  String
+  requirementName  String
+  documentCategory DocumentCategory?
+  status           RequirementStatus
+  documentUrl      String?
+  metadata         Json?
+  uploadedAt       DateTime?
+  reviewedAt       DateTime?
+  reviewedBy       String?
+  approvedAt       DateTime?
+  rejectedAt       DateTime?
+  rejectionReason  String?
+  expiresAt        DateTime?
+  reason           DocumentVersionReason
+  supersededAt     DateTime
+  workerProfile    WorkerProfile         @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([workerProfileId, supersededAt])
+  @@index([supersededAt])
+  @@map("document_versions")
+}
+
+enum DocumentVersionReason {
+  REPLACED
+  DELETED_BY_WORKER
+  SERVICE_REMOVED
+}
+
 model VerificationToken {
   identifier String
   token      String   @unique
@@ -257,6 +293,7 @@ model WorkerProfile {
   createdAt                DateTime                  @default(now())
   updatedAt                DateTime
   verificationRequirements VerificationRequirement[]
+  documentVersions         DocumentVersion[]
   workerAdditionalInfo     WorkerAdditionalInfo?
   user                     User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
   workerServices           WorkerService[]
@@ -520,6 +557,7 @@ enum AuditAction {
   ACCOUNT_REGISTERED
   ADMIN_RECORD_VIEW
   SERVICE_REQUEST_STATUS_CHANGE
+  DOCUMENT_VERSION_DELETE
 }
 
 enum DocumentCategory {

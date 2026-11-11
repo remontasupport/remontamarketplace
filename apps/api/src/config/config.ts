@@ -53,6 +53,8 @@ const envSchema = z.object({
    * the three checklist groups. Switched on a stage by a reviewed one-line change of infra/lib/stages.ts, never by hand.
    */
   COMPLETION_MODEL: z.enum(['legacy', 'groups']).default('legacy'),
+  /** document-history U1 (R5): the 7-year job only counts (`report`, the first release) or deletes (`apply`). */
+  DOCUMENT_VERSION_RETENTION: z.enum(['report', 'apply']).default('report'),
   /** The completion-sync job's period (CR-11, Q2 A): five minutes. */
   COMPLETION_SYNC_INTERVAL_MS: z.coerce.number().int().min(60_000).max(3_600_000).default(300_000),
   /** The CRM notification's webhook (deferred, user 2026-10-01): optional until that outbox handler exists. */

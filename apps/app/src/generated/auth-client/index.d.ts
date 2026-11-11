@@ -54,6 +54,14 @@ export type User = $Result.DefaultSelection<Prisma.$UserPayload>
  */
 export type VerificationRequirement = $Result.DefaultSelection<Prisma.$VerificationRequirementPayload>
 /**
+ * Model DocumentVersion
+ * document-history U1: a worker document as it was just before a re-upload replaced it, the worker deleted it, or the
+ * worker removed its service. Written in the same transaction as that change; never updated. Admins only. The file
+ * it points at (metadata.storageKey, or a legacy documentUrl) is kept until the 7-year retention job or an admin
+ * deletes the version. requirementId is not a foreign key: the requirement row may be gone.
+ */
+export type DocumentVersion = $Result.DefaultSelection<Prisma.$DocumentVersionPayload>
+/**
  * Model VerificationToken
  * 
  */
@@ -200,7 +208,16 @@ export type RateLimitBucket = $Result.DefaultSelection<Prisma.$RateLimitBucketPa
  * Enums
  */
 export namespace $Enums {
-  export const JobApplicationStatus: {
+  export const DocumentVersionReason: {
+  REPLACED: 'REPLACED',
+  DELETED_BY_WORKER: 'DELETED_BY_WORKER',
+  SERVICE_REMOVED: 'SERVICE_REMOVED'
+};
+
+export type DocumentVersionReason = (typeof DocumentVersionReason)[keyof typeof DocumentVersionReason]
+
+
+export const JobApplicationStatus: {
   PENDING: 'PENDING',
   WITHDRAWN: 'WITHDRAWN'
 };
@@ -235,7 +252,8 @@ export const AuditAction: {
   IMPERSONATION_END: 'IMPERSONATION_END',
   ACCOUNT_REGISTERED: 'ACCOUNT_REGISTERED',
   ADMIN_RECORD_VIEW: 'ADMIN_RECORD_VIEW',
-  SERVICE_REQUEST_STATUS_CHANGE: 'SERVICE_REQUEST_STATUS_CHANGE'
+  SERVICE_REQUEST_STATUS_CHANGE: 'SERVICE_REQUEST_STATUS_CHANGE',
+  DOCUMENT_VERSION_DELETE: 'DOCUMENT_VERSION_DELETE'
 };
 
 export type AuditAction = (typeof AuditAction)[keyof typeof AuditAction]
@@ -401,6 +419,10 @@ export const OutboxStatus: {
 export type OutboxStatus = (typeof OutboxStatus)[keyof typeof OutboxStatus]
 
 }
+
+export type DocumentVersionReason = $Enums.DocumentVersionReason
+
+export const DocumentVersionReason: typeof $Enums.DocumentVersionReason
 
 export type JobApplicationStatus = $Enums.JobApplicationStatus
 
@@ -671,6 +693,16 @@ export class PrismaClient<
     * ```
     */
   get verificationRequirement(): Prisma.VerificationRequirementDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.documentVersion`: Exposes CRUD operations for the **DocumentVersion** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more DocumentVersions
+    * const documentVersions = await prisma.documentVersion.findMany()
+    * ```
+    */
+  get documentVersion(): Prisma.DocumentVersionDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.verificationToken`: Exposes CRUD operations for the **VerificationToken** model.
@@ -1370,6 +1402,7 @@ export namespace Prisma {
     Session: 'Session',
     User: 'User',
     VerificationRequirement: 'VerificationRequirement',
+    DocumentVersion: 'DocumentVersion',
     VerificationToken: 'VerificationToken',
     WorkerProfile: 'WorkerProfile',
     Document: 'Document',
@@ -1413,7 +1446,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "account" | "auditLog" | "clientProfile" | "coordinatorProfile" | "participant" | "session" | "user" | "verificationRequirement" | "verificationToken" | "workerProfile" | "document" | "category" | "subcategory" | "categoryDocument" | "subcategoryDocument" | "workerService" | "job" | "jobApplication" | "workerAdditionalInfo" | "serviceRequest" | "workerJobHistory" | "workerEducation" | "workerAvailability" | "workerExperience" | "auLocality" | "auLocalityRefresh" | "workerLocation" | "workerOnboarding" | "scheduledJob" | "workerOnboardingTransition" | "outboxEvent" | "registrationPhotoUpload" | "rateLimitBucket"
+      modelProps: "account" | "auditLog" | "clientProfile" | "coordinatorProfile" | "participant" | "session" | "user" | "verificationRequirement" | "documentVersion" | "verificationToken" | "workerProfile" | "document" | "category" | "subcategory" | "categoryDocument" | "subcategoryDocument" | "workerService" | "job" | "jobApplication" | "workerAdditionalInfo" | "serviceRequest" | "workerJobHistory" | "workerEducation" | "workerAvailability" | "workerExperience" | "auLocality" | "auLocalityRefresh" | "workerLocation" | "workerOnboarding" | "scheduledJob" | "workerOnboardingTransition" | "outboxEvent" | "registrationPhotoUpload" | "rateLimitBucket"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2006,6 +2039,80 @@ export namespace Prisma {
           count: {
             args: Prisma.VerificationRequirementCountArgs<ExtArgs>
             result: $Utils.Optional<VerificationRequirementCountAggregateOutputType> | number
+          }
+        }
+      }
+      DocumentVersion: {
+        payload: Prisma.$DocumentVersionPayload<ExtArgs>
+        fields: Prisma.DocumentVersionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.DocumentVersionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DocumentVersionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.DocumentVersionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DocumentVersionPayload>
+          }
+          findFirst: {
+            args: Prisma.DocumentVersionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DocumentVersionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.DocumentVersionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DocumentVersionPayload>
+          }
+          findMany: {
+            args: Prisma.DocumentVersionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DocumentVersionPayload>[]
+          }
+          create: {
+            args: Prisma.DocumentVersionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DocumentVersionPayload>
+          }
+          createMany: {
+            args: Prisma.DocumentVersionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.DocumentVersionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DocumentVersionPayload>[]
+          }
+          delete: {
+            args: Prisma.DocumentVersionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DocumentVersionPayload>
+          }
+          update: {
+            args: Prisma.DocumentVersionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DocumentVersionPayload>
+          }
+          deleteMany: {
+            args: Prisma.DocumentVersionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.DocumentVersionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.DocumentVersionUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DocumentVersionPayload>[]
+          }
+          upsert: {
+            args: Prisma.DocumentVersionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DocumentVersionPayload>
+          }
+          aggregate: {
+            args: Prisma.DocumentVersionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateDocumentVersion>
+          }
+          groupBy: {
+            args: Prisma.DocumentVersionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<DocumentVersionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.DocumentVersionCountArgs<ExtArgs>
+            result: $Utils.Optional<DocumentVersionCountAggregateOutputType> | number
           }
         }
       }
@@ -3963,6 +4070,7 @@ export namespace Prisma {
     session?: SessionOmit
     user?: UserOmit
     verificationRequirement?: VerificationRequirementOmit
+    documentVersion?: DocumentVersionOmit
     verificationToken?: VerificationTokenOmit
     workerProfile?: WorkerProfileOmit
     document?: DocumentOmit
@@ -4158,6 +4266,7 @@ export namespace Prisma {
 
   export type WorkerProfileCountOutputType = {
     verificationRequirements: number
+    documentVersions: number
     workerServices: number
     availability: number
     jobHistoryEntries: number
@@ -4170,6 +4279,7 @@ export namespace Prisma {
 
   export type WorkerProfileCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     verificationRequirements?: boolean | WorkerProfileCountOutputTypeCountVerificationRequirementsArgs
+    documentVersions?: boolean | WorkerProfileCountOutputTypeCountDocumentVersionsArgs
     workerServices?: boolean | WorkerProfileCountOutputTypeCountWorkerServicesArgs
     availability?: boolean | WorkerProfileCountOutputTypeCountAvailabilityArgs
     jobHistoryEntries?: boolean | WorkerProfileCountOutputTypeCountJobHistoryEntriesArgs
@@ -4196,6 +4306,13 @@ export namespace Prisma {
    */
   export type WorkerProfileCountOutputTypeCountVerificationRequirementsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: VerificationRequirementWhereInput
+  }
+
+  /**
+   * WorkerProfileCountOutputType without action
+   */
+  export type WorkerProfileCountOutputTypeCountDocumentVersionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: DocumentVersionWhereInput
   }
 
   /**
@@ -13849,6 +13966,1229 @@ export namespace Prisma {
 
 
   /**
+   * Model DocumentVersion
+   */
+
+  export type AggregateDocumentVersion = {
+    _count: DocumentVersionCountAggregateOutputType | null
+    _min: DocumentVersionMinAggregateOutputType | null
+    _max: DocumentVersionMaxAggregateOutputType | null
+  }
+
+  export type DocumentVersionMinAggregateOutputType = {
+    id: string | null
+    workerProfileId: string | null
+    requirementId: string | null
+    requirementType: string | null
+    requirementName: string | null
+    documentCategory: $Enums.DocumentCategory | null
+    status: $Enums.RequirementStatus | null
+    documentUrl: string | null
+    uploadedAt: Date | null
+    reviewedAt: Date | null
+    reviewedBy: string | null
+    approvedAt: Date | null
+    rejectedAt: Date | null
+    rejectionReason: string | null
+    expiresAt: Date | null
+    reason: $Enums.DocumentVersionReason | null
+    supersededAt: Date | null
+  }
+
+  export type DocumentVersionMaxAggregateOutputType = {
+    id: string | null
+    workerProfileId: string | null
+    requirementId: string | null
+    requirementType: string | null
+    requirementName: string | null
+    documentCategory: $Enums.DocumentCategory | null
+    status: $Enums.RequirementStatus | null
+    documentUrl: string | null
+    uploadedAt: Date | null
+    reviewedAt: Date | null
+    reviewedBy: string | null
+    approvedAt: Date | null
+    rejectedAt: Date | null
+    rejectionReason: string | null
+    expiresAt: Date | null
+    reason: $Enums.DocumentVersionReason | null
+    supersededAt: Date | null
+  }
+
+  export type DocumentVersionCountAggregateOutputType = {
+    id: number
+    workerProfileId: number
+    requirementId: number
+    requirementType: number
+    requirementName: number
+    documentCategory: number
+    status: number
+    documentUrl: number
+    metadata: number
+    uploadedAt: number
+    reviewedAt: number
+    reviewedBy: number
+    approvedAt: number
+    rejectedAt: number
+    rejectionReason: number
+    expiresAt: number
+    reason: number
+    supersededAt: number
+    _all: number
+  }
+
+
+  export type DocumentVersionMinAggregateInputType = {
+    id?: true
+    workerProfileId?: true
+    requirementId?: true
+    requirementType?: true
+    requirementName?: true
+    documentCategory?: true
+    status?: true
+    documentUrl?: true
+    uploadedAt?: true
+    reviewedAt?: true
+    reviewedBy?: true
+    approvedAt?: true
+    rejectedAt?: true
+    rejectionReason?: true
+    expiresAt?: true
+    reason?: true
+    supersededAt?: true
+  }
+
+  export type DocumentVersionMaxAggregateInputType = {
+    id?: true
+    workerProfileId?: true
+    requirementId?: true
+    requirementType?: true
+    requirementName?: true
+    documentCategory?: true
+    status?: true
+    documentUrl?: true
+    uploadedAt?: true
+    reviewedAt?: true
+    reviewedBy?: true
+    approvedAt?: true
+    rejectedAt?: true
+    rejectionReason?: true
+    expiresAt?: true
+    reason?: true
+    supersededAt?: true
+  }
+
+  export type DocumentVersionCountAggregateInputType = {
+    id?: true
+    workerProfileId?: true
+    requirementId?: true
+    requirementType?: true
+    requirementName?: true
+    documentCategory?: true
+    status?: true
+    documentUrl?: true
+    metadata?: true
+    uploadedAt?: true
+    reviewedAt?: true
+    reviewedBy?: true
+    approvedAt?: true
+    rejectedAt?: true
+    rejectionReason?: true
+    expiresAt?: true
+    reason?: true
+    supersededAt?: true
+    _all?: true
+  }
+
+  export type DocumentVersionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which DocumentVersion to aggregate.
+     */
+    where?: DocumentVersionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of DocumentVersions to fetch.
+     */
+    orderBy?: DocumentVersionOrderByWithRelationInput | DocumentVersionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: DocumentVersionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` DocumentVersions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` DocumentVersions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned DocumentVersions
+    **/
+    _count?: true | DocumentVersionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: DocumentVersionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: DocumentVersionMaxAggregateInputType
+  }
+
+  export type GetDocumentVersionAggregateType<T extends DocumentVersionAggregateArgs> = {
+        [P in keyof T & keyof AggregateDocumentVersion]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateDocumentVersion[P]>
+      : GetScalarType<T[P], AggregateDocumentVersion[P]>
+  }
+
+
+
+
+  export type DocumentVersionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: DocumentVersionWhereInput
+    orderBy?: DocumentVersionOrderByWithAggregationInput | DocumentVersionOrderByWithAggregationInput[]
+    by: DocumentVersionScalarFieldEnum[] | DocumentVersionScalarFieldEnum
+    having?: DocumentVersionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: DocumentVersionCountAggregateInputType | true
+    _min?: DocumentVersionMinAggregateInputType
+    _max?: DocumentVersionMaxAggregateInputType
+  }
+
+  export type DocumentVersionGroupByOutputType = {
+    id: string
+    workerProfileId: string
+    requirementId: string
+    requirementType: string
+    requirementName: string
+    documentCategory: $Enums.DocumentCategory | null
+    status: $Enums.RequirementStatus
+    documentUrl: string | null
+    metadata: JsonValue | null
+    uploadedAt: Date | null
+    reviewedAt: Date | null
+    reviewedBy: string | null
+    approvedAt: Date | null
+    rejectedAt: Date | null
+    rejectionReason: string | null
+    expiresAt: Date | null
+    reason: $Enums.DocumentVersionReason
+    supersededAt: Date
+    _count: DocumentVersionCountAggregateOutputType | null
+    _min: DocumentVersionMinAggregateOutputType | null
+    _max: DocumentVersionMaxAggregateOutputType | null
+  }
+
+  type GetDocumentVersionGroupByPayload<T extends DocumentVersionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<DocumentVersionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof DocumentVersionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], DocumentVersionGroupByOutputType[P]>
+            : GetScalarType<T[P], DocumentVersionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type DocumentVersionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workerProfileId?: boolean
+    requirementId?: boolean
+    requirementType?: boolean
+    requirementName?: boolean
+    documentCategory?: boolean
+    status?: boolean
+    documentUrl?: boolean
+    metadata?: boolean
+    uploadedAt?: boolean
+    reviewedAt?: boolean
+    reviewedBy?: boolean
+    approvedAt?: boolean
+    rejectedAt?: boolean
+    rejectionReason?: boolean
+    expiresAt?: boolean
+    reason?: boolean
+    supersededAt?: boolean
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["documentVersion"]>
+
+  export type DocumentVersionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workerProfileId?: boolean
+    requirementId?: boolean
+    requirementType?: boolean
+    requirementName?: boolean
+    documentCategory?: boolean
+    status?: boolean
+    documentUrl?: boolean
+    metadata?: boolean
+    uploadedAt?: boolean
+    reviewedAt?: boolean
+    reviewedBy?: boolean
+    approvedAt?: boolean
+    rejectedAt?: boolean
+    rejectionReason?: boolean
+    expiresAt?: boolean
+    reason?: boolean
+    supersededAt?: boolean
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["documentVersion"]>
+
+  export type DocumentVersionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    workerProfileId?: boolean
+    requirementId?: boolean
+    requirementType?: boolean
+    requirementName?: boolean
+    documentCategory?: boolean
+    status?: boolean
+    documentUrl?: boolean
+    metadata?: boolean
+    uploadedAt?: boolean
+    reviewedAt?: boolean
+    reviewedBy?: boolean
+    approvedAt?: boolean
+    rejectedAt?: boolean
+    rejectionReason?: boolean
+    expiresAt?: boolean
+    reason?: boolean
+    supersededAt?: boolean
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["documentVersion"]>
+
+  export type DocumentVersionSelectScalar = {
+    id?: boolean
+    workerProfileId?: boolean
+    requirementId?: boolean
+    requirementType?: boolean
+    requirementName?: boolean
+    documentCategory?: boolean
+    status?: boolean
+    documentUrl?: boolean
+    metadata?: boolean
+    uploadedAt?: boolean
+    reviewedAt?: boolean
+    reviewedBy?: boolean
+    approvedAt?: boolean
+    rejectedAt?: boolean
+    rejectionReason?: boolean
+    expiresAt?: boolean
+    reason?: boolean
+    supersededAt?: boolean
+  }
+
+  export type DocumentVersionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "workerProfileId" | "requirementId" | "requirementType" | "requirementName" | "documentCategory" | "status" | "documentUrl" | "metadata" | "uploadedAt" | "reviewedAt" | "reviewedBy" | "approvedAt" | "rejectedAt" | "rejectionReason" | "expiresAt" | "reason" | "supersededAt", ExtArgs["result"]["documentVersion"]>
+  export type DocumentVersionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }
+  export type DocumentVersionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }
+  export type DocumentVersionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    workerProfile?: boolean | WorkerProfileDefaultArgs<ExtArgs>
+  }
+
+  export type $DocumentVersionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "DocumentVersion"
+    objects: {
+      workerProfile: Prisma.$WorkerProfilePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      workerProfileId: string
+      requirementId: string
+      requirementType: string
+      requirementName: string
+      documentCategory: $Enums.DocumentCategory | null
+      status: $Enums.RequirementStatus
+      documentUrl: string | null
+      metadata: Prisma.JsonValue | null
+      uploadedAt: Date | null
+      reviewedAt: Date | null
+      reviewedBy: string | null
+      approvedAt: Date | null
+      rejectedAt: Date | null
+      rejectionReason: string | null
+      expiresAt: Date | null
+      reason: $Enums.DocumentVersionReason
+      supersededAt: Date
+    }, ExtArgs["result"]["documentVersion"]>
+    composites: {}
+  }
+
+  type DocumentVersionGetPayload<S extends boolean | null | undefined | DocumentVersionDefaultArgs> = $Result.GetResult<Prisma.$DocumentVersionPayload, S>
+
+  type DocumentVersionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<DocumentVersionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: DocumentVersionCountAggregateInputType | true
+    }
+
+  export interface DocumentVersionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['DocumentVersion'], meta: { name: 'DocumentVersion' } }
+    /**
+     * Find zero or one DocumentVersion that matches the filter.
+     * @param {DocumentVersionFindUniqueArgs} args - Arguments to find a DocumentVersion
+     * @example
+     * // Get one DocumentVersion
+     * const documentVersion = await prisma.documentVersion.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends DocumentVersionFindUniqueArgs>(args: SelectSubset<T, DocumentVersionFindUniqueArgs<ExtArgs>>): Prisma__DocumentVersionClient<$Result.GetResult<Prisma.$DocumentVersionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one DocumentVersion that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {DocumentVersionFindUniqueOrThrowArgs} args - Arguments to find a DocumentVersion
+     * @example
+     * // Get one DocumentVersion
+     * const documentVersion = await prisma.documentVersion.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends DocumentVersionFindUniqueOrThrowArgs>(args: SelectSubset<T, DocumentVersionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__DocumentVersionClient<$Result.GetResult<Prisma.$DocumentVersionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first DocumentVersion that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DocumentVersionFindFirstArgs} args - Arguments to find a DocumentVersion
+     * @example
+     * // Get one DocumentVersion
+     * const documentVersion = await prisma.documentVersion.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends DocumentVersionFindFirstArgs>(args?: SelectSubset<T, DocumentVersionFindFirstArgs<ExtArgs>>): Prisma__DocumentVersionClient<$Result.GetResult<Prisma.$DocumentVersionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first DocumentVersion that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DocumentVersionFindFirstOrThrowArgs} args - Arguments to find a DocumentVersion
+     * @example
+     * // Get one DocumentVersion
+     * const documentVersion = await prisma.documentVersion.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends DocumentVersionFindFirstOrThrowArgs>(args?: SelectSubset<T, DocumentVersionFindFirstOrThrowArgs<ExtArgs>>): Prisma__DocumentVersionClient<$Result.GetResult<Prisma.$DocumentVersionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more DocumentVersions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DocumentVersionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all DocumentVersions
+     * const documentVersions = await prisma.documentVersion.findMany()
+     * 
+     * // Get first 10 DocumentVersions
+     * const documentVersions = await prisma.documentVersion.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const documentVersionWithIdOnly = await prisma.documentVersion.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends DocumentVersionFindManyArgs>(args?: SelectSubset<T, DocumentVersionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DocumentVersionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a DocumentVersion.
+     * @param {DocumentVersionCreateArgs} args - Arguments to create a DocumentVersion.
+     * @example
+     * // Create one DocumentVersion
+     * const DocumentVersion = await prisma.documentVersion.create({
+     *   data: {
+     *     // ... data to create a DocumentVersion
+     *   }
+     * })
+     * 
+     */
+    create<T extends DocumentVersionCreateArgs>(args: SelectSubset<T, DocumentVersionCreateArgs<ExtArgs>>): Prisma__DocumentVersionClient<$Result.GetResult<Prisma.$DocumentVersionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many DocumentVersions.
+     * @param {DocumentVersionCreateManyArgs} args - Arguments to create many DocumentVersions.
+     * @example
+     * // Create many DocumentVersions
+     * const documentVersion = await prisma.documentVersion.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends DocumentVersionCreateManyArgs>(args?: SelectSubset<T, DocumentVersionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many DocumentVersions and returns the data saved in the database.
+     * @param {DocumentVersionCreateManyAndReturnArgs} args - Arguments to create many DocumentVersions.
+     * @example
+     * // Create many DocumentVersions
+     * const documentVersion = await prisma.documentVersion.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many DocumentVersions and only return the `id`
+     * const documentVersionWithIdOnly = await prisma.documentVersion.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends DocumentVersionCreateManyAndReturnArgs>(args?: SelectSubset<T, DocumentVersionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DocumentVersionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a DocumentVersion.
+     * @param {DocumentVersionDeleteArgs} args - Arguments to delete one DocumentVersion.
+     * @example
+     * // Delete one DocumentVersion
+     * const DocumentVersion = await prisma.documentVersion.delete({
+     *   where: {
+     *     // ... filter to delete one DocumentVersion
+     *   }
+     * })
+     * 
+     */
+    delete<T extends DocumentVersionDeleteArgs>(args: SelectSubset<T, DocumentVersionDeleteArgs<ExtArgs>>): Prisma__DocumentVersionClient<$Result.GetResult<Prisma.$DocumentVersionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one DocumentVersion.
+     * @param {DocumentVersionUpdateArgs} args - Arguments to update one DocumentVersion.
+     * @example
+     * // Update one DocumentVersion
+     * const documentVersion = await prisma.documentVersion.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends DocumentVersionUpdateArgs>(args: SelectSubset<T, DocumentVersionUpdateArgs<ExtArgs>>): Prisma__DocumentVersionClient<$Result.GetResult<Prisma.$DocumentVersionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more DocumentVersions.
+     * @param {DocumentVersionDeleteManyArgs} args - Arguments to filter DocumentVersions to delete.
+     * @example
+     * // Delete a few DocumentVersions
+     * const { count } = await prisma.documentVersion.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends DocumentVersionDeleteManyArgs>(args?: SelectSubset<T, DocumentVersionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more DocumentVersions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DocumentVersionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many DocumentVersions
+     * const documentVersion = await prisma.documentVersion.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends DocumentVersionUpdateManyArgs>(args: SelectSubset<T, DocumentVersionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more DocumentVersions and returns the data updated in the database.
+     * @param {DocumentVersionUpdateManyAndReturnArgs} args - Arguments to update many DocumentVersions.
+     * @example
+     * // Update many DocumentVersions
+     * const documentVersion = await prisma.documentVersion.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more DocumentVersions and only return the `id`
+     * const documentVersionWithIdOnly = await prisma.documentVersion.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends DocumentVersionUpdateManyAndReturnArgs>(args: SelectSubset<T, DocumentVersionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DocumentVersionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one DocumentVersion.
+     * @param {DocumentVersionUpsertArgs} args - Arguments to update or create a DocumentVersion.
+     * @example
+     * // Update or create a DocumentVersion
+     * const documentVersion = await prisma.documentVersion.upsert({
+     *   create: {
+     *     // ... data to create a DocumentVersion
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the DocumentVersion we want to update
+     *   }
+     * })
+     */
+    upsert<T extends DocumentVersionUpsertArgs>(args: SelectSubset<T, DocumentVersionUpsertArgs<ExtArgs>>): Prisma__DocumentVersionClient<$Result.GetResult<Prisma.$DocumentVersionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of DocumentVersions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DocumentVersionCountArgs} args - Arguments to filter DocumentVersions to count.
+     * @example
+     * // Count the number of DocumentVersions
+     * const count = await prisma.documentVersion.count({
+     *   where: {
+     *     // ... the filter for the DocumentVersions we want to count
+     *   }
+     * })
+    **/
+    count<T extends DocumentVersionCountArgs>(
+      args?: Subset<T, DocumentVersionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], DocumentVersionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a DocumentVersion.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DocumentVersionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends DocumentVersionAggregateArgs>(args: Subset<T, DocumentVersionAggregateArgs>): Prisma.PrismaPromise<GetDocumentVersionAggregateType<T>>
+
+    /**
+     * Group by DocumentVersion.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DocumentVersionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends DocumentVersionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: DocumentVersionGroupByArgs['orderBy'] }
+        : { orderBy?: DocumentVersionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, DocumentVersionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetDocumentVersionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the DocumentVersion model
+   */
+  readonly fields: DocumentVersionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for DocumentVersion.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__DocumentVersionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    workerProfile<T extends WorkerProfileDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfileDefaultArgs<ExtArgs>>): Prisma__WorkerProfileClient<$Result.GetResult<Prisma.$WorkerProfilePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the DocumentVersion model
+   */
+  interface DocumentVersionFieldRefs {
+    readonly id: FieldRef<"DocumentVersion", 'String'>
+    readonly workerProfileId: FieldRef<"DocumentVersion", 'String'>
+    readonly requirementId: FieldRef<"DocumentVersion", 'String'>
+    readonly requirementType: FieldRef<"DocumentVersion", 'String'>
+    readonly requirementName: FieldRef<"DocumentVersion", 'String'>
+    readonly documentCategory: FieldRef<"DocumentVersion", 'DocumentCategory'>
+    readonly status: FieldRef<"DocumentVersion", 'RequirementStatus'>
+    readonly documentUrl: FieldRef<"DocumentVersion", 'String'>
+    readonly metadata: FieldRef<"DocumentVersion", 'Json'>
+    readonly uploadedAt: FieldRef<"DocumentVersion", 'DateTime'>
+    readonly reviewedAt: FieldRef<"DocumentVersion", 'DateTime'>
+    readonly reviewedBy: FieldRef<"DocumentVersion", 'String'>
+    readonly approvedAt: FieldRef<"DocumentVersion", 'DateTime'>
+    readonly rejectedAt: FieldRef<"DocumentVersion", 'DateTime'>
+    readonly rejectionReason: FieldRef<"DocumentVersion", 'String'>
+    readonly expiresAt: FieldRef<"DocumentVersion", 'DateTime'>
+    readonly reason: FieldRef<"DocumentVersion", 'DocumentVersionReason'>
+    readonly supersededAt: FieldRef<"DocumentVersion", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * DocumentVersion findUnique
+   */
+  export type DocumentVersionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentVersion
+     */
+    select?: DocumentVersionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the DocumentVersion
+     */
+    omit?: DocumentVersionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentVersionInclude<ExtArgs> | null
+    /**
+     * Filter, which DocumentVersion to fetch.
+     */
+    where: DocumentVersionWhereUniqueInput
+  }
+
+  /**
+   * DocumentVersion findUniqueOrThrow
+   */
+  export type DocumentVersionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentVersion
+     */
+    select?: DocumentVersionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the DocumentVersion
+     */
+    omit?: DocumentVersionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentVersionInclude<ExtArgs> | null
+    /**
+     * Filter, which DocumentVersion to fetch.
+     */
+    where: DocumentVersionWhereUniqueInput
+  }
+
+  /**
+   * DocumentVersion findFirst
+   */
+  export type DocumentVersionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentVersion
+     */
+    select?: DocumentVersionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the DocumentVersion
+     */
+    omit?: DocumentVersionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentVersionInclude<ExtArgs> | null
+    /**
+     * Filter, which DocumentVersion to fetch.
+     */
+    where?: DocumentVersionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of DocumentVersions to fetch.
+     */
+    orderBy?: DocumentVersionOrderByWithRelationInput | DocumentVersionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for DocumentVersions.
+     */
+    cursor?: DocumentVersionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` DocumentVersions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` DocumentVersions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of DocumentVersions.
+     */
+    distinct?: DocumentVersionScalarFieldEnum | DocumentVersionScalarFieldEnum[]
+  }
+
+  /**
+   * DocumentVersion findFirstOrThrow
+   */
+  export type DocumentVersionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentVersion
+     */
+    select?: DocumentVersionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the DocumentVersion
+     */
+    omit?: DocumentVersionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentVersionInclude<ExtArgs> | null
+    /**
+     * Filter, which DocumentVersion to fetch.
+     */
+    where?: DocumentVersionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of DocumentVersions to fetch.
+     */
+    orderBy?: DocumentVersionOrderByWithRelationInput | DocumentVersionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for DocumentVersions.
+     */
+    cursor?: DocumentVersionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` DocumentVersions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` DocumentVersions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of DocumentVersions.
+     */
+    distinct?: DocumentVersionScalarFieldEnum | DocumentVersionScalarFieldEnum[]
+  }
+
+  /**
+   * DocumentVersion findMany
+   */
+  export type DocumentVersionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentVersion
+     */
+    select?: DocumentVersionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the DocumentVersion
+     */
+    omit?: DocumentVersionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentVersionInclude<ExtArgs> | null
+    /**
+     * Filter, which DocumentVersions to fetch.
+     */
+    where?: DocumentVersionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of DocumentVersions to fetch.
+     */
+    orderBy?: DocumentVersionOrderByWithRelationInput | DocumentVersionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing DocumentVersions.
+     */
+    cursor?: DocumentVersionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` DocumentVersions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` DocumentVersions.
+     */
+    skip?: number
+    distinct?: DocumentVersionScalarFieldEnum | DocumentVersionScalarFieldEnum[]
+  }
+
+  /**
+   * DocumentVersion create
+   */
+  export type DocumentVersionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentVersion
+     */
+    select?: DocumentVersionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the DocumentVersion
+     */
+    omit?: DocumentVersionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentVersionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a DocumentVersion.
+     */
+    data: XOR<DocumentVersionCreateInput, DocumentVersionUncheckedCreateInput>
+  }
+
+  /**
+   * DocumentVersion createMany
+   */
+  export type DocumentVersionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many DocumentVersions.
+     */
+    data: DocumentVersionCreateManyInput | DocumentVersionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * DocumentVersion createManyAndReturn
+   */
+  export type DocumentVersionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentVersion
+     */
+    select?: DocumentVersionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the DocumentVersion
+     */
+    omit?: DocumentVersionOmit<ExtArgs> | null
+    /**
+     * The data used to create many DocumentVersions.
+     */
+    data: DocumentVersionCreateManyInput | DocumentVersionCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentVersionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * DocumentVersion update
+   */
+  export type DocumentVersionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentVersion
+     */
+    select?: DocumentVersionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the DocumentVersion
+     */
+    omit?: DocumentVersionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentVersionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a DocumentVersion.
+     */
+    data: XOR<DocumentVersionUpdateInput, DocumentVersionUncheckedUpdateInput>
+    /**
+     * Choose, which DocumentVersion to update.
+     */
+    where: DocumentVersionWhereUniqueInput
+  }
+
+  /**
+   * DocumentVersion updateMany
+   */
+  export type DocumentVersionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update DocumentVersions.
+     */
+    data: XOR<DocumentVersionUpdateManyMutationInput, DocumentVersionUncheckedUpdateManyInput>
+    /**
+     * Filter which DocumentVersions to update
+     */
+    where?: DocumentVersionWhereInput
+    /**
+     * Limit how many DocumentVersions to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * DocumentVersion updateManyAndReturn
+   */
+  export type DocumentVersionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentVersion
+     */
+    select?: DocumentVersionSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the DocumentVersion
+     */
+    omit?: DocumentVersionOmit<ExtArgs> | null
+    /**
+     * The data used to update DocumentVersions.
+     */
+    data: XOR<DocumentVersionUpdateManyMutationInput, DocumentVersionUncheckedUpdateManyInput>
+    /**
+     * Filter which DocumentVersions to update
+     */
+    where?: DocumentVersionWhereInput
+    /**
+     * Limit how many DocumentVersions to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentVersionIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * DocumentVersion upsert
+   */
+  export type DocumentVersionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentVersion
+     */
+    select?: DocumentVersionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the DocumentVersion
+     */
+    omit?: DocumentVersionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentVersionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the DocumentVersion to update in case it exists.
+     */
+    where: DocumentVersionWhereUniqueInput
+    /**
+     * In case the DocumentVersion found by the `where` argument doesn't exist, create a new DocumentVersion with this data.
+     */
+    create: XOR<DocumentVersionCreateInput, DocumentVersionUncheckedCreateInput>
+    /**
+     * In case the DocumentVersion was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<DocumentVersionUpdateInput, DocumentVersionUncheckedUpdateInput>
+  }
+
+  /**
+   * DocumentVersion delete
+   */
+  export type DocumentVersionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentVersion
+     */
+    select?: DocumentVersionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the DocumentVersion
+     */
+    omit?: DocumentVersionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentVersionInclude<ExtArgs> | null
+    /**
+     * Filter which DocumentVersion to delete.
+     */
+    where: DocumentVersionWhereUniqueInput
+  }
+
+  /**
+   * DocumentVersion deleteMany
+   */
+  export type DocumentVersionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which DocumentVersions to delete
+     */
+    where?: DocumentVersionWhereInput
+    /**
+     * Limit how many DocumentVersions to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * DocumentVersion without action
+   */
+  export type DocumentVersionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentVersion
+     */
+    select?: DocumentVersionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the DocumentVersion
+     */
+    omit?: DocumentVersionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentVersionInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Model VerificationToken
    */
 
@@ -15232,6 +16572,7 @@ export namespace Prisma {
     homeStreetLine?: boolean
     homeLocalityId?: boolean
     verificationRequirements?: boolean | WorkerProfile$verificationRequirementsArgs<ExtArgs>
+    documentVersions?: boolean | WorkerProfile$documentVersionsArgs<ExtArgs>
     workerAdditionalInfo?: boolean | WorkerProfile$workerAdditionalInfoArgs<ExtArgs>
     user?: boolean | UserDefaultArgs<ExtArgs>
     workerServices?: boolean | WorkerProfile$workerServicesArgs<ExtArgs>
@@ -15362,6 +16703,7 @@ export namespace Prisma {
   export type WorkerProfileOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "firstName" | "middleName" | "lastName" | "mobile" | "age" | "dateOfBirth" | "gender" | "languages" | "experience" | "introduction" | "qualifications" | "hasVehicle" | "funFact" | "hobbies" | "uniqueService" | "photos" | "additionalPhotos" | "abn" | "setupProgress" | "profileCompleted" | "isPublished" | "verificationStatus" | "createdAt" | "updatedAt" | "consentProfileShareAt" | "consentWordingVersion" | "zohoLeadId" | "tourSeenAt" | "isActivated" | "homeStreetLine" | "homeLocalityId", ExtArgs["result"]["workerProfile"]>
   export type WorkerProfileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     verificationRequirements?: boolean | WorkerProfile$verificationRequirementsArgs<ExtArgs>
+    documentVersions?: boolean | WorkerProfile$documentVersionsArgs<ExtArgs>
     workerAdditionalInfo?: boolean | WorkerProfile$workerAdditionalInfoArgs<ExtArgs>
     user?: boolean | UserDefaultArgs<ExtArgs>
     workerServices?: boolean | WorkerProfile$workerServicesArgs<ExtArgs>
@@ -15389,6 +16731,7 @@ export namespace Prisma {
     name: "WorkerProfile"
     objects: {
       verificationRequirements: Prisma.$VerificationRequirementPayload<ExtArgs>[]
+      documentVersions: Prisma.$DocumentVersionPayload<ExtArgs>[]
       workerAdditionalInfo: Prisma.$WorkerAdditionalInfoPayload<ExtArgs> | null
       user: Prisma.$UserPayload<ExtArgs>
       workerServices: Prisma.$WorkerServicePayload<ExtArgs>[]
@@ -15831,6 +17174,7 @@ export namespace Prisma {
   export interface Prisma__WorkerProfileClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     verificationRequirements<T extends WorkerProfile$verificationRequirementsArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfile$verificationRequirementsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$VerificationRequirementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    documentVersions<T extends WorkerProfile$documentVersionsArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfile$documentVersionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DocumentVersionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     workerAdditionalInfo<T extends WorkerProfile$workerAdditionalInfoArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfile$workerAdditionalInfoArgs<ExtArgs>>): Prisma__WorkerAdditionalInfoClient<$Result.GetResult<Prisma.$WorkerAdditionalInfoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     workerServices<T extends WorkerProfile$workerServicesArgs<ExtArgs> = {}>(args?: Subset<T, WorkerProfile$workerServicesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$WorkerServicePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -16322,6 +17666,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: VerificationRequirementScalarFieldEnum | VerificationRequirementScalarFieldEnum[]
+  }
+
+  /**
+   * WorkerProfile.documentVersions
+   */
+  export type WorkerProfile$documentVersionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DocumentVersion
+     */
+    select?: DocumentVersionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the DocumentVersion
+     */
+    omit?: DocumentVersionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DocumentVersionInclude<ExtArgs> | null
+    where?: DocumentVersionWhereInput
+    orderBy?: DocumentVersionOrderByWithRelationInput | DocumentVersionOrderByWithRelationInput[]
+    cursor?: DocumentVersionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: DocumentVersionScalarFieldEnum | DocumentVersionScalarFieldEnum[]
   }
 
   /**
@@ -42879,6 +44247,30 @@ export namespace Prisma {
   export type VerificationRequirementScalarFieldEnum = (typeof VerificationRequirementScalarFieldEnum)[keyof typeof VerificationRequirementScalarFieldEnum]
 
 
+  export const DocumentVersionScalarFieldEnum: {
+    id: 'id',
+    workerProfileId: 'workerProfileId',
+    requirementId: 'requirementId',
+    requirementType: 'requirementType',
+    requirementName: 'requirementName',
+    documentCategory: 'documentCategory',
+    status: 'status',
+    documentUrl: 'documentUrl',
+    metadata: 'metadata',
+    uploadedAt: 'uploadedAt',
+    reviewedAt: 'reviewedAt',
+    reviewedBy: 'reviewedBy',
+    approvedAt: 'approvedAt',
+    rejectedAt: 'rejectedAt',
+    rejectionReason: 'rejectionReason',
+    expiresAt: 'expiresAt',
+    reason: 'reason',
+    supersededAt: 'supersededAt'
+  };
+
+  export type DocumentVersionScalarFieldEnum = (typeof DocumentVersionScalarFieldEnum)[keyof typeof DocumentVersionScalarFieldEnum]
+
+
   export const VerificationTokenScalarFieldEnum: {
     identifier: 'identifier',
     token: 'token',
@@ -43483,6 +44875,20 @@ export namespace Prisma {
    * Reference to a field of type 'DocumentCategory[]'
    */
   export type ListEnumDocumentCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DocumentCategory[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'DocumentVersionReason'
+   */
+  export type EnumDocumentVersionReasonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DocumentVersionReason'>
+    
+
+
+  /**
+   * Reference to a field of type 'DocumentVersionReason[]'
+   */
+  export type ListEnumDocumentVersionReasonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DocumentVersionReason[]'>
     
 
 
@@ -44373,6 +45779,126 @@ export namespace Prisma {
     metadata?: JsonNullableWithAggregatesFilter<"VerificationRequirement">
   }
 
+  export type DocumentVersionWhereInput = {
+    AND?: DocumentVersionWhereInput | DocumentVersionWhereInput[]
+    OR?: DocumentVersionWhereInput[]
+    NOT?: DocumentVersionWhereInput | DocumentVersionWhereInput[]
+    id?: StringFilter<"DocumentVersion"> | string
+    workerProfileId?: StringFilter<"DocumentVersion"> | string
+    requirementId?: StringFilter<"DocumentVersion"> | string
+    requirementType?: StringFilter<"DocumentVersion"> | string
+    requirementName?: StringFilter<"DocumentVersion"> | string
+    documentCategory?: EnumDocumentCategoryNullableFilter<"DocumentVersion"> | $Enums.DocumentCategory | null
+    status?: EnumRequirementStatusFilter<"DocumentVersion"> | $Enums.RequirementStatus
+    documentUrl?: StringNullableFilter<"DocumentVersion"> | string | null
+    metadata?: JsonNullableFilter<"DocumentVersion">
+    uploadedAt?: DateTimeNullableFilter<"DocumentVersion"> | Date | string | null
+    reviewedAt?: DateTimeNullableFilter<"DocumentVersion"> | Date | string | null
+    reviewedBy?: StringNullableFilter<"DocumentVersion"> | string | null
+    approvedAt?: DateTimeNullableFilter<"DocumentVersion"> | Date | string | null
+    rejectedAt?: DateTimeNullableFilter<"DocumentVersion"> | Date | string | null
+    rejectionReason?: StringNullableFilter<"DocumentVersion"> | string | null
+    expiresAt?: DateTimeNullableFilter<"DocumentVersion"> | Date | string | null
+    reason?: EnumDocumentVersionReasonFilter<"DocumentVersion"> | $Enums.DocumentVersionReason
+    supersededAt?: DateTimeFilter<"DocumentVersion"> | Date | string
+    workerProfile?: XOR<WorkerProfileScalarRelationFilter, WorkerProfileWhereInput>
+  }
+
+  export type DocumentVersionOrderByWithRelationInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    requirementId?: SortOrder
+    requirementType?: SortOrder
+    requirementName?: SortOrder
+    documentCategory?: SortOrderInput | SortOrder
+    status?: SortOrder
+    documentUrl?: SortOrderInput | SortOrder
+    metadata?: SortOrderInput | SortOrder
+    uploadedAt?: SortOrderInput | SortOrder
+    reviewedAt?: SortOrderInput | SortOrder
+    reviewedBy?: SortOrderInput | SortOrder
+    approvedAt?: SortOrderInput | SortOrder
+    rejectedAt?: SortOrderInput | SortOrder
+    rejectionReason?: SortOrderInput | SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    reason?: SortOrder
+    supersededAt?: SortOrder
+    workerProfile?: WorkerProfileOrderByWithRelationInput
+  }
+
+  export type DocumentVersionWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: DocumentVersionWhereInput | DocumentVersionWhereInput[]
+    OR?: DocumentVersionWhereInput[]
+    NOT?: DocumentVersionWhereInput | DocumentVersionWhereInput[]
+    workerProfileId?: StringFilter<"DocumentVersion"> | string
+    requirementId?: StringFilter<"DocumentVersion"> | string
+    requirementType?: StringFilter<"DocumentVersion"> | string
+    requirementName?: StringFilter<"DocumentVersion"> | string
+    documentCategory?: EnumDocumentCategoryNullableFilter<"DocumentVersion"> | $Enums.DocumentCategory | null
+    status?: EnumRequirementStatusFilter<"DocumentVersion"> | $Enums.RequirementStatus
+    documentUrl?: StringNullableFilter<"DocumentVersion"> | string | null
+    metadata?: JsonNullableFilter<"DocumentVersion">
+    uploadedAt?: DateTimeNullableFilter<"DocumentVersion"> | Date | string | null
+    reviewedAt?: DateTimeNullableFilter<"DocumentVersion"> | Date | string | null
+    reviewedBy?: StringNullableFilter<"DocumentVersion"> | string | null
+    approvedAt?: DateTimeNullableFilter<"DocumentVersion"> | Date | string | null
+    rejectedAt?: DateTimeNullableFilter<"DocumentVersion"> | Date | string | null
+    rejectionReason?: StringNullableFilter<"DocumentVersion"> | string | null
+    expiresAt?: DateTimeNullableFilter<"DocumentVersion"> | Date | string | null
+    reason?: EnumDocumentVersionReasonFilter<"DocumentVersion"> | $Enums.DocumentVersionReason
+    supersededAt?: DateTimeFilter<"DocumentVersion"> | Date | string
+    workerProfile?: XOR<WorkerProfileScalarRelationFilter, WorkerProfileWhereInput>
+  }, "id">
+
+  export type DocumentVersionOrderByWithAggregationInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    requirementId?: SortOrder
+    requirementType?: SortOrder
+    requirementName?: SortOrder
+    documentCategory?: SortOrderInput | SortOrder
+    status?: SortOrder
+    documentUrl?: SortOrderInput | SortOrder
+    metadata?: SortOrderInput | SortOrder
+    uploadedAt?: SortOrderInput | SortOrder
+    reviewedAt?: SortOrderInput | SortOrder
+    reviewedBy?: SortOrderInput | SortOrder
+    approvedAt?: SortOrderInput | SortOrder
+    rejectedAt?: SortOrderInput | SortOrder
+    rejectionReason?: SortOrderInput | SortOrder
+    expiresAt?: SortOrderInput | SortOrder
+    reason?: SortOrder
+    supersededAt?: SortOrder
+    _count?: DocumentVersionCountOrderByAggregateInput
+    _max?: DocumentVersionMaxOrderByAggregateInput
+    _min?: DocumentVersionMinOrderByAggregateInput
+  }
+
+  export type DocumentVersionScalarWhereWithAggregatesInput = {
+    AND?: DocumentVersionScalarWhereWithAggregatesInput | DocumentVersionScalarWhereWithAggregatesInput[]
+    OR?: DocumentVersionScalarWhereWithAggregatesInput[]
+    NOT?: DocumentVersionScalarWhereWithAggregatesInput | DocumentVersionScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"DocumentVersion"> | string
+    workerProfileId?: StringWithAggregatesFilter<"DocumentVersion"> | string
+    requirementId?: StringWithAggregatesFilter<"DocumentVersion"> | string
+    requirementType?: StringWithAggregatesFilter<"DocumentVersion"> | string
+    requirementName?: StringWithAggregatesFilter<"DocumentVersion"> | string
+    documentCategory?: EnumDocumentCategoryNullableWithAggregatesFilter<"DocumentVersion"> | $Enums.DocumentCategory | null
+    status?: EnumRequirementStatusWithAggregatesFilter<"DocumentVersion"> | $Enums.RequirementStatus
+    documentUrl?: StringNullableWithAggregatesFilter<"DocumentVersion"> | string | null
+    metadata?: JsonNullableWithAggregatesFilter<"DocumentVersion">
+    uploadedAt?: DateTimeNullableWithAggregatesFilter<"DocumentVersion"> | Date | string | null
+    reviewedAt?: DateTimeNullableWithAggregatesFilter<"DocumentVersion"> | Date | string | null
+    reviewedBy?: StringNullableWithAggregatesFilter<"DocumentVersion"> | string | null
+    approvedAt?: DateTimeNullableWithAggregatesFilter<"DocumentVersion"> | Date | string | null
+    rejectedAt?: DateTimeNullableWithAggregatesFilter<"DocumentVersion"> | Date | string | null
+    rejectionReason?: StringNullableWithAggregatesFilter<"DocumentVersion"> | string | null
+    expiresAt?: DateTimeNullableWithAggregatesFilter<"DocumentVersion"> | Date | string | null
+    reason?: EnumDocumentVersionReasonWithAggregatesFilter<"DocumentVersion"> | $Enums.DocumentVersionReason
+    supersededAt?: DateTimeWithAggregatesFilter<"DocumentVersion"> | Date | string
+  }
+
   export type VerificationTokenWhereInput = {
     AND?: VerificationTokenWhereInput | VerificationTokenWhereInput[]
     OR?: VerificationTokenWhereInput[]
@@ -44454,6 +45980,7 @@ export namespace Prisma {
     homeStreetLine?: StringNullableFilter<"WorkerProfile"> | string | null
     homeLocalityId?: IntNullableFilter<"WorkerProfile"> | number | null
     verificationRequirements?: VerificationRequirementListRelationFilter
+    documentVersions?: DocumentVersionListRelationFilter
     workerAdditionalInfo?: XOR<WorkerAdditionalInfoNullableScalarRelationFilter, WorkerAdditionalInfoWhereInput> | null
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
     workerServices?: WorkerServiceListRelationFilter
@@ -44503,6 +46030,7 @@ export namespace Prisma {
     homeStreetLine?: SortOrderInput | SortOrder
     homeLocalityId?: SortOrderInput | SortOrder
     verificationRequirements?: VerificationRequirementOrderByRelationAggregateInput
+    documentVersions?: DocumentVersionOrderByRelationAggregateInput
     workerAdditionalInfo?: WorkerAdditionalInfoOrderByWithRelationInput
     user?: UserOrderByWithRelationInput
     workerServices?: WorkerServiceOrderByRelationAggregateInput
@@ -44555,6 +46083,7 @@ export namespace Prisma {
     homeStreetLine?: StringNullableFilter<"WorkerProfile"> | string | null
     homeLocalityId?: IntNullableFilter<"WorkerProfile"> | number | null
     verificationRequirements?: VerificationRequirementListRelationFilter
+    documentVersions?: DocumentVersionListRelationFilter
     workerAdditionalInfo?: XOR<WorkerAdditionalInfoNullableScalarRelationFilter, WorkerAdditionalInfoWhereInput> | null
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
     workerServices?: WorkerServiceListRelationFilter
@@ -47312,6 +48841,152 @@ export namespace Prisma {
     metadata?: NullableJsonNullValueInput | InputJsonValue
   }
 
+  export type DocumentVersionCreateInput = {
+    id?: string
+    requirementId: string
+    requirementType: string
+    requirementName: string
+    documentCategory?: $Enums.DocumentCategory | null
+    status: $Enums.RequirementStatus
+    documentUrl?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: Date | string | null
+    reviewedAt?: Date | string | null
+    reviewedBy?: string | null
+    approvedAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    rejectionReason?: string | null
+    expiresAt?: Date | string | null
+    reason: $Enums.DocumentVersionReason
+    supersededAt: Date | string
+    workerProfile: WorkerProfileCreateNestedOneWithoutDocumentVersionsInput
+  }
+
+  export type DocumentVersionUncheckedCreateInput = {
+    id?: string
+    workerProfileId: string
+    requirementId: string
+    requirementType: string
+    requirementName: string
+    documentCategory?: $Enums.DocumentCategory | null
+    status: $Enums.RequirementStatus
+    documentUrl?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: Date | string | null
+    reviewedAt?: Date | string | null
+    reviewedBy?: string | null
+    approvedAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    rejectionReason?: string | null
+    expiresAt?: Date | string | null
+    reason: $Enums.DocumentVersionReason
+    supersededAt: Date | string
+  }
+
+  export type DocumentVersionUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    requirementId?: StringFieldUpdateOperationsInput | string
+    requirementType?: StringFieldUpdateOperationsInput | string
+    requirementName?: StringFieldUpdateOperationsInput | string
+    documentCategory?: NullableEnumDocumentCategoryFieldUpdateOperationsInput | $Enums.DocumentCategory | null
+    status?: EnumRequirementStatusFieldUpdateOperationsInput | $Enums.RequirementStatus
+    documentUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reason?: EnumDocumentVersionReasonFieldUpdateOperationsInput | $Enums.DocumentVersionReason
+    supersededAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    workerProfile?: WorkerProfileUpdateOneRequiredWithoutDocumentVersionsNestedInput
+  }
+
+  export type DocumentVersionUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workerProfileId?: StringFieldUpdateOperationsInput | string
+    requirementId?: StringFieldUpdateOperationsInput | string
+    requirementType?: StringFieldUpdateOperationsInput | string
+    requirementName?: StringFieldUpdateOperationsInput | string
+    documentCategory?: NullableEnumDocumentCategoryFieldUpdateOperationsInput | $Enums.DocumentCategory | null
+    status?: EnumRequirementStatusFieldUpdateOperationsInput | $Enums.RequirementStatus
+    documentUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reason?: EnumDocumentVersionReasonFieldUpdateOperationsInput | $Enums.DocumentVersionReason
+    supersededAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DocumentVersionCreateManyInput = {
+    id?: string
+    workerProfileId: string
+    requirementId: string
+    requirementType: string
+    requirementName: string
+    documentCategory?: $Enums.DocumentCategory | null
+    status: $Enums.RequirementStatus
+    documentUrl?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: Date | string | null
+    reviewedAt?: Date | string | null
+    reviewedBy?: string | null
+    approvedAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    rejectionReason?: string | null
+    expiresAt?: Date | string | null
+    reason: $Enums.DocumentVersionReason
+    supersededAt: Date | string
+  }
+
+  export type DocumentVersionUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    requirementId?: StringFieldUpdateOperationsInput | string
+    requirementType?: StringFieldUpdateOperationsInput | string
+    requirementName?: StringFieldUpdateOperationsInput | string
+    documentCategory?: NullableEnumDocumentCategoryFieldUpdateOperationsInput | $Enums.DocumentCategory | null
+    status?: EnumRequirementStatusFieldUpdateOperationsInput | $Enums.RequirementStatus
+    documentUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reason?: EnumDocumentVersionReasonFieldUpdateOperationsInput | $Enums.DocumentVersionReason
+    supersededAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DocumentVersionUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    workerProfileId?: StringFieldUpdateOperationsInput | string
+    requirementId?: StringFieldUpdateOperationsInput | string
+    requirementType?: StringFieldUpdateOperationsInput | string
+    requirementName?: StringFieldUpdateOperationsInput | string
+    documentCategory?: NullableEnumDocumentCategoryFieldUpdateOperationsInput | $Enums.DocumentCategory | null
+    status?: EnumRequirementStatusFieldUpdateOperationsInput | $Enums.RequirementStatus
+    documentUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reason?: EnumDocumentVersionReasonFieldUpdateOperationsInput | $Enums.DocumentVersionReason
+    supersededAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type VerificationTokenCreateInput = {
     identifier: string
     token: string
@@ -47387,6 +49062,7 @@ export namespace Prisma {
     isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
@@ -47436,6 +49112,7 @@ export namespace Prisma {
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -47481,6 +49158,7 @@ export namespace Prisma {
     isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
@@ -47530,6 +49208,7 @@ export namespace Prisma {
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -50469,6 +52148,84 @@ export namespace Prisma {
     _max?: NestedEnumDocumentCategoryNullableFilter<$PrismaModel>
   }
 
+  export type EnumDocumentVersionReasonFilter<$PrismaModel = never> = {
+    equals?: $Enums.DocumentVersionReason | EnumDocumentVersionReasonFieldRefInput<$PrismaModel>
+    in?: $Enums.DocumentVersionReason[] | ListEnumDocumentVersionReasonFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DocumentVersionReason[] | ListEnumDocumentVersionReasonFieldRefInput<$PrismaModel>
+    not?: NestedEnumDocumentVersionReasonFilter<$PrismaModel> | $Enums.DocumentVersionReason
+  }
+
+  export type DocumentVersionCountOrderByAggregateInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    requirementId?: SortOrder
+    requirementType?: SortOrder
+    requirementName?: SortOrder
+    documentCategory?: SortOrder
+    status?: SortOrder
+    documentUrl?: SortOrder
+    metadata?: SortOrder
+    uploadedAt?: SortOrder
+    reviewedAt?: SortOrder
+    reviewedBy?: SortOrder
+    approvedAt?: SortOrder
+    rejectedAt?: SortOrder
+    rejectionReason?: SortOrder
+    expiresAt?: SortOrder
+    reason?: SortOrder
+    supersededAt?: SortOrder
+  }
+
+  export type DocumentVersionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    requirementId?: SortOrder
+    requirementType?: SortOrder
+    requirementName?: SortOrder
+    documentCategory?: SortOrder
+    status?: SortOrder
+    documentUrl?: SortOrder
+    uploadedAt?: SortOrder
+    reviewedAt?: SortOrder
+    reviewedBy?: SortOrder
+    approvedAt?: SortOrder
+    rejectedAt?: SortOrder
+    rejectionReason?: SortOrder
+    expiresAt?: SortOrder
+    reason?: SortOrder
+    supersededAt?: SortOrder
+  }
+
+  export type DocumentVersionMinOrderByAggregateInput = {
+    id?: SortOrder
+    workerProfileId?: SortOrder
+    requirementId?: SortOrder
+    requirementType?: SortOrder
+    requirementName?: SortOrder
+    documentCategory?: SortOrder
+    status?: SortOrder
+    documentUrl?: SortOrder
+    uploadedAt?: SortOrder
+    reviewedAt?: SortOrder
+    reviewedBy?: SortOrder
+    approvedAt?: SortOrder
+    rejectedAt?: SortOrder
+    rejectionReason?: SortOrder
+    expiresAt?: SortOrder
+    reason?: SortOrder
+    supersededAt?: SortOrder
+  }
+
+  export type EnumDocumentVersionReasonWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.DocumentVersionReason | EnumDocumentVersionReasonFieldRefInput<$PrismaModel>
+    in?: $Enums.DocumentVersionReason[] | ListEnumDocumentVersionReasonFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DocumentVersionReason[] | ListEnumDocumentVersionReasonFieldRefInput<$PrismaModel>
+    not?: NestedEnumDocumentVersionReasonWithAggregatesFilter<$PrismaModel> | $Enums.DocumentVersionReason
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumDocumentVersionReasonFilter<$PrismaModel>
+    _max?: NestedEnumDocumentVersionReasonFilter<$PrismaModel>
+  }
+
   export type VerificationTokenIdentifierTokenCompoundUniqueInput = {
     identifier: string
     token: string
@@ -50496,6 +52253,12 @@ export namespace Prisma {
     every?: VerificationRequirementWhereInput
     some?: VerificationRequirementWhereInput
     none?: VerificationRequirementWhereInput
+  }
+
+  export type DocumentVersionListRelationFilter = {
+    every?: DocumentVersionWhereInput
+    some?: DocumentVersionWhereInput
+    none?: DocumentVersionWhereInput
   }
 
   export type WorkerAdditionalInfoNullableScalarRelationFilter = {
@@ -50562,6 +52325,10 @@ export namespace Prisma {
   }
 
   export type VerificationRequirementOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type DocumentVersionOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -52617,6 +54384,24 @@ export namespace Prisma {
     update?: XOR<XOR<WorkerProfileUpdateToOneWithWhereWithoutVerificationRequirementsInput, WorkerProfileUpdateWithoutVerificationRequirementsInput>, WorkerProfileUncheckedUpdateWithoutVerificationRequirementsInput>
   }
 
+  export type WorkerProfileCreateNestedOneWithoutDocumentVersionsInput = {
+    create?: XOR<WorkerProfileCreateWithoutDocumentVersionsInput, WorkerProfileUncheckedCreateWithoutDocumentVersionsInput>
+    connectOrCreate?: WorkerProfileCreateOrConnectWithoutDocumentVersionsInput
+    connect?: WorkerProfileWhereUniqueInput
+  }
+
+  export type EnumDocumentVersionReasonFieldUpdateOperationsInput = {
+    set?: $Enums.DocumentVersionReason
+  }
+
+  export type WorkerProfileUpdateOneRequiredWithoutDocumentVersionsNestedInput = {
+    create?: XOR<WorkerProfileCreateWithoutDocumentVersionsInput, WorkerProfileUncheckedCreateWithoutDocumentVersionsInput>
+    connectOrCreate?: WorkerProfileCreateOrConnectWithoutDocumentVersionsInput
+    upsert?: WorkerProfileUpsertWithoutDocumentVersionsInput
+    connect?: WorkerProfileWhereUniqueInput
+    update?: XOR<XOR<WorkerProfileUpdateToOneWithWhereWithoutDocumentVersionsInput, WorkerProfileUpdateWithoutDocumentVersionsInput>, WorkerProfileUncheckedUpdateWithoutDocumentVersionsInput>
+  }
+
   export type WorkerProfileCreatelanguagesInput = {
     set: string[]
   }
@@ -52626,6 +54411,13 @@ export namespace Prisma {
     connectOrCreate?: VerificationRequirementCreateOrConnectWithoutWorkerProfileInput | VerificationRequirementCreateOrConnectWithoutWorkerProfileInput[]
     createMany?: VerificationRequirementCreateManyWorkerProfileInputEnvelope
     connect?: VerificationRequirementWhereUniqueInput | VerificationRequirementWhereUniqueInput[]
+  }
+
+  export type DocumentVersionCreateNestedManyWithoutWorkerProfileInput = {
+    create?: XOR<DocumentVersionCreateWithoutWorkerProfileInput, DocumentVersionUncheckedCreateWithoutWorkerProfileInput> | DocumentVersionCreateWithoutWorkerProfileInput[] | DocumentVersionUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: DocumentVersionCreateOrConnectWithoutWorkerProfileInput | DocumentVersionCreateOrConnectWithoutWorkerProfileInput[]
+    createMany?: DocumentVersionCreateManyWorkerProfileInputEnvelope
+    connect?: DocumentVersionWhereUniqueInput | DocumentVersionWhereUniqueInput[]
   }
 
   export type WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput = {
@@ -52715,6 +54507,13 @@ export namespace Prisma {
     connect?: VerificationRequirementWhereUniqueInput | VerificationRequirementWhereUniqueInput[]
   }
 
+  export type DocumentVersionUncheckedCreateNestedManyWithoutWorkerProfileInput = {
+    create?: XOR<DocumentVersionCreateWithoutWorkerProfileInput, DocumentVersionUncheckedCreateWithoutWorkerProfileInput> | DocumentVersionCreateWithoutWorkerProfileInput[] | DocumentVersionUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: DocumentVersionCreateOrConnectWithoutWorkerProfileInput | DocumentVersionCreateOrConnectWithoutWorkerProfileInput[]
+    createMany?: DocumentVersionCreateManyWorkerProfileInputEnvelope
+    connect?: DocumentVersionWhereUniqueInput | DocumentVersionWhereUniqueInput[]
+  }
+
   export type WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput = {
     create?: XOR<WorkerAdditionalInfoCreateWithoutWorkerProfileInput, WorkerAdditionalInfoUncheckedCreateWithoutWorkerProfileInput>
     connectOrCreate?: WorkerAdditionalInfoCreateOrConnectWithoutWorkerProfileInput
@@ -52800,6 +54599,20 @@ export namespace Prisma {
     update?: VerificationRequirementUpdateWithWhereUniqueWithoutWorkerProfileInput | VerificationRequirementUpdateWithWhereUniqueWithoutWorkerProfileInput[]
     updateMany?: VerificationRequirementUpdateManyWithWhereWithoutWorkerProfileInput | VerificationRequirementUpdateManyWithWhereWithoutWorkerProfileInput[]
     deleteMany?: VerificationRequirementScalarWhereInput | VerificationRequirementScalarWhereInput[]
+  }
+
+  export type DocumentVersionUpdateManyWithoutWorkerProfileNestedInput = {
+    create?: XOR<DocumentVersionCreateWithoutWorkerProfileInput, DocumentVersionUncheckedCreateWithoutWorkerProfileInput> | DocumentVersionCreateWithoutWorkerProfileInput[] | DocumentVersionUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: DocumentVersionCreateOrConnectWithoutWorkerProfileInput | DocumentVersionCreateOrConnectWithoutWorkerProfileInput[]
+    upsert?: DocumentVersionUpsertWithWhereUniqueWithoutWorkerProfileInput | DocumentVersionUpsertWithWhereUniqueWithoutWorkerProfileInput[]
+    createMany?: DocumentVersionCreateManyWorkerProfileInputEnvelope
+    set?: DocumentVersionWhereUniqueInput | DocumentVersionWhereUniqueInput[]
+    disconnect?: DocumentVersionWhereUniqueInput | DocumentVersionWhereUniqueInput[]
+    delete?: DocumentVersionWhereUniqueInput | DocumentVersionWhereUniqueInput[]
+    connect?: DocumentVersionWhereUniqueInput | DocumentVersionWhereUniqueInput[]
+    update?: DocumentVersionUpdateWithWhereUniqueWithoutWorkerProfileInput | DocumentVersionUpdateWithWhereUniqueWithoutWorkerProfileInput[]
+    updateMany?: DocumentVersionUpdateManyWithWhereWithoutWorkerProfileInput | DocumentVersionUpdateManyWithWhereWithoutWorkerProfileInput[]
+    deleteMany?: DocumentVersionScalarWhereInput | DocumentVersionScalarWhereInput[]
   }
 
   export type WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput = {
@@ -52964,6 +54777,20 @@ export namespace Prisma {
     update?: VerificationRequirementUpdateWithWhereUniqueWithoutWorkerProfileInput | VerificationRequirementUpdateWithWhereUniqueWithoutWorkerProfileInput[]
     updateMany?: VerificationRequirementUpdateManyWithWhereWithoutWorkerProfileInput | VerificationRequirementUpdateManyWithWhereWithoutWorkerProfileInput[]
     deleteMany?: VerificationRequirementScalarWhereInput | VerificationRequirementScalarWhereInput[]
+  }
+
+  export type DocumentVersionUncheckedUpdateManyWithoutWorkerProfileNestedInput = {
+    create?: XOR<DocumentVersionCreateWithoutWorkerProfileInput, DocumentVersionUncheckedCreateWithoutWorkerProfileInput> | DocumentVersionCreateWithoutWorkerProfileInput[] | DocumentVersionUncheckedCreateWithoutWorkerProfileInput[]
+    connectOrCreate?: DocumentVersionCreateOrConnectWithoutWorkerProfileInput | DocumentVersionCreateOrConnectWithoutWorkerProfileInput[]
+    upsert?: DocumentVersionUpsertWithWhereUniqueWithoutWorkerProfileInput | DocumentVersionUpsertWithWhereUniqueWithoutWorkerProfileInput[]
+    createMany?: DocumentVersionCreateManyWorkerProfileInputEnvelope
+    set?: DocumentVersionWhereUniqueInput | DocumentVersionWhereUniqueInput[]
+    disconnect?: DocumentVersionWhereUniqueInput | DocumentVersionWhereUniqueInput[]
+    delete?: DocumentVersionWhereUniqueInput | DocumentVersionWhereUniqueInput[]
+    connect?: DocumentVersionWhereUniqueInput | DocumentVersionWhereUniqueInput[]
+    update?: DocumentVersionUpdateWithWhereUniqueWithoutWorkerProfileInput | DocumentVersionUpdateWithWhereUniqueWithoutWorkerProfileInput[]
+    updateMany?: DocumentVersionUpdateManyWithWhereWithoutWorkerProfileInput | DocumentVersionUpdateManyWithWhereWithoutWorkerProfileInput[]
+    deleteMany?: DocumentVersionScalarWhereInput | DocumentVersionScalarWhereInput[]
   }
 
   export type WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput = {
@@ -54253,6 +56080,23 @@ export namespace Prisma {
     _max?: NestedEnumDocumentCategoryNullableFilter<$PrismaModel>
   }
 
+  export type NestedEnumDocumentVersionReasonFilter<$PrismaModel = never> = {
+    equals?: $Enums.DocumentVersionReason | EnumDocumentVersionReasonFieldRefInput<$PrismaModel>
+    in?: $Enums.DocumentVersionReason[] | ListEnumDocumentVersionReasonFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DocumentVersionReason[] | ListEnumDocumentVersionReasonFieldRefInput<$PrismaModel>
+    not?: NestedEnumDocumentVersionReasonFilter<$PrismaModel> | $Enums.DocumentVersionReason
+  }
+
+  export type NestedEnumDocumentVersionReasonWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.DocumentVersionReason | EnumDocumentVersionReasonFieldRefInput<$PrismaModel>
+    in?: $Enums.DocumentVersionReason[] | ListEnumDocumentVersionReasonFieldRefInput<$PrismaModel>
+    notIn?: $Enums.DocumentVersionReason[] | ListEnumDocumentVersionReasonFieldRefInput<$PrismaModel>
+    not?: NestedEnumDocumentVersionReasonWithAggregatesFilter<$PrismaModel> | $Enums.DocumentVersionReason
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumDocumentVersionReasonFilter<$PrismaModel>
+    _max?: NestedEnumDocumentVersionReasonFilter<$PrismaModel>
+  }
+
   export type NestedBoolNullableFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
     not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
@@ -55387,6 +57231,7 @@ export namespace Prisma {
     isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
@@ -55434,6 +57279,7 @@ export namespace Prisma {
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -55683,6 +57529,7 @@ export namespace Prisma {
     isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
@@ -55730,6 +57577,7 @@ export namespace Prisma {
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -55875,6 +57723,7 @@ export namespace Prisma {
     tourSeenAt?: Date | string | null
     isActivated?: boolean
     homeStreetLine?: string | null
+    documentVersions?: DocumentVersionCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
@@ -55923,6 +57772,7 @@ export namespace Prisma {
     isActivated?: boolean
     homeStreetLine?: string | null
     homeLocalityId?: number | null
+    documentVersions?: DocumentVersionUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -55983,6 +57833,7 @@ export namespace Prisma {
     tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
+    documentVersions?: DocumentVersionUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
@@ -56031,6 +57882,211 @@ export namespace Prisma {
     isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
+    documentVersions?: DocumentVersionUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
+    workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    locations?: WorkerLocationUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUncheckedUpdateOneWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedUpdateManyWithoutClaimedByNestedInput
+  }
+
+  export type WorkerProfileCreateWithoutDocumentVersionsInput = {
+    id?: string
+    firstName: string
+    middleName?: string | null
+    lastName: string
+    mobile: string
+    age?: number | null
+    dateOfBirth?: string | null
+    gender?: string | null
+    languages?: WorkerProfileCreatelanguagesInput | string[]
+    experience?: string | null
+    introduction?: string | null
+    qualifications?: string | null
+    hasVehicle?: string | null
+    funFact?: string | null
+    hobbies?: string | null
+    uniqueService?: string | null
+    photos?: string | null
+    additionalPhotos?: string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: boolean
+    isPublished?: boolean
+    verificationStatus?: string
+    createdAt?: Date | string
+    updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
+    tourSeenAt?: Date | string | null
+    isActivated?: boolean
+    homeStreetLine?: string | null
+    verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
+    workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
+    user: UserCreateNestedOneWithoutWorkerProfileInput
+    workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceCreateNestedManyWithoutWorkerProfileInput
+    homeLocality?: AuLocalityCreateNestedOneWithoutWorkerHomesInput
+    locations?: WorkerLocationCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingCreateNestedOneWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionCreateNestedManyWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadCreateNestedManyWithoutClaimedByInput
+  }
+
+  export type WorkerProfileUncheckedCreateWithoutDocumentVersionsInput = {
+    id?: string
+    userId: string
+    firstName: string
+    middleName?: string | null
+    lastName: string
+    mobile: string
+    age?: number | null
+    dateOfBirth?: string | null
+    gender?: string | null
+    languages?: WorkerProfileCreatelanguagesInput | string[]
+    experience?: string | null
+    introduction?: string | null
+    qualifications?: string | null
+    hasVehicle?: string | null
+    funFact?: string | null
+    hobbies?: string | null
+    uniqueService?: string | null
+    photos?: string | null
+    additionalPhotos?: string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: boolean
+    isPublished?: boolean
+    verificationStatus?: string
+    createdAt?: Date | string
+    updatedAt: Date | string
+    consentProfileShareAt?: Date | string | null
+    consentWordingVersion?: string | null
+    zohoLeadId?: string | null
+    tourSeenAt?: Date | string | null
+    isActivated?: boolean
+    homeStreetLine?: string | null
+    homeLocalityId?: number | null
+    verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
+    workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
+    jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput
+    educationEntries?: WorkerEducationUncheckedCreateNestedManyWithoutWorkerProfileInput
+    careExperience?: WorkerExperienceUncheckedCreateNestedManyWithoutWorkerProfileInput
+    locations?: WorkerLocationUncheckedCreateNestedManyWithoutWorkerProfileInput
+    onboarding?: WorkerOnboardingUncheckedCreateNestedOneWithoutWorkerProfileInput
+    onboardingTransitions?: WorkerOnboardingTransitionUncheckedCreateNestedManyWithoutWorkerProfileInput
+    registrationPhotos?: RegistrationPhotoUploadUncheckedCreateNestedManyWithoutClaimedByInput
+  }
+
+  export type WorkerProfileCreateOrConnectWithoutDocumentVersionsInput = {
+    where: WorkerProfileWhereUniqueInput
+    create: XOR<WorkerProfileCreateWithoutDocumentVersionsInput, WorkerProfileUncheckedCreateWithoutDocumentVersionsInput>
+  }
+
+  export type WorkerProfileUpsertWithoutDocumentVersionsInput = {
+    update: XOR<WorkerProfileUpdateWithoutDocumentVersionsInput, WorkerProfileUncheckedUpdateWithoutDocumentVersionsInput>
+    create: XOR<WorkerProfileCreateWithoutDocumentVersionsInput, WorkerProfileUncheckedCreateWithoutDocumentVersionsInput>
+    where?: WorkerProfileWhereInput
+  }
+
+  export type WorkerProfileUpdateToOneWithWhereWithoutDocumentVersionsInput = {
+    where?: WorkerProfileWhereInput
+    data: XOR<WorkerProfileUpdateWithoutDocumentVersionsInput, WorkerProfileUncheckedUpdateWithoutDocumentVersionsInput>
+  }
+
+  export type WorkerProfileUpdateWithoutDocumentVersionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    middleName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: StringFieldUpdateOperationsInput | string
+    mobile?: StringFieldUpdateOperationsInput | string
+    age?: NullableIntFieldUpdateOperationsInput | number | null
+    dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    languages?: WorkerProfileUpdatelanguagesInput | string[]
+    experience?: NullableStringFieldUpdateOperationsInput | string | null
+    introduction?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifications?: NullableStringFieldUpdateOperationsInput | string | null
+    hasVehicle?: NullableStringFieldUpdateOperationsInput | string | null
+    funFact?: NullableStringFieldUpdateOperationsInput | string | null
+    hobbies?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: BoolFieldUpdateOperationsInput | boolean
+    isPublished?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
+    tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
+    homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
+    verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
+    workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
+    user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
+    workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
+    availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
+    jobHistoryEntries?: WorkerJobHistoryUpdateManyWithoutWorkerProfileNestedInput
+    educationEntries?: WorkerEducationUpdateManyWithoutWorkerProfileNestedInput
+    careExperience?: WorkerExperienceUpdateManyWithoutWorkerProfileNestedInput
+    homeLocality?: AuLocalityUpdateOneWithoutWorkerHomesNestedInput
+    locations?: WorkerLocationUpdateManyWithoutWorkerProfileNestedInput
+    onboarding?: WorkerOnboardingUpdateOneWithoutWorkerProfileNestedInput
+    onboardingTransitions?: WorkerOnboardingTransitionUpdateManyWithoutWorkerProfileNestedInput
+    registrationPhotos?: RegistrationPhotoUploadUpdateManyWithoutClaimedByNestedInput
+  }
+
+  export type WorkerProfileUncheckedUpdateWithoutDocumentVersionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    firstName?: StringFieldUpdateOperationsInput | string
+    middleName?: NullableStringFieldUpdateOperationsInput | string | null
+    lastName?: StringFieldUpdateOperationsInput | string
+    mobile?: StringFieldUpdateOperationsInput | string
+    age?: NullableIntFieldUpdateOperationsInput | number | null
+    dateOfBirth?: NullableStringFieldUpdateOperationsInput | string | null
+    gender?: NullableStringFieldUpdateOperationsInput | string | null
+    languages?: WorkerProfileUpdatelanguagesInput | string[]
+    experience?: NullableStringFieldUpdateOperationsInput | string | null
+    introduction?: NullableStringFieldUpdateOperationsInput | string | null
+    qualifications?: NullableStringFieldUpdateOperationsInput | string | null
+    hasVehicle?: NullableStringFieldUpdateOperationsInput | string | null
+    funFact?: NullableStringFieldUpdateOperationsInput | string | null
+    hobbies?: NullableStringFieldUpdateOperationsInput | string | null
+    uniqueService?: NullableStringFieldUpdateOperationsInput | string | null
+    photos?: NullableStringFieldUpdateOperationsInput | string | null
+    additionalPhotos?: NullableStringFieldUpdateOperationsInput | string | null
+    abn?: NullableJsonNullValueInput | InputJsonValue
+    setupProgress?: NullableJsonNullValueInput | InputJsonValue
+    profileCompleted?: BoolFieldUpdateOperationsInput | boolean
+    isPublished?: BoolFieldUpdateOperationsInput | boolean
+    verificationStatus?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    consentProfileShareAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    consentWordingVersion?: NullableStringFieldUpdateOperationsInput | string | null
+    zohoLeadId?: NullableStringFieldUpdateOperationsInput | string | null
+    tourSeenAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActivated?: BoolFieldUpdateOperationsInput | boolean
+    homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
+    homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
+    verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -56094,6 +58150,56 @@ export namespace Prisma {
 
   export type VerificationRequirementCreateManyWorkerProfileInputEnvelope = {
     data: VerificationRequirementCreateManyWorkerProfileInput | VerificationRequirementCreateManyWorkerProfileInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type DocumentVersionCreateWithoutWorkerProfileInput = {
+    id?: string
+    requirementId: string
+    requirementType: string
+    requirementName: string
+    documentCategory?: $Enums.DocumentCategory | null
+    status: $Enums.RequirementStatus
+    documentUrl?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: Date | string | null
+    reviewedAt?: Date | string | null
+    reviewedBy?: string | null
+    approvedAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    rejectionReason?: string | null
+    expiresAt?: Date | string | null
+    reason: $Enums.DocumentVersionReason
+    supersededAt: Date | string
+  }
+
+  export type DocumentVersionUncheckedCreateWithoutWorkerProfileInput = {
+    id?: string
+    requirementId: string
+    requirementType: string
+    requirementName: string
+    documentCategory?: $Enums.DocumentCategory | null
+    status: $Enums.RequirementStatus
+    documentUrl?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: Date | string | null
+    reviewedAt?: Date | string | null
+    reviewedBy?: string | null
+    approvedAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    rejectionReason?: string | null
+    expiresAt?: Date | string | null
+    reason: $Enums.DocumentVersionReason
+    supersededAt: Date | string
+  }
+
+  export type DocumentVersionCreateOrConnectWithoutWorkerProfileInput = {
+    where: DocumentVersionWhereUniqueInput
+    create: XOR<DocumentVersionCreateWithoutWorkerProfileInput, DocumentVersionUncheckedCreateWithoutWorkerProfileInput>
+  }
+
+  export type DocumentVersionCreateManyWorkerProfileInputEnvelope = {
+    data: DocumentVersionCreateManyWorkerProfileInput | DocumentVersionCreateManyWorkerProfileInput[]
     skipDuplicates?: boolean
   }
 
@@ -56586,6 +58692,46 @@ export namespace Prisma {
     documentCategory?: EnumDocumentCategoryNullableFilter<"VerificationRequirement"> | $Enums.DocumentCategory | null
     notes?: StringNullableFilter<"VerificationRequirement"> | string | null
     metadata?: JsonNullableFilter<"VerificationRequirement">
+  }
+
+  export type DocumentVersionUpsertWithWhereUniqueWithoutWorkerProfileInput = {
+    where: DocumentVersionWhereUniqueInput
+    update: XOR<DocumentVersionUpdateWithoutWorkerProfileInput, DocumentVersionUncheckedUpdateWithoutWorkerProfileInput>
+    create: XOR<DocumentVersionCreateWithoutWorkerProfileInput, DocumentVersionUncheckedCreateWithoutWorkerProfileInput>
+  }
+
+  export type DocumentVersionUpdateWithWhereUniqueWithoutWorkerProfileInput = {
+    where: DocumentVersionWhereUniqueInput
+    data: XOR<DocumentVersionUpdateWithoutWorkerProfileInput, DocumentVersionUncheckedUpdateWithoutWorkerProfileInput>
+  }
+
+  export type DocumentVersionUpdateManyWithWhereWithoutWorkerProfileInput = {
+    where: DocumentVersionScalarWhereInput
+    data: XOR<DocumentVersionUpdateManyMutationInput, DocumentVersionUncheckedUpdateManyWithoutWorkerProfileInput>
+  }
+
+  export type DocumentVersionScalarWhereInput = {
+    AND?: DocumentVersionScalarWhereInput | DocumentVersionScalarWhereInput[]
+    OR?: DocumentVersionScalarWhereInput[]
+    NOT?: DocumentVersionScalarWhereInput | DocumentVersionScalarWhereInput[]
+    id?: StringFilter<"DocumentVersion"> | string
+    workerProfileId?: StringFilter<"DocumentVersion"> | string
+    requirementId?: StringFilter<"DocumentVersion"> | string
+    requirementType?: StringFilter<"DocumentVersion"> | string
+    requirementName?: StringFilter<"DocumentVersion"> | string
+    documentCategory?: EnumDocumentCategoryNullableFilter<"DocumentVersion"> | $Enums.DocumentCategory | null
+    status?: EnumRequirementStatusFilter<"DocumentVersion"> | $Enums.RequirementStatus
+    documentUrl?: StringNullableFilter<"DocumentVersion"> | string | null
+    metadata?: JsonNullableFilter<"DocumentVersion">
+    uploadedAt?: DateTimeNullableFilter<"DocumentVersion"> | Date | string | null
+    reviewedAt?: DateTimeNullableFilter<"DocumentVersion"> | Date | string | null
+    reviewedBy?: StringNullableFilter<"DocumentVersion"> | string | null
+    approvedAt?: DateTimeNullableFilter<"DocumentVersion"> | Date | string | null
+    rejectedAt?: DateTimeNullableFilter<"DocumentVersion"> | Date | string | null
+    rejectionReason?: StringNullableFilter<"DocumentVersion"> | string | null
+    expiresAt?: DateTimeNullableFilter<"DocumentVersion"> | Date | string | null
+    reason?: EnumDocumentVersionReasonFilter<"DocumentVersion"> | $Enums.DocumentVersionReason
+    supersededAt?: DateTimeFilter<"DocumentVersion"> | Date | string
   }
 
   export type WorkerAdditionalInfoUpsertWithoutWorkerProfileInput = {
@@ -57596,6 +59742,7 @@ export namespace Prisma {
     isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
     availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
@@ -57644,6 +59791,7 @@ export namespace Prisma {
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
     jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -57704,6 +59852,7 @@ export namespace Prisma {
     isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
@@ -57752,6 +59901,7 @@ export namespace Prisma {
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
     jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -57942,6 +60092,7 @@ export namespace Prisma {
     isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionCreateNestedManyWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityCreateNestedManyWithoutWorkerProfileInput
@@ -57990,6 +60141,7 @@ export namespace Prisma {
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
     jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -58050,6 +60202,7 @@ export namespace Prisma {
     isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUpdateManyWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUpdateManyWithoutWorkerProfileNestedInput
@@ -58098,6 +60251,7 @@ export namespace Prisma {
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
     jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -58230,6 +60384,7 @@ export namespace Prisma {
     isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
@@ -58278,6 +60433,7 @@ export namespace Prisma {
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -58338,6 +60494,7 @@ export namespace Prisma {
     isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
@@ -58386,6 +60543,7 @@ export namespace Prisma {
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -58430,6 +60588,7 @@ export namespace Prisma {
     isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
@@ -58478,6 +60637,7 @@ export namespace Prisma {
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -58538,6 +60698,7 @@ export namespace Prisma {
     isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
@@ -58586,6 +60747,7 @@ export namespace Prisma {
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -58630,6 +60792,7 @@ export namespace Prisma {
     isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
@@ -58678,6 +60841,7 @@ export namespace Prisma {
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
     jobHistoryEntries?: WorkerJobHistoryUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -58738,6 +60902,7 @@ export namespace Prisma {
     isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
@@ -58786,6 +60951,7 @@ export namespace Prisma {
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
     jobHistoryEntries?: WorkerJobHistoryUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -58830,6 +60996,7 @@ export namespace Prisma {
     isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
@@ -58878,6 +61045,7 @@ export namespace Prisma {
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -58938,6 +61106,7 @@ export namespace Prisma {
     isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
@@ -58986,6 +61155,7 @@ export namespace Prisma {
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -59151,6 +61321,7 @@ export namespace Prisma {
     isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
@@ -59198,6 +61369,7 @@ export namespace Prisma {
     isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -59405,6 +61577,7 @@ export namespace Prisma {
     isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
@@ -59453,6 +61626,7 @@ export namespace Prisma {
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -59553,6 +61727,7 @@ export namespace Prisma {
     isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
@@ -59601,6 +61776,7 @@ export namespace Prisma {
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -59691,6 +61867,7 @@ export namespace Prisma {
     isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
@@ -59739,6 +61916,7 @@ export namespace Prisma {
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -59799,6 +61977,7 @@ export namespace Prisma {
     isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
@@ -59847,6 +62026,7 @@ export namespace Prisma {
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -59891,6 +62071,7 @@ export namespace Prisma {
     isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
@@ -59939,6 +62120,7 @@ export namespace Prisma {
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -59999,6 +62181,7 @@ export namespace Prisma {
     isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
@@ -60047,6 +62230,7 @@ export namespace Prisma {
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -60091,6 +62275,7 @@ export namespace Prisma {
     isActivated?: boolean
     homeStreetLine?: string | null
     verificationRequirements?: VerificationRequirementCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoCreateNestedOneWithoutWorkerProfileInput
     user: UserCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceCreateNestedManyWithoutWorkerProfileInput
@@ -60139,6 +62324,7 @@ export namespace Prisma {
     homeStreetLine?: string | null
     homeLocalityId?: number | null
     verificationRequirements?: VerificationRequirementUncheckedCreateNestedManyWithoutWorkerProfileInput
+    documentVersions?: DocumentVersionUncheckedCreateNestedManyWithoutWorkerProfileInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedCreateNestedOneWithoutWorkerProfileInput
     workerServices?: WorkerServiceUncheckedCreateNestedManyWithoutWorkerProfileInput
     availability?: WorkerAvailabilityUncheckedCreateNestedManyWithoutWorkerProfileInput
@@ -60199,6 +62385,7 @@ export namespace Prisma {
     isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
@@ -60247,6 +62434,7 @@ export namespace Prisma {
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     homeLocalityId?: NullableIntFieldUpdateOperationsInput | number | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
@@ -60526,6 +62714,26 @@ export namespace Prisma {
     metadata?: NullableJsonNullValueInput | InputJsonValue
   }
 
+  export type DocumentVersionCreateManyWorkerProfileInput = {
+    id?: string
+    requirementId: string
+    requirementType: string
+    requirementName: string
+    documentCategory?: $Enums.DocumentCategory | null
+    status: $Enums.RequirementStatus
+    documentUrl?: string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: Date | string | null
+    reviewedAt?: Date | string | null
+    reviewedBy?: string | null
+    approvedAt?: Date | string | null
+    rejectedAt?: Date | string | null
+    rejectionReason?: string | null
+    expiresAt?: Date | string | null
+    reason: $Enums.DocumentVersionReason
+    supersededAt: Date | string
+  }
+
   export type WorkerServiceCreateManyWorkerProfileInput = {
     id?: string
     categoryId: string
@@ -60687,6 +62895,66 @@ export namespace Prisma {
     documentCategory?: NullableEnumDocumentCategoryFieldUpdateOperationsInput | $Enums.DocumentCategory | null
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     metadata?: NullableJsonNullValueInput | InputJsonValue
+  }
+
+  export type DocumentVersionUpdateWithoutWorkerProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    requirementId?: StringFieldUpdateOperationsInput | string
+    requirementType?: StringFieldUpdateOperationsInput | string
+    requirementName?: StringFieldUpdateOperationsInput | string
+    documentCategory?: NullableEnumDocumentCategoryFieldUpdateOperationsInput | $Enums.DocumentCategory | null
+    status?: EnumRequirementStatusFieldUpdateOperationsInput | $Enums.RequirementStatus
+    documentUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reason?: EnumDocumentVersionReasonFieldUpdateOperationsInput | $Enums.DocumentVersionReason
+    supersededAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DocumentVersionUncheckedUpdateWithoutWorkerProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    requirementId?: StringFieldUpdateOperationsInput | string
+    requirementType?: StringFieldUpdateOperationsInput | string
+    requirementName?: StringFieldUpdateOperationsInput | string
+    documentCategory?: NullableEnumDocumentCategoryFieldUpdateOperationsInput | $Enums.DocumentCategory | null
+    status?: EnumRequirementStatusFieldUpdateOperationsInput | $Enums.RequirementStatus
+    documentUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reason?: EnumDocumentVersionReasonFieldUpdateOperationsInput | $Enums.DocumentVersionReason
+    supersededAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DocumentVersionUncheckedUpdateManyWithoutWorkerProfileInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    requirementId?: StringFieldUpdateOperationsInput | string
+    requirementType?: StringFieldUpdateOperationsInput | string
+    requirementName?: StringFieldUpdateOperationsInput | string
+    documentCategory?: NullableEnumDocumentCategoryFieldUpdateOperationsInput | $Enums.DocumentCategory | null
+    status?: EnumRequirementStatusFieldUpdateOperationsInput | $Enums.RequirementStatus
+    documentUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    metadata?: NullableJsonNullValueInput | InputJsonValue
+    uploadedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reviewedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reviewedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    approvedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    rejectionReason?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reason?: EnumDocumentVersionReasonFieldUpdateOperationsInput | $Enums.DocumentVersionReason
+    supersededAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type WorkerServiceUpdateWithoutWorkerProfileInput = {
@@ -61351,6 +63619,7 @@ export namespace Prisma {
     isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUpdateOneWithoutWorkerProfileNestedInput
     user?: UserUpdateOneRequiredWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUpdateManyWithoutWorkerProfileNestedInput
@@ -61398,6 +63667,7 @@ export namespace Prisma {
     isActivated?: BoolFieldUpdateOperationsInput | boolean
     homeStreetLine?: NullableStringFieldUpdateOperationsInput | string | null
     verificationRequirements?: VerificationRequirementUncheckedUpdateManyWithoutWorkerProfileNestedInput
+    documentVersions?: DocumentVersionUncheckedUpdateManyWithoutWorkerProfileNestedInput
     workerAdditionalInfo?: WorkerAdditionalInfoUncheckedUpdateOneWithoutWorkerProfileNestedInput
     workerServices?: WorkerServiceUncheckedUpdateManyWithoutWorkerProfileNestedInput
     availability?: WorkerAvailabilityUncheckedUpdateManyWithoutWorkerProfileNestedInput
