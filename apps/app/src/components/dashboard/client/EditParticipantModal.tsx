@@ -68,6 +68,8 @@ interface EditParticipantModalProps {
   participant: ParticipantData | null;
   onSave: (data: ParticipantData) => Promise<void>;
   showRelationship?: boolean;
+  /** Show the "Relationship with the client" dropdown (support coordinators). The client dashboard turns it off. */
+  askRelationship?: boolean;
 }
 
 const genderOptions = [
@@ -133,6 +135,7 @@ export default function EditParticipantModal({
   participant,
   onSave,
   showRelationship = true,
+  askRelationship = true,
 }: EditParticipantModalProps) {
   const [formData, setFormData] = useState<FormData>({
     id: "",
@@ -431,7 +434,7 @@ export default function EditParticipantModal({
                 </div>
 
                 {/* Relationship — hidden on client/self-manage path */}
-                {!showRelationship && (
+                {!showRelationship && askRelationship && (
                   <div>
                     <label className="block text-sm font-medium text-gray-900 font-poppins mb-2">
                       Relationship with the client

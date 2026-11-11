@@ -110,6 +110,8 @@ interface AddClientModalProps {
     additionalInfo?: string | null;
   }) => void;
   showRelationship?: boolean;
+  /** Show the "Relationship with the client" dropdown (support coordinators). The client dashboard turns it off. */
+  askRelationship?: boolean;
   initialFirstName?: string;
   initialLastName?: string;
 }
@@ -142,6 +144,7 @@ export default function AddClientModal({
   onClose,
   onAdd,
   showRelationship = true,
+  askRelationship = true,
   initialFirstName,
   initialLastName,
 }: AddClientModalProps) {
@@ -202,7 +205,9 @@ export default function AddClientModal({
     // Resolve once — used for both the API payload and the onAdd callback
     const resolvedRelationship = showRelationship
       ? "MYSELF"
-      : formData.relationshipToClient === "OTHER"
+      : !askRelationship
+        ? null
+        : formData.relationshipToClient === "OTHER"
         ? otherRelationshipText.trim() || "OTHER"
         : formData.relationshipToClient || null;
 
@@ -412,7 +417,7 @@ export default function AddClientModal({
                 </div>
 
                 {/* Relationship to Client */}
-                {!showRelationship && (
+                {!showRelationship && askRelationship && (
                   <div>
                     <label className="block text-sm font-medium text-gray-900 font-poppins mb-2">
                       Relationship with the client
