@@ -35,6 +35,8 @@ export interface ParticipantData {
 interface ParticipantsMasterDetailProps {
   participants: ParticipantData[];
   showRelationship?: boolean;
+  /** Show the "Relationship with the client" dropdown (support coordinators). The client dashboard turns it off. */
+  askRelationship?: boolean;
   showRemove?: boolean;
   showAddButton?: boolean;
   title: string;
@@ -46,6 +48,7 @@ interface ParticipantsMasterDetailProps {
 export default function ParticipantsMasterDetail({
   participants: initialParticipants,
   showRelationship = true,
+  askRelationship = true,
   showRemove = false,
   showAddButton = true,
   title,
@@ -325,6 +328,7 @@ export default function ParticipantsMasterDetail({
         participant={getEditData()}
         onSave={handleSaveParticipant}
         showRelationship={showRelationship}
+        askRelationship={askRelationship}
       />
 
       {/* Remove Client Modal */}
@@ -341,6 +345,7 @@ export default function ParticipantsMasterDetail({
         onClose={() => setIsAddModalOpen(false)}
         onAdd={handleAddParticipant}
         showRelationship={showRelationship}
+        askRelationship={askRelationship}
         initialFirstName={clientName?.firstName}
         initialLastName={clientName?.lastName}
       />
