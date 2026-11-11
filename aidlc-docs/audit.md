@@ -6204,3 +6204,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-11):** "yes start U2"
 
 **AI action (2026-11-11):** U2 `history-app` built on `feat/document-history-app` (`29d084f`, from `main` `e73524c`), pushed, no PR. Notes `construction/u2-history-app/construction-notes.md`. Gates green locally.
+
+**User input (2026-11-11):** "merged"
+
+**AI action (2026-11-11):** by refs `main` = `3cb3206` (#163, `29d084f`). PR CI all success (App Quality Node 20/22, Supply chain, CodeQL, Semgrep). Vercel production remonta-app and remontamarketplace success; `/admin/compliance/x/history` 200 on app.remontaservices.com.au (404 before the build finished). Asked the user for the production check; cycle close next.

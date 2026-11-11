@@ -4,7 +4,7 @@
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
 - **Current Cycle**: document-history (opened 2026-11-11): admins keep and retrieve past worker documents.
-- **Current Stage**: CONSTRUCTION U2 `history-app`: pushed on `feat/document-history-app` (`29d084f`), PR to open; preview checklist, merge. U1 live 2026-11-11 (`e73524c`).
+- **Current Stage**: CONSTRUCTION done (U1 live 2026-11-11 api `e73524c`; U2 live 2026-11-11 app `main` `3cb3206`, #163). To do: the user's production check, then close the cycle (archive, rollback rows).
 
 ## Previous cycles (archived, read-only)
 
