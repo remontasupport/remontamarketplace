@@ -6186,3 +6186,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **AI action (2026-11-11):** read as plan approved; O2 no worker wording; O3 versions cascade with the worker profile. Construction U1 `history-api` starts on `feat/document-history-api` from `main`.
 
 **AI action (2026-11-11):** U1 `history-api` built on `feat/document-history-api` (`056c341` db, `2261ac9` api/contract/docs), pushed, no PR. Local gates green (database tests skipped locally: CI). Notes `construction/u1-history-api/construction-notes.md`. Asked the user to open the PR.
+
+**User input (2026-11-11):** "Merged"
+
+**AI action (2026-11-11):** by refs `main` = `e73524c` (#162: `056c341` + `2261ac9`). PR CI all success (API Quality Node 20/22 with the migration and the database tests; App, Web, Supply chain, CodeQL, Semgrep). deploy-api run 42928560306 to staging started; waiting for it.
