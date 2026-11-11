@@ -6216,3 +6216,14 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-11):** on production; the opened URL `https://3zopk5m9p62cgiju.public.blob.vercel-storage.com/ndis-training/cmm7aoivq002sjo04iwn6d8km/ndis-induction-module-1790211400437-a232ba03-removable-dates.png`; "I deleted a document from the worker, and search that worker on the admin, when I open the history, blob not found".
 
 **AI action (2026-11-11):** the URL answers 404 now. The worker's delete goes `useDeleteComplianceDocument` -> `workerApi.deleteComplianceDocument` -> api `removeComplianceDocument` (production `e73524c`: keeps the version, deletes no file; that a version exists proves the new code handled it). A legacy upload of 2026-09-24 00:56Z (file-name timestamp) under `ndis-training/<userId>/`: most likely already missing before today (a shared legacy URL deleted through another row, C5, or a lost upload); not caused by U1/U2. Asked the user for two read-only production queries (the version and any row sharing the URL) and proposed a read-only check of every legacy Blob URL still on a current row.
+
+## Side fix (outside the document-history cycle): client dashboard relationship field
+**Timestamp**: 2026-11-11
+**User Input**: "Hey Claude, in the /dashboard/client path can you hide or remove the relationship with the client field? it should only be visible on the support coordinator"
+**AI Response**: The client and support coordinator dashboards share the participant add/edit modals and both passed showRelationship={false}, so clients saw the dropdown. Added an `askRelationship` switch (default on) through ParticipantsMasterDetail, AddClientModal and EditParticipantModal; the client dashboard passes false. Edits keep a stored value; a client-side add saves null (the field is optional in both routes). App quality green. Branch fix/client-hide-relationship, commit 68c028e.
+**Context**: Side fix; no api change.
+
+**Timestamp**: 2026-11-11
+**User Input**: "merged. whats next"
+**AI Response**: Confirmed on main as #164 (merge 1f8d27f). Next: production check of the client dashboard, the blob-not-found read-only queries, then the document-history cycle close.
+**Context**: Side fix live (app only, Vercel).
