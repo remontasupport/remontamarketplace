@@ -6192,3 +6192,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **AI action (2026-11-11):** by refs `main` = `e73524c` (#162: `056c341` + `2261ac9`). PR CI all success (API Quality Node 20/22 with the migration and the database tests; App, Web, Supply chain, CodeQL, Semgrep). deploy-api run 42928560306 to staging started; waiting for it.
 
 **AI action (2026-11-11):** deploy-api 42928560306 success: "Apply pending migrations to the staging database" success (document_versions on rehearse-w1), service applied, health success. From outside: staging /v1/health 200, `/v1/admin/workers/x/document-versions` 401 without a token (the route exists); production the same path 404 (unchanged, not promoted). Next: the user's preview checklist, then promotion of `e73524c0b4872d59a979fc7b49fc01e38b94ece6`.
+
+**User input (2026-11-11):** "what is the link of the staging only?" (answered: the PR #162 app preview `remonta-app-git-feat-document-history-api-remontas-projects.vercel.app`; a staging-only user = a new sign-up on that preview) / "Promoted"
+
+**AI action (2026-11-11):** deploy-api dispatch 42930455127 (00:19:38Z, `e73524c`) found in progress; production before it: health 200, the history route 404. No preview checklist result was reported before the promotion: to confirm afterwards (staging logs for the user's requests, versions written).
