@@ -4,7 +4,7 @@
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
 - **Current Cycle**: document-history (opened 2026-11-11): admins keep and retrieve past worker documents.
-- **Current Stage**: CONSTRUCTION U2 `history-app` next. U1 `history-api` live 2026-11-11 (#162, `main` `e73524c`, promoted by dispatch 42930455127; previous prod image `1e4d74e`).
+- **Current Stage**: CONSTRUCTION U2 `history-app`: pushed on `feat/document-history-app` (`29d084f`), PR to open; preview checklist, merge. U1 live 2026-11-11 (`e73524c`).
 
 ## Previous cycles (archived, read-only)
 

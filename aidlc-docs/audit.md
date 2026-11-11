@@ -6200,3 +6200,7 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User input (2026-11-11):** "Yes I did" (the preview checklist).
 
 **AI action (2026-11-11):** could not read staging logs (gcloud needs `gcloud auth login`); offered the login or a read-only `document_versions` count on staging. Promotion 42930455127 success: image exists, "Apply pending migrations" to production success (document_versions created), service applied, health success. Production from outside: /v1/health 200, the history route 401 without a token (was 404): `e73524c` serves. Revision name not read (gcloud). Worker files stop being deleted from now. Rollback: the previous image `1e4d74e7d2e46cb8b1d3df8f107b7bcc7f6bfe01` (it ignores the new table; files deleted meanwhile are not, files replaced under it are deleted again). Next: U2 `history-app`.
+
+**User input (2026-11-11):** "yes start U2"
+
+**AI action (2026-11-11):** U2 `history-app` built on `feat/document-history-app` (`29d084f`, from `main` `e73524c`), pushed, no PR. Notes `construction/u2-history-app/construction-notes.md`. Gates green locally.
