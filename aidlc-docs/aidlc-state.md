@@ -4,7 +4,7 @@
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
 - **Current Cycle**: signup-abn-agreement (opened 2026-11-19): the ABN notice and the Contractor Agreement inside the worker sign-up.
-- **Current Stage**: CONSTRUCTION U1 `agreement-api` built (`feat/signup-agreement-api` `d24e98a`, pushed); next PR, CI, staging-preview checklist, promotion. Then U2 `agreement-app`, U3 `agreement-required`.
+- **Current Stage**: CONSTRUCTION U2 `agreement-app`, functional design, awaiting approval. U1 live in production 2026-11-19 (`fcc503a`, dispatch 44443348414; checked by the user).
 
 ## Previous cycles (archived, read-only)
 

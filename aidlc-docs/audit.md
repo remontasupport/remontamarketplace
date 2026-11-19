@@ -6289,3 +6289,5 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 
 **User Input (2026-11-19):** "Passed" (the production check: sign-up, duplicate-email notice, dashboard)
 **AI Response:** U1 verified in production. Starting U2 `agreement-app`: inventory of the form engine and the agreement page, then its functional design.
+
+**AI action (2026-11-19):** U2 inventory (form engine `types.ts`, `kinds.ts`, `form.ts`, `photo-upload.ts`; `FormWizard.tsx`, `useFormWizard.ts`, `FormWizardView.tsx`; `ContractPage.tsx`, `lib/contractPdf.ts`, `useWorkerProfile`). Wrote `construction/u2-agreement-app/functional-design.md`; asked for approval and D7 (sign at "Sign & Accept Agreement").
