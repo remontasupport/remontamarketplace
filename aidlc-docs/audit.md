@@ -6281,3 +6281,5 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User Input**: "Merged"
 **AI Response**: By refs `main` = `fcc503a` (#165: `d24e98a` + `92489f6`). deploy-api (staging) and CI on main started 02:16:47Z; watching. Next: staging checks, the preview checklist (a sign-up without the agreement = the live app), then the promotion dispatch with the full sha.
 **Context**: CONSTRUCTION U1, merged; staging deploy.
+
+**AI action (2026-11-19):** deploy-api (staging) run 44443348414 for `fcc503a`: success. Staging from outside: /v1/health 200; `POST /v1/registrations/worker/agreement-tickets` with a JPEG type answers 400 `fields.contentType` (the route exists: `fcc503a` serves). Waiting for the user's preview checklist (a sign-up without the agreement), then the promotion of `fcc503a982ba6807f9ee57f16bbeeffd4a8c3fcf`.
