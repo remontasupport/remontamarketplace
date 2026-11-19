@@ -6,7 +6,7 @@ import { profileSchema, type Profile } from "@remonta/api-contract";
 import { describe, expect, it } from "vitest";
 import { PROFILE_REDIRECTS, profileRedirects } from "@/config/profileRedirects";
 import { isProfilePage } from "@/features/worker/definitions";
-import { applyReadiness, EDIT_PROFILE_CHILDREN, EDIT_SERVICES_LINK, editProfileBadge, editProfileChildren, groupOfPath, requirementsForSteps, SERVICE_AREA_LINK, servicesChildren, WORKER_MENU } from "./workerMenu";
+import { applyReadiness, EDIT_PROFILE_CHILDREN, requiredMet, EDIT_SERVICES_LINK, editProfileBadge, editProfileChildren, groupOfPath, requirementsForSteps, SERVICE_AREA_LINK, servicesChildren, WORKER_MENU } from "./workerMenu";
 
 const APP = join(__dirname, "../../app");
 // A page file at the path, or in a route group under it ("(home)", 2026-10-16): groups do not change the URL.
@@ -111,15 +111,22 @@ describe("WORKER_MENU", () => {
   });
 
   it("Bio keeps Next until About you and a Fun fact of 50+ characters are saved (2026-11-19)", () => {
-    const bio = EDIT_PROFILE_CHILDREN.find((c) => c.slug === "bio")!.requiredBeforeNext!;
+    const bioStep = EDIT_PROFILE_CHILDREN.find((c) => c.slug === "bio")!;
     const info = { languages: [], culturalBackground: [], religion: [], interests: [], workPreferences: [], lgbtqiaSupport: null, nonSmoker: null, petFriendly: null, personality: null, uniqueService: [] };
     const withInfo = (funFact: string | null) => ({ ...base, sections: { ...base.sections, additionalInfo: { ...info, funFact } } }) as unknown as Profile;
-    expect(bio.ok({ ...base, bio: null } as Profile)).toBe(false);
-    expect(bio.ok({ ...withInfo("x".repeat(50)), bio: "  " } as Profile)).toBe(false);
-    expect(bio.ok({ ...withInfo("too short"), bio: "Hello" } as Profile)).toBe(false);
-    expect(bio.ok({ ...withInfo("x".repeat(50)), bio: "Hello" } as Profile)).toBe(true);
-    // Only Bio has the rule: the other steps move on as before.
-    expect(EDIT_PROFILE_CHILDREN.filter((c) => c.requiredBeforeNext).map((c) => c.slug)).toEqual(["bio"]);
+    expect(requiredMet(bioStep, { ...base, bio: null } as Profile)).toBe(false);
+    expect(requiredMet(bioStep, { ...withInfo("x".repeat(50)), bio: "  " } as Profile)).toBe(false);
+    expect(requiredMet(bioStep, { ...withInfo("too short"), bio: "Hello" } as Profile)).toBe(false);
+    expect(requiredMet(bioStep, { ...withInfo("x".repeat(50)), bio: "Hello" } as Profile)).toBe(true);
+    // The required steps (user, 2026-11-19): Bio, then Date of Birth to Preferences; the rest move on as before.
+    expect(EDIT_PROFILE_CHILDREN.filter((c) => c.requiredBeforeNext).map((c) => c.slug)).toEqual([
+      "bio", "date-of-birth", "gender", "languages", "preferred-hours", "vehicle", "cultural-background", "religion", "interests", "about-me", "preferences",
+    ]);
+    // Each of those but Bio is required by its own done rule.
+    const religion = EDIT_PROFILE_CHILDREN.find((c) => c.slug === "religion")!;
+    expect(requiredMet(religion, withInfo(null))).toBe(false);
+    expect(requiredMet(religion, { ...withInfo(null), sections: { ...withInfo(null).sections, additionalInfo: { ...info, funFact: null, religion: ["None"] } } } as unknown as Profile)).toBe(true);
+    expect(requiredMet(EDIT_PROFILE_CHILDREN.find((c) => c.slug === "experience")!, base)).toBe(true); // not required
   });
 
   it("the job-apply check names what is missing", () => {

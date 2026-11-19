@@ -9,9 +9,11 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNo
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
-import { applyReadiness, EDIT_PROFILE_CHILDREN, sectionHref } from "@/features/navigation/workerMenu";
+import { useQueryClient } from "@tanstack/react-query";
+import type { Profile } from "@remonta/api-contract";
+import { applyReadiness, EDIT_PROFILE_CHILDREN, requiredMet, sectionHref } from "@/features/navigation/workerMenu";
 import { startNavigationProgress } from "@/components/ui/NavigationProgress";
-import { useWorkerProfile } from "./profile";
+import { PROFILE_QUERY_KEY, useWorkerProfile } from "./profile";
 import { StepFormsProvider, useStepFormsRegistry } from "./stepForms";
 
 /** Shown when leaving was stopped because a save did not go through (the fields say why). */
@@ -40,14 +42,15 @@ function useApplyContext(): ApplyContext {
 
 export default function ProfileShell({ slug, children }: { slug?: string; children: ReactNode }) {
   const router = useRouter();
-  const { profile } = useWorkerProfile();
+  const { profile, reload } = useWorkerProfile();
+  const qc = useQueryClient();
   const apply = useApplyContext();
   const { canApply, missing } = applyReadiness(profile);
   const at = EDIT_PROFILE_CHILDREN.findIndex((c) => c.slug === slug);
   const prev = at > 0 ? EDIT_PROFILE_CHILDREN[at - 1] : undefined;
   const next = at >= 0 && at < EDIT_PROFILE_CHILDREN.length - 1 ? EDIT_PROFILE_CHILDREN[at + 1] : undefined;
   // A step with required answers keeps "Next" here until they are saved (2026-11-19).
-  const required = at >= 0 ? EDIT_PROFILE_CHILDREN[at]!.requiredBeforeNext : undefined;
+  const current = at >= 0 ? EDIT_PROFILE_CHILDREN[at] : undefined;
   const [blocked, setBlocked] = useState<string | null>(null);
   const [leaving, setLeaving] = useState(false);
   useEffect(() => setBlocked(null), [slug, profile]);
@@ -63,12 +66,16 @@ export default function ProfileShell({ slug, children }: { slug?: string; childr
       const saved = await step.saveChanged();
       setLeaving(false);
       if (!saved) return setBlocked(SAVE_FAILED_MESSAGE);
-      // Nothing was typed: the saved answers decide (a save itself already checked them).
-      if (opts.checkRequired && !hadChanges && required && profile && !required.ok(profile)) return setBlocked(required.message);
+      // The saved answers decide; after a save, read them fresh (some steps may be saved empty, e.g. no religion chosen).
+      if (opts.checkRequired && current?.requiredBeforeNext) {
+        if (hadChanges) await reload();
+        const saved = hadChanges ? qc.getQueryData<Profile>(PROFILE_QUERY_KEY) : profile;
+        if (saved && !requiredMet(current, saved)) return setBlocked(current.requiredBeforeNext.message);
+      }
       startNavigationProgress();
       router.push(href);
     },
-    [leaving, step, required, profile, router],
+    [leaving, step, current, profile, reload, qc, router],
   );
 
   // Any other link out of the step (the sidebar, the header): save the changes first, then follow the same link again,

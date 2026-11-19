@@ -63,8 +63,14 @@ export type ProfileGroup = keyof typeof PROFILE_GROUPS;
  * Read from the saved profile, so typed but unsaved text does not count.
  */
 export interface RequiredBeforeNext {
-  ok: (p: Profile) => boolean;
+  /** What must hold; the step's own `done` when absent (user, 2026-11-19: Date of Birth to Preferences). */
+  ok?: (p: Profile) => boolean;
   message: string;
+}
+
+/** Whether a step's required answers are saved in `p`. */
+export function requiredMet(step: { done: (p: Profile) => boolean; requiredBeforeNext?: RequiredBeforeNext }, p: Profile): boolean {
+  return !step.requiredBeforeNext || (step.requiredBeforeNext.ok ?? step.done)(p);
 }
 
 export const EDIT_PROFILE_CHILDREN: readonly { slug: string; label: string; done: (p: Profile) => boolean; group?: ProfileGroup; requiredBeforeNext?: RequiredBeforeNext }[] = [
@@ -81,19 +87,19 @@ export const EDIT_PROFILE_CHILDREN: readonly { slug: string; label: string; done
     },
   },
   { slug: "address", label: "Address", group: "personal-information", done: (p) => !!p.homeAddress },
-  { slug: "date-of-birth", label: "Date of Birth", group: "personal-information", done: (p) => !!p.personalInfo.dateOfBirth },
-  { slug: "gender", label: "Gender", group: "personal-information", done: (p) => !!p.personalInfo.gender },
-  { slug: "languages", label: "Language", group: "personal-information", done: (p) => filled(info(p)?.languages) },
+  { slug: "date-of-birth", label: "Date of Birth", group: "personal-information", done: (p) => !!p.personalInfo.dateOfBirth, requiredBeforeNext: { message: "Please enter your date of birth before continuing." } },
+  { slug: "gender", label: "Gender", group: "personal-information", done: (p) => !!p.personalInfo.gender, requiredBeforeNext: { message: "Please choose your gender before continuing." } },
+  { slug: "languages", label: "Language", group: "personal-information", done: (p) => filled(info(p)?.languages), requiredBeforeNext: { message: "Please choose at least one language before continuing." } },
   { slug: "experience", group: "professional-information", label: "Experience", done: (p) => filled(p.sections.experience) },
   { slug: "work-history", group: "professional-information", label: "Work History", done: (p) => filled(p.sections.jobHistory) },
   { slug: "education", group: "professional-information", label: "Education", done: (p) => filled(p.sections.education) },
-  { slug: "preferred-hours", group: "professional-information", label: "Preferred Hours", done: (p) => filled(p.sections.availability) },
-  { slug: "vehicle", group: "professional-information", label: "Vehicle Access", done: (p) => !!p.personalInfo.hasVehicle },
-  { slug: "cultural-background", label: "Cultural Background", group: "additional-information", done: (p) => filled(info(p)?.culturalBackground) },
-  { slug: "religion", label: "Religion", group: "additional-information", done: (p) => filled(info(p)?.religion) },
-  { slug: "interests", label: "Interests", group: "additional-information", done: (p) => filled(info(p)?.interests) },
-  { slug: "about-me", label: "Support & Activities", group: "additional-information", done: (p) => filled(info(p)?.uniqueService) },
-  { slug: "preferences", label: "Preferences", group: "additional-information", done: (p) => filled(info(p)?.workPreferences) },
+  { slug: "preferred-hours", group: "professional-information", label: "Preferred Hours", done: (p) => filled(p.sections.availability), requiredBeforeNext: { message: "Please add your preferred hours before continuing." } },
+  { slug: "vehicle", group: "professional-information", label: "Vehicle Access", done: (p) => !!p.personalInfo.hasVehicle, requiredBeforeNext: { message: "Please tell us whether you have access to a vehicle before continuing." } },
+  { slug: "cultural-background", label: "Cultural Background", group: "additional-information", done: (p) => filled(info(p)?.culturalBackground), requiredBeforeNext: { message: "Please choose your cultural background before continuing." } },
+  { slug: "religion", label: "Religion", group: "additional-information", done: (p) => filled(info(p)?.religion), requiredBeforeNext: { message: "Please choose your religion before continuing." } },
+  { slug: "interests", label: "Interests", group: "additional-information", done: (p) => filled(info(p)?.interests), requiredBeforeNext: { message: "Please choose at least one interest before continuing." } },
+  { slug: "about-me", label: "Support & Activities", group: "additional-information", done: (p) => filled(info(p)?.uniqueService), requiredBeforeNext: { message: "Please choose at least one thing you can offer before continuing." } },
+  { slug: "preferences", label: "Preferences", group: "additional-information", done: (p) => filled(info(p)?.workPreferences), requiredBeforeNext: { message: "Please choose who you prefer to work with before continuing." } },
   { slug: "personality", label: "Personality", group: "additional-information", done: (p) => !!info(p)?.personality },
 ];
 
