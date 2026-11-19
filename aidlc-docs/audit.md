@@ -6269,3 +6269,8 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User Input**: "Approved, start U1"
 **AI Response**: Built U1 `agreement-api` on `feat/signup-agreement-api` (`d24e98a`, from `main` `1f8d27f`), pushed, no PR. Gates locally: schemas 103, api-contract 139, form-engine 76, api 1208 passed (268 database-gated skipped: Docker down here, CI is the proof), app 753. Deviation recorded: completion not recomputed in the sign-up transaction (the live read and completion-sync cover it; avoids a Zoho event the sign-up never sent). Noted: a sign-up with the agreement enters the admin review queue (PENDING_REVIEW), as the dashboard signing does. Notes `construction/u1-agreement-api/construction-notes.md`.
 **Context**: CONSTRUCTION U1, code generated; next the PR, CI and the staging-preview checklist.
+
+**Timestamp**: 2026-11-19
+**User Input**: "There is an error when I merged it CI (api) / API Quality (Node 22.x) (pull_request)"
+**AI Response**: `main` still `1f8d27f` (not merged). Check runs of `d24e98a`: only API Quality (Node 22.x) failed; Node 20.x and every other check passed. The one failing test was the existing `profile.http.test.ts` U1-SEC-06 (the BSB `062000` must not appear in logs): the log's `responseTime` was `1.0510620000000017`, a coincidence. The agreement database tests passed on both Node versions. Fixed the test to mask timing fields (`a6…` on `feat/signup-agreement-api`), pushed.
+**Context**: CONSTRUCTION U1, CI.
