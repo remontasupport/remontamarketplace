@@ -72,7 +72,7 @@ export const workerRegistrationForm = defineForm({
           max: 1,
           documentsNotice: {
             title: "Please Note:",
-            text: "{service} requires the following documents:",
+            text: "{service} requires the following documents and checks:",
             after: "After signing up, go to Compliance on your dashboard to upload them.",
             button: "OK",
           },

@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { registrationContract } from "@remonta/api-contract";
 import { formSchemaFor, loadDraft, neverSavedKeys, saveDraft, toRequestBody } from "@remonta/form-engine";
 import { localityInputText, notesFor, optionLocked } from "@/components/ui/form-wizard/fields";
-import { requiredDocumentNames } from "@/config/serviceDocumentRequirements";
+import { fetchServiceRequirements } from "./adapters/serviceRequirements";
 import { workerRegistrationForm } from "./definitions/workerRegistration";
 import { previewKeyOf } from "./photoPreview";
 import { wizardResolver } from "./resolver";
@@ -144,7 +144,7 @@ describe("one service at sign-up, and the documents notice (2026-11-19)", () => 
     expect(field.max).toBe(1);
     expect(field.documentsNotice).toEqual({
       title: "Please Note:",
-      text: "{service} requires the following documents:",
+      text: "{service} requires the following documents and checks:",
       after: "After signing up, go to Compliance on your dashboard to upload them.",
       button: "OK",
     });
@@ -165,14 +165,25 @@ describe("one service at sign-up, and the documents notice (2026-11-19)", () => 
     expect(optionLocked(undefined, ["support-worker"], "cleaning-services")).toBe(false);
   });
 
-  it("the notice lists the required documents the dashboard asks for, once each; none for services with only optional ones", () => {
-    expect(requiredDocumentNames("Support Worker", ["personal-care"])).toEqual([]);
-    expect(requiredDocumentNames("Cleaning Services", [])).toEqual([]);
-    expect(requiredDocumentNames("Support Worker (High Intensity)", ["seizure-management", "complex-bowel-care"])).toEqual(["Highest Relevant Qualification Certificate"]);
-    expect(requiredDocumentNames("Nursing Services", [])).toEqual(["AHPRA Registration", "Nursing Qualification Certificate"]);
-    const therapy = requiredDocumentNames("Therapeutic Supports", ["occupational-therapist", "art-therapist"]);
-    expect(therapy).toContain("AHPRA Registration");
-    expect(therapy).toContain("Professional Association Membership");
-    expect(new Set(therapy).size).toBe(therapy.length);
+  it("the notice asks apps/api for the service's requirements, with the chosen sub-services; a failure is null, not an error", async () => {
+    const backend = { apiBaseUrl: "https://api.example", recaptchaSiteKey: "k" };
+    const real = globalThis.fetch;
+    const urls: string[] = [];
+    const groups = [{ title: "Compliance", items: [{ name: "ID verification", ifApplicable: false }] }, { title: "Additional credentials", items: [{ name: "Driver's Licence", ifApplicable: true }] }];
+    globalThis.fetch = (async (url: string) => {
+      urls.push(url);
+      return new Response(JSON.stringify({ service: "Therapeutic Supports", groups }), { status: 200, headers: { "content-type": "application/json" } });
+    }) as unknown as typeof fetch;
+    try {
+      expect(await fetchServiceRequirements(backend, "therapeutic-supports", ["art-therapist", "counsellor"])).toEqual(groups);
+      const u = new URL(urls[0]!);
+      expect(u.pathname).toBe("/v1/service-requirements");
+      expect(u.searchParams.get("categoryId")).toBe("therapeutic-supports");
+      expect(u.searchParams.get("subcategoryIds")).toBe("art-therapist,counsellor");
+      globalThis.fetch = (async () => new Response("{}", { status: 503 })) as unknown as typeof fetch;
+      expect(await fetchServiceRequirements(backend, "support-worker", [])).toBeNull();
+    } finally {
+      globalThis.fetch = real;
+    }
   });
 });

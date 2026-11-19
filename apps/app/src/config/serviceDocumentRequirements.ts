@@ -288,16 +288,6 @@ function getTherapeuticDocumentRequirements(subcategoryId: string): ServiceDocum
 /**
  * Check if a service has any required qualifications
  */
-/**
- * The required documents' names for a service with the sub-categories chosen for it (each sub-category's own list,
- * or the service's when none is chosen), once each. The sign-up's services notice lists them (2026-11-19), so it
- * names exactly what the dashboard will ask for.
- */
-export function requiredDocumentNames(serviceName: string, subcategoryIds: readonly string[]): string[] {
-  const lists = subcategoryIds.length > 0 ? subcategoryIds.map((id) => getServiceDocumentRequirements(serviceName, id)) : [getServiceDocumentRequirements(serviceName)];
-  return [...new Set(lists.flat().filter((d) => d.required).map((d) => d.name))];
-}
-
 export function serviceHasRequiredQualifications(serviceName: string, subcategoryId?: string): boolean {
   const requirements = getServiceDocumentRequirements(serviceName, subcategoryId);
   return requirements.some(req => req.required);

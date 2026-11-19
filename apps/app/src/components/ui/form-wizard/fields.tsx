@@ -213,6 +213,12 @@ export interface ServiceCategory {
   subcategories: { id: string; name: string }[];
 }
 
+/** One group of a service's requirements, as the dashboard names it (Compliance, Trainings, ...). */
+export interface ServiceRequirementGroup {
+  title: string;
+  items: { name: string; ifApplicable: boolean }[];
+}
+
 /** One service only (the sign-up, 2026-11-19): with one picked, every other option is off until it is un-picked. */
 export function optionLocked(single: boolean | undefined, services: readonly string[], optionId: string): boolean {
   return !!single && services.length > 0 && !services.includes(optionId);
@@ -233,8 +239,11 @@ export interface ServicesFieldProps {
   single?: boolean;
   /** Shown when a picked service has required documents; `{service}` in `text` is its name. */
   documentsNotice?: { title: string; text: string; after: string; button: string };
-  /** The required documents of a service with the sub-categories chosen for it (the glue supplies the platform's list). */
-  requiredDocumentsOf?: (category: ServiceCategory, subcategories: readonly string[]) => string[];
+  /**
+   * What a service with its chosen sub-categories will ask for, in the dashboard's groups (the glue asks apps/api).
+   * null: unknown (the notice then points to the dashboard without a list).
+   */
+  requirementsOf?: (category: ServiceCategory, subcategories: readonly string[]) => Promise<ServiceRequirementGroup[] | null>;
 }
 
 /** The notes to show for the ticked services, in their declared order. */
@@ -274,19 +283,23 @@ export function FieldLoading({ label }: { label: string }) {
   );
 }
 
-export function ServicesField({ title, hint, options, categories, services, subcategories, onChange, error, notes, single, documentsNotice, requiredDocumentsOf }: ServicesFieldProps) {
+export function ServicesField({ title, hint, options, categories, services, subcategories, onChange, error, notes, single, documentsNotice, requirementsOf }: ServicesFieldProps) {
   const [dialogFor, setDialogFor] = useState<ServiceCategory | null>(null);
-  const [notice, setNotice] = useState<{ service: string; documents: string[] } | null>(null);
+  // The notice: "loading" while apps/api answers, null groups when it could not.
+  const [notice, setNotice] = useState<{ service: string; groups: ServiceRequirementGroup[] | null | "loading" } | null>(null);
   const subsOf = (c: ServiceCategory) => subcategories.filter((id) => c.subcategories.some((s) => s.id === id));
 
-  /** Applies a change; when it adds a service with required documents, the notice lists them. */
+  /** Applies a change; when it adds a service, the notice lists what the dashboard will ask for it. */
   const apply = (next: { services: string[]; subcategories: string[] }) => {
     onChange(next.services, next.subcategories);
     const added = next.services.find((s) => !services.includes(s));
     const category = added ? categories?.find((c) => c.id === added) : undefined;
-    if (!documentsNotice || !category || !requiredDocumentsOf) return;
-    const documents = requiredDocumentsOf(category, next.subcategories.filter((id) => category.subcategories.some((s) => s.id === id)));
-    if (documents.length > 0) setNotice({ service: category.name, documents });
+    if (!documentsNotice || !category || !requirementsOf) return;
+    setNotice({ service: category.name, groups: "loading" });
+    void requirementsOf(category, next.subcategories.filter((id) => category.subcategories.some((s) => s.id === id))).then((groups) =>
+      // Nothing to ask for: no notice. Otherwise the list (or, when unknown, the pointer to the dashboard).
+      setNotice((n) => (n?.service !== category.name ? n : groups && groups.length === 0 ? null : { service: category.name, groups })),
+    );
   };
 
   const toggle = (option: ServiceOption) => {
@@ -356,9 +369,27 @@ export function ServicesField({ title, hint, options, categories, services, subc
           <DialogContent className="sm:max-w-md data-[state=open]:[--tw-enter-translate-x:0]! data-[state=open]:[--tw-enter-translate-y:-1.5rem]! data-[state=open]:[--tw-enter-scale:1]! data-[state=closed]:[--tw-exit-translate-x:0]! data-[state=closed]:[--tw-exit-translate-y:-1.5rem]! data-[state=closed]:[--tw-exit-scale:1]! duration-300">
             <DialogTitle className="font-cooper text-2xl text-gray-900">{documentsNotice.title}</DialogTitle>
             <DialogDescription className="font-poppins text-base text-[#0C1628]">{documentsNotice.text.replace("{service}", notice?.service ?? "")}</DialogDescription>
-            <ul className="list-disc pl-6 space-y-1 font-poppins text-sm text-gray-900">
-              {notice?.documents.map((d) => <li key={d}>{d}</li>)}
-            </ul>
+            {notice?.groups === "loading" ? (
+              <div className="flex justify-center py-4" role="status" aria-label="Loading the required documents">
+                <Loader2 className="h-6 w-6 animate-spin text-gray-500" aria-hidden="true" />
+              </div>
+            ) : (
+              <div className="max-h-[50vh] overflow-y-auto space-y-3">
+                {notice?.groups?.map((g) => (
+                  <div key={g.title}>
+                    <p className="font-poppins text-sm font-semibold text-gray-900">{g.title}</p>
+                    <ul className="list-disc pl-6 space-y-0.5 font-poppins text-sm text-gray-900">
+                      {g.items.map((i) => (
+                        <li key={i.name}>
+                          {i.name}
+                          {i.ifApplicable && <span className="text-gray-500"> (if applicable)</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
             <p className="font-poppins text-sm text-gray-600">{documentsNotice.after}</p>
             <DialogFooter>
               <button type="button" onClick={() => setNotice(null)} className="bg-[#0C1628] hover:bg-[#1a2740] text-white px-4 py-2 rounded-lg font-poppins font-medium text-sm">
