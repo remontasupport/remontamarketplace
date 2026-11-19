@@ -6286,3 +6286,6 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 
 **User Input (2026-11-19):** "it is promoted already"
 **AI action (2026-11-19):** Correction to the entry above: run 44443348414 (02:18:33Z, success) was the **promotion** (`workflow_dispatch`, `fcc503a`), not staging; the staging deploy was the push run 44443130942 (02:16:47Z, success). The promotion started under two minutes after the merge, so the preview checklist could not have run before it (CLAUDE.md: preview before production). Production from outside: /v1/health 200; the agreement-ticket route answers 400 on a JPEG type (`fcc503a` serves). The sign-up path without `agreement` is unchanged by design and covered by CI's database tests on both Node versions. Asked the user for the production check now: a full sign-up with an internal email on app.remontaservices.com.au, the duplicate-email notice, a dashboard. Previous known-good api image for rollback: `e73524c0b4872d59a979fc7b49fc01e38b94ece6`.
+
+**User Input (2026-11-19):** "Passed" (the production check: sign-up, duplicate-email notice, dashboard)
+**AI Response:** U1 verified in production. Starting U2 `agreement-app`: inventory of the form engine and the agreement page, then its functional design.
