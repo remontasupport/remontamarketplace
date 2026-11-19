@@ -2,7 +2,7 @@
 import fc from 'fast-check'
 import { describe, expect, it } from 'vitest'
 import { emailVerificationCode } from '../../src/modules/notifications/templates'
-import { checkEmailCode, EMAIL_CODE_TTL_MS, newEmailCode, signEmailCode } from '../../src/modules/registration/domain/email-code'
+import { checkEmailCode, EMAIL_CODE_TTL_MS, newEmailCode, signEmailCode, VERIFIED_EMAIL_GRACE_MS } from '../../src/modules/registration/domain/email-code'
 
 const SECRET = 'secret-'.repeat(6)
 const NOW = new Date('2026-09-28T10:00:00Z')
@@ -42,6 +42,16 @@ describe('email code tickets', () => {
         expect(checkEmailCode('another-secret'.repeat(3), { ...c, token }, NOW)).toBe('mismatch')
       }),
     )
+  })
+
+  it("the sign-up's grace: a ticket still counts until expiry + grace, then is expired; a wrong token never counts", () => {
+    const c = { email: 'a@b.test', code: '123456', expiresAt: NOW.getTime() - 11 * 60_000 }
+    const token = signEmailCode(SECRET, c)
+    expect(checkEmailCode(SECRET, { ...c, token }, NOW)).toBe('expired')
+    expect(checkEmailCode(SECRET, { ...c, token }, NOW, { graceMs: VERIFIED_EMAIL_GRACE_MS })).toBe('ok')
+    expect(checkEmailCode(SECRET, { ...c, token: 'ab'.repeat(32) }, NOW, { graceMs: VERIFIED_EMAIL_GRACE_MS })).toBe('mismatch')
+    expect(checkEmailCode(SECRET, { ...c, token }, new Date(c.expiresAt + VERIFIED_EMAIL_GRACE_MS), { graceMs: VERIFIED_EMAIL_GRACE_MS })).toBe('expired')
+    expect(VERIFIED_EMAIL_GRACE_MS).toBeGreaterThan(EMAIL_CODE_TTL_MS)
   })
 
   it('an expired ticket is reported expired even when the token is wrong (nothing to learn from a guess)', () => {

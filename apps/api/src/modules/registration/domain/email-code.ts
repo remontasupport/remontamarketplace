@@ -9,6 +9,13 @@ import { createHmac, randomInt, timingSafeEqual } from 'node:crypto'
 
 export const EMAIL_CODE_TTL_MS = 10 * 60_000
 export const EMAIL_CODE_TTL_MINUTES = EMAIL_CODE_TTL_MS / 60_000
+/**
+ * How long a verified address stays verified for the sign-up after its code expired (2026-11-19: a worker who took
+ * more than ten minutes over the later steps was sent back to verify again). The code itself is entered within its ten
+ * minutes (the verify entry); the proof the sign-up carries is the same signed ticket and code, accepted for this long
+ * after. Guessing a code at the sign-up stays bounded by its own limits (5/h per IP), and the proof is for one address.
+ */
+export const VERIFIED_EMAIL_GRACE_MS = 24 * 60 * 60_000
 
 /** Six digits, uniformly random, leading zeros kept. */
 export function newEmailCode(): string {
@@ -29,10 +36,11 @@ export type EmailCodeCheck = 'ok' | 'expired' | 'mismatch'
 
 /**
  * Expiry first, so a guess against an expired ticket learns nothing about the
- * code; then a constant-time signature comparison.
+ * code; then a constant-time signature comparison. `graceMs`: how long after the
+ * expiry the ticket still counts (the sign-up's proof, VERIFIED_EMAIL_GRACE_MS).
  */
-export function checkEmailCode(secret: string, c: EmailCodeClaim & { token: string }, now: Date): EmailCodeCheck {
-  if (now.getTime() >= c.expiresAt) return 'expired'
+export function checkEmailCode(secret: string, c: EmailCodeClaim & { token: string }, now: Date, opts: { graceMs?: number } = {}): EmailCodeCheck {
+  if (now.getTime() >= c.expiresAt + (opts.graceMs ?? 0)) return 'expired'
   const expected = Buffer.from(signEmailCode(secret, c), 'hex')
   const given = Buffer.from(c.token, 'hex')
   if (given.length !== expected.length) return 'mismatch'

@@ -10,7 +10,8 @@
 //   R5 a browser retry after a commit lands in R1 (noticeExistingAccount).
 //   R6 the email was verified (S1 step 13): the sign-up carries the code's ticket
 //      and the server re-checks it against the body's email, before the lookup,
-//      so a refusal says nothing about whether an account exists.
+//      so a refusal says nothing about whether an account exists. The proof holds
+//      for VERIFIED_EMAIL_GRACE_MS after the code's own ten minutes (2026-11-19).
 //   R7 the signed agreement (signup-abn-agreement U1, optional until U3): the PDF is
 //      checked and copied into the worker's folder before the transaction, recorded in
 //      it with the signed ABN engagement; whatever records nothing deletes the file.
@@ -29,7 +30,7 @@ import { placeHome } from '../../locations/domain/home'
 import { openOnboarding } from '../../onboarding/markers'
 import type { PhotoStore } from '../adapters/photo-store'
 import type { BreachCheck, BreachedPasswordChecker } from '../adapters/pwned-passwords'
-import { checkEmailCode } from '../domain/email-code'
+import { checkEmailCode, VERIFIED_EMAIL_GRACE_MS } from '../domain/email-code'
 import { PHOTO_UPLOADED, WORKER_REGISTERED, type PhotoUploadedPayload, type WorkerRegisteredPayload } from '../domain/events'
 import { findUserIdByEmail } from '../persistence/users'
 import { AGREEMENT_STORE_UNAVAILABLE, discardAgreement, recordAgreement, stageAgreement } from './agreement'
@@ -77,7 +78,8 @@ export async function registerWorker(input: WorkerRegistration, deps: RegisterDe
 
   // R6, then the breach check: both for every email, before the email is looked up,
   // so a refusal here says nothing about whether an account exists.
-  const verified = checkEmailCode(deps.codeSecret, { ...input.emailVerification, email: input.email }, now)
+  // The code had ten minutes to be entered; once verified, the address stays verified for the rest of the sign-up.
+  const verified = checkEmailCode(deps.codeSecret, { ...input.emailVerification, email: input.email }, now, { graceMs: VERIFIED_EMAIL_GRACE_MS })
   if (verified !== 'ok') throw new ApiError(400, `email verification ${verified}`, { emailVerification: [EMAIL_NOT_VERIFIED] })
 
   const breach = await deps.breaches.check(input.password)

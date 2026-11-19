@@ -288,7 +288,7 @@ Body (JSON, strict — unknown fields are refused):
 | `firstName` | string | yes | Trimmed, spaces collapsed; 1–50 characters; letters (any script), spaces, `'` `’` `-` only; at least one letter |
 | `lastName` | string | yes | Same as `firstName` |
 | `email` | string | yes | Trimmed, lower-cased, valid, max 254 |
-| `emailVerification` | object | yes | `{ token, expiresAt, code }` from 4.4 / 4.5. Server: re-checked against `email`. |
+| `emailVerification` | object | yes | `{ token, expiresAt, code }` from 4.4 / 4.5. Server: re-checked against `email`; accepted up to 24 hours after the code's own 10 minutes (`VERIFIED_EMAIL_GRACE_MS`, 2026-11-19: the code is entered within 10 minutes, the address then stays verified for the rest of the sign-up). |
 | `mobile` | string | yes | An Australian mobile in any common form (`04xx xxx xxx`, `+61 4xx…`, `614…`, with spaces/dots/dashes/brackets). **Stored as E.164**, `+614XXXXXXXX`. |
 | `password` | string | yes | 8–128 characters with upper case, lower case, a digit and one of `@!#$%^&*(),.?":{}\|<>`. Server: also refused if it appears in a known data breach (Have I Been Pwned range check). |
 | `services` | string[] | yes | 1–10 `Category` ids, no duplicates. Server: each must exist. |
