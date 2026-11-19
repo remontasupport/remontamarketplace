@@ -6360,3 +6360,6 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 
 **User Input (2026-11-19):** "Or instead of having a Save buttons to the steps, we will save the data when the users next page, is this doable without affecting the performance of the app" / "go with your recommendation, build it"
 **AI Response:** Built on `feat/signup-agreement-app`: `stepForms.tsx` registry (each SectionPage/SectionPair registers changed + save; `saveInOrder`), ProfileShell saves before Previous/Next/"Save & finish" (last step, to the dashboard), before any other link out (capture-phase guard re-clicks the link after saving) and before "Review application"; no request when nothing changed; a refused save stays with the errors. Save buttons hidden on My Profile steps (status only); Service Area and the bank account keep theirs. `unsaved.tsx` removed. App 775, baselines held, app build green.
+
+**User Input (2026-11-19):** "Now the address, do not make it require, remove the asterisk"
+**AI Response:** LocalityField takes `optional` (no mark); the section locality kind carries it; the home address's Suburb is optional. A never-saved section with every field blank no longer counts as changed on leave (a street typed then cleared). An entered address still needs a suburb (contract unchanged). App 775, baselines held. Pushed to `feat/signup-agreement-app`.
