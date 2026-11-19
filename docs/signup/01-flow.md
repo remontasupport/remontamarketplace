@@ -87,7 +87,7 @@ Complete       ----- POST /v1/registrations/worker
 | R3 atomic | Every row of a sign-up commits together or not at all. |
 | R4 photo claimed once | A staged photo can be used by one sign-up, within 24 h of upload. |
 | R5 retry-safe | A browser retry after a commit lands in R1 (no second account, no notice email). |
-| R6 email verified | The submit carries the code's ticket; the server re-checks it against the body's email before anything else. |
+| R6 email verified | The submit carries the code's ticket; the server re-checks it against the body's email before anything else. The code must be entered within 10 minutes; once verified, the proof holds for 24 hours more, so a slow sign-up is not sent back to verify (2026-11-19). |
 | R7 signed agreement | With `agreement` (signup-abn-agreement; optional until the wizard sends it), the signed Contractor Agreement PDF and the ABN are recorded with the account, as the dashboard's signing records them; an existing email or any refusal leaves no file. |
 
 ## 4. Where it runs
