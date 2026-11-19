@@ -14,6 +14,7 @@ import { AddServiceDialog } from "@/components/services-setup/AddServiceDialog";
 import { useCatalogue } from "@/features/forms/adapters/useServiceCategories";
 import { serviceNameToSlug } from "@/utils/serviceSlugMapping";
 import "@/app/styles/services-setup.css";
+import { serviceLabel } from "@/lib/serviceLabel";
 
 interface Step1ServicesOfferProps {
   data: {
@@ -73,7 +74,7 @@ function ServiceCard({
         <div className="service-card-content flex flex-col h-full">
           <div className="service-card-header flex-grow">
             <h4 className="service-card-title" style={{ color: '#0C1628' }}>
-              {service}
+              {serviceLabel(service)}
             </h4>
           </div>
 
@@ -103,7 +104,7 @@ function ServiceCard({
                 onEditCategories();
               }}
               className="service-add-btn"
-              aria-label={`Add more subcategories to ${service}`}
+              aria-label={`Add more subcategories to ${serviceLabel(service)}`}
               title="Add more subcategories"
             >
               <PlusIcon className="w-5 h-5" />
@@ -114,7 +115,7 @@ function ServiceCard({
             type="button"
             onClick={() => onRemove(service)}
             className="service-delete-btn"
-            aria-label={`Remove ${service}`}
+            aria-label={`Remove ${serviceLabel(service)}`}
             title="Remove service"
           >
             <TrashIcon />
@@ -384,7 +385,7 @@ export default function Step1ServicesOffer({
         <CategorySubcategoriesDialog
           open={showSubcategoriesDialog}
           onOpenChange={setShowSubcategoriesDialog}
-          categoryName={selectedCategoryForEdit.name}
+          categoryName={serviceLabel(selectedCategoryForEdit.name)}
           subcategories={selectedCategoryForEdit.subcategories}
           selectedSubcategories={
             data.supportWorkerCategories.filter(id =>

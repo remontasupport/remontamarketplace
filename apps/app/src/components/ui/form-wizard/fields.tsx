@@ -14,6 +14,7 @@ import PhotoUpload from "@/components/forms/fields/PhotoUpload";
 import { ACCEPTED_IMAGE_TYPES } from "@remonta/schemas/image-type";
 import type { UploadProgress } from "@remonta/form-engine";
 import { CategorySubcategoriesDialog } from "@/components/forms/workerRegistration/CategorySubcategoriesDialog";
+import { serviceLabel } from "@/lib/serviceLabel";
 
 export function FieldError({ message }: { message?: string }) {
   return message ? <p className="text-red-500 text-sm font-poppins mt-1">{message}</p> : null;
@@ -295,10 +296,10 @@ export function ServicesField({ title, hint, options, categories, services, subc
     const added = next.services.find((s) => !services.includes(s));
     const category = added ? categories?.find((c) => c.id === added) : undefined;
     if (!documentsNotice || !category || !requirementsOf) return;
-    setNotice({ service: category.name, groups: "loading" });
+    setNotice({ service: serviceLabel(category.name), groups: "loading" });
     void requirementsOf(category, next.subcategories.filter((id) => category.subcategories.some((s) => s.id === id))).then((groups) =>
       // Nothing to ask for: no notice. Otherwise the list (or, when unknown, the pointer to the dashboard).
-      setNotice((n) => (n?.service !== category.name ? n : groups && groups.length === 0 ? null : { service: category.name, groups })),
+      setNotice((n) => (n?.service !== serviceLabel(category.name) ? n : groups && groups.length === 0 ? null : { service: serviceLabel(category.name), groups })),
     );
   };
 
@@ -332,7 +333,7 @@ export function ServicesField({ title, hint, options, categories, services, subc
                 <Checkbox id={option.id} checked={services.includes(option.id)} disabled={locked} onCheckedChange={() => toggle(option)} className="mt-1" />
                 <div className="flex-1">
                   <Label htmlFor={option.id} className={`text-base font-poppins font-semibold text-gray-900 ${locked ? "cursor-not-allowed" : "cursor-pointer"}`}>
-                    {option.title}
+                    {serviceLabel(option.title)}
                   </Label>
                   <p className="text-sm text-gray-600 font-poppins mt-1 leading-relaxed">{option.description}</p>
                   {count > 0 && (
@@ -357,7 +358,7 @@ export function ServicesField({ title, hint, options, categories, services, subc
         <CategorySubcategoriesDialog
           open={!!dialogFor}
           onOpenChange={(o) => !o && setDialogFor(null)}
-          categoryName={dialogFor.name}
+          categoryName={serviceLabel(dialogFor.name)}
           subcategories={dialogFor.subcategories as never}
           selectedSubcategories={subsOf(dialogFor)}
           onSave={saveDialog}
