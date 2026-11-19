@@ -95,7 +95,7 @@ export default function ProfileShell({ slug, children }: { slug?: string; childr
           </nav>
         )}
         {blocked && (
-          <p role="alert" className="mt-2 text-right text-sm font-poppins text-red-600">
+          <p role="alert" className="mt-2 text-center text-sm font-poppins text-red-600">
             {blocked}
           </p>
         )}
