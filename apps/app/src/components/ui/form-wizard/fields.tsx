@@ -238,7 +238,7 @@ export interface ServicesFieldProps {
   /** One service only: with one picked, the others are dimmed and cannot be picked. */
   single?: boolean;
   /** Shown when a picked service has required documents; `{service}` in `text` is its name. */
-  documentsNotice?: { title: string; text: string; after: string; button: string };
+  documentsNotice?: { title: string; text: string; after: string; unavailable: string; button: string };
   /**
    * What a service with its chosen sub-categories will ask for, in the dashboard's groups (the glue asks apps/api).
    * null: unknown (the notice then points to the dashboard without a list).
@@ -368,7 +368,9 @@ export function ServicesField({ title, hint, options, categories, services, subc
           {/* The sign-up's notices fade in from just above (as the ABN notice). */}
           <DialogContent className="sm:max-w-md data-[state=open]:[--tw-enter-translate-x:0]! data-[state=open]:[--tw-enter-translate-y:-1.5rem]! data-[state=open]:[--tw-enter-scale:1]! data-[state=closed]:[--tw-exit-translate-x:0]! data-[state=closed]:[--tw-exit-translate-y:-1.5rem]! data-[state=closed]:[--tw-exit-scale:1]! duration-300">
             <DialogTitle className="font-cooper text-2xl text-gray-900">{documentsNotice.title}</DialogTitle>
-            <DialogDescription className="font-poppins text-base text-[#0C1628]">{documentsNotice.text.replace("{service}", notice?.service ?? "")}</DialogDescription>
+            <DialogDescription className="font-poppins text-base text-[#0C1628]">
+              {(notice?.groups === null ? documentsNotice.unavailable : documentsNotice.text).replace("{service}", notice?.service ?? "")}
+            </DialogDescription>
             {notice?.groups === "loading" ? (
               <div className="flex justify-center py-4" role="status" aria-label="Loading the required documents">
                 <Loader2 className="h-6 w-6 animate-spin text-gray-500" aria-hidden="true" />
@@ -390,7 +392,7 @@ export function ServicesField({ title, hint, options, categories, services, subc
                 ))}
               </div>
             )}
-            <p className="font-poppins text-sm text-gray-600">{documentsNotice.after}</p>
+            {notice?.groups !== null && <p className="font-poppins text-sm text-gray-600">{documentsNotice.after}</p>}
             <DialogFooter>
               <button type="button" onClick={() => setNotice(null)} className="bg-[#0C1628] hover:bg-[#1a2740] text-white px-4 py-2 rounded-lg font-poppins font-medium text-sm">
                 {documentsNotice.button}

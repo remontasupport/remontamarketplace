@@ -146,6 +146,7 @@ describe("one service at sign-up, and the documents notice (2026-11-19)", () => 
       title: "Please Note:",
       text: "{service} requires the following documents and checks:",
       after: "After signing up, go to Compliance on your dashboard to upload them.",
+      unavailable: "{service} requires documents and checks. After signing up, go to Compliance on your dashboard to see the full list and upload them.",
       button: "OK",
     });
   });

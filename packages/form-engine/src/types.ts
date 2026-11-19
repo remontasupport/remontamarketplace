@@ -37,9 +37,10 @@ export type FieldDef =
       max?: number;
       /**
        * Shown when a picked service has required documents (the platform's list, the one its dashboard asks for):
-       * `text` (`{service}` is the service's name), the documents, then `after`.
+       * `text` (`{service}` is the service's name), the documents, then `after`; `unavailable` in place of `text` and
+       * the list when they cannot be loaded.
        */
-      documentsNotice?: { title: string; text: string; after: string; button: string };
+      documentsNotice?: { title: string; text: string; after: string; unavailable: string; button: string };
     })
   /**
    * A photo uploaded straight to storage (U3): `ticketEntry` names the key the browser
