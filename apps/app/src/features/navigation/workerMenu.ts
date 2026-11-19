@@ -77,7 +77,7 @@ export const EDIT_PROFILE_CHILDREN: readonly { slug: string; label: string; done
     done: (p) => (p.bio?.trim().length ?? 0) >= 50,
     requiredBeforeNext: {
       ok: (p) => !!p.bio?.trim() && (info(p)?.funFact?.trim().length ?? 0) >= 50,
-      message: "Please fill in About you and your Fun fact (50 characters or more), then press Save before continuing.",
+      message: "Please fill in About you and your Fun fact (50 characters or more) before continuing.",
     },
   },
   { slug: "address", label: "Address", group: "personal-information", done: (p) => !!p.homeAddress },

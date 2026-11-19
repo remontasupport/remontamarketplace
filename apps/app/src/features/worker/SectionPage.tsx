@@ -31,7 +31,7 @@ import { workerApi } from "./api";
 import { savePair } from "./pair";
 import { ROW_DELETES } from "./rowDeletes";
 import { UNAVAILABLE_MESSAGE, useSection, type SaveState } from "./useSection";
-import { useReportUnsaved } from "./unsaved";
+import { useStepForm } from "./stepForms";
 
 const choices = (options: readonly (string | { value: string; label?: string })[]): ChoiceOption[] =>
   options.map((o) => (typeof o === "string" ? { value: o, label: o } : { value: o.value, label: o.label ?? o.value }));
@@ -172,14 +172,18 @@ function OrderedListSlot({ field, path, rows, set, errors, setValue, picked, onD
   );
 }
 
-function SaveBar({ save, onSave, disabled }: { save: SaveState; onSave: () => void; disabled: boolean }) {
+/** `statusOnly`: a My Profile step saves when the worker leaves it (stepForms.tsx), so only the outcome shows. */
+function SaveBar({ save, onSave, disabled, statusOnly = false }: { save: SaveState; onSave: () => void; disabled: boolean; statusOnly?: boolean }) {
   const saving = save.kind === "saving";
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-2">
-      <button type="button" onClick={onSave} disabled={disabled || saving} className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-[#0C1628] text-white font-poppins font-medium hover:bg-[#1a2740] disabled:opacity-50">
-        {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-        {saving ? (save.retrying ? "Still saving..." : "Saving...") : "Save"}
-      </button>
+      {!statusOnly && (
+        <button type="button" onClick={onSave} disabled={disabled || saving} className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-[#0C1628] text-white font-poppins font-medium hover:bg-[#1a2740] disabled:opacity-50">
+          {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+          {saving ? (save.retrying ? "Still saving..." : "Saving...") : "Save"}
+        </button>
+      )}
+      {statusOnly && saving && <span className="text-sm font-poppins text-gray-600">{save.retrying ? "Still saving..." : "Saving..."}</span>}
       <div role="status" aria-live="polite" className="text-sm font-poppins">
         {save.kind === "saving" && save.offline && <span className="text-amber-700">You are offline. We will save as soon as you are back online.</span>}
         {save.kind === "saved" && (
@@ -246,7 +250,7 @@ export function SectionPair({ title, first, second }: { title: string; first: Se
   const a = useSection(first);
   const b = useSection(second);
   const onSave = () => savePair([a, b]);
-  useReportUnsaved(a.changed || b.changed);
+  const savesOnLeave = useStepForm(a.changed || b.changed, onSave);
 
   return (
     <section className="space-y-5">
@@ -265,7 +269,7 @@ export function SectionPair({ title, first, second }: { title: string; first: Se
         >
           <SectionFields def={first} s={a} />
           <SectionFields def={second} s={b} />
-          <SaveBar save={pairState(a.save, b.save)} onSave={() => void onSave()} disabled={false} />
+          <SaveBar save={pairState(a.save, b.save)} onSave={() => void onSave()} disabled={false} statusOnly={savesOnLeave} />
         </form>
       )}
     </section>
@@ -277,7 +281,8 @@ export function SectionPair({ title, first, second }: { title: string; first: Se
  * `onSaved` runs once a Save is stored (Service Area then goes to the dashboard, user 2026-10-16).
  */
 export default function SectionPage({ def, onSaved }: { def: SectionDefinition; onSaved?: () => void }) {
-  const { profile, isLoading, readError, values, errors, setValue, submit: saveSection, save, deleteRow } = useSection(def);
+  const { profile, isLoading, readError, values, errors, setValue, submit: saveSection, save, deleteRow, changed } = useSection(def);
+  const savesOnLeave = useStepForm(changed, saveSection);
   const submit = async () => {
     if ((await saveSection()) && onSaved) onSaved();
   };
@@ -335,7 +340,7 @@ export default function SectionPage({ def, onSaved }: { def: SectionDefinition; 
             {deleting && <p className="text-sm text-gray-600 font-poppins">Deleting…</p>}
             {deleteError && <p className="text-sm text-red-600 font-poppins">{deleteError}</p>}
           </div>
-          <SaveBar save={save} onSave={() => void submit()} disabled={!values || deleting} />
+          <SaveBar save={save} onSave={() => void submit()} disabled={!values || deleting} statusOnly={savesOnLeave} />
         </form>
       )}
       {rowDelete && (
