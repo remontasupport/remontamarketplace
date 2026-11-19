@@ -6254,3 +6254,8 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User Input**: (questions) "Inside sign-up (Recommended)"; "ABN only (Recommended)"
 **AI Response**: Cycle `signup-abn-agreement` opened on branch `aidlc/signup-abn-agreement` (from `aidlc/document-history`). Targeted inventory of the sign-up (`registerWorker`, the photo ticket) and the dashboard agreement (`ContractPage`, `signContract`: `stageDocument`, `recordComplianceDocument`, `writeSignedEngagement`). Wrote `inception/requirements/requirements.md` (D1-D6, R1-R9, O1-O2); asked for approval and the open questions.
 **Context**: INCEPTION, requirements analysis.
+
+**Timestamp**: 2026-11-19
+**User Input**: "Yes keep 3, for existing workers, yes keep signing agreement to the dashboard. By the way, save the file on the dashboard in the agreement as well for this new process"
+**AI Response**: Requirements approved; O1 (three extensions kept) and O2 (existing workers unchanged) recorded; R7 made explicit: the sign-up's signed PDF is the same `contract-of-agreement` row the dashboard reads (`requirements/setup`, `contractDocumentFromDB`), so it shows on the dashboard's agreement. Wrote `inception/plans/execution-plan.md`: U1 `agreement-api` (fields optional while the old app is live), U2 `agreement-app`, U3 `agreement-required`. Asked for plan approval.
+**Context**: INCEPTION, requirements approved; workflow planning.

@@ -1,6 +1,6 @@
 # Requirements: signup-abn-agreement (the ABN notice and the Contractor Agreement inside the worker sign-up)
 
-Cycle opened 2026-11-19. Brownfield; the area is the worker sign-up (`workerRegistration.ts`, `POST /v1/registrations/worker`)
+Cycle opened 2026-11-19. **Approved 2026-11-19** (O1, O2 answered; R7 made explicit at the user's request). Brownfield; the area is the worker sign-up (`workerRegistration.ts`, `POST /v1/registrations/worker`)
 and the dashboard's ABN agreement (`components/contracts/ContractPage.tsx`, `POST /v1/worker/contract`).
 
 ## Today (targeted inventory, 2026-11-19)
@@ -51,8 +51,12 @@ and the dashboard's ABN agreement (`components/contracts/ContractPage.tsx`, `POS
   true}}`. All or nothing (registration R3); a failed transaction leaves no copied file.
 - **R6 Existing email (registration R1).** Same 202, no account change, the uploaded PDF discarded; nothing in the
   response differs.
-- **R7 The dashboard follows.** A worker who signed at sign-up sees the agreement signed and the ABN on file (setup page,
-  compliance list, completion) exactly as after signing on the dashboard; the admin sees the PDF as today.
+- **R7 The file is on the dashboard's agreement** (user 2026-11-19: "save the file on the dashboard in the agreement as
+  well"). The signed PDF is stored as the same `contract-of-agreement` row the dashboard signing writes (private bucket,
+  `documentUrl` = the app's `/api/documents/<id>/<name>` path), so the dashboard's agreement section
+  (`requirements/setup`, `contractDocumentFromDB`) shows it signed with the file to open, the ABN is on file, completion
+  counts it, and the admin compliance page and Document History see it as today. No dashboard code change expected
+  (to verify on the preview).
 - **R8 Draft.** The on-device draft never keeps the signature or the PDF; the ABN, name, GST and address follow the
   existing draft rule (to confirm in Functional Design).
 - **R9 Docs.** `docs/signup/` updated in the same PR (CLAUDE.md).
@@ -65,9 +69,9 @@ and the dashboard's ABN agreement (`components/contracts/ContractPage.tsx`, `POS
   follow-up 32). An old app against the new api must keep working until then, or the fields are optional until the
   app is live (to settle in the plan).
 - Security: the anonymous ticket is rate-limited like the photo's; the PDF is never public; the ABN is not logged.
-- Extensions (carried: Security blocking, Resiliency, PBT full): to confirm.
+- Extensions (user 2026-11-19): Security Baseline blocking, Resiliency Baseline, PBT full.
 
-## Open questions
+## Answered
 
-- O1 Extensions for this cycle (carried values).
-- O2 Workers who signed up before the release: no change (they sign on the dashboard as today)?
+- O1 Extensions: the three carried, unchanged.
+- O2 Workers who signed up before the release: no change; they sign on the dashboard as today.

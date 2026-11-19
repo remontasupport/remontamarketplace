@@ -4,7 +4,7 @@
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
 - **Current Cycle**: signup-abn-agreement (opened 2026-11-19): the ABN notice and the Contractor Agreement inside the worker sign-up.
-- **Current Stage**: INCEPTION, requirements analysis (`inception/requirements/requirements.md`), awaiting approval.
+- **Current Stage**: INCEPTION, workflow planning (`inception/plans/execution-plan.md`), awaiting approval; requirements approved 2026-11-19.
 
 ## Previous cycles (archived, read-only)
 
