@@ -9,7 +9,9 @@ import {
   workerRegistrationSchema,
   emailCodeRequestSchema,
   emailCodeVerifySchema,
+  abnNumberSchema,
 } from './workerRegistrationSchema'
+import { isValidAbn } from '../validations/abn'
 
 const valid = {
   localityId: 1234,
@@ -185,5 +187,31 @@ describe('the email-code schemas (S1 step 13)', () => {
     const r = workerRegistrationFormSchema.safeParse({ ...valid, emailVerification: undefined })
     expect(r.success).toBe(false)
     expect(r.error!.issues.map((i) => [i.path.join('.'), i.message])).toContainEqual(['emailVerification', 'Please verify your email address'])
+  })
+})
+
+describe('the signed agreement (signup-abn-agreement U1)', () => {
+  const agreement = { uploadId: '9b2e7c1a-3d4f-4a5b-8c6d-7e8f9a0b1c2d', fileName: 'Contractor_Agreement.pdf', abn: '51 824 753 556' }
+
+  it('is optional until U3, and carried as the eleven digits when given', () => {
+    expect(workerRegistrationFormSchema.safeParse(valid).success).toBe(true)
+    const out = workerRegistrationFormSchema.parse({ ...valid, agreement })
+    expect(out.agreement).toEqual({ ...agreement, abn: '51824753556' })
+  })
+
+  it('refuses a wrong ABN, an unknown field, a path in the file name and a non-uuid upload id', () => {
+    for (const bad of [{ abn: '51 824 753 557' }, { abn: '5182475355' }, { extra: 1 }, { fileName: '../x.pdf' }, { uploadId: 'abc' }]) {
+      expect(workerRegistrationFormSchema.safeParse({ ...valid, agreement: { ...agreement, ...bad } }).success, JSON.stringify(bad)).toBe(false)
+    }
+  })
+
+  it('property: the agreement ABN rule and the dashboard ABN rule are one rule', () => {
+    fc.assert(
+      fc.property(fc.stringMatching(/^[0-9 ]{0,16}$/), (abn) => {
+        const asAgreement = abnNumberSchema.safeParse(abn)
+        expect(asAgreement.success).toBe(isValidAbn(abn))
+        if (asAgreement.success) expect(asAgreement.data).toBe(abn.replace(/\s+/g, ''))
+      }),
+    )
   })
 })

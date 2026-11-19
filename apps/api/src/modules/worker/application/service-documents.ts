@@ -15,7 +15,8 @@ import type { FastifyBaseLogger } from 'fastify'
 import { ApiError } from '../../../platform/errors'
 import type { Prisma, Tx } from '../../../platform/persistence/db'
 import { StoreUnavailable, type PhotoStore } from '../../registration/adapters/photo-store'
-import { stagingKey, TICKET_TTL_MS } from '../../registration/domain/photo-upload'
+import { stagingKey } from '../../registration/domain/photo-upload'
+import { issueUploadTicket } from '../../registration/application/upload-ticket'
 import { uploadableDocuments } from '../domain/service-requirements'
 import { ADDITIONAL_CATEGORIES, OTHER_DOCUMENTS_NAME } from '../domain/requirement-groups'
 import { keepVersions, VERSION_SOURCE_SELECT } from './document-versions'
@@ -47,23 +48,26 @@ export function documentPath(id: string, fileName: string, type: DocumentType): 
   return `/api/documents/${id}/${encodeURIComponent(name)}`
 }
 
-function storeUnavailable(log: FastifyBaseLogger, err: StoreUnavailable): never {
+function storeUnavailable(log: FastifyBaseLogger, err: StoreUnavailable, field = 'file'): never {
   log.warn({ err: err.message }, 'service-document store unavailable')
-  throw new ApiError(503, 'document store unavailable', { file: [DOCUMENT_STORE_UNAVAILABLE] }, { 'retry-after': '2' })
+  throw new ApiError(503, 'document store unavailable', { [field]: [DOCUMENT_STORE_UNAVAILABLE] }, { 'retry-after': '2' })
 }
 
+/** What a staged upload may be, and the field its refusals name. A worker document: any document type, 50 MB. */
+export interface StageRules {
+  maxBytes: number
+  /** The accepted types; every document type when absent. */
+  only?: readonly DocumentType[]
+  field: string
+  tooLarge: string
+  notAccepted: string
+}
+export const WORKER_DOCUMENT_RULES: StageRules = { maxBytes: DOCUMENT_MAX_BYTES, field: 'file', tooLarge: DOCUMENT_TOO_LARGE, notAccepted: DOCUMENT_NOT_ACCEPTED }
+
 export async function createDocumentTicket(input: ServiceDocumentTicketRequest, deps: { bucket: PhotoStore; now: Date }, log: FastifyBaseLogger): Promise<ServiceDocumentTicketResponse> {
-  const id = randomUUID()
-  const expiresAt = new Date(deps.now.getTime() + TICKET_TTL_MS)
-  let ticket
-  try {
-    ticket = await deps.bucket.createUploadTicket(stagingKey(id), input.contentType, DOCUMENT_MAX_BYTES, expiresAt)
-  } catch (err) {
-    if (err instanceof StoreUnavailable) storeUnavailable(log, err)
-    throw err
-  }
+  const { id, ...ticket } = await issueUploadTicket(deps.bucket, { contentType: input.contentType, maxBytes: DOCUMENT_MAX_BYTES, unavailable: { field: 'file', message: DOCUMENT_STORE_UNAVAILABLE, reason: 'document' } }, deps.now, log)
   log.info({ uploadId: id, contentType: input.contentType, sizeBytes: input.sizeBytes }, 'service-document ticket')
-  return { uploadId: id, upload: { url: ticket.url, method: 'POST', fields: ticket.fields, fileField: 'file' }, expiresAt: expiresAt.toISOString() }
+  return { uploadId: id, ...ticket }
 }
 
 /** The chosen service and what it may carry, read before the bucket is touched. */
@@ -118,7 +122,7 @@ export interface StagedDocument {
  * Checks what landed at the ticket's key (one ranged read: size, stored type, first bytes) and copies it into the
  * worker's folder; the staging object is deleted. null when nothing is there (never uploaded, or already confirmed).
  */
-export async function stageDocument(bucket: PhotoStore, uploadId: string, profileId: string, log: FastifyBaseLogger): Promise<StagedDocument | null> {
+export async function stageDocument(bucket: PhotoStore, uploadId: string, profileId: string, log: FastifyBaseLogger, rules: StageRules = WORKER_DOCUMENT_RULES): Promise<StagedDocument | null> {
   const staging = stagingKey(uploadId)
   try {
     const found = await bucket.inspectWithPrefix(staging, DOCUMENT_HEADER_BYTES)
@@ -126,17 +130,17 @@ export async function stageDocument(bucket: PhotoStore, uploadId: string, profil
     const reject = async (reason: string, status: 413 | 415, message: string): Promise<never> => {
       await bucket.delete(staging).catch((err: unknown) => log.warn({ uploadId, err: err instanceof Error ? err.message : String(err) }, 'service-document delete failed'))
       log.warn({ uploadId, reason }, 'service-document rejected')
-      throw new ApiError(status, `document rejected: ${reason}`, { file: [message] })
+      throw new ApiError(status, `document rejected: ${reason}`, { [rules.field]: [message] })
     }
-    if (found.info.sizeBytes > DOCUMENT_MAX_BYTES) await reject('too-large', 413, DOCUMENT_TOO_LARGE)
+    if (found.info.sizeBytes > rules.maxBytes) await reject('too-large', 413, rules.tooLarge)
     const detected = detectDocumentType(found.head)
-    if (!detected || !matchesDeclared(detected, found.info.contentType)) await reject(detected ? 'wrong-type' : 'not-document', 415, DOCUMENT_NOT_ACCEPTED)
+    if (!detected || !matchesDeclared(detected, found.info.contentType) || (rules.only && !rules.only.includes(detected))) await reject(detected ? 'wrong-type' : 'not-document', 415, rules.notAccepted)
     const key = documentKey(profileId, uploadId, detected!)
     await bucket.copy(staging, key)
     await bucket.delete(staging).catch((err: unknown) => log.warn({ uploadId, err: err instanceof Error ? err.message : String(err) }, 'service-document staging delete failed'))
     return { key, type: detected!, sizeBytes: found.info.sizeBytes }
   } catch (err) {
-    if (err instanceof StoreUnavailable) storeUnavailable(log, err)
+    if (err instanceof StoreUnavailable) storeUnavailable(log, err, rules.field)
     throw err
   }
 }

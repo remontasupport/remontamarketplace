@@ -4,7 +4,7 @@
 // The subpath, not the package index: the index re-exports older schemas with
 // tracked type errors, which would otherwise enter this package's strict tsc.
 import { ACCEPTED_IMAGE_TYPES } from '@remonta/schemas/image-type'
-import { emailAvailabilitySchema, emailCodeRequestSchema, emailCodeTicketSchema, emailCodeVerifySchema, workerRegistrationSchema } from '@remonta/schemas/schema/workerRegistrationSchema'
+import { AGREEMENT_MAX_BYTES, emailAvailabilitySchema, emailCodeRequestSchema, emailCodeTicketSchema, emailCodeVerifySchema, workerRegistrationSchema } from '@remonta/schemas/schema/workerRegistrationSchema'
 import * as z from 'zod'
 import { defineContract } from './define'
 import { meta } from './meta'
@@ -36,7 +36,16 @@ export const photoTicketResponseSchema = z.strictObject({
 })
 export type PhotoTicketResponse = z.infer<typeof photoTicketResponseSchema>
 
-export const photoConfirmSchema = z.strictObject({ photoUploadId: z.uuid() })
+// The signed Contractor Agreement's upload (signup-abn-agreement U1): the photo ticket's shape, a PDF only.
+export const agreementTicketRequestSchema = z.strictObject({
+  contentType: z.literal('application/pdf'),
+  sizeBytes: z.int().min(1).max(AGREEMENT_MAX_BYTES),
+})
+export type AgreementTicketRequest = z.infer<typeof agreementTicketRequestSchema>
+export const agreementTicketResponseSchema = photoTicketResponseSchema.omit({ photoUploadId: true }).extend({ uploadId: z.uuid() })
+export type AgreementTicketResponse = z.infer<typeof agreementTicketResponseSchema>
+
+export const photoConfirmSchema =z.strictObject({ photoUploadId: z.uuid() })
 
 export const localitySchema = z.strictObject({
   id: z.number().int().positive(),
@@ -157,6 +166,23 @@ export const registrationContract = defineContract('registration', {
     meta: meta({
       access: 'public',
       bot: 'none', // the limits bound tickets; an unused ticket costs nothing but a signing call
+      rateLimit: [
+        { per: 'ip', limit: 10, window: '1h' },
+        { per: 'global', limit: 300, window: '1h' },
+      ],
+      maxBodyKb: 1,
+    }),
+  },
+
+  createAgreementUploadTicket: {
+    method: 'POST',
+    path: '/v1/registrations/worker/agreement-tickets',
+    summary: 'A ticket to upload the signed Contractor Agreement (a PDF, at most 5 MB) straight to storage for ten minutes. Nothing is stored until the sign-up is submitted.',
+    body: { kind: 'json', schema: agreementTicketRequestSchema },
+    responses: { 201: agreementTicketResponseSchema },
+    meta: meta({
+      access: 'public',
+      bot: 'none', // as the photo ticket: the limits bound tickets; an unused ticket costs nothing but a signing call
       rateLimit: [
         { per: 'ip', limit: 10, window: '1h' },
         { per: 'global', limit: 300, window: '1h' },

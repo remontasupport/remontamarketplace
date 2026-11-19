@@ -11,9 +11,13 @@
 //   R6 the email was verified (S1 step 13): the sign-up carries the code's ticket
 //      and the server re-checks it against the body's email, before the lookup,
 //      so a refusal says nothing about whether an account exists.
+//   R7 the signed agreement (signup-abn-agreement U1, optional until U3): the PDF is
+//      checked and copied into the worker's folder before the transaction, recorded in
+//      it with the signed ABN engagement; whatever records nothing deletes the file.
 import { randomUUID } from 'node:crypto'
 import { REGISTRATION_ACCEPTED_MESSAGE } from '@remonta/api-contract'
 import type { WorkerRegistration } from '@remonta/schemas/schema/workerRegistrationSchema'
+import type { StagedDocument } from '../../worker/application/service-documents'
 import type { FastifyBaseLogger } from 'fastify'
 import type { AuditRecorder } from '../../../platform/audit'
 import { systemClock, type Clock } from '../../../platform/clock'
@@ -23,10 +27,12 @@ import { Prisma, unitOfWork, type Db, type Tx } from '../../../platform/persiste
 import type { PasswordHasher } from '../../../platform/security/password-hasher'
 import { placeHome } from '../../locations/domain/home'
 import { openOnboarding } from '../../onboarding/markers'
+import type { PhotoStore } from '../adapters/photo-store'
 import type { BreachCheck, BreachedPasswordChecker } from '../adapters/pwned-passwords'
 import { checkEmailCode } from '../domain/email-code'
 import { PHOTO_UPLOADED, WORKER_REGISTERED, type PhotoUploadedPayload, type WorkerRegisteredPayload } from '../domain/events'
 import { findUserIdByEmail } from '../persistence/users'
+import { AGREEMENT_STORE_UNAVAILABLE, discardAgreement, recordAgreement, stageAgreement } from './agreement'
 import { noticeExistingAccount } from './existing-account'
 import { attachPhoto, claimPhoto } from './photo-claim'
 import { resolveServices, type ResolvedService } from './resolve-services'
@@ -37,6 +43,8 @@ export interface RegisterDeps {
   breaches: BreachedPasswordChecker
   /** Signs and checks the email-code tickets (S1 step 13). */
   codeSecret: string
+  /** The private bucket: the signed agreement's upload (R7). */
+  bucket?: PhotoStore
   now?: Clock
 }
 
@@ -53,6 +61,12 @@ export const ACCEPTED = { status: 202, body: { status: 'accepted', message: REGI
 
 /** Raised inside the transaction when a concurrent registration took the email. */
 class EmailTaken extends Error {}
+
+/** R7: the copied PDF and the profile id it was copied for. */
+interface SignedAgreement {
+  profileId: string
+  staged: StagedDocument
+}
 
 export async function registerWorker(input: WorkerRegistration, deps: RegisterDeps, ctx: RegisterContext) {
   const now = (deps.now ?? systemClock)()
@@ -78,11 +92,23 @@ export async function registerWorker(input: WorkerRegistration, deps: RegisterDe
   const passwordHash = await deps.hasher.hash(input.password)
 
   const existing = await findUserIdByEmail(deps.db, input.email)
-  if (existing) return existingAccount(existing, deps.db, ctx, now)
+  if (existing) {
+    await discardAgreement(deps.bucket, input.agreement, null, ctx.log)
+    return existingAccount(existing, deps.db, ctx, now)
+  }
+
+  // R7: the profile's id is chosen here so the PDF lands in its folder before any row exists.
+  let agreement: SignedAgreement | null = null
+  if (input.agreement) {
+    if (!deps.bucket) throw new ApiError(503, 'agreement store not configured', { agreement: [AGREEMENT_STORE_UNAVAILABLE] }, { 'retry-after': '2' })
+    const profileId = randomUUID()
+    agreement = { profileId, staged: await stageAgreement(deps.bucket, input.agreement, profileId, ctx.log) }
+  }
 
   try {
-    await unitOfWork(deps.db, (tx) => createAccount(tx, input, passwordHash, services, breach, now, ctx))
+    await unitOfWork(deps.db, (tx) => createAccount(tx, input, passwordHash, services, breach, now, ctx, agreement))
   } catch (err) {
+    await discardAgreement(deps.bucket, input.agreement, agreement?.staged ?? null, ctx.log)
     if (err instanceof EmailTaken) {
       const taken = await findUserIdByEmail(deps.db, input.email)
       if (!taken) throw err
@@ -99,7 +125,7 @@ async function existingAccount(userId: string, db: Db, ctx: RegisterContext, now
   return ACCEPTED
 }
 
-async function createAccount(tx: Tx, input: WorkerRegistration, passwordHash: string, services: ResolvedService[], breach: BreachCheck, now: Date, ctx: RegisterContext) {
+async function createAccount(tx: Tx, input: WorkerRegistration, passwordHash: string, services: ResolvedService[], breach: BreachCheck, now: Date, ctx: RegisterContext, agreement: SignedAgreement | null) {
   const locality = await tx.auLocality.findFirst({ where: { id: input.localityId, retiredAt: null } })
   if (!locality) throw new ApiError(400, `locality ${input.localityId} unknown or retired`, { localityId: ['Please choose your suburb from the list'] })
   const placed = placeHome(locality, 'REGISTRATION')
@@ -122,6 +148,7 @@ async function createAccount(tx: Tx, input: WorkerRegistration, passwordHash: st
         updatedAt: now,
         workerProfile: {
           create: {
+            ...(agreement ? { id: agreement.profileId } : {}),
             firstName: input.firstName,
             lastName: input.lastName,
             mobile: input.mobile,
@@ -149,11 +176,12 @@ async function createAccount(tx: Tx, input: WorkerRegistration, passwordHash: st
   await tx.workerService.createMany({ data: services.map((s) => ({ workerProfileId, ...s })) })
   await tx.workerLocation.create({ data: { id: randomUUID(), workerProfileId, ...placed.home, updatedAt: now } })
   await openOnboarding(tx, workerProfileId, now, WORKER_REGISTERED)
+  if (agreement && input.agreement) await recordAgreement(tx, workerProfileId, input.agreement, agreement.staged, now)
 
   await ctx.audit.record(tx, {
     action: 'ACCOUNT_REGISTERED',
     userId: user.id,
-    metadata: { workerProfileId, breachedPasswordCheck: breach.status },
+    metadata: { workerProfileId, breachedPasswordCheck: breach.status, agreement: agreement !== null },
   })
   const payload: WorkerRegisteredPayload = { userId: user.id, workerProfileId }
   await enqueue(tx, { type: WORKER_REGISTERED, payload }, now)

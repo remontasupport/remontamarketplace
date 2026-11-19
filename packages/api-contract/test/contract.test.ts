@@ -10,10 +10,11 @@ describe('the contracts as committed', () => {
     expect(checkContracts(contracts, allow)).toEqual([])
   })
 
-  it('declare the seven S1 registration entries plus the two of the direct photo upload (U3)', () => {
+  it('declare the S1 registration entries, the direct photo upload (U3) and the agreement ticket (signup-abn-agreement)', () => {
     expect(Object.keys(registrationContract.entries).sort()).toEqual([
       'checkEmailAvailability',
       'confirmPhotoUpload',
+      'createAgreementUploadTicket',
       'createPhotoUploadTicket',
       'listServiceCategories',
       'requestEmailCode',
@@ -21,6 +22,13 @@ describe('the contracts as committed', () => {
       'submitWorkerRegistration',
       'verifyEmailCode',
     ])
+  })
+
+  it('bind the agreement ticket to a PDF of at most 5 MB', () => {
+    const body = registrationContract.entries.createAgreementUploadTicket.body as { kind: 'json'; schema: z.ZodType }
+    expect(body.schema.safeParse({ contentType: 'application/pdf', sizeBytes: 5 * 1024 * 1024 }).success).toBe(true)
+    expect(body.schema.safeParse({ contentType: 'application/pdf', sizeBytes: 5 * 1024 * 1024 + 1 }).success).toBe(false)
+    expect(body.schema.safeParse({ contentType: 'image/jpeg', sizeBytes: 1 }).success).toBe(false)
   })
 
   it('bind the photo ticket to the accepted types and the size cap, and the confirm to a uuid', () => {

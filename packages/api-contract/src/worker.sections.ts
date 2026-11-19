@@ -24,7 +24,7 @@ import {
 } from '@remonta/schemas/data/profileOptions'
 import { OTHER_TOOL_MAX_CHARS, OTHER_TOOLS_MAX, TOOL_IDS, TOOL_SERVICES } from '@remonta/schemas/data/serviceTools'
 import { DOCUMENT_MAX_BYTES, DOCUMENT_TYPES } from '@remonta/schemas/document-type'
-import { abnChecksum, normaliseAbn } from '@remonta/schemas/validations/abn'
+import { abnNumberSchema, documentFileNameSchema } from '@remonta/schemas/schema/workerRegistrationSchema'
 import * as z from 'zod'
 import { photoUploadBodySchema, photoUrlBodySchema } from './photos'
 
@@ -87,12 +87,7 @@ export const vehicleSchema = z.strictObject({ hasVehicle: z.enum(VEHICLE_ANSWERS
 export type VehicleBody = z.output<typeof vehicleSchema>
 
 /** R5.1: spaces allowed while typing; stored as the eleven digits. */
-export const abnBodySchema = z.strictObject({
-  abn: z
-    .string()
-    .transform(normaliseAbn)
-    .pipe(z.string().regex(/^\d{11}$/, 'An ABN has 11 digits').refine(abnChecksum, 'That is not a valid ABN')),
-})
+export const abnBodySchema = z.strictObject({ abn: abnNumberSchema })
 export type AbnBody = z.output<typeof abnBodySchema>
 export const abnViewSchema = z.strictObject({ type: z.literal('abn'), value: z.string().regex(/^\d{11}$/), signed: z.boolean() })
 export type AbnView = z.output<typeof abnViewSchema>
@@ -366,7 +361,7 @@ export type ServiceDocumentTicketResponse = z.output<typeof serviceDocumentTicke
 /** A type id of the requirement table (`qualification-certificate`, `cert3-aged-care`, ...); the api checks it against the service. */
 const documentTypeId = z.string().trim().min(1).max(80).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Not a document type')
 /** The file's own name, for the worker and the reviewer to recognise it: a plain line, no path. */
-const fileName = trimmed(1, 200).regex(/^[^\p{Cc}/\\]+$/u, 'A file name only')
+const fileName = documentFileNameSchema
 
 export const confirmServiceDocumentSchema = z.strictObject({
   uploadId: z.uuid(),
