@@ -6363,3 +6363,6 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 
 **User Input (2026-11-19):** "Now the address, do not make it require, remove the asterisk"
 **AI Response:** LocalityField takes `optional` (no mark); the section locality kind carries it; the home address's Suburb is optional. A never-saved section with every field blank no longer counts as changed on leave (a street typed then cleared). An entered address still needs a suburb (contract unchanged). App 775, baselines held. Pushed to `feat/signup-agreement-app`.
+
+**User Input (2026-11-19):** "Perfect, now require the Date of Birth, Gender, Languages, Preferred Hours, Do you have access to Vechile, Cultural Background, Religion, Interests, What can you offer, Preferences,"
+**AI Response:** `requiredBeforeNext` on those ten steps (message each), `ok` optional and defaulting to the step's `done` (`requiredMet`); ProfileShell reloads the profile after a save before checking (some lists may be saved empty). Options all include an opt-out (Religion None, Gender Prefer not to say, Preferences No preferences, Cultural Background Other). App 775, baselines held. Pushed to `feat/signup-agreement-app`.
