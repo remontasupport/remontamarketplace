@@ -33,6 +33,10 @@ were removed on 2026-10-02, after the api had served production since that morni
 | 4 | (same) | Ticks the consent, clicks **Complete Signup** | `POST /v1/registrations/worker` (with a fresh reCAPTCHA token) | **yes**: everything in [03 §2](03-data-model.md#2-tables-written-by-a-sign-up) |
 | 5 | `/registration/worker/success` | — | — | — |
 
+**signup-abn-agreement (api 2026-11-19; the wizard's notice and its final "Contractor Agreement" step follow in U2):** the
+submit also accepts the signed agreement (`POST …/agreement-tickets` → the browser POSTs the PDF straight to the bucket →
+`agreement` in the submit; [02 §4.6c](02-api-reference.md)).
+
 After step 4 the account exists and can sign in at once. Emails and other follow-ups run in the
 background from the outbox ([05](05-events-and-emails.md)).
 
@@ -84,6 +88,7 @@ Complete       ----- POST /v1/registrations/worker
 | R4 photo claimed once | A staged photo can be used by one sign-up, within 24 h of upload. |
 | R5 retry-safe | A browser retry after a commit lands in R1 (no second account, no notice email). |
 | R6 email verified | The submit carries the code's ticket; the server re-checks it against the body's email before anything else. |
+| R7 signed agreement | With `agreement` (signup-abn-agreement; optional until the wizard sends it), the signed Contractor Agreement PDF and the ABN are recorded with the account, as the dashboard's signing records them; an existing email or any refusal leaves no file. |
 
 ## 4. Where it runs
 

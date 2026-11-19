@@ -5,6 +5,7 @@
 // Strict: unknown fields are rejected, strings are trimmed and bounded, and email
 // and mobile are normalised, so the server stores exactly what it validated.
 import * as z from 'zod'
+import { abnChecksum, normaliseAbn } from '../validations/abn'
 
 /** The consent wording currently shown on the form. Bump it when the wording changes. */
 export const CONSENT_WORDING_VERSION = 'worker-profile-share-v1'
@@ -100,6 +101,37 @@ const password = z
 export const accountEmailSchema = email
 export const accountPasswordSchema = password
 
+/**
+ * An ABN as typed (spaces allowed), output as the eleven digits whose ATO check passes. One rule for the sign-up's
+ * agreement (signup-abn-agreement) and the dashboard's ABN section (api-contract `abnBodySchema`).
+ */
+export const abnNumberSchema = z
+  .string()
+  .max(32, 'An ABN has 11 digits')
+  .transform(normaliseAbn)
+  .pipe(z.string().regex(/^\d{11}$/, 'An ABN has 11 digits').refine(abnChecksum, 'That is not a valid ABN'))
+
+/** A document's file name as the browser names it: no control characters, no path separators. */
+export const documentFileNameSchema = z.string().trim().min(1).max(200).regex(/^[^\p{Cc}/\\]+$/u, 'A file name only')
+
+/** The PDF limit of the sign-up's signed agreement (a generated contract with a signature image is well under 1 MB). */
+export const AGREEMENT_MAX_BYTES = 5 * 1024 * 1024
+
+/**
+ * The signed Contractor Agreement (signup-abn-agreement): the PDF the browser built and uploaded by ticket, and the ABN
+ * it was signed with. Optional until the app that sends it is live (U3 makes it required).
+ */
+export const signupAgreementSchema = z.strictObject(
+  {
+    /** From POST /v1/registrations/worker/agreement-tickets. */
+    uploadId: z.uuid('Please sign the agreement'),
+    fileName: documentFileNameSchema,
+    abn: abnNumberSchema,
+  },
+  'Please sign the agreement',
+)
+export type SignupAgreement = z.output<typeof signupAgreementSchema>
+
 const identifier = z
   .string()
   .max(200)
@@ -179,6 +211,8 @@ export const workerRegistrationFormSchema = z.strictObject({
   photoUploadId: z.uuid('Profile photo is required'),
   consentProfileShare: z.literal(true, 'Profile sharing consent is required'),
   consentWordingVersion: z.literal(CONSENT_WORDING_VERSION),
+  /** The signed Contractor Agreement (signup-abn-agreement U1): optional until U3. */
+  agreement: signupAgreementSchema.optional(),
   /**
    * From the Zoho link the worker followed. Malformed is not an error (US-REG-04):
    * it becomes undefined and registration continues; the server logs a warning when

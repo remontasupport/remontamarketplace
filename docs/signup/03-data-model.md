@@ -23,9 +23,17 @@ literally `"Category"` and `"Subcategory"`. Enums are in [04-enums.md](04-enums.
 | `worker_onboarding_transitions` | 1 | submit | 4.7 |
 | `audit_logs` | 1 | submit | 4.7 |
 | `outbox_events` | 1 (`WorkerRegistered`) | submit | 4.7 |
+| `verification_requirements` | 1 (`contract-of-agreement`) when the sign-up carries `agreement` | submit | 4.7 |
 | `rate_limit_buckets` | counters | every call | pipeline |
 
 Everything the submit writes is in **one transaction** (R3): all of it or none of it.
+
+**With `agreement`** (signup-abn-agreement): the `verification_requirements` row the dashboard's signing writes
+(`requirementType` `contract-of-agreement`, `SUBMITTED`, `documentUrl` `/api/documents/<id>/<fileName>`, metadata
+`storageKey` = `documents/<profileId>/<uploadId>.pdf` in the private bucket), `worker_profiles.abn` =
+`{"workerEngagementType": {"type": "abn", "signed": true, "value": "<11 digits>"}}`, and
+`worker_profiles.verificationStatus` `PENDING_REVIEW` (a new document, as on the dashboard). The profile id is a uuid
+(chosen before the transaction so the PDF lands in its folder); without `agreement` it is the default cuid.
 
 An **existing email** writes no account rows: at most one `outbox_events` row
 (`RegistrationAttemptOnExistingAccount`, at most one per account per 10 minutes, none in the first

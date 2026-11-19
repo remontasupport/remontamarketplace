@@ -115,7 +115,8 @@ describe('GET /v1/worker/profile', () => {
     await get(workerToken('u_a'))
     const line = f.logs.find((l) => l.entry === 'worker.getProfile')
     expect(line).toMatchObject({ userId: 'u_a', percent: expect.any(Number), durationMs: expect.any(Number) })
-    const all = JSON.stringify(f.logs)
+    // Timings are left out: a float such as responseTime 1.0510620000000017 once contained '062000' (CI, 2026-11-19).
+    const all = JSON.stringify(f.logs, (k, v: unknown) => (k === 'responseTime' || k === 'durationMs' || k === 'time' ? 0 : v))
     for (const secret of ['Mary', "O'Connor", '0412345678', '062000', '55512399']) expect(all).not.toContain(secret)
   })
 

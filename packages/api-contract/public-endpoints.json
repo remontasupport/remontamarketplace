@@ -16,6 +16,10 @@
     "reason": "Sign-up photo, before any account exists: a signed ticket naming one storage key the browser may fill for ten minutes, bound to type and size. Nothing is stored until confirm; per-IP and global limits."
   },
   {
+    "route": "POST /v1/registrations/worker/agreement-tickets",
+    "reason": "Sign-up's signed Contractor Agreement, before any account exists: a signed ticket naming one storage key the browser may fill with one PDF (at most 5 MB) for ten minutes. Nothing is stored until the sign-up is submitted; per-IP and global limits."
+  },
+  {
     "route": "POST /v1/registrations/worker/photo-confirmations",
     "reason": "Sign-up photo, before any account exists: the api checks the uploaded object's size and first bytes before a row exists. Ids are random uuids; a guessed id answers 409 and costs one metadata read."
   },

@@ -45,10 +45,17 @@ export async function writeVehicle(tx: Tx, profileId: string, body: VehicleBody)
  * U4d: the engagement marked signed, with the contract that proves it (the caller records the PDF in the same
  * transaction). An ABN already stored stays when the engagement is still ABN; a TFN is never stored (D17).
  */
-export async function writeSignedEngagement(tx: Tx, profileId: string, type: 'abn' | 'tfn'): Promise<{ type: 'abn' | 'tfn'; signed: true }> {
-  const stored = await tx.workerProfile.findUnique({ where: { id: profileId }, select: { abn: true } })
-  const prev = (stored?.abn as { workerEngagementType?: { type?: unknown; value?: unknown } } | null)?.workerEngagementType
-  const keep = type === 'abn' && prev?.type === 'abn' && typeof prev.value === 'string' && /^\d{11}$/.test(prev.value) ? { value: prev.value } : {}
+export async function writeSignedEngagement(tx: Tx, profileId: string, type: 'abn' | 'tfn', abn?: string): Promise<{ type: 'abn' | 'tfn'; signed: true }> {
+  // signup-abn-agreement: the sign-up signs with the ABN it was given (checked by the schema), so that value is stored.
+  let keep: { value?: string } = {}
+  if (type === 'abn' && abn !== undefined) {
+    if (!abnChecksum(abn)) throw new ApiError(400, 'abn checksum', { abn: ['That is not a valid ABN'] })
+    keep = { value: abn }
+  } else if (type === 'abn') {
+    const stored = await tx.workerProfile.findUnique({ where: { id: profileId }, select: { abn: true } })
+    const prev = (stored?.abn as { workerEngagementType?: { type?: unknown; value?: unknown } } | null)?.workerEngagementType
+    if (prev?.type === 'abn' && typeof prev.value === 'string' && /^\d{11}$/.test(prev.value)) keep = { value: prev.value }
+  }
   await tx.workerProfile.update({ where: { id: profileId }, data: { abn: { workerEngagementType: { type, signed: true, ...keep } } }, select: { id: true } })
   return { type, signed: true }
 }

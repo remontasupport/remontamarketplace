@@ -75,6 +75,7 @@ previews); production will allow `https://app.remontaservices.com.au` only.
 | 4.5 | POST | `/v1/registrations/worker/email-codes/verify` | Check the code | — | 30/h / 5000/h | — | 1 KB |
 | 4.6a | POST | `/v1/registrations/worker/photo-tickets` | A ticket to upload the photo straight to storage | — | 10/h / 300/h | — | 1 KB |
 | 4.6b | POST | `/v1/registrations/worker/photo-confirmations` | Confirm the uploaded photo | — | 30/h / 1000/h | — | 1 KB |
+| 4.6c | POST | `/v1/registrations/worker/agreement-tickets` | A ticket to upload the signed Contractor Agreement (PDF) | — | 10/h / 300/h | — | 1 KB |
 | 4.7 | POST | `/v1/registrations/worker` | Create the account | `worker_register` | 5/h / 500/h | — | 16 KB |
 | — | GET | `/v1/health` | Liveness (Cloud Run probe) | — | 60/min | — | 1 KB |
 
@@ -264,6 +265,19 @@ photo (seconds). Undecodable bytes are stored as uploaded in Blob instead
 
 **History.** The pre-U3 entry `POST /v1/registrations/worker/photo` (multipart through the api, the file to Vercel Blob as `workers/registration/<uuid>.<ext>`) was removed in PR 3c after the cut-over window; rows it wrote carry that key prefix and are never touched by the purge.
 
+#### 4.6c `POST /v1/registrations/worker/agreement-tickets` — the signed agreement's ticket
+
+signup-abn-agreement (2026-11-19). The wizard's last step shows the dashboard's ABN Contractor Agreement; the browser
+builds the signed PDF, takes a ticket here and POSTs the PDF straight to the bucket exactly as the photo (4.6a).
+Nothing is stored and there is no confirm: the submit (4.7) checks and records it.
+
+Body (JSON, strict): `{ "contentType": "application/pdf", "sizeBytes": 1 … 5 242 880 }`.
+
+**201** `{ "uploadId": "uuid", "upload": { … as 4.6a … }, "expiresAt": "…" }` (the policy binds `staging/<uuid>`,
+`application/pdf`, at most 5 MB, 10 minutes; an unused one is removed by the bucket's lifecycle rule after a day).
+
+Errors: 400, 429, 503 (`fields.agreement`, `Retry-After: 2`).
+
 ### 4.7 `POST /v1/registrations/worker` — create the account
 
 Body (JSON, strict — unknown fields are refused):
@@ -282,6 +296,7 @@ Body (JSON, strict — unknown fields are refused):
 | `photoUploadId` | uuid | yes | From 4.6. Server: unused and less than 24 h old. |
 | `consentProfileShare` | `true` | yes | Must be exactly `true` |
 | `consentWordingVersion` | string | yes | Must be exactly `worker-profile-share-v1` (the wording currently shown) |
+| `agreement` | object | no (until U3, then yes) | The signed Contractor Agreement: `{ uploadId: uuid (4.6c), fileName: 1–200, no path or control characters, abn }`. `abn`: spaces allowed, stored as the 11 digits; must pass the ATO check ("An ABN has 11 digits", "That is not a valid ABN"), the same rule as the dashboard's ABN. Server: the upload must be at the ticket's key and be a PDF of at most 5 MB. |
 | `zohoLeadId` | string | no | From the Zoho link (`?id=` on the page). 1–32 digits; anything else is dropped silently (logged) and the sign-up continues. |
 | `captchaToken` | string | yes | reCAPTCHA v3 token for action `worker_register` |
 
@@ -292,7 +307,9 @@ Body (JSON, strict — unknown fields are refused):
 ```
 
 Server-side checks, in order: reCAPTCHA (pipeline) → email ticket → breached password → services →
-existing account? → (new account) the transaction: locality, photo claim, then all inserts
+existing account? (an existing email: the uploaded agreement is deleted, the same 202) → (new account, with `agreement`)
+the PDF checked and copied to `documents/<profileId>/<uploadId>.pdf` → the transaction: locality, photo claim, then all
+inserts, the agreement row and the signed ABN; any failure deletes the copied PDF
 ([03 §2](03-data-model.md#2-tables-written-by-a-sign-up)).
 
 Errors (400 unless noted), with the `fields` key and message:
@@ -305,6 +322,8 @@ Errors (400 unless noted), with the `fields` key and message:
 | Sub-category outside the chosen services | `supportWorkerCategories` | "Please choose categories that belong to your selected services" |
 | Locality unknown or retired | `localityId` | "Please choose your suburb from the list" |
 | Photo missing, used or older than 24 h | `photoUploadId` | "Please upload your photo again" |
+| Agreement upload missing or expired | `agreement` | "Please sign the agreement again" |
+| Agreement not a PDF (415) or over 5 MB (413); the file is deleted | `agreement` | "Please sign the agreement again" |
 | Any schema rule above | the field's name | the rule's message |
 | reCAPTCHA refused | — | 403 |
 | Rate limit | — | 429 |
