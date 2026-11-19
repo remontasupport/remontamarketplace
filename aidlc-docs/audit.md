@@ -6340,3 +6340,6 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 
 **User Input (2026-11-19):** "I think the buttons should be place both in the center but add an evenly space between them"
 **AI Response:** Card actions centred together with a 1.5rem gap (Remove alone is centred too). Pushed to `feat/signup-agreement-app`.
+
+**User Input (2026-11-19):** "Perfect. now If the services is more than 1, I want to have a function/feature that the user can select the service as a Primary Service, and the others will be Secondary, before building, can you check the schema whether we should modify it in order to implement this? because in the admin dashboard, I will also edit some filters"
+**AI Response:** Analysis only, no code: `inception/requirements/primary-service-analysis.md`. Nothing in the schema marks a primary; the app already treats the first service (createdAt order) as primary in four places; strict responses limit where a new field can go. Recommended `worker_services.isPrimary` + a partial unique index, a backfill (first service = primary), api rules, a new write/read entry, admin filter. Asked the user for the decisions.
