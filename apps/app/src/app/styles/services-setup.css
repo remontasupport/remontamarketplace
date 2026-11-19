@@ -533,8 +533,7 @@ div.services-step-container div.info-column div.info-box {
 /* Edit and Remove beside each service card (2026-11-19: no separate edit mode) */
 .service-card-actions {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 0.5rem;
   margin-top: 1rem;
   padding-top: 0.75rem;
@@ -575,6 +574,7 @@ div.services-step-container div.info-column div.info-box {
 }
 
 .service-action-remove {
+  margin-left: auto; /* on the right, also when there is no Edit */
   background-color: #fee2e2;
   color: #b91c1c;
 }

@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { TrashIcon, PlusIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import { CategorySubcategoriesDialog } from "@/components/forms/workerRegistration/CategorySubcategoriesDialog";
 import { AddServiceDialog } from "@/components/services-setup/AddServiceDialog";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 import { useCatalogue } from "@/features/forms/adapters/useServiceCategories";
 import { serviceNameToSlug } from "@/utils/serviceSlugMapping";
 import "@/app/styles/services-setup.css";
@@ -141,6 +142,8 @@ export default function Step1ServicesOffer({
   // A service just added that has sub-services: kept on screen, saved only once its sub-services are chosen.
   const [pending, setPending] = useState<string | null>(null);
   const savedFromDialog = useRef(false);
+  // Remove asks first (user, 2026-11-19): the service stops being searchable.
+  const [removeTarget, setRemoveTarget] = useState<string | null>(null);
 
   // Fetch categories from database
   const { data: categories } = useCatalogue();
@@ -285,7 +288,7 @@ export default function Step1ServicesOffer({
                       service={service}
                       supportWorkerCategories={data.supportWorkerCategories}
                       categoryData={categoryData}
-                      onRemove={handleRemoveService}
+                      onRemove={setRemoveTarget}
                       onEditCategories={() => handleEditCategories(service)}
                       hasSubcategories={hasSubcategories}
                       busy={isSaving}
@@ -359,6 +362,20 @@ export default function Step1ServicesOffer({
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={removeTarget !== null}
+        onClose={() => setRemoveTarget(null)}
+        onConfirm={() => {
+          const target = removeTarget;
+          setRemoveTarget(null);
+          if (target) void handleRemoveService(target);
+        }}
+        title="Remove this service?"
+        message={`Are you sure you want to remove ${removeTarget ? serviceLabel(removeTarget) : "this service"}? Clients searching for this service will no longer find you. You can add it back at any time.`}
+        confirmText="Remove"
+        cancelText="Cancel"
+      />
 
       {/* Add Service Dialog */}
       <AddServiceDialog
