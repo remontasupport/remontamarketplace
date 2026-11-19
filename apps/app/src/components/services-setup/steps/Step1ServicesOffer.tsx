@@ -91,34 +91,36 @@ function ServiceCard({
               </ul>
             </div>
           )}
+
+          {/* Edit and Remove, below the service (user 2026-11-19: beside the card squeezed it on a phone) */}
+          <div className="service-card-actions">
+            {hasSubcategories && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEditCategories();
+                }}
+                disabled={busy}
+                className="service-action-btn service-action-edit"
+                aria-label={`Edit ${serviceLabel(service)}`}
+              >
+                <PencilSquareIcon aria-hidden="true" />
+                <span>Edit</span>
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => onRemove(service)}
+              disabled={busy}
+              className="service-action-btn service-action-remove"
+              aria-label={`Remove ${serviceLabel(service)}`}
+            >
+              <TrashIcon aria-hidden="true" />
+              <span>Remove</span>
+            </button>
+          </div>
         </div>
-      </div>
-      <div className="service-card-actions">
-        {hasSubcategories && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEditCategories();
-            }}
-            disabled={busy}
-            className="service-action-btn service-action-edit"
-            aria-label={`Edit ${serviceLabel(service)}`}
-          >
-            <PencilSquareIcon aria-hidden="true" />
-            <span>Edit</span>
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={() => onRemove(service)}
-          disabled={busy}
-          className="service-action-btn service-action-remove"
-          aria-label={`Remove ${serviceLabel(service)}`}
-        >
-          <TrashIcon aria-hidden="true" />
-          <span>Remove</span>
-        </button>
       </div>
     </div>
   );
