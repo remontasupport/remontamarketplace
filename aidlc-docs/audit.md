@@ -6233,3 +6233,24 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User Input**: "close the cycle, the blob not found is ok already"
 **AI Response**: Closed the cycle. Archived `inception/` and `construction/` under `aidlc-docs/archive/document-history/` with a README, the outcomes in both construction notes and `aidlc-state-at-close.md`; state set to between cycles (row added, "Document history" carried forward, follow-ups 47 retention `apply` before 2033-11 and 48 legacy Blob files already missing). Docs PR `docs/rollback-rows-2026-11-11` re-records CLAUDE.md's rollback rows (api `e73524c`, previous `1e4d74e`; app/web `main` `1f8d27f`). Cloud Run revision name not read (gcloud not logged in).
 **Context**: Cycle closed; the blob-not-found report accepted by the user.
+
+## New cycle requested
+**Timestamp**: 2026-11-19
+**User Input**: "start ai dlc"
+**AI Response**: Read the record (`aidlc/document-history`, between cycles, no standing recommendation). Refs: `main` = `1f8d27f`; docs PR `docs/rollback-rows-2026-11-11` (`a06317d`) still unmerged. Asked the user for the cycle goal, offering candidates from the open follow-ups.
+**Context**: Workspace detection; awaiting the cycle goal.
+
+**Timestamp**: 2026-11-19
+**User Input**: "In the sign up process for the workers, I want to add an extra steps. First, On the Welcome to Remonta, when the worker clicked the Continue, a modal will appear with this statement \"Before you begin, please have your ABN handy. You’ll need it in the final step of the sign-up process.\" with a button \"Proceed\" and \"Cancel\""
+**AI Response**: Read the sign-up definition (`apps/app/src/features/forms/definitions/workerRegistration.ts`): the intro "Welcome to Remonta" / "Continue", then four steps (location; details + email code + password; services; photo + consent). No step asks for an ABN today (an `AbnField` component exists for the dashboard sections; the sign-up contract body has no ABN). Asked the user what the further steps are, in particular the ABN step the notice refers to.
+**Context**: Requirements analysis, clarifying scope.
+
+**Timestamp**: 2026-11-19
+**User Input**: "1. On the final step, we will reuse the same ABN engagement agreement on the dashboard, 2. Required 3. Yes Cancel closes the notice / together ship"
+**AI Response**: Read the dashboard agreement: `/dashboard/worker/contract/abn` (`components/contracts/ContractPage.tsx`): preamble (provider name, ABN, GST yes/no, address), the contract text, signature pad, date, agree box; the browser builds the PDF (jsPDF) and `signContract` (`POST /v1/worker/contract`, a signed-in worker) stores it privately and marks the engagement `{type: abn, signed: true}`; the ABN value is not sent (D17), and the page checks only that the ABN is non-empty. The sign-up is anonymous until submit and does not sign the worker in (success page -> /login), so signing inside the sign-up needs the api to accept the signed PDF with the registration (an anonymous upload ticket like the photo's, plus the ABN, in the same transaction). Asked where the signing happens.
+**Context**: Requirements analysis; the one design decision that sets the api scope.
+
+**Timestamp**: 2026-11-19
+**User Input**: (questions) "Inside sign-up (Recommended)"; "ABN only (Recommended)"
+**AI Response**: Cycle `signup-abn-agreement` opened on branch `aidlc/signup-abn-agreement` (from `aidlc/document-history`). Targeted inventory of the sign-up (`registerWorker`, the photo ticket) and the dashboard agreement (`ContractPage`, `signContract`: `stageDocument`, `recordComplianceDocument`, `writeSignedEngagement`). Wrote `inception/requirements/requirements.md` (D1-D6, R1-R9, O1-O2); asked for approval and the open questions.
+**Context**: INCEPTION, requirements analysis.

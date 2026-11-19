@@ -3,8 +3,8 @@
 ## Project Information
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
-- **Current Cycle**: none (between cycles; document-history closed 2026-11-11).
-- **Current Stage**: none. No standing recommendation: pick from the follow-ups.
+- **Current Cycle**: signup-abn-agreement (opened 2026-11-19): the ABN notice and the Contractor Agreement inside the worker sign-up.
+- **Current Stage**: INCEPTION, requirements analysis (`inception/requirements/requirements.md`), awaiting approval.
 
 ## Previous cycles (archived, read-only)
 
