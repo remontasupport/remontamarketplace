@@ -6,6 +6,7 @@
 import { useState } from "react";
 import { AlertTriangle, Eye, EyeOff, Info, Loader2, Search, Check } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -209,7 +210,26 @@ export interface ServiceOption {
 export interface ServiceCategory {
   id: string;
   name: string;
-  subcategories: { id: string; name: string }[];
+  /** The catalogue's flag: the service asks for documents (qualifications, registrations). */
+  requiresQualification?: boolean;
+  subcategories: { id: string; name: string; requiresRegistration?: string | null }[];
+}
+
+/** Whether the service, with the sub-categories chosen for it, asks for documents. */
+export function needsDocuments(category: ServiceCategory | undefined, subcategories: readonly string[]): boolean {
+  if (!category) return false;
+  return !!category.requiresQualification || category.subcategories.some((s) => !!s.requiresRegistration && subcategories.includes(s.id));
+}
+
+/**
+ * One service only (the sign-up, 2026-11-19): when a change adds a service, it replaces the others, and their
+ * sub-categories go with them. Returns the change as is when nothing was added.
+ */
+export function keepNewest(prevServices: readonly string[], next: { services: string[]; subcategories: string[] }, categories: readonly ServiceCategory[] | undefined): { services: string[]; subcategories: string[]; added: string | null } {
+  const added = next.services.find((s) => !prevServices.includes(s)) ?? null;
+  if (!added) return { ...next, added: null };
+  const own = categories?.find((c) => c.id === added);
+  return { services: [added], subcategories: own ? next.subcategories.filter((id) => own.subcategories.some((s) => s.id === id)) : [], added };
 }
 
 export interface ServicesFieldProps {
@@ -223,6 +243,10 @@ export interface ServicesFieldProps {
   error?: string;
   /** Notes shown under the list while any of their service ids is ticked (worker-tools UR-10). */
   notes?: readonly { whenAny: readonly string[]; text: string }[];
+  /** One service only: picking another replaces it. */
+  single?: boolean;
+  /** Shown when a picked service asks for documents; `{service}` is its name. */
+  documentsNotice?: { title: string; text: string; button: string };
 }
 
 /** The notes to show for the ticked services, in their declared order. */
@@ -262,21 +286,29 @@ export function FieldLoading({ label }: { label: string }) {
   );
 }
 
-export function ServicesField({ title, hint, options, categories, services, subcategories, onChange, error, notes }: ServicesFieldProps) {
+export function ServicesField({ title, hint, options, categories, services, subcategories, onChange, error, notes, single, documentsNotice }: ServicesFieldProps) {
   const [dialogFor, setDialogFor] = useState<ServiceCategory | null>(null);
+  const [noticeFor, setNoticeFor] = useState<string | null>(null);
   const subsOf = (c: ServiceCategory) => subcategories.filter((id) => c.subcategories.some((s) => s.id === id));
+
+  /** Applies a change: one service only when `single`; the documents notice when a service that needs them is added. */
+  const apply = (next: { services: string[]; subcategories: string[] }) => {
+    const kept = single ? keepNewest(services, next, categories) : { ...next, added: next.services.find((s) => !services.includes(s)) ?? null };
+    onChange(kept.services, kept.subcategories);
+    const category = kept.added ? categories?.find((c) => c.id === kept.added) : undefined;
+    if (documentsNotice && category && needsDocuments(category, kept.subcategories)) setNoticeFor(category.name);
+  };
 
   const toggle = (option: ServiceOption) => {
     const category = categories?.find((c) => c.id === option.id);
     const next = toggleService(option, category, services, subcategories);
     if (!next) return setDialogFor(category ?? null);
-    onChange(next.services, next.subcategories);
+    apply(next);
   };
 
   const saveDialog = (chosen: string[]) => {
     if (!dialogFor) return;
-    const next = saveSubcategories(dialogFor, chosen, services, subcategories);
-    onChange(next.services, next.subcategories);
+    apply(saveSubcategories(dialogFor, chosen, services, subcategories));
   };
 
   return (
@@ -325,6 +357,20 @@ export function ServicesField({ title, hint, options, categories, services, subc
           selectedSubcategories={subsOf(dialogFor)}
           onSave={saveDialog}
         />
+      )}
+      {documentsNotice && (
+        <Dialog open={noticeFor !== null} onOpenChange={(o) => !o && setNoticeFor(null)}>
+          {/* The sign-up's notices fade in from just above (as the ABN notice). */}
+          <DialogContent className="sm:max-w-md data-[state=open]:[--tw-enter-translate-x:0]! data-[state=open]:[--tw-enter-translate-y:-1.5rem]! data-[state=open]:[--tw-enter-scale:1]! data-[state=closed]:[--tw-exit-translate-x:0]! data-[state=closed]:[--tw-exit-translate-y:-1.5rem]! data-[state=closed]:[--tw-exit-scale:1]! duration-300">
+            <DialogTitle className="font-cooper text-2xl text-gray-900">{documentsNotice.title}</DialogTitle>
+            <DialogDescription className="font-poppins text-base text-[#0C1628]">{documentsNotice.text.replace("{service}", noticeFor ?? "")}</DialogDescription>
+            <DialogFooter>
+              <button type="button" onClick={() => setNoticeFor(null)} className="bg-[#0C1628] hover:bg-[#1a2740] text-white px-4 py-2 rounded-lg font-poppins font-medium text-sm">
+                {documentsNotice.button}
+              </button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </>
   );

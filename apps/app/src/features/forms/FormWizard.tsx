@@ -198,6 +198,8 @@ function ServicesSlot({ field, control, backend, error }: { field: Extract<Field
       services={picked}
       subcategories={pickedSubs}
       notes={field.notes}
+      single={field.max === 1}
+      documentsNotice={field.documentsNotice}
       onChange={(s, c) => {
         services.field.onChange(s);
         subs.field.onChange(c);

@@ -2,7 +2,7 @@ import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 import { registrationContract } from "@remonta/api-contract";
 import { formSchemaFor, loadDraft, neverSavedKeys, saveDraft, toRequestBody } from "@remonta/form-engine";
-import { localityInputText, notesFor, saveSubcategories, toggleService, type ServiceCategory } from "@/components/ui/form-wizard/fields";
+import { keepNewest, localityInputText, needsDocuments, notesFor, saveSubcategories, toggleService, type ServiceCategory } from "@/components/ui/form-wizard/fields";
 import { workerRegistrationForm } from "./definitions/workerRegistration";
 import { previewKeyOf } from "./photoPreview";
 import { wizardResolver } from "./resolver";
@@ -134,5 +134,60 @@ describe("the email verification field", () => {
     expect(verificationError("taken", error)).toBeUndefined();
     for (const a of ["unknown", "checking", "available", "unavailable"] as const) expect(verificationError(a, error)).toBe(error);
     expect(verificationError("available", undefined)).toBeUndefined();
+  });
+});
+
+describe("one service at sign-up, and the documents notice (2026-11-19)", () => {
+  const support: ServiceCategory = { id: "support-worker", name: "Support Worker", requiresQualification: false, subcategories: [{ id: "personal-care", name: "Personal care", requiresRegistration: null }] };
+  const therapy: ServiceCategory = {
+    id: "therapeutic-supports",
+    name: "Therapeutic Supports",
+    requiresQualification: true,
+    subcategories: [
+      { id: "art-therapist", name: "Art Therapist", requiresRegistration: null },
+      { id: "occupational-therapist", name: "Occupational Therapist", requiresRegistration: "AHPRA" },
+    ],
+  };
+  const cleaning: ServiceCategory = { id: "cleaning-services", name: "Cleaning Services", requiresQualification: false, subcategories: [] };
+  const categories = [support, therapy, cleaning];
+
+  it("the definition allows one service and words the notice with the service's name", () => {
+    const field = workerRegistrationForm.steps[2]!.fields[0] as { max?: number; documentsNotice?: { title: string; text: string; button: string } };
+    expect(field.max).toBe(1);
+    expect(field.documentsNotice).toMatchObject({ title: "Please Note:", button: "OK" });
+    expect(field.documentsNotice!.text).toContain("{service}");
+    expect(field.documentsNotice!.text).toContain("Compliance on your dashboard");
+  });
+
+  it("the form refuses two services (the contract still takes up to ten: the dashboard adds more)", () => {
+    const schema = formSchemaFor(workerRegistrationForm);
+    const one = schema.safeParse({ ...filled, services: ["support-worker"], supportWorkerCategories: [] });
+    const two = schema.safeParse({ ...filled, services: ["support-worker", "cleaning-services"], supportWorkerCategories: [] });
+    const servicesIssue = (r: typeof two) => r.error?.issues.find((i) => i.path[0] === "services")?.message;
+    expect(servicesIssue(one)).toBeUndefined();
+    expect(servicesIssue(two)).toBe("Please choose one service. You can add more on your dashboard after signing up.");
+  });
+
+  it("picking a second service replaces the first, with its sub-categories", () => {
+    const afterSupport = saveSubcategories(support, ["personal-care"], [], []);
+    expect(keepNewest([], afterSupport, categories)).toEqual({ services: ["support-worker"], subcategories: ["personal-care"], added: "support-worker" });
+    const withCleaning = toggleService({ id: "cleaning-services", title: "Cleaning", description: "" }, cleaning, afterSupport.services, afterSupport.subcategories)!;
+    expect(keepNewest(afterSupport.services, withCleaning, categories)).toEqual({ services: ["cleaning-services"], subcategories: [], added: "cleaning-services" });
+    const withTherapy = saveSubcategories(therapy, ["art-therapist"], ["cleaning-services"], []);
+    expect(keepNewest(["cleaning-services"], withTherapy, categories)).toEqual({ services: ["therapeutic-supports"], subcategories: ["art-therapist"], added: "therapeutic-supports" });
+  });
+
+  it("un-ticking adds nothing: no replacement, no notice", () => {
+    const off = toggleService({ id: "cleaning-services", title: "Cleaning", description: "" }, cleaning, ["cleaning-services"], [])!;
+    expect(keepNewest(["cleaning-services"], off, categories)).toEqual({ services: [], subcategories: [], added: null });
+  });
+
+  it("documents are needed for a service the catalogue flags, or a chosen sub-category that needs registration", () => {
+    expect(needsDocuments(therapy, ["art-therapist"])).toBe(true);
+    expect(needsDocuments(support, ["personal-care"])).toBe(false);
+    expect(needsDocuments(cleaning, [])).toBe(false);
+    expect(needsDocuments({ ...therapy, requiresQualification: false }, ["occupational-therapist"])).toBe(true);
+    expect(needsDocuments({ ...therapy, requiresQualification: false }, ["art-therapist"])).toBe(false);
+    expect(needsDocuments(undefined, [])).toBe(false);
   });
 });

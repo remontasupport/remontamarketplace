@@ -67,7 +67,14 @@ export const workerRegistrationForm = defineForm({
           kind: "services",
           subcategoriesName: "supportWorkerCategories",
           title: "What services can you offer?",
-          hint: "You can select more than one, but make sure you have the relevant qualifications.",
+          // 2026-11-19: one service at sign-up; more are added on the dashboard (Services > + Add services).
+          hint: "Choose the one service you'd like to start with. You can add more services from your dashboard after signing up.",
+          max: 1,
+          documentsNotice: {
+            title: "Please Note:",
+            text: "{service} requires supporting documents. After signing up, go to Compliance on your dashboard to see the list of required documents and upload them.",
+            button: "OK",
+          },
           // worker-tools (FR-10, UR-10): only a note; the tools themselves are on the dashboard.
           notes: [{ whenAny: ["cleaning-services", "home-yard-maintenance"], text: "Some jobs require your own tools, so please be ready to bring them." }],
         },
