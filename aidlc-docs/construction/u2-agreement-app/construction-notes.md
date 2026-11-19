@@ -20,7 +20,7 @@ Branch `feat/signup-agreement-app` (from `main` `fcc503a`), 2026-11-19.
     The download is an object-URL link instead of jsPDF's `save` (same file, same name).
   - `FormWizardView` `WizardIntro`: the notice dialog. `useFormWizard`: `agreementUploaderFor`. `FormWizard`: the
     `agreement` case. `features/forms/AgreementSlot.tsx`: the step (sign -> ABN check -> PDF -> upload -> value;
-    "Agreement signed" + Change; a server refusal clears it).
+    "Agreement signed"; a server refusal clears it; the Change button removed at the user's request 2026-11-19).
   - `workerRegistration.ts`: the notice and the fifth step "Contractor Agreement".
 - Docs: `docs/signup/01-flow.md` (steps 0, 4, 5).
 

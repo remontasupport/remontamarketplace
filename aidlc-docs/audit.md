@@ -6316,3 +6316,6 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 
 **User Input (2026-11-19):** "why does the list still not appearing? Support Worker requires the following documents and checks: / After signing up, go to Compliance on your dashboard to upload them."
 **AI Response:** Cause: the user tested while deploy-api (staging) run 44461937599 was still running; staging answered 404 on the new route, the adapter returned null and the notice showed its heading with no list. The run then completed (success); staging now answers Support Worker with Compliance (7), Trainings (NDIS modules ...) and the rest; CORS allows the preview origin. Made the failure case explicit (`documentsNotice.unavailable`), pushed to `feat/signup-agreement-app`. Asked the user to reload and test again.
+
+**User Input (2026-11-19):** "can you remove the button Change"
+**AI Response:** Removed the Change button from the signed state of the agreement step (AgreementSlot); a server refusal of the agreement still clears it so the worker signs again. Docs updated. Pushed to `feat/signup-agreement-app`.
