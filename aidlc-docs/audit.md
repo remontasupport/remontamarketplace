@@ -6346,3 +6346,5 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 
 **User Input (2026-11-19):** "Ahh, okay let us just skip that. For now, in the admin dashboard, when the admin searches by services, can you only display under the workers name result the specific service? for example if admin searches Support Worker, the badges under their names should only be Support Worker and not Cleaning Services / Home and Yard Maintenance / Support Worker, if admin searches more than 2 services, apply the 2 services only"
 **AI Response:** Primary service dropped (analysis kept for later). Started on the admin result badges.
+
+**AI Response (2026-11-19, admin badges):** `servicesShown` (features/admin-search/query.ts) and its use in AdminDashboardClient: with Type of support applied, only the searched service shows under each name; written for any number of searched services, but the filter is single-select today (asked the user whether to make it multi-select). Display only; CSV and worker page unchanged. Tests 29 (admin-search), baselines held. Pushed to `feat/signup-agreement-app`.
