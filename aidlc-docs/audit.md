@@ -6354,3 +6354,6 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 
 **User Input (2026-11-19):** "place the error message at the center"
 **AI Response:** The Bio step's Next message is centred. Pushed to `feat/signup-agreement-app`.
+
+**User Input (2026-11-19):** "ok, now I noticed this one, when i completely fill in the 2 fields, and hit the next step, the error message does not change, can you make it something like, Save your updates first"
+**AI Response:** The check reads the saved profile, so filled-but-unsaved answers still showed "fill in". The Bio pair now reports unsaved edits to ProfileShell (`unsaved.tsx`, a small context); Next shows "Save your updates first, then continue." in that case, the fill-in message otherwise; the message clears once saved. App 772, baselines held. Pushed to `feat/signup-agreement-app`.
