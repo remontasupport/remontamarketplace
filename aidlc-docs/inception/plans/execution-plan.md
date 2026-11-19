@@ -42,6 +42,7 @@ Requirements approved 2026-11-19. Extensions: Security Baseline (blocking), Resi
 ### U3 `agreement-required` (packages/schemas) -- a small PR after U2 is live
 
 - `abn` and `agreementUploadId` required in the registration schema (D3), staging, promote.
+- `services` at most 1 in the registration schema (user 2026-11-19: one service at sign-up; U2 enforces it on the form).
 
 ## Order and risk
 
