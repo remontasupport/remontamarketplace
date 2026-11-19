@@ -1,14 +1,14 @@
 /**
  * Step 1: Services You Offer
- * Displays selected services as cards with delete functionality
- * Conditionally shows Support Worker categories if "Support Worker" is selected
+ * The chosen services as cards, each with Edit (its sub-services) and Remove beside it, and "Add more services"
+ * below (user, 2026-11-19: no separate edit mode). Every change is saved when the worker confirms it.
  */
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { TrashIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { TrashIcon, PlusIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import { CategorySubcategoriesDialog } from "@/components/forms/workerRegistration/CategorySubcategoriesDialog";
 import { AddServiceDialog } from "@/components/services-setup/AddServiceDialog";
 import { useCatalogue } from "@/features/forms/adapters/useServiceCategories";
@@ -35,8 +35,8 @@ interface ServiceCardProps {
   categoryData: any; // Full category data from database
   onRemove: (service: string) => void;
   onEditCategories: () => void;
-  isEditMode: boolean;
-  hasSubcategories: boolean; // Flag to show if service has subcategories
+  hasSubcategories: boolean; // Edit is offered only where there are sub-services to choose
+  busy: boolean;
 }
 
 function ServiceCard({
@@ -45,8 +45,8 @@ function ServiceCard({
   categoryData,
   onRemove,
   onEditCategories,
-  isEditMode,
   hasSubcategories,
+  busy,
 }: ServiceCardProps) {
   // OPTIMIZED: Create a Map for O(1) lookups instead of O(n) find operations
   // This eliminates nested iterations (was O(n²), now O(n))
@@ -93,35 +93,33 @@ function ServiceCard({
           )}
         </div>
       </div>
-      {isEditMode && (
-        <div className="flex gap-2">
-          {/* Add Subcategories Button - Only show for services with subcategories */}
-          {hasSubcategories && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onEditCategories();
-              }}
-              className="service-add-btn"
-              aria-label={`Add more subcategories to ${serviceLabel(service)}`}
-              title="Add more subcategories"
-            >
-              <PlusIcon className="w-5 h-5" />
-            </button>
-          )}
-          {/* Delete Service Button */}
+      <div className="service-card-actions">
+        {hasSubcategories && (
           <button
             type="button"
-            onClick={() => onRemove(service)}
-            className="service-delete-btn"
-            aria-label={`Remove ${serviceLabel(service)}`}
-            title="Remove service"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEditCategories();
+            }}
+            disabled={busy}
+            className="service-action-btn service-action-edit"
+            aria-label={`Edit ${serviceLabel(service)}`}
           >
-            <TrashIcon />
+            <PencilSquareIcon aria-hidden="true" />
+            <span>Edit</span>
           </button>
-        </div>
-      )}
+        )}
+        <button
+          type="button"
+          onClick={() => onRemove(service)}
+          disabled={busy}
+          className="service-action-btn service-action-remove"
+          aria-label={`Remove ${serviceLabel(service)}`}
+        >
+          <TrashIcon aria-hidden="true" />
+          <span>Remove</span>
+        </button>
+      </div>
     </div>
   );
 }
@@ -138,7 +136,9 @@ export default function Step1ServicesOffer({
   const [showSubcategoriesDialog, setShowSubcategoriesDialog] = useState(false);
   const [selectedCategoryForEdit, setSelectedCategoryForEdit] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
+  // A service just added that has sub-services: kept on screen, saved only once its sub-services are chosen.
+  const [pending, setPending] = useState<string | null>(null);
+  const savedFromDialog = useRef(false);
 
   // Fetch categories from database
   const { data: categories } = useCatalogue();
@@ -150,27 +150,37 @@ export default function Step1ServicesOffer({
     return new Map(categories.map((cat: any) => [cat.name, cat]));
   }, [categories]);
 
+  /** Saves services and sub-services; on a refusal the screen goes back to what it showed (the error is the caller's). */
+  const persist = async (services: string[], subIds: string[], previous: { services: string[]; subs: string[] }) => {
+    onChange("services", services);
+    onChange("supportWorkerCategories", subIds);
+    if (!onSaveServices) return;
+    setIsSaving(true);
+    try {
+      await onSaveServices(services, subIds);
+    } catch {
+      onChange("services", previous.services);
+      onChange("supportWorkerCategories", previous.subs);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleAddServices = (newServices: string[]) => {
     const currentServices = data.services || [];
-    const updatedServices = [...currentServices, ...newServices];
-
-    // Check for subcategories to open dialog immediately
-    let categoryWithSubcategories = null;
-    for (const serviceTitle of newServices) {
-      const category = categoryMap.get(serviceTitle);
-      if (category && Array.isArray(category.subcategories) && category.subcategories.length > 0) {
-        categoryWithSubcategories = category;
-        break;
-      }
-    }
-
-    // Update UI state synchronously for instant feedback
-    onChange("services", updatedServices);
-
-    if (categoryWithSubcategories) {
-      setSelectedCategoryForEdit(categoryWithSubcategories);
+    const currentSubs = data.supportWorkerCategories || [];
+    if (newServices.length === 0) return;
+    // A service with sub-services is added on its own (the dialog does that): choose them first, then save.
+    const withSubs = newServices.map((s) => categoryMap.get(s)).find((c) => Array.isArray(c?.subcategories) && c.subcategories.length > 0);
+    if (withSubs) {
+      onChange("services", [...currentServices, withSubs.name]);
+      setPending(withSubs.name);
+      savedFromDialog.current = false;
+      setSelectedCategoryForEdit(withSubs);
       setShowSubcategoriesDialog(true);
+      return;
     }
+    void persist([...currentServices, ...newServices], currentSubs, { services: currentServices, subs: currentSubs });
   };
 
   const handleRemoveService = async (serviceTitle: string) => {
@@ -198,40 +208,38 @@ export default function Step1ServicesOffer({
 
   const handleSubcategoriesSave = async (subcategoryIds: string[]) => {
     if (!selectedCategoryForEdit) return;
-
+    savedFromDialog.current = true;
+    const name = selectedCategoryForEdit.name;
+    const currentServices = data.services || [];
     const currentSubcategories = data.supportWorkerCategories || [];
     const categorySubcategoryIds = selectedCategoryForEdit.subcategories.map((sub: any) => sub.id);
     const otherSubcategories = currentSubcategories.filter(id => !categorySubcategoryIds.includes(id));
+    const isNew = pending === name;
+    setPending(null);
 
-    const updatedCategories = [...otherSubcategories, ...subcategoryIds];
-
-    onChange("supportWorkerCategories", updatedCategories);
-
-    // If no subcategories selected, delete the service immediately
     if (subcategoryIds.length === 0) {
-      await handleRemoveService(selectedCategoryForEdit.name);
-    }
-  };
-
-  const handleDone = async () => {
-    if (!onSaveServices) {
-      setIsEditMode(false);
+      // None chosen: a new service is simply not added; an existing one is removed (as before).
+      if (isNew) onChange("services", currentServices.filter((s) => s !== name));
+      else await handleRemoveService(name);
       return;
     }
-    setIsSaving(true);
-    try {
-      await onSaveServices(data.services || [], data.supportWorkerCategories || []);
-    } catch (error) {
-      console.error('Error saving services:', error);
-    } finally {
-      setIsSaving(false);
-      setIsEditMode(false);
+    const previous = { services: isNew ? currentServices.filter((s) => s !== name) : currentServices, subs: currentSubcategories };
+    await persist(currentServices, [...otherSubcategories, ...subcategoryIds], previous);
+  };
+
+  /** The sub-services dialog closed without saving: a service waiting for its sub-services is not added. */
+  const handleSubcategoriesOpenChange = (open: boolean) => {
+    setShowSubcategoriesDialog(open);
+    if (!open && !savedFromDialog.current && pending) {
+      onChange("services", (data.services || []).filter((s) => s !== pending));
+      setPending(null);
     }
   };
 
   const handleEditCategories = (serviceTitle: string) => {
     const category = categoryMap.get(serviceTitle); // O(1) lookup instead of O(n) find
     if (category) {
+      savedFromDialog.current = false;
       setSelectedCategoryForEdit(category);
       setShowSubcategoriesDialog(true);
     }
@@ -277,50 +285,30 @@ export default function Step1ServicesOffer({
                       categoryData={categoryData}
                       onRemove={handleRemoveService}
                       onEditCategories={() => handleEditCategories(service)}
-                      isEditMode={isEditMode}
                       hasSubcategories={hasSubcategories}
+                      busy={isSaving}
                     />
                   );
                 })
               ) : (
                 <div className="services-empty-state">
                   <p>
-                    No services added yet. Click "EDIT SERVICES" to get started.
+                    No services added yet. Click "ADD MORE SERVICES" to get started.
                   </p>
                 </div>
               )}
 
-              {/* Edit/Add Services Buttons */}
+              {/* Add more services; Edit and Remove are beside each card */}
               <div className="service-button-container">
-                {isEditMode ? (
                   <div className="service-button-group">
                     <button
                       type="button"
                       onClick={() => setShowAddServiceDialog(true)}
+                      disabled={isSaving}
                       className="service-btn-add-more"
                     >
                       <PlusIcon />
-                      ADD MORE
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDone}
-                      disabled={!hasValidSubcategories || isSaving}
-                      className="service-btn-done"
-                      title={!hasValidSubcategories ? "Please select service offerings for all services" : ""}
-                    >
-                      {isSaving ? 'Saving...' : 'Done'}
-                    </button>
-                  </div>
-                ) : (
-                  <div className="service-button-group">
-                    <button
-                      type="button"
-                      onClick={() => setIsEditMode(true)}
-                      className="service-btn-edit"
-                    >
-                      <PlusIcon />
-                      EDIT SERVICES
+                      {isSaving ? "SAVING..." : "ADD MORE SERVICES"}
                     </button>
                     {/* Main Save button - only redirects, does not save (already saved when subcategories were selected) */}
                     {onSaveAndExit && (
@@ -341,7 +329,6 @@ export default function Step1ServicesOffer({
                       </button>
                     )}
                   </div>
-                )}
               </div>
             </div>
           </div>
@@ -363,9 +350,8 @@ export default function Step1ServicesOffer({
               to choose specific areas you can provide.
             </p>
             <p className="info-box-text mt-3">
-              <strong>In edit mode:</strong> Use the <span className="text-green-600">+</span> button
-              to add more subcategories, or the <span className="text-red-600">trash icon</span> to
-              remove a service.
+              Use <strong>Edit</strong> beside a service to change the specific areas you provide, or
+              <strong> Remove</strong> to take it off your profile. Changes are saved straight away.
             </p>
           </div>
           </div>
@@ -384,7 +370,7 @@ export default function Step1ServicesOffer({
       {selectedCategoryForEdit && (
         <CategorySubcategoriesDialog
           open={showSubcategoriesDialog}
-          onOpenChange={setShowSubcategoriesDialog}
+          onOpenChange={handleSubcategoriesOpenChange}
           categoryName={serviceLabel(selectedCategoryForEdit.name)}
           subcategories={selectedCategoryForEdit.subcategories}
           selectedSubcategories={
