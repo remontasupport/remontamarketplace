@@ -6334,3 +6334,6 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 
 **User Input (2026-11-19):** "can you fix the UI especially on the mobile view? currently this is the view refer to the screenshot (Downloads/Screenshot 2026-11-19 141308.png), I think the 2 buttons should be place below the cards"
 **AI Response:** The screenshot showed Edit/Remove beside the card squeezing it on a phone. Moved them inside each card as a right-aligned row along its bottom edge (border above), every screen size. Baselines held. Pushed to `feat/signup-agreement-app`.
+
+**User Input (2026-11-19):** "can you add equally? like the edit should place on the left and the remove is on the right with equally space in the middle. Also when removing, add a modal that says \"Are you sure you want to remove this service? You may not be searchable\" or can you check the grammar and suggests any note"
+**AI Response:** Actions row `space-between` (Edit left, Remove right; Remove right also without Edit). Remove now confirms through the app's ConfirmDialog: title "Remove this service?", message "Are you sure you want to remove <service>? Clients searching for this service will no longer find you. You can add it back at any time.", Cancel / Remove (wording suggested, user to confirm). Baselines held. Pushed to `feat/signup-agreement-app`.
