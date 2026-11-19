@@ -24,7 +24,7 @@ were removed on 2026-10-02, after the api had served production since that morni
 | 0 | "Welcome to Remonta" intro | Clicks Continue; a notice says "Before you begin, please have your ABN handy. You’ll need it in the final step of the sign-up process." **Proceed** starts the form, **Cancel** closes the notice | — | — |
 | 1 | "Where are you located?" | Types 2+ letters of a suburb or postcode, picks one | `GET /v1/localities?q=…` (debounced 300 ms, every keystroke) | no |
 | 2 | "Please provide your details" | Types first name, last name, mobile | — | — |
-| 2 | (same) | Types email, leaves the field | `POST /v1/registrations/worker/email-availability` | no |
+| 2 | (same) | Types a valid email (checked once typing pauses for half a second, or when the field is left; **Send code** is enabled as soon as the address is free) | `POST /v1/registrations/worker/email-availability` | no |
 | 2 | (same) | Clicks **Send code** (only if the address is available) | `POST /v1/registrations/worker/email-codes` (with a reCAPTCHA token) → a signed ticket | no (an email is sent) |
 | 2 | (same) | Types the 6-digit code, clicks **Verify** | `POST /v1/registrations/worker/email-codes/verify` | no |
 | 2 | (same) | Types the password (enabled only after the email is verified) | — | — |

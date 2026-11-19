@@ -343,7 +343,7 @@
     "/v1/registrations/worker/email-availability": {
       "post": {
         "operationId": "registration.checkEmailAvailability",
-        "summary": "Whether an address can sign up (no account yet). Asked when the email field loses focus. One indexed lookup, nothing else.",
+        "summary": "Whether an address can sign up (no account yet). Asked once typing pauses on a valid address or the email field loses focus. One indexed lookup, nothing else.",
         "security": [],
         "requestBody": {
           "required": true,

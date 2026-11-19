@@ -480,7 +480,6 @@ export function EmailCodeField({ label, hint, email, status, code, onCodeChange,
               </span>
             )}
             {status.kind === "idle" && availability === "checking" && <span className="text-sm text-gray-600 font-poppins">Checking this address...</span>}
-            {status.kind === "idle" && availability === "unknown" && email && <span className="text-sm text-gray-600 font-poppins">Leave the email field to check this address.</span>}
           </div>
         </div>
       )}

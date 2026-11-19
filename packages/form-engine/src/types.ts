@@ -56,7 +56,7 @@ export type FieldDef =
       for: string;
       sendEntry: string;
       verifyEntry: string;
-      /** Asked when the address field loses focus; the code can be sent only for an available address. */
+      /** Asked when typing pauses on a valid address or the field loses focus; the code can be sent only for an available address. */
       availabilityEntry?: string;
     });
 
