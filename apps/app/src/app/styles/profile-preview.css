@@ -283,6 +283,11 @@
   gap: 40px;
 }
 
+/* One column when the other has nothing to show (empty sections hidden, 2026-11-19) */
+.profile-preview-grid.profile-preview-grid-single {
+  grid-template-columns: 1fr;
+}
+
 @media (max-width: 768px) {
   .profile-preview-grid {
     /* Keep grid but single column */
