@@ -175,8 +175,9 @@ export default function WorkerProfileView({
   const hideEmpty = (isAdminView || isPublicView) && !isEditMode
   const filled = (a: unknown) => Array.isArray(a) && a.length > 0
   const has = {
-    'about-me': !!(editableState?.introduction || profile?.introduction),
-    'basic-information': profile?.hasVehicle != null || !!(profile?.city || profile?.state),
+    // About Me and Basic Information always show (user, 2026-11-19).
+    'about-me': true,
+    'basic-information': true,
     experience: Object.values((additionalInfo?.experience ?? {}) as Record<string, { description?: unknown } | null>).some((d) => !!d?.description) || filled(editableState?.editableExperienceItems),
     'job-history': yearsOfExperience.length > 0,
     'education-history': filled(additionalInfo?.education),
