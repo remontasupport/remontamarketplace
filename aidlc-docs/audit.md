@@ -6351,3 +6351,6 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 
 **User Input (2026-11-19):** "Perfect, now let us move to the steps of completing the profile. I noticed that the required fields like about you and fun fact, even if the fields are blank, the worker can still proceed to the next step, can you make a validation of it"
 **AI Response:** Two causes: ProfileShell's Previous/Next are plain links (no check), and the Bio page's one Save (`savePair`) validated only the edited section. Fixes: `savePair` validates every section, saves the due ones (the old test that pinned the bug rewritten); `requiredBeforeNext` on the Bio step (About you non-empty, Fun fact 50+, from the saved profile) blocks Next with a message. Only Bio has the rule (completion does not count either field); asked which other steps should be required. Noted: the sidebar tick for Bio wants 50+ characters of About you while the api accepts 1. App 771, baselines held. Pushed to `feat/signup-agreement-app`.
+
+**User Input (2026-11-19):** "place the error message at the center"
+**AI Response:** The Bio step's Next message is centred. Pushed to `feat/signup-agreement-app`.
