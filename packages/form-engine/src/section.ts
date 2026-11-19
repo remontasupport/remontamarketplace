@@ -36,7 +36,8 @@ export type SectionFieldDef =
   | (SectionFieldBase & { kind: "checkbox" })
   | (SectionFieldBase & { kind: "date" })
   | (SectionFieldBase & { kind: "number"; min?: number; max?: number; unit?: string })
-  | (SectionFieldBase & { kind: "locality"; placeholder?: string })
+  /** `optional`: shown without the required mark (the home address, user 2026-11-19); the contract still needs a suburb to save. */
+  | (SectionFieldBase & { kind: "locality"; placeholder?: string; optional?: boolean })
   | (SectionFieldBase & { kind: "timeRanges" })
   | (SectionFieldBase & {
       kind: "orderedList";

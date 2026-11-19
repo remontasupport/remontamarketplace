@@ -66,6 +66,7 @@ function LocalitySlot({ field, value, onPick, error }: { field: SectionFieldDef;
       }}
       error={error}
       placeholder={field.kind === "locality" ? field.placeholder : undefined}
+      optional={field.kind === "locality" && field.optional === true}
     />
   );
 }
@@ -218,6 +219,9 @@ export function SectionSkeleton() {
 
 type Section = ReturnType<typeof useSection>;
 
+/** An empty answer: nothing typed, nothing chosen. */
+export const isBlank = (v: unknown): boolean => v == null || (typeof v === "string" && v.trim() === "") || (Array.isArray(v) && v.length === 0);
+
 /** One section's description and fields, without a Save of its own (a two-section page). */
 function SectionFields({ def, s }: { def: SectionDefinition; s: Section }) {
   const picked = pickPath(s.profile, def.pick);
@@ -282,7 +286,9 @@ export function SectionPair({ title, first, second }: { title: string; first: Se
  */
 export default function SectionPage({ def, onSaved }: { def: SectionDefinition; onSaved?: () => void }) {
   const { profile, isLoading, readError, values, errors, setValue, submit: saveSection, save, deleteRow, changed } = useSection(def);
-  const savesOnLeave = useStepForm(changed, saveSection);
+  // Nothing saved before and nothing entered now (an optional address typed then cleared): nothing to save on leave.
+  const blank = !!values && def.fields.every((f) => isBlank(values[f.name])) && pickPath(profile, def.pick) == null;
+  const savesOnLeave = useStepForm(changed && !blank, saveSection);
   const submit = async () => {
     if ((await saveSection()) && onSaved) onSaved();
   };

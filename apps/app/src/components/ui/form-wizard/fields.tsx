@@ -135,9 +135,11 @@ export interface LocalityFieldProps {
   onPick: (l: LocalityOption) => void;
   error?: string;
   placeholder?: string;
+  /** No required mark. */
+  optional?: boolean;
 }
 
-export function LocalityField({ label, value, query, onQueryChange, suggestions, loading, onPick, error, placeholder = "Search" }: LocalityFieldProps) {
+export function LocalityField({ label, value, query, onQueryChange, suggestions, loading, onPick, error, placeholder = "Search", optional = false }: LocalityFieldProps) {
   const [open, setOpen] = useState(false);
   /** Typing since the last pick or since the box was left: the box shows the typed text, not the chosen suburb. */
   const [editing, setEditing] = useState(false);
@@ -145,7 +147,7 @@ export function LocalityField({ label, value, query, onQueryChange, suggestions,
     <div>
       <Label className="text-lg font-poppins font-medium">
         {label}
-        <span className="text-red-500">*</span>
+        {!optional && <span className="text-red-500">*</span>}
       </Label>
       <div
         className="relative mt-2"

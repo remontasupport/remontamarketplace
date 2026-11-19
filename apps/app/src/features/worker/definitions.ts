@@ -97,7 +97,8 @@ export const homeAddressSection = defineSection({
   writeEntry: "putHomeAddress",
   fields: [
     { name: "streetLine", kind: "text", label: "Street address (optional)", placeholder: "12 Example St" },
-    { name: "localityId", kind: "locality", label: "Suburb", placeholder: "Start typing your suburb" },
+    // Not required (user, 2026-11-19): no mark; an untouched address is never sent. To save one, a suburb is needed.
+    { name: "localityId", kind: "locality", label: "Suburb", placeholder: "Start typing your suburb", optional: true },
   ],
   seed: (p) => {
     const h = p as { streetLine: string | null; localityId: number; suburb: string; state: string; postcode: string } | null;
