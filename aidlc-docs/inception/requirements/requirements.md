@@ -41,6 +41,10 @@ and the dashboard's ABN agreement (`components/contracts/ContractPage.tsx`, `POS
   preamble (provider name prefilled from first + last name, editable; ABN; GST yes/no; address), the contract text, a
   signature, the date and the agree box, as on the dashboard. One shared component and one PDF builder for both places
   (no second copy of the contract or the PDF code).
+- **R2a Name auto-fill** (user 2026-11-19: "apply the auto fill in for the name in the agreement"). The agreement's
+  provider name starts as the worker's first + last name: in the sign-up from the details step, on the dashboard page
+  from the profile (today it starts empty). Editable (a company or business name is allowed); the PDF's "Name:" line
+  follows the field.
 - **R3 ABN rule.** 11 digits and the ATO checksum, from the contract entry's schema (the form and the api agree), with
   the existing field error wording.
 - **R4 Submit carries the agreement.** The browser builds the signed PDF and uploads it by an anonymous ticket (the

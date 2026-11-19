@@ -6259,3 +6259,8 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User Input**: "Yes keep 3, for existing workers, yes keep signing agreement to the dashboard. By the way, save the file on the dashboard in the agreement as well for this new process"
 **AI Response**: Requirements approved; O1 (three extensions kept) and O2 (existing workers unchanged) recorded; R7 made explicit: the sign-up's signed PDF is the same `contract-of-agreement` row the dashboard reads (`requirements/setup`, `contractDocumentFromDB`), so it shows on the dashboard's agreement. Wrote `inception/plans/execution-plan.md`: U1 `agreement-api` (fields optional while the old app is live), U2 `agreement-app`, U3 `agreement-required`. Asked for plan approval.
 **Context**: INCEPTION, requirements approved; workflow planning.
+
+**Timestamp**: 2026-11-19
+**User Input**: "Approved, also apply the auto fill in for the name in the agreement"
+**AI Response**: Plan approved. Added R2a: the agreement's provider name auto-filled from first + last name in the sign-up and from the profile on the dashboard page (editable). Started CONSTRUCTION U1 `agreement-api`: wrote `construction/u1-agreement-api/functional-design.md` (ticket entry, optional `agreement` body, one shared upload-ticket function, staging before the transaction with a uuid profile id, row + engagement + completion in the transaction, copy deleted on failure, existing email discards). Asked for approval.
+**Context**: CONSTRUCTION U1, functional design.
