@@ -6264,3 +6264,8 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User Input**: "Approved, also apply the auto fill in for the name in the agreement"
 **AI Response**: Plan approved. Added R2a: the agreement's provider name auto-filled from first + last name in the sign-up and from the profile on the dashboard page (editable). Started CONSTRUCTION U1 `agreement-api`: wrote `construction/u1-agreement-api/functional-design.md` (ticket entry, optional `agreement` body, one shared upload-ticket function, staging before the transaction with a uuid profile id, row + engagement + completion in the transaction, copy deleted on failure, existing email discards). Asked for approval.
 **Context**: CONSTRUCTION U1, functional design.
+
+**Timestamp**: 2026-11-19
+**User Input**: "Approved, start U1"
+**AI Response**: Built U1 `agreement-api` on `feat/signup-agreement-api` (`d24e98a`, from `main` `1f8d27f`), pushed, no PR. Gates locally: schemas 103, api-contract 139, form-engine 76, api 1208 passed (268 database-gated skipped: Docker down here, CI is the proof), app 753. Deviation recorded: completion not recomputed in the sign-up transaction (the live read and completion-sync cover it; avoids a Zoho event the sign-up never sent). Noted: a sign-up with the agreement enters the admin review queue (PENDING_REVIEW), as the dashboard signing does. Notes `construction/u1-agreement-api/construction-notes.md`.
+**Context**: CONSTRUCTION U1, code generated; next the PR, CI and the staging-preview checklist.
