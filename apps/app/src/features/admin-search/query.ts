@@ -280,3 +280,15 @@ export function filtersFromURL(params: URLSearchParams): AdminFilters {
   for (const flag of COMPLETION_FLAGS) if (q[flag]) f.completion[flag] = q[flag]
   return f
 }
+
+/**
+ * The services shown under a worker's name in the results (user, 2026-11-19): when the search is by service, only the
+ * searched ones; otherwise all of them. `searched` are catalogue ids, the row's services are names. When none of the
+ * worker's services can be matched to a searched one (a renamed category), all are shown rather than none.
+ */
+export function servicesShown(services: readonly string[], searched: readonly string[], categories: readonly { id: string; name: string }[] | undefined): string[] {
+  if (searched.length === 0) return [...services];
+  const names = new Set(searched.map((id) => categories?.find((c) => c.id === id)?.name).filter((n): n is string => !!n));
+  const shown = services.filter((s) => names.has(s));
+  return shown.length > 0 ? shown : [...services];
+}

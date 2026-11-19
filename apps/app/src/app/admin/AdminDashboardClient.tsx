@@ -42,6 +42,7 @@ import {
   unfinishedOf,
   urlFromFilters,
   type AdminFilters,
+  servicesShown,
 } from '@/features/admin-search/query'
 import type { ExtraColumn } from '@/features/admin-export/contactsCsv'
 import { estimatedDriveMinutes, formatDrive } from '@/features/admin-search/travel'
@@ -1287,9 +1288,10 @@ export default function AdminDashboard() {
                           </div>
 
                           {/* Services */}
+                          {/* Searched by service: only the searched ones (user, 2026-11-19) */}
                           {contractor.services && contractor.services.length > 0 && (
                             <p className="text-xs text-gray-600 mb-2">
-                              {contractor.services.join(' / ')}
+                              {servicesShown(contractor.services, filters.typeOfSupport ? [filters.typeOfSupport] : [], categories).join(' / ')}
                             </p>
                           )}
 
