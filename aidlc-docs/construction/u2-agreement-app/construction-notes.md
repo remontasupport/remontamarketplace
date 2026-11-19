@@ -30,3 +30,45 @@ Branch `feat/signup-agreement-app` (from `main` `fcc503a`), 2026-11-19.
   (no confirm, retry, own message), 415 with fields -> invalid. All 76 earlier engine tests unchanged and passing.
 - app `forms.test.ts`: the steps, the notice, the last step, "what the form accepts, the contract accepts" with an
   agreement; `contractPdf.test.ts`: the preamble checks and messages, the PDF and its safe name.
+
+## Added on the same branch at the user's request (2026-11-19), in order
+
+Sign-up:
+- Notice title "Please Note:", fades in from above (`intro.notice.title`).
+- "Send code" enables after a 500 ms pause on a valid email (`useEmailCode`), not only on blur.
+- Services step: one service only (`max: 1`, form rule; server limit in U3); once one is ticked the others are dimmed
+  and disabled; a "Please Note:" dialog lists what the service requires, from `GET /v1/service-requirements` (#166,
+  api branch merged into this one), with a plain fallback when the list cannot load.
+- The agreement step's "Change" button removed.
+- (api, own PRs, on `main`) #166 the service-requirements entry; #167 the verified email holds 24 h for the sign-up.
+
+Worker dashboard:
+- "Support Worker" reads "Support Work" (and the High Intensity one) wherever workers see it (`lib/serviceLabel.ts`).
+- Services You Offer (Account > Manage services): "ADD MORE SERVICES"; Edit and Remove inside each card, centred,
+  evenly spaced; Remove confirms ("Remove this service? ... Clients searching for this service will no longer find
+  you. You can add it back at any time."); each change saves on confirmation (no edit mode / Done).
+- My Profile steps save on leaving (`stepForms.tsx`): Previous, Next, "Save & finish" on the last step, any link out
+  (sidebar), "Review application"; no Save buttons on the steps (Service Area and the bank account keep theirs).
+- Required before Next (`requiredBeforeNext` / `requiredMet`): Bio (About you + Fun fact 50+), Date of Birth, Gender,
+  Languages, Preferred Hours, Vehicle Access, Cultural Background, Religion, Interests, Support & Activities,
+  Preferences. The Bio page's Save checks both sections (`savePair`).
+- Address optional (no asterisk; a blank never-saved step is not saved on leave; an entered address still needs a suburb).
+
+Admin:
+- A search by Type of support shows only the searched service under each name (`servicesShown`).
+- Show profile (and client/public views): empty sections hidden except About Me and Basic Information; a column with
+  nothing gives the grid one column; edit mode shows all; the worker's own preview unchanged.
+
+## Open questions left with the user
+- Multi-select "Type of support" in the admin search (needs an api change)?
+- Should the worker's own Profile Preview also hide empty sections?
+- About you: require 50 characters (the sidebar tick already wants 50)?
+- Address: allow a street without a suburb (api change)?
+- Next on a step already complete but edited again: it saves (the step saves on leave) -- confirm on the preview.
+- Primary service: analysed (`inception/requirements/primary-service-analysis.md`), skipped by the user for now.
+
+## Preview checklist for the U2 PR (staging api)
+Sign-up end to end (notice; email code + wait > 10 min before Complete; one service + the requirements list; the
+agreement with a wrong ABN refused, then signed); the new worker's dashboard agreement shows the PDF; admin compliance
+shows it; Manage services (add / edit / remove + confirm); My Profile steps (save on Next, required steps, Address
+optional, Personality "Save & finish"); admin search badges; admin Show profile empty sections; production unchanged.

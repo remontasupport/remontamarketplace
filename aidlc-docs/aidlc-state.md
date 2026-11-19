@@ -4,7 +4,18 @@
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
 - **Current Cycle**: signup-abn-agreement (opened 2026-11-19): the ABN notice and the Contractor Agreement inside the worker sign-up.
-- **Current Stage**: CONSTRUCTION U2 `agreement-app` built (`feat/signup-agreement-app` `5405309`, pushed); next PR, preview checklist, merge (production app). U1 live in production 2026-11-19 (`fcc503a`). Then U3 `agreement-required`.
+- **Current Stage**: CONSTRUCTION, paused 2026-11-19 (session closed by the user). **Resume here:**
+  1. **Promote the api** (staging already runs it): Actions -> deploy-api -> Run workflow -> stage `prod`, imageTag
+     `9a01efd1a454b716df8b2cea3edd7782a8756432` (`main` after #165-#167: U1 + `GET /v1/service-requirements` + the
+     24 h verified-email window). Production api today: `fcc503a` (U1 only). Then check production: /v1/health 200,
+     `/v1/service-requirements?categoryId=support-worker` 200.
+  2. **U2 PR** `feat/signup-agreement-app` (`02cf04f`, 23 commits ahead of `main` `9a01efd`; not opened yet):
+     https://github.com/remontasupport/remontamarketplace/compare/main...feat%2Fsignup-agreement-app?expand=1 --
+     the preview checklist (list in `construction/u2-agreement-app/construction-notes.md`), merge only **after** step 1.
+  3. **U3 `agreement-required`**: `agreement` required and `services` at most 1 in the registration schema; staging,
+     preview, promote (after U2 is live).
+  4. Re-record CLAUDE.md's rollback rows (the docs PR `docs/rollback-rows-2026-11-11` `a06317d` is still unmerged and
+     predates this cycle), then close the cycle.
 
 ## Previous cycles (archived, read-only)
 

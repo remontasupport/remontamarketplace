@@ -6372,3 +6372,6 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 
 **User Input (2026-11-19):** "ahh, no no, the about me should be there always, as well as the basic Information"
 **AI Response:** About Me and Basic Information always show (their `has` entries true); the other sections still hide when empty. Pushed to `feat/signup-agreement-app`.
+
+**User Input (2026-11-19):** "Can you save the state to where we are at this, I will close the session now and make sure I can go back tomorrow"
+**AI Response:** State saved: `aidlc-state.md` Current Stage = paused with the resume steps (promote `9a01efd...`, U2 PR `02cf04f` after it, U3, rollback rows); `construction/u2-agreement-app/construction-notes.md` lists every change added on the branch, the open questions and the preview checklist. Record branch pushed.
