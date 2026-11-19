@@ -6369,3 +6369,6 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 
 **User Input (2026-11-19):** "Perfect. Now on the admin's Show profile, I noticed that if a certain section is no data, it is still being shown, for example one of the worker doesn't have the Experience but the Experience section still appear, can you make the layout to be flexible with out compromising the design, what I want is to display only the section that has data or information"
 **AI Response:** WorkerProfileView (shared): one `has` table per section and `shows(id)`; empty sections hidden when isAdminView or isPublicView and not in edit mode; a column with nothing shown gives the grid one column (`profile-preview-grid-single`). Admin edit mode shows all; the worker preview unchanged. App 775, baselines held (an `any` the baseline caught was typed). Pushed to `feat/signup-agreement-app`.
+
+**User Input (2026-11-19):** "ahh, no no, the about me should be there always, as well as the basic Information"
+**AI Response:** About Me and Basic Information always show (their `has` entries true); the other sections still hide when empty. Pushed to `feat/signup-agreement-app`.
