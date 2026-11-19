@@ -58,10 +58,28 @@ export type ProfileGroup = keyof typeof PROFILE_GROUPS;
  * Professional Information (date of birth, gender and vehicle access: a page and a write each); the
  * additional-details sections in Additional Information. The photo, preferred hours and bank account keep a place (user choice).
  */
-export const EDIT_PROFILE_CHILDREN: readonly { slug: string; label: string; done: (p: Profile) => boolean; group?: ProfileGroup }[] = [
+/**
+ * A step whose answers must be saved before "Next" moves on (2026-11-19: About you and Fun fact could be left blank).
+ * Read from the saved profile, so typed but unsaved text does not count.
+ */
+export interface RequiredBeforeNext {
+  ok: (p: Profile) => boolean;
+  message: string;
+}
+
+export const EDIT_PROFILE_CHILDREN: readonly { slug: string; label: string; done: (p: Profile) => boolean; group?: ProfileGroup; requiredBeforeNext?: RequiredBeforeNext }[] = [
   { slug: "name", label: "Name", group: "personal-information", done: (p) => !!p.names.firstName && !!p.names.lastName },
   { slug: "photo", label: "Profile Photo", group: "personal-information", done: (p) => !!p.photos.main },
-  { slug: "bio", label: "Bio", group: "personal-information", done: (p) => (p.bio?.trim().length ?? 0) >= 50 },
+  {
+    slug: "bio",
+    label: "Bio",
+    group: "personal-information",
+    done: (p) => (p.bio?.trim().length ?? 0) >= 50,
+    requiredBeforeNext: {
+      ok: (p) => !!p.bio?.trim() && (info(p)?.funFact?.trim().length ?? 0) >= 50,
+      message: "Please fill in About you and your Fun fact (50 characters or more), then press Save before continuing.",
+    },
+  },
   { slug: "address", label: "Address", group: "personal-information", done: (p) => !!p.homeAddress },
   { slug: "date-of-birth", label: "Date of Birth", group: "personal-information", done: (p) => !!p.personalInfo.dateOfBirth },
   { slug: "gender", label: "Gender", group: "personal-information", done: (p) => !!p.personalInfo.gender },

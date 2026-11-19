@@ -4,7 +4,7 @@
 // (no "My profile" heading: the sidebar names the page; user, 2026-10-13), the job-apply banner the old profile layout carried (the
 // apply context from the URL or this tab's storage), and links to the previous and next
 // section in the sidebar's order.
-import { useLayoutEffect, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -40,6 +40,10 @@ export default function ProfileShell({ slug, children }: { slug?: string; childr
   const at = EDIT_PROFILE_CHILDREN.findIndex((c) => c.slug === slug);
   const prev = at > 0 ? EDIT_PROFILE_CHILDREN[at - 1] : undefined;
   const next = at >= 0 && at < EDIT_PROFILE_CHILDREN.length - 1 ? EDIT_PROFILE_CHILDREN[at + 1] : undefined;
+  // A step with required answers keeps "Next" here until they are saved (2026-11-19).
+  const required = at >= 0 ? EDIT_PROFILE_CHILDREN[at]!.requiredBeforeNext : undefined;
+  const [blocked, setBlocked] = useState<string | null>(null);
+  useEffect(() => setBlocked(null), [slug, profile]);
 
   return (
     <DashboardLayout profileData={profile ? { firstName: profile.names.firstName, photo: profile.photos.main, role: profile.displayRole } : undefined}>
@@ -75,11 +79,25 @@ export default function ProfileShell({ slug, children }: { slug?: string; childr
               <span />
             )}
             {next && (
-              <Link href={sectionHref(next.slug)} className="inline-flex items-center gap-1 text-[#0C1628] hover:underline">
+              <Link
+                href={sectionHref(next.slug)}
+                onClick={(e) => {
+                  if (required && profile && !required.ok(profile)) {
+                    e.preventDefault();
+                    setBlocked(required.message);
+                  }
+                }}
+                className="inline-flex items-center gap-1 text-[#0C1628] hover:underline"
+              >
                 {next.label} <ChevronRight className="w-4 h-4" />
               </Link>
             )}
           </nav>
+        )}
+        {blocked && (
+          <p role="alert" className="mt-2 text-right text-sm font-poppins text-red-600">
+            {blocked}
+          </p>
         )}
       </div>
     </DashboardLayout>

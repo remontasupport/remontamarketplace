@@ -37,9 +37,14 @@ describe("one Save for two sections", () => {
     expect(d.calls).toEqual(["validate", "submit"]);
   });
 
-  it("an untouched section is neither checked nor saved", async () => {
+  it("an untouched section is checked but not saved: a blank required answer there stops the Save (2026-11-19)", async () => {
     const [a, b] = [part(false, false), part(true)];
-    expect(await savePair([a, b])).toBe(true);
-    expect(a.calls).toEqual([]);
+    expect(await savePair([a, b])).toBe(false);
+    expect(a.calls).toEqual(["validate"]);
+    expect(b.calls).toEqual(["validate"]);
+    const [c, d] = [part(false), part(true)];
+    expect(await savePair([c, d])).toBe(true);
+    expect(c.calls).toEqual(["validate"]);
+    expect(d.calls).toEqual(["validate", "submit"]);
   });
 });
