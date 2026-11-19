@@ -12,6 +12,10 @@
     "reason": "The services list on the sign-up form, before any account exists. Returns category and sub-category names and their qualification/registration flags only; the same for every caller and cached."
   },
   {
+    "route": "GET /v1/service-requirements",
+    "reason": "Sign-up's services notice, before any account exists: the documents one catalogue service will ask for (names only, the same for everyone), cached. Per-IP and global limits."
+  },
+  {
     "route": "POST /v1/registrations/worker/photo-tickets",
     "reason": "Sign-up photo, before any account exists: a signed ticket naming one storage key the browser may fill for ten minutes, bound to type and size. Nothing is stored until confirm; per-IP and global limits."
   },

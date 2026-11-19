@@ -56,6 +56,27 @@ export const localitySchema = z.strictObject({
   label: z.string(),
 })
 
+/**
+ * What one service will ask of the worker, by the dashboard's own rules (signup-abn-agreement, 2026-11-19): the groups
+ * the dashboard shows (Compliance, Trainings, Service documents, Additional credentials), required items only; an item
+ * that depends on the worker (a driver's licence with a vehicle) is `ifApplicable`. The sign-up's services notice.
+ */
+export const serviceRequirementsQuerySchema = z.strictObject({
+  categoryId: z.string().trim().min(1).max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Not a service'),
+  /** The chosen sub-services, comma-separated; none = the service as a whole. */
+  subcategoryIds: z
+    .string()
+    .max(2000)
+    .optional()
+    .transform((v) => (v ? v.split(',').map((s) => s.trim()).filter(Boolean) : []))
+    .pipe(z.array(z.string().max(100).regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Not a sub-service')).max(30)),
+})
+export const serviceRequirementsPreviewSchema = z.strictObject({
+  service: z.string().max(200),
+  groups: z.array(z.strictObject({ title: z.string().max(60), items: z.array(z.strictObject({ name: z.string().max(200), ifApplicable: z.boolean() })).max(100) })).max(10),
+})
+export type ServiceRequirementsPreview = z.output<typeof serviceRequirementsPreviewSchema>
+
 /** A service the worker can offer, with only what the sign-up's services step shows. */
 export const serviceCategorySchema = z.strictObject({
   id: z.string(),
@@ -73,6 +94,24 @@ export const registrationContract = defineContract('registration', {
     meta: meta({
       access: 'public',
       bot: 'none', // read-only, the same for everyone, cached
+      rateLimit: [
+        { per: 'ip', limit: 60, window: '1m' },
+        { per: 'global', limit: 3000, window: '1m' },
+      ],
+      maxBodyKb: 1,
+      cacheSeconds: 300,
+    }),
+  },
+
+  listServiceRequirements: {
+    method: 'GET',
+    path: '/v1/service-requirements',
+    summary: "What one service (with its chosen sub-services) will ask of a worker, by the dashboard's rules: compliance, trainings, the service's documents, additional credentials; required items only. For the sign-up's services notice.",
+    query: serviceRequirementsQuerySchema,
+    responses: { 200: serviceRequirementsPreviewSchema },
+    meta: meta({
+      access: 'public',
+      bot: 'none', // read-only, the same for everyone, cached; the catalogue is public on the sign-up already
       rateLimit: [
         { per: 'ip', limit: 60, window: '1m' },
         { per: 'global', limit: 3000, window: '1m' },
