@@ -28,7 +28,7 @@ const form = defineForm({
   contract: registrationContract,
   submitEntry: "submitWorkerRegistration",
   constants: { consentWordingVersion: CONSENT_WORDING_VERSION },
-  intro: { title: "Welcome", text: "t", button: "Continue", notice: { text: "Have your ABN handy", proceed: "Proceed", cancel: "Cancel" } },
+  intro: { title: "Welcome", text: "t", button: "Continue", notice: { title: "Please Note:", text: "Have your ABN handy", proceed: "Proceed", cancel: "Cancel" } },
   steps: steps.map((s) => ({ ...s, fields: [...s.fields] })) as never,
   successRedirect: "/done",
 });

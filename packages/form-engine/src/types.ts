@@ -113,7 +113,7 @@ export interface FormDefinition<C extends ContractDef = ContractDef> {
   /** Body fields taken from the page URL: { zohoLeadId: "id" } reads ?id=. */
   fromQuery?: Record<string, string>;
   /** `notice`: shown in a dialog when the intro's button is pressed; `proceed` starts the form, `cancel` closes it. */
-  intro?: { title: string; text: string; button: string; notice?: { text: string; proceed: string; cancel: string } };
+  intro?: { title: string; text: string; button: string; notice?: { title: string; text: string; proceed: string; cancel: string } };
   steps: StepDef[];
   successRedirect: string;
 }

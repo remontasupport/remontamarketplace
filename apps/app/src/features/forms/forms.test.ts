@@ -66,6 +66,7 @@ describe("the worker sign-up definition", () => {
 
   it("signup-abn-agreement R1: Continue shows the ABN notice, with Proceed and Cancel", () => {
     expect(workerRegistrationForm.intro?.notice).toEqual({
+      title: "Please Note:",
       text: "Before you begin, please have your ABN handy. You’ll need it in the final step of the sign-up process.",
       proceed: "Proceed",
       cancel: "Cancel",

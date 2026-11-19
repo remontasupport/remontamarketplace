@@ -13,6 +13,7 @@ import { Progress } from "@/components/ui/progress";
 export type WizardStatus = { kind: "idle" } | { kind: "sending" } | { kind: "uploading" } | { kind: "retrying" } | { kind: "waiting-for-connection" } | { kind: "failed"; message: string };
 
 export interface WizardNotice {
+  title: string;
   text: string;
   proceed: string;
   cancel: string;
@@ -40,8 +41,9 @@ export function WizardIntro({ title, text, button, notice, onStart }: { title: s
       </div>
       {notice && (
         <Dialog open={noticeOpen} onOpenChange={setNoticeOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogTitle className="font-cooper text-2xl text-gray-900">Before you begin</DialogTitle>
+          {/* Fades in from just above (user 2026-11-19), instead of the shared dialog's slide in from the side and zoom. */}
+          <DialogContent className="sm:max-w-md data-[state=open]:[--tw-enter-translate-x:0]! data-[state=open]:[--tw-enter-translate-y:-1.5rem]! data-[state=open]:[--tw-enter-scale:1]! data-[state=closed]:[--tw-exit-translate-x:0]! data-[state=closed]:[--tw-exit-translate-y:-1.5rem]! data-[state=closed]:[--tw-exit-scale:1]! duration-300">
+            <DialogTitle className="font-cooper text-2xl text-gray-900">{notice.title}</DialogTitle>
             <DialogDescription className="font-poppins text-base text-[#0C1628]">{notice.text}</DialogDescription>
             <DialogFooter className="gap-2 sm:gap-2">
               <Button variant="outline" onClick={() => setNoticeOpen(false)} className="font-poppins">

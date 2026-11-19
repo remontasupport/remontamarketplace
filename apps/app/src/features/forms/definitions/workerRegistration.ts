@@ -20,6 +20,7 @@ export const workerRegistrationForm = defineForm({
     button: "Continue",
     // signup-abn-agreement R1: the ABN is asked for on the last step.
     notice: {
+      title: "Please Note:",
       text: "Before you begin, please have your ABN handy. You’ll need it in the final step of the sign-up process.",
       proceed: "Proceed",
       cancel: "Cancel",
