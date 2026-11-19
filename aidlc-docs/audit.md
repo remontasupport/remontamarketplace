@@ -6337,3 +6337,6 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 
 **User Input (2026-11-19):** "can you add equally? like the edit should place on the left and the remove is on the right with equally space in the middle. Also when removing, add a modal that says \"Are you sure you want to remove this service? You may not be searchable\" or can you check the grammar and suggests any note"
 **AI Response:** Actions row `space-between` (Edit left, Remove right; Remove right also without Edit). Remove now confirms through the app's ConfirmDialog: title "Remove this service?", message "Are you sure you want to remove <service>? Clients searching for this service will no longer find you. You can add it back at any time.", Cancel / Remove (wording suggested, user to confirm). Baselines held. Pushed to `feat/signup-agreement-app`.
+
+**User Input (2026-11-19):** "I think the buttons should be place both in the center but add an evenly space between them"
+**AI Response:** Card actions centred together with a 1.5rem gap (Remove alone is centred too). Pushed to `feat/signup-agreement-app`.
