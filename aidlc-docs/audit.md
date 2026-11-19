@@ -6295,3 +6295,6 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User Input (2026-11-19):** "Approved, start U2" (functional design and D7: sign at "Sign & Accept Agreement")
 
 **AI action (2026-11-19):** U2 `agreement-app` built on `feat/signup-agreement-app` (`5405309`, from `main` `fcc503a`), pushed, no PR. Gates locally: form-engine 82 (76 earlier unchanged + 6 new), app 759 (type and lint baselines held), `turbo run build` for the app green. Regenerated Prisma clients from the build discarded (not committed). Notes `construction/u2-agreement-app/construction-notes.md`. Next: the PR, its preview (on staging, which runs U1) and the checklist; then U3 `agreement-required`.
+
+**User Input (2026-11-19):** "Change the title of the modal from Before you begin to Please Note:, then adjust the transition, it should be a fade in from up and not sideways"
+**AI Response:** `intro.notice.title` added (data, "Please Note:"); the notice dialog alone enters and exits from 1.5rem above with a fade, no sideways slide or zoom (tw-animate variables overridden, checked in the built CSS). Tests green (engine 82, forms 20). Pushed to `feat/signup-agreement-app`.
