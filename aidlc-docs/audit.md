@@ -6276,3 +6276,8 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **Context**: CONSTRUCTION U1, CI.
 
 **AI note (2026-11-19):** the test fix above is commit `92489f6` on `feat/signup-agreement-api`.
+
+**Timestamp**: 2026-11-19
+**User Input**: "Merged"
+**AI Response**: By refs `main` = `fcc503a` (#165: `d24e98a` + `92489f6`). deploy-api (staging) and CI on main started 02:16:47Z; watching. Next: staging checks, the preview checklist (a sign-up without the agreement = the live app), then the promotion dispatch with the full sha.
+**Context**: CONSTRUCTION U1, merged; staging deploy.
