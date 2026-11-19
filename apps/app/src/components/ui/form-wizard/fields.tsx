@@ -210,26 +210,12 @@ export interface ServiceOption {
 export interface ServiceCategory {
   id: string;
   name: string;
-  /** The catalogue's flag: the service asks for documents (qualifications, registrations). */
-  requiresQualification?: boolean;
-  subcategories: { id: string; name: string; requiresRegistration?: string | null }[];
+  subcategories: { id: string; name: string }[];
 }
 
-/** Whether the service, with the sub-categories chosen for it, asks for documents. */
-export function needsDocuments(category: ServiceCategory | undefined, subcategories: readonly string[]): boolean {
-  if (!category) return false;
-  return !!category.requiresQualification || category.subcategories.some((s) => !!s.requiresRegistration && subcategories.includes(s.id));
-}
-
-/**
- * One service only (the sign-up, 2026-11-19): when a change adds a service, it replaces the others, and their
- * sub-categories go with them. Returns the change as is when nothing was added.
- */
-export function keepNewest(prevServices: readonly string[], next: { services: string[]; subcategories: string[] }, categories: readonly ServiceCategory[] | undefined): { services: string[]; subcategories: string[]; added: string | null } {
-  const added = next.services.find((s) => !prevServices.includes(s)) ?? null;
-  if (!added) return { ...next, added: null };
-  const own = categories?.find((c) => c.id === added);
-  return { services: [added], subcategories: own ? next.subcategories.filter((id) => own.subcategories.some((s) => s.id === id)) : [], added };
+/** One service only (the sign-up, 2026-11-19): with one picked, every other option is off until it is un-picked. */
+export function optionLocked(single: boolean | undefined, services: readonly string[], optionId: string): boolean {
+  return !!single && services.length > 0 && !services.includes(optionId);
 }
 
 export interface ServicesFieldProps {
@@ -243,10 +229,12 @@ export interface ServicesFieldProps {
   error?: string;
   /** Notes shown under the list while any of their service ids is ticked (worker-tools UR-10). */
   notes?: readonly { whenAny: readonly string[]; text: string }[];
-  /** One service only: picking another replaces it. */
+  /** One service only: with one picked, the others are dimmed and cannot be picked. */
   single?: boolean;
-  /** Shown when a picked service asks for documents; `{service}` is its name. */
-  documentsNotice?: { title: string; text: string; button: string };
+  /** Shown when a picked service has required documents; `{service}` in `text` is its name. */
+  documentsNotice?: { title: string; text: string; after: string; button: string };
+  /** The required documents of a service with the sub-categories chosen for it (the glue supplies the platform's list). */
+  requiredDocumentsOf?: (category: ServiceCategory, subcategories: readonly string[]) => string[];
 }
 
 /** The notes to show for the ticked services, in their declared order. */
@@ -286,20 +274,23 @@ export function FieldLoading({ label }: { label: string }) {
   );
 }
 
-export function ServicesField({ title, hint, options, categories, services, subcategories, onChange, error, notes, single, documentsNotice }: ServicesFieldProps) {
+export function ServicesField({ title, hint, options, categories, services, subcategories, onChange, error, notes, single, documentsNotice, requiredDocumentsOf }: ServicesFieldProps) {
   const [dialogFor, setDialogFor] = useState<ServiceCategory | null>(null);
-  const [noticeFor, setNoticeFor] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{ service: string; documents: string[] } | null>(null);
   const subsOf = (c: ServiceCategory) => subcategories.filter((id) => c.subcategories.some((s) => s.id === id));
 
-  /** Applies a change: one service only when `single`; the documents notice when a service that needs them is added. */
+  /** Applies a change; when it adds a service with required documents, the notice lists them. */
   const apply = (next: { services: string[]; subcategories: string[] }) => {
-    const kept = single ? keepNewest(services, next, categories) : { ...next, added: next.services.find((s) => !services.includes(s)) ?? null };
-    onChange(kept.services, kept.subcategories);
-    const category = kept.added ? categories?.find((c) => c.id === kept.added) : undefined;
-    if (documentsNotice && category && needsDocuments(category, kept.subcategories)) setNoticeFor(category.name);
+    onChange(next.services, next.subcategories);
+    const added = next.services.find((s) => !services.includes(s));
+    const category = added ? categories?.find((c) => c.id === added) : undefined;
+    if (!documentsNotice || !category || !requiredDocumentsOf) return;
+    const documents = requiredDocumentsOf(category, next.subcategories.filter((id) => category.subcategories.some((s) => s.id === id)));
+    if (documents.length > 0) setNotice({ service: category.name, documents });
   };
 
   const toggle = (option: ServiceOption) => {
+    if (optionLocked(single, services, option.id)) return;
     const category = categories?.find((c) => c.id === option.id);
     const next = toggleService(option, category, services, subcategories);
     if (!next) return setDialogFor(category ?? null);
@@ -321,12 +312,13 @@ export function ServicesField({ title, hint, options, categories, services, subc
         {options.map((option) => {
           const category = categories?.find((c) => c.id === option.id);
           const count = option.hasSubServices && category ? subsOf(category).length : 0;
+          const locked = optionLocked(single, services, option.id);
           return (
-            <div key={option.id} className="border-b border-gray-200 pb-4 last:border-b-0">
+            <div key={option.id} className={`border-b border-gray-200 pb-4 last:border-b-0 transition-opacity ${locked ? "opacity-40" : ""}`} aria-disabled={locked || undefined}>
               <div className="flex items-start space-x-3">
-                <Checkbox id={option.id} checked={services.includes(option.id)} onCheckedChange={() => toggle(option)} className="mt-1" />
+                <Checkbox id={option.id} checked={services.includes(option.id)} disabled={locked} onCheckedChange={() => toggle(option)} className="mt-1" />
                 <div className="flex-1">
-                  <Label htmlFor={option.id} className="text-base font-poppins font-semibold text-gray-900 cursor-pointer">
+                  <Label htmlFor={option.id} className={`text-base font-poppins font-semibold text-gray-900 ${locked ? "cursor-not-allowed" : "cursor-pointer"}`}>
                     {option.title}
                   </Label>
                   <p className="text-sm text-gray-600 font-poppins mt-1 leading-relaxed">{option.description}</p>
@@ -359,13 +351,17 @@ export function ServicesField({ title, hint, options, categories, services, subc
         />
       )}
       {documentsNotice && (
-        <Dialog open={noticeFor !== null} onOpenChange={(o) => !o && setNoticeFor(null)}>
+        <Dialog open={notice !== null} onOpenChange={(o) => !o && setNotice(null)}>
           {/* The sign-up's notices fade in from just above (as the ABN notice). */}
           <DialogContent className="sm:max-w-md data-[state=open]:[--tw-enter-translate-x:0]! data-[state=open]:[--tw-enter-translate-y:-1.5rem]! data-[state=open]:[--tw-enter-scale:1]! data-[state=closed]:[--tw-exit-translate-x:0]! data-[state=closed]:[--tw-exit-translate-y:-1.5rem]! data-[state=closed]:[--tw-exit-scale:1]! duration-300">
             <DialogTitle className="font-cooper text-2xl text-gray-900">{documentsNotice.title}</DialogTitle>
-            <DialogDescription className="font-poppins text-base text-[#0C1628]">{documentsNotice.text.replace("{service}", noticeFor ?? "")}</DialogDescription>
+            <DialogDescription className="font-poppins text-base text-[#0C1628]">{documentsNotice.text.replace("{service}", notice?.service ?? "")}</DialogDescription>
+            <ul className="list-disc pl-6 space-y-1 font-poppins text-sm text-gray-900">
+              {notice?.documents.map((d) => <li key={d}>{d}</li>)}
+            </ul>
+            <p className="font-poppins text-sm text-gray-600">{documentsNotice.after}</p>
             <DialogFooter>
-              <button type="button" onClick={() => setNoticeFor(null)} className="bg-[#0C1628] hover:bg-[#1a2740] text-white px-4 py-2 rounded-lg font-poppins font-medium text-sm">
+              <button type="button" onClick={() => setNotice(null)} className="bg-[#0C1628] hover:bg-[#1a2740] text-white px-4 py-2 rounded-lg font-poppins font-medium text-sm">
                 {documentsNotice.button}
               </button>
             </DialogFooter>

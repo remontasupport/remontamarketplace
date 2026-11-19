@@ -72,7 +72,8 @@ export const workerRegistrationForm = defineForm({
           max: 1,
           documentsNotice: {
             title: "Please Note:",
-            text: "{service} requires supporting documents. After signing up, go to Compliance on your dashboard to see the list of required documents and upload them.",
+            text: "{service} requires the following documents:",
+            after: "After signing up, go to Compliance on your dashboard to upload them.",
             button: "OK",
           },
           // worker-tools (FR-10, UR-10): only a note; the tools themselves are on the dashboard.

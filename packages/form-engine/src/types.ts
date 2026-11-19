@@ -33,13 +33,13 @@ export type FieldDef =
       title?: string;
       /** Words shown under the list while any of `whenAny` (service ids) is ticked; display only, never sent (worker-tools UR-10). */
       notes?: readonly { whenAny: readonly string[]; text: string }[];
-      /** At most this many services on this form (the contract may allow more): 1 = picking one replaces the other. */
+      /** At most this many services on this form (the contract may allow more): 1 = once one is picked, the others are off until it is un-picked. */
       max?: number;
       /**
-       * Shown when a service that needs documents is picked (the catalogue's `requiresQualification`, or a chosen
-       * sub-category's `requiresRegistration`). `{service}` in the text is the service's name.
+       * Shown when a picked service has required documents (the platform's list, the one its dashboard asks for):
+       * `text` (`{service}` is the service's name), the documents, then `after`.
        */
-      documentsNotice?: { title: string; text: string; button: string };
+      documentsNotice?: { title: string; text: string; after: string; button: string };
     })
   /**
    * A photo uploaded straight to storage (U3): `ticketEntry` names the key the browser
