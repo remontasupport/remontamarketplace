@@ -31,6 +31,7 @@ import { workerApi } from "./api";
 import { savePair } from "./pair";
 import { ROW_DELETES } from "./rowDeletes";
 import { UNAVAILABLE_MESSAGE, useSection, type SaveState } from "./useSection";
+import { useReportUnsaved } from "./unsaved";
 
 const choices = (options: readonly (string | { value: string; label?: string })[]): ChoiceOption[] =>
   options.map((o) => (typeof o === "string" ? { value: o, label: o } : { value: o.value, label: o.label ?? o.value }));
@@ -245,6 +246,7 @@ export function SectionPair({ title, first, second }: { title: string; first: Se
   const a = useSection(first);
   const b = useSection(second);
   const onSave = () => savePair([a, b]);
+  useReportUnsaved(a.changed || b.changed);
 
   return (
     <section className="space-y-5">

@@ -11,6 +11,10 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
 import { applyReadiness, EDIT_PROFILE_CHILDREN, sectionHref } from "@/features/navigation/workerMenu";
 import { useWorkerProfile } from "./profile";
+import { UnsavedChangesProvider } from "./unsaved";
+
+/** Next on a step whose answers are typed but not saved (2026-11-19). */
+export const SAVE_FIRST_MESSAGE = "Save your updates first, then continue.";
 
 type ApplyContext = { applyJobId: string; applyJobTitle: string } | null;
 
@@ -43,6 +47,7 @@ export default function ProfileShell({ slug, children }: { slug?: string; childr
   // A step with required answers keeps "Next" here until they are saved (2026-11-19).
   const required = at >= 0 ? EDIT_PROFILE_CHILDREN[at]!.requiredBeforeNext : undefined;
   const [blocked, setBlocked] = useState<string | null>(null);
+  const [unsaved, setUnsaved] = useState(false); // a form on this step has edits not saved yet
   useEffect(() => setBlocked(null), [slug, profile]);
 
   return (
@@ -68,7 +73,9 @@ export default function ProfileShell({ slug, children }: { slug?: string; childr
           </div>
         )}
         {apply && !canApply && <p className="mb-3 text-xs font-poppins text-amber-700">To apply, complete: {missing.join(", ")}.</p>}
-        <div className="rounded-xl border border-gray-200 bg-white p-5 sm:p-6">{children}</div>
+        <div className="rounded-xl border border-gray-200 bg-white p-5 sm:p-6">
+          <UnsavedChangesProvider onChange={setUnsaved}>{children}</UnsavedChangesProvider>
+        </div>
         {(prev || next) && (
           <nav className="mt-4 flex justify-between text-sm font-poppins" aria-label="Sections">
             {prev ? (
@@ -84,7 +91,8 @@ export default function ProfileShell({ slug, children }: { slug?: string; childr
                 onClick={(e) => {
                   if (required && profile && !required.ok(profile)) {
                     e.preventDefault();
-                    setBlocked(required.message);
+                    // Typed but not saved: say so; otherwise what is still missing.
+                    setBlocked(unsaved ? SAVE_FIRST_MESSAGE : required.message);
                   }
                 }}
                 className="inline-flex items-center gap-1 text-[#0C1628] hover:underline"
