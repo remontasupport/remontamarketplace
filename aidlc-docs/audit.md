@@ -6274,3 +6274,5 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User Input**: "There is an error when I merged it CI (api) / API Quality (Node 22.x) (pull_request)"
 **AI Response**: `main` still `1f8d27f` (not merged). Check runs of `d24e98a`: only API Quality (Node 22.x) failed; Node 20.x and every other check passed. The one failing test was the existing `profile.http.test.ts` U1-SEC-06 (the BSB `062000` must not appear in logs): the log's `responseTime` was `1.0510620000000017`, a coincidence. The agreement database tests passed on both Node versions. Fixed the test to mask timing fields (`a6…` on `feat/signup-agreement-api`), pushed.
 **Context**: CONSTRUCTION U1, CI.
+
+**AI note (2026-11-19):** the test fix above is commit `92489f6` on `feat/signup-agreement-api`.
