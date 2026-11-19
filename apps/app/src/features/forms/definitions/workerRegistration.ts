@@ -18,6 +18,12 @@ export const workerRegistrationForm = defineForm({
     title: "Welcome to Remonta",
     text: "There are thousands of people on Remonta looking for support workers just like you. Create your account today and tell us more about yourself",
     button: "Continue",
+    // signup-abn-agreement R1: the ABN is asked for on the last step.
+    notice: {
+      text: "Before you begin, please have your ABN handy. You’ll need it in the final step of the sign-up process.",
+      proceed: "Proceed",
+      cancel: "Cancel",
+    },
   },
   steps: [
     {
@@ -89,6 +95,11 @@ export const workerRegistrationForm = defineForm({
           statement: "I acknowledge and consent to my profile and photo will be shared with clients for matching purposes.",
         },
       ],
+    },
+    {
+      // signup-abn-agreement U2: the dashboard's ABN Contractor Agreement, signed here and recorded with the account.
+      title: "Contractor Agreement",
+      fields: [{ name: "agreement", kind: "agreement", ticketEntry: "createAgreementUploadTicket", nameFrom: ["firstName", "lastName"], neverSaved: true }],
     },
   ],
 });

@@ -1,5 +1,6 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
+import { registrationContract } from "@remonta/api-contract";
 import { formSchemaFor, loadDraft, neverSavedKeys, saveDraft, toRequestBody } from "@remonta/form-engine";
 import { localityInputText, notesFor, saveSubcategories, toggleService, type ServiceCategory } from "@/components/ui/form-wizard/fields";
 import { workerRegistrationForm } from "./definitions/workerRegistration";
@@ -19,6 +20,7 @@ const filled = {
   photoUploadId: "https://blob.example/workers/x.jpg",
   consentProfileShare: true,
 };
+const signedAgreement = { uploadId: "9b2e7c1a-3d4f-4a5b-8c6d-7e8f9a0b1c2d", fileName: "Contractor_Agreement_Mary_O'Connor_2026-11-19.pdf", abn: "51824753556" };
 
 describe("the sign-up form's messages are plain English (2026-10-14)", () => {
   const resolve = (values: Record<string, unknown>) =>
@@ -58,7 +60,31 @@ describe("the worker sign-up definition", () => {
       ["firstName", "lastName", "mobile", "email", "emailVerification", "password"],
       ["services"],
       ["photoUploadId", "consentProfileShare"],
+      ["agreement"],
     ]);
+  });
+
+  it("signup-abn-agreement R1: Continue shows the ABN notice, with Proceed and Cancel", () => {
+    expect(workerRegistrationForm.intro?.notice).toEqual({
+      text: "Before you begin, please have your ABN handy. You’ll need it in the final step of the sign-up process.",
+      proceed: "Proceed",
+      cancel: "Cancel",
+    });
+  });
+
+  it("signup-abn-agreement: the last step is the agreement, required, never in the draft, sent as the contract takes it", () => {
+    const last = workerRegistrationForm.steps.at(-1)!;
+    expect(last.title).toBe("Contractor Agreement");
+    expect(last.fields[0]).toMatchObject({ kind: "agreement", ticketEntry: "createAgreementUploadTicket", nameFrom: ["firstName", "lastName"] });
+    expect(neverSavedKeys(workerRegistrationForm)).toContain("agreement");
+    expect(formSchemaFor(workerRegistrationForm).safeParse({ ...filled, agreement: null }).success).toBe(false);
+    // What the form accepts, the contract accepts.
+    const values = { ...filled, email: "mary@example.com", emailVerification: { token: "ab".repeat(32), expiresAt: 1_790_000_000_000, code: "123456" }, photoUploadId: "3f2b8c1e-7d4a-4f5b-9c2e-1a2b3c4d5e6f", agreement: signedAgreement };
+    expect(formSchemaFor(workerRegistrationForm).safeParse(values).success).toBe(true);
+    const body = { ...toRequestBody(workerRegistrationForm, values, new URLSearchParams()), captchaToken: "t" };
+    const schema = (registrationContract.entries.submitWorkerRegistration.body as { schema: { safeParse: (v: unknown) => { success: boolean } } }).schema;
+    expect(schema.safeParse(body).success).toBe(true);
+    expect(body).toMatchObject({ agreement: signedAgreement });
   });
 
   it("sends the contract's body, with the consent version and the Zoho lead id from ?id=", () => {
@@ -81,7 +107,7 @@ describe("the worker sign-up definition", () => {
 
 describe("the photo preview kept beside the staged id", () => {
   const key = previewKeyOf("photoUploadId");
-  const values: Record<string, unknown> = { ...filled, email: "mary@example.com", emailVerification: { token: "ab".repeat(32), expiresAt: 1, code: "123456" }, photoUploadId: "8f6c0d3e-0f0e-4d6a-9c4b-1b2c3d4e5f60", [key]: "data:image/jpeg;base64,AAAA" };
+  const values: Record<string, unknown> = { ...filled, email: "mary@example.com", emailVerification: { token: "ab".repeat(32), expiresAt: 1, code: "123456" }, photoUploadId: "8f6c0d3e-0f0e-4d6a-9c4b-1b2c3d4e5f60", agreement: signedAgreement, [key]: "data:image/jpeg;base64,AAAA" };
 
   it("is a companion key, not a field name, and never reaches the request body", () => {
     expect(key).not.toMatch(/[.[\]]/); // a plain key for react-hook-form, not a nested path

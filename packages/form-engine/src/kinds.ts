@@ -64,6 +64,7 @@ export const localityValue = z.object({
 export type LocalityValue = z.infer<typeof localityValue>;
 
 const CHOOSE_SUBURB = "Please choose your suburb from the list";
+export const SIGN_THE_AGREEMENT = "Please sign the agreement";
 
 export const KINDS: Record<FieldDef["kind"], KindRules> = {
   text: plain,
@@ -106,6 +107,13 @@ export const KINDS: Record<FieldDef["kind"], KindRules> = {
     defaults: (f) => ({ [f.name]: false }),
     schemas: (ctx) => ({ [ctx.field.name]: ruleFor(ctx, ctx.field.name) }),
     toBody: (f) => ({ [f.name]: true }),
+  },
+
+  // signup-abn-agreement U2: required on the form although the contract keeps it optional until every app sends it.
+  agreement: {
+    defaults: (f) => ({ [f.name]: null }),
+    schemas: (ctx) => ({ [ctx.field.name]: ruleFor(ctx, ctx.field.name).refine((v) => v != null, SIGN_THE_AGREEMENT) }),
+    toBody: (f, v) => ({ [f.name]: v[f.name] }),
   },
 
   emailCode: {

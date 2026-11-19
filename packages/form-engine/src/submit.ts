@@ -43,7 +43,8 @@ export async function submitToApi(def: FormDefinition, backend: Api, values: Rec
     }, deps.retry);
     if (r.ok) return { ok: true };
     const fields = (r.body as { error?: { fields?: Record<string, string[]> } } | null)?.error?.fields;
-    if (r.status === 400 && fields) return { ok: false, kind: "invalid", fields: topLevel(fields) };
+    // 413/415 name a field too (the signed agreement's file): the step that owns it shows the message.
+    if ((r.status === 400 || r.status === 413 || r.status === 415) && fields) return { ok: false, kind: "invalid", fields: topLevel(fields) };
     return { ok: false, kind: "failed", message: messageFor(r.status) };
   } catch {
     return { ok: false, kind: "failed", message: "We couldn't reach Remonta. Your details are saved on this device -- please check your connection and try again." };

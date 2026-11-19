@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useController, useWatch, type Control, type FieldErrors } from "react-hook-form";
 import { KINDS, type Backend, type EmailCodeField as EmailCodeDef, type FieldDef, type FormDefinition, type LocalityValue, type UploadProgress } from "@remonta/form-engine";
+import { AgreementSlot } from "./AgreementSlot";
 import { ConsentField, EmailCodeField, FieldLoading, LocalityField, PasswordField, PhotoField, ServicesField, TextField } from "@/components/ui/form-wizard/fields";
 import { FormWizardView, WizardIntro } from "@/components/ui/form-wizard/FormWizardView";
 import { SERVICE_OPTIONS } from "@/constants";
@@ -108,6 +109,8 @@ function FieldSlot({ field, control, errors, backend, uploader, wizard, definiti
       return <ServicesSlot field={field} control={control} backend={backend} error={error ?? errorOf(errors, field.subcategoriesName)} />;
     case "photo":
       return <PhotoSlot field={field} control={control} uploader={uploader} wizard={wizard} error={error} />;
+    case "agreement":
+      return <AgreementSlot field={field} control={control} wizard={wizard} error={error} />;
     case "consent":
       return (
         <Controller
