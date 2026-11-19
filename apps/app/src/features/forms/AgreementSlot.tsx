@@ -10,7 +10,6 @@ import { CheckCircle2 } from "lucide-react";
 import type { FieldDef } from "@remonta/form-engine";
 import { abnNumberSchema } from "@remonta/schemas/schema/workerRegistrationSchema";
 import ContractAgreementForm, { emptyPreamble } from "@/components/contracts/ContractAgreementForm";
-import { Button } from "@/components/ui/button";
 import { buildContractPdf, preambleProblem, type ContractPreamble } from "@/lib/contractPdf";
 import type { useFormWizard } from "./useFormWizard";
 import "@/app/styles/contract.css";
@@ -62,19 +61,6 @@ export function AgreementSlot({ field, control, wizard, error }: { field: Agreem
             <p className="text-lg font-medium text-gray-900">Agreement signed</p>
             <p className="text-sm text-gray-600">Your signed Contractor Agreement will be saved to your account when you complete your sign-up. You can view it on your dashboard afterwards.</p>
           </div>
-        </div>
-        <div className="mt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => {
-              value.onChange(null);
-              setSignature(null);
-              setAgreed(false);
-            }}
-          >
-            Change
-          </Button>
         </div>
       </div>
     );
