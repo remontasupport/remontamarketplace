@@ -17,6 +17,7 @@ describe('the contracts as committed', () => {
       'createAgreementUploadTicket',
       'createPhotoUploadTicket',
       'listServiceCategories',
+      'listServiceRequirements',
       'requestEmailCode',
       'searchLocalities',
       'submitWorkerRegistration',
