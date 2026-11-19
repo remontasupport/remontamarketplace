@@ -9,6 +9,7 @@ import { confirmPhotoUpload, type PhotoConfirmDeps } from './application/photo-c
 import { createPhotoTicket, type PhotoTicketDeps } from './application/photo-ticket'
 import { registerWorker, type RegisterDeps } from './application/register-worker'
 import { listServiceCategories } from './application/service-categories'
+import { listServiceRequirements } from './application/service-requirements'
 
 export interface RegistrationModuleDeps extends Omit<RegisterDeps, 'bucket'>, Omit<PhotoConfirmDeps, 'db' | 'now'>, PhotoTicketDeps, EmailCodeDeps {
   localities: LocalityDirectory
@@ -17,6 +18,8 @@ export interface RegistrationModuleDeps extends Omit<RegisterDeps, 'bucket'>, Om
 export function registrationHandlers(deps: RegistrationModuleDeps) {
   return defineHandlers(registrationContract, {
     listServiceCategories: async () => ({ status: 200, body: { categories: await listServiceCategories(deps.db) } }),
+
+    listServiceRequirements: async (req) => ({ status: 200, body: await listServiceRequirements(deps.db, req.query) }),
 
     searchLocalities: async (req) => ({ status: 200, body: { localities: await deps.localities.search(req.query.q) } }),
 
