@@ -6433,3 +6433,9 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 
 **User Input (2026-11-20):** "adding a sign-in checks"
 **AI Response:** On `fix/middleware-location` (`a00e54a`): `signInRequired()` in lib/auth.ts (401 "Sign in required" without a signed-in user; tested with a revoked-session case) at the top of `/api/upload/worker-photo` (POST), `/api/contractors` and `/api/contractors/[id]` (GET). Callers checked first: sign-up uploads via apps/api (only the admin photo picker / PhotoUpload's default use the route); apps/web has its own /api/contractors routes; the app's list is called only by `/remontaadmin/findsupport`, the detail by nothing. Noted: `/remontaadmin/findsupport` ("Admin access only") has no page protection (outside the middleware matcher, no layout); asked whether to put it under the middleware as ADMIN. App 761, baselines held.
+
+**User Input (2026-11-20):** (a Vercel build error pasted: `./src/middleware.ts` "Can't resolve './src/types/auth'")
+**AI Response:** That was the preview of `8e313ff` (the move-only commit); `c9550d4` fixed the import and built (remonta-app success); `a00e54a` built too. Nothing to fix; revert the two together if ever needed.
+
+**User Input (2026-11-20):** "leave it as is for now" (about `/remontaadmin/findsupport` having no page protection)
+**AI Response:** Left as is; added to the follow-ups: `/remontaadmin/findsupport` ("Admin access only") is outside the middleware and has no layout check; since `a00e54a` its data (`/api/contractors`) needs a sign-in.
