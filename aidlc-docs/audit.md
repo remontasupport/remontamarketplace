@@ -6387,3 +6387,6 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 
 **User Input (2026-11-20, answers):** Scope "One set per worker"; Units "Hourly; sleepover per night"; Required "Weekdays required, rest optional"; Visibility "Admin (worker page)".
 **AI Response:** Plan `inception/plans/worker-rates-plan.md`: new table `worker_rates` (six numeric(7,2)), `getRates`/`putRates` + admin `getWorkerRates`, an api branch from `main` first, the app on `feat/signup-agreement-app`, one promotion of the rates merge sha (contains `9a01efd`). Asked for approval.
+
+**User Input (2026-11-20):** "yes"
+**AI Response (api half):** Branch `feat/worker-rates-api` from `main` `9a01efd`, commit `df8895d`, pushed (PR not opened: no gh). Migration `20261120120000_worker_rates` (expand-only, down.sql, CHECK 1..999999 cents); amounts stored as **integer cents** rather than numeric(7,2) (plan deviation: exact, no Decimal type in the api; the wire is dollars). Contract `rates.ts`: `getRates`/`putRates` (worker), `getWorkerRates` (admin). Handlers through `replaceSection` (completion false). Tests: contract 146, api 1242 (+7 database tests skipped locally, CI runs them), db 50, form-engine 76, schemas 103, app 753; openapi.json regenerated; docs/worker and docs/admin updated. down.sql not yet run on a Neon branch.
