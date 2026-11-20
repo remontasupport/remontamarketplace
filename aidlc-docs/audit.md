@@ -6448,3 +6448,6 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 
 **User Input (2026-11-20):** "fix the gap 1."
 **AI Response:** Branch `fix/reset-signs-out` from `main` `4d67e36`: the reset stores `passwordChangedAt: new Date()`; route test (2). App 763, baselines held. App only. Order for the user: merge, check production, then do the reset (a reset before the merge does not sign her out).
+
+**User Input (2026-11-20):** "merged"
+**AI Response:** #172 merged (`main` = `02f3c75`); Vercel production builds success; /login 200, the reset endpoint answers 400 to an invalid token (route up). The user may now reset admin@ through Forgot password.
