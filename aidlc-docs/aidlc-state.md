@@ -3,19 +3,8 @@
 ## Project Information
 - **Project**: Remonta marketplace monorepo (`apps/app`, `apps/web`, `apps/api`, `packages/*`, `infra/`)
 - **Project Type**: Brownfield
-- **Current Cycle**: signup-abn-agreement (opened 2026-11-19): the ABN notice and the Contractor Agreement inside the worker sign-up.
-- **Current Stage**: CONSTRUCTION, paused 2026-11-19 (session closed by the user). **Resume here:**
-  1. **Promote the api** (staging already runs it): Actions -> deploy-api -> Run workflow -> stage `prod`, imageTag
-     `9a01efd1a454b716df8b2cea3edd7782a8756432` (`main` after #165-#167: U1 + `GET /v1/service-requirements` + the
-     24 h verified-email window). Production api today: `fcc503a` (U1 only). Then check production: /v1/health 200,
-     `/v1/service-requirements?categoryId=support-worker` 200.
-  2. **U2 PR** `feat/signup-agreement-app` (`02cf04f`, 23 commits ahead of `main` `9a01efd`; not opened yet):
-     https://github.com/remontasupport/remontamarketplace/compare/main...feat%2Fsignup-agreement-app?expand=1 --
-     the preview checklist (list in `construction/u2-agreement-app/construction-notes.md`), merge only **after** step 1.
-  3. **U3 `agreement-required`**: `agreement` required and `services` at most 1 in the registration schema; staging,
-     preview, promote (after U2 is live).
-  4. Re-record CLAUDE.md's rollback rows (the docs PR `docs/rollback-rows-2026-11-11` `a06317d` is still unmerged and
-     predates this cycle), then close the cycle.
+- **Current Cycle**: none (signup-abn-agreement closed 2026-11-20; archive `aidlc-docs/archive/signup-abn-agreement/`).
+- **Current Stage**: between cycles. Next: pick from the follow-ups (49, U3 `agreement-required`, is the smallest open piece).
 
 ## Previous cycles (archived, read-only)
 
@@ -38,11 +27,18 @@
 | Worker Zoho sync (U1 `account-details-webhook`, + the dispatcher fix) | `aidlc-docs/archive/worker-zoho-sync/` | Closed 2026-11-10; #157-#158 live (api prod `00030-89z` = `167bc28`; app/web code unchanged, rollback point `972ff6b`); verified by the user in n8n/Zoho |
 | Drop the legacy location columns (search-locations U7) | `aidlc-docs/archive/drop-legacy-location-columns/` | Closed 2026-11-10; #160 live (migration `20261110120000_drop_worker_profiles_legacy_location`, api prod `00031-9h4` = `1e4d74e`); n8n "Query workers" moved to worker_locations first; backup Neon branch `backup-before-u7-2026-11-10` |
 | Document history (U1 `history-api`, U2 `history-app`) | `aidlc-docs/archive/document-history/` | Closed 2026-11-11; #162-#163 live (api prod image `e73524c`, previous `1e4d74e`; app `main` `3cb3206`); #164 (client dashboard relationship field) outside the goal, app/web `main` `1f8d27f` |
+| Sign-up ABN and agreement (U1 `agreement-api`, U2 `agreement-app`; + worker rates, admin dashboard, auth fixes) | `aidlc-docs/archive/signup-abn-agreement/` | Closed 2026-11-20; #165-#172 live (api prod image `626dd09`, previous `bbeec8e`; app/web `main` `dfa4b49`); U3 not built (follow-up 49) |
 
 `aidlc-docs/audit.md` is the single append-only audit trail across cycles; never rewrite it.
 
 ## What is live (carry forward -- facts the next cycle builds on)
 
+- **Sign-up ABN + agreement, worker rates, auth** (2026-11-20): the sign-up opens with the ABN notice and ends with the
+  Contractor Agreement (PDF by ticket, `agreementUploadId`; one service). `worker_rates` (one row per worker, cents;
+  `GET/PUT /v1/worker/rates`, admin `GET /v1/admin/workers/:workerId/rates`, search `withRates`), shown to admins only.
+  The auth middleware is `apps/app/src/middleware.ts` (rules in `lib/routeAccess.ts`: worker, client,
+  supportcoordinators, apply, admin; a revoked session counts as signed out). A password reset by email sets
+  `passwordChangedAt`. Suspend account is on the admin dashboard cards; Restore in Suspended accounts (with a search).
 - **Document history** (2026-11-11): a worker's replace, delete or service removal writes a `document_versions` row
   and keeps the file (bucket key or legacy Blob URL); nothing in the worker handlers deletes a document file any more.
   Admins: `GET /v1/admin/workers/:workerId/document-versions`, `GET /v1/admin/document-versions/:id/link`, `DELETE
@@ -200,6 +196,16 @@
     one-off send if wanted); the n8n worker-profile webhook URL appeared in the session (2026-11-10): change its path in n8n
     and add a secret version if that matters; before any backfill or `COMPLETION_MODEL` switch, count the `accountDetails`
     flips (each is sent to Zoho); a stale-PENDING alert for outbox events no revision handles (none today).
+
+49. **U3 `agreement-required`** (signup-abn-agreement): `abn` and `agreementUploadId` required and `services` at most 1
+    in the registration schema (the form already requires them); staging, preview, promote.
+50. **Suspension ends open sessions**: the jwt callback's once-a-minute check (`lib/sessionRevocation.ts`) should also
+    treat a non-ACTIVE account as signed out; today a suspended worker keeps the Next session (24 h / 7 days) and the
+    Next routes, though the api stops within 5 min (the token mint checks status).
+51. **`/remontaadmin/findsupport`** has no page protection (left as is by the user, 2026-11-20).
+52. **Admin change-password page**: admins have none (`/v1/account/password` refuses ADMIN); Forgot password is the way today.
+53. **Restore for LOCKED / PENDING_VERIFICATION** accounts: only the Edit Profile page offered it; the button moved to the
+    dashboard cards (ACTIVE only) and Suspended accounts lists SUSPENDED only.
 
 ## Workspace State
 - **Existing Code**: Yes
