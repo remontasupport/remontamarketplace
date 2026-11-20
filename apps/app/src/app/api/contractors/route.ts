@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { signInRequired } from '@/lib/auth'
 import { applyRateLimit, publicApiRateLimit } from '@/lib/ratelimit'
 import { geocodeAddress, calculateDistance, calculateBoundingBox } from '@/lib/geocoding'
 
@@ -45,6 +46,9 @@ const DEFAULT_OFFSET = 0
  */
 export async function GET(request: NextRequest) {
   try {
+    // Sign-in required (2026-11-20): this route had no check.
+    const denied = await signInRequired()
+    if (denied) return denied
     // ============================================
     // 1. APPLY RATE LIMITING
     // ============================================

@@ -8,6 +8,7 @@
  */
 
 import { getServerSession } from "next-auth/next";
+import { NextResponse } from "next/server";
 import { authOptions } from "./auth.config";
 import { UserRole } from "@/types/auth";
 import type { Session } from "next-auth";
@@ -27,6 +28,14 @@ export async function getSession(): Promise<Session | null> {
 export async function getCurrentUser() {
   const session = await getSession();
   return session?.user ?? null;
+}
+
+/**
+ * A route's sign-in check (2026-11-20): the 401 to return when nobody is signed in, else null.
+ * `const denied = await signInRequired(); if (denied) return denied;`
+ */
+export async function signInRequired(): Promise<NextResponse | null> {
+  return (await getCurrentUser()) ? null : NextResponse.json({ error: "Sign in required" }, { status: 401 });
 }
 
 /**
