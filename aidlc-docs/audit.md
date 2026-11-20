@@ -6393,3 +6393,9 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 
 **AI Response (2026-11-20, app half):** On `feat/signup-agreement-app`: merged `feat/worker-rates-api` (`56e6a97`), then `9433211`. Services -> Rates after Service Area (`RATES_LINK`, `/dashboard/worker/profile/rates`), a `ratesSection` definition on its own read (`getRates`; `useSection`/`SectionPage` take an optional `SectionSource`, `features/worker/rates.ts`); number kind gains `decimals` + `prefix` ("$"). Weekdays required by the contract (Save refuses), others "Optional". Service Area's Save -> Rates; Rates' Save -> dashboard. Rates is not a My Profile step (no Next/Previous; own Save, like Service Area). Admin Show profile: a Rates section, admin only, hidden when none saved (`adminApi.getWorkerRates`). App 777 tests, baselines held, form-engine 82, app build green; regenerated Prisma clients not committed.
 **Order now:** PR `feat/worker-rates-api` -> CI (database tests) -> merge -> staging migration + deploy -> U2 PR preview checklist + rates -> promote the rates merge sha (contains `9a01efd`) -> merge U2.
+
+**User Input (2026-11-20):** "how to do this? down.sql"
+**AI Response:** Steps given: a throwaway Neon branch of production, in its SQL Editor run migration.sql, down.sql, `select to_regclass('public.worker_rates')` (NULL), migration.sql again; then delete the branch.
+
+**User Input (2026-11-20):** "all four passed"
+**AI Response:** Recorded: `20261120120000_worker_rates` down.sql tested on a Neon branch of production (create, drop, table gone, re-create clean). The api PR may merge once CI is green.
