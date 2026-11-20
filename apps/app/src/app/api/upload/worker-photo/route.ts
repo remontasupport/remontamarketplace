@@ -1,17 +1,22 @@
 /**
  * Worker Photo Upload API Endpoint
  *
- * Uploads worker photo to Vercel Blob storage before registration
- * Returns the Blob URL to be included in registration data
+ * Uploads a worker photo to Vercel Blob storage for a signed-in screen (the admin photo picker)
+ * Returns the Blob URL
  *
  * POST /api/upload/worker-photo
  */
 
 import { NextResponse } from 'next/server';
 import { uploadWorkerPhoto, generateFileName, validateImageFile } from '@/lib/blobStorage';
+import { signInRequired } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
+    // Sign-in required (2026-11-20): anyone could upload to the production Blob store. The sign-up uploads through
+    // apps/api; this route serves signed-in screens only (the admin photo picker, PhotoUpload's default).
+    const denied = await signInRequired();
+    if (denied) return denied;
 
 
     // Parse FormData
