@@ -6451,3 +6451,6 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 
 **User Input (2026-11-20):** "merged"
 **AI Response:** #172 merged (`main` = `02f3c75`); Vercel production builds success; /login 200, the reset endpoint answers 400 to an invalid token (route up). The user may now reset admin@ through Forgot password.
+
+## 2026-11-20: Suspend button on the cards
+**User Input**: "On the admin dashboard, can you place the Suspend Account button to the cards of the profile? instead in the Edit Profile page"
