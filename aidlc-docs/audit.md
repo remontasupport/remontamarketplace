@@ -6442,3 +6442,9 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 
 **User Input (2026-11-20):** "merged, with all the changes we made including yesterday, is it live already?"
 **AI Response:** Checked: only #171 (`fix/middleware-location`) is merged (`main` = `4d67e36`); Vercel production builds success. Live and verified signed out on production: /dashboard/worker/profile/bio, /dashboard/worker/profile/rates and /admin answer 307 to /login?callbackUrl=<page>; /api/contractors 401 "Sign in required". **Not live:** U2 PR #169 (`feat/signup-agreement-app`, yesterday's and today's app changes) is open, not merged; the rates page itself is in U2. The api for it (`626dd09`) is already in production.
+
+**User Input (2026-11-20):** "Ahh ok, I want to change the password of admin@remontaservices.com.au since we have a internal member awoled so she might login to the dashboard"
+**AI Response:** Admins have no change-password page (AccountSettingsPanel: worker, client, coordinator; `/v1/account/password` refuses ADMIN): use Forgot password. Found: the reset did not set `passwordChangedAt`, so other sessions stayed (up to 7 days). Also advised: secure the admin@ mailbox first (the reset link goes there), suspend her own account, review her access to Vercel/Neon/GCP/GitHub/Zoho/n8n.
+
+**User Input (2026-11-20):** "fix the gap 1."
+**AI Response:** Branch `fix/reset-signs-out` from `main` `4d67e36`: the reset stores `passwordChangedAt: new Date()`; route test (2). App 763, baselines held. App only. Order for the user: merge, check production, then do the reset (a reset before the merge does not sign her out).
