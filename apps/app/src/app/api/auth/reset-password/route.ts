@@ -87,6 +87,10 @@ export async function POST(request: Request) {
       where: { id: user.id },
       data: {
         passwordHash,
+        // 2026-11-20: a reset signs out every older session and api token within a minute, as the account's own
+        // password change does (U5d, lib/sessionRevocation.ts; the api-token mint checks it too). Before, a session
+        // signed in elsewhere stayed until it expired (up to 7 days with "Remember me").
+        passwordChangedAt: new Date(),
         resetPasswordToken: null, // Clear reset token
         resetPasswordExpires: null,
         failedLoginAttempts: 0, // Reset failed login attempts
