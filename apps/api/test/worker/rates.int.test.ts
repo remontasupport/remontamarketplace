@@ -96,6 +96,18 @@ describe.skipIf(!local)('the rates entries on PostGIS', () => {
     )
   })
 
+  it('the admin search carries the rates on each row only with withRates (the dashboard cards)', async () => {
+    await save(h.a.userId, BODY)
+    const search = async (q: Record<string, string>) => {
+      const res = await admin.fastify.inject({ method: 'GET', url: `/v1/admin/workers?${new URLSearchParams({ search: "Mary O'Connor", pageSize: '50', ...q })}`, headers: { 'x-test-principal': 'admin_1:ADMIN', 'cache-control': 'no-cache' } })
+      expect(res.statusCode, res.body).toBe(200)
+      return (res.json().data as { id: string; rates?: unknown }[]).find((r) => r.id === h.a.profileId)
+    }
+    const row = await search({ withRates: 'true' })
+    expect(row?.rates).toMatchObject({ weekday: 42.5, saturday: 55, sunday: null, publicHoliday: 90.25, evening: null, inactiveSleepover: 250 })
+    expect(await search({})).not.toHaveProperty('rates')
+  })
+
   it('a WORKER account without a profile is 404 on both entries; an unknown worker id is 404 for the admin', async () => {
     expect((await read(h.orphan.userId)).statusCode).toBe(404)
     expect((await save(h.orphan.userId, BODY)).statusCode).toBe(404)
