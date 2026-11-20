@@ -6412,3 +6412,6 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 **User Input (2026-11-20):** "merged" (#170, `main` = `626dd09`)
 **User Input (2026-11-20):** "promoted"
 **AI Response:** deploy-api push run for `626dd09` (staging) completed success 01:50Z; the workflow_dispatch (prod) waited behind it and completed success 01:51Z. Production /v1/health 200. Production api = `626dd096d505acbc3fd0ecba98633b91ab961b75` (previous `bbeec8e`, before it `fcc503a`). Again promoted before the U2 preview checklist; U2 still needs the checklist before its merge. U2 may now merge after the checklist (the api accepts `withRates`).
+
+**User Input (2026-11-20):** "the rates should be under the address, also it should be vertically aligned"
+**AI Response:** `CardRates` moved out of the card's details row (address, gender, age) to a block directly under it: one rate per line, a two-column grid (label, amount right-aligned with tabular figures). App only; app 779, baselines held. Pushed `dc355ce` to `feat/signup-agreement-app`.
