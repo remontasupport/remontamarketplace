@@ -6402,3 +6402,6 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 
 **User Input (2026-11-20):** "merged"
 **AI Response:** Checked: `main` = `bbeec8e` (#168, contains `df8895d` and `9a01efd`). deploy-api for `bbeec8e` completed success (staging; migration `20261120120000_worker_rates` applied to rehearse-w1). Staging `/v1/worker/rates` and `/v1/admin/workers/x/rates` now 401 without a token (were 404: the routes exist). Promotion sha after the U2 preview checklist: `bbeec8ec35badc6d8338b2ac5712c982d1027dbf`.
+
+**User Input (2026-11-20):** "promoted"
+**AI Response:** Checked: deploy-api workflow_dispatch for `bbeec8e` completed success (01:12Z, 4 min after the #168 merge, so before the U2 preview checklist). Production: /v1/health 200, `/v1/service-requirements?categoryId=support-worker` 200 (was 404), `/v1/worker/rates` and `/v1/admin/workers/x/rates` 401 (routes present). Previous production image `fcc503a` (rollback target). The api change is additive (new table, new entries); the deployed app does not call them. U2 must still pass the preview checklist before merging.
