@@ -63,7 +63,7 @@ describe('the contracts as committed', () => {
   })
 
   it('declare the three admin lists, the document link (U3b) and the services of one worker (worker-tools U1) behind the ADMIN role, per-user limited, privately cacheable for a minute (U2); the two switches (worker-activation U1) and the client / coordinator entries (admin-clients U1) and the version delete (document-history U1) never cached', () => {
-    expect(Object.keys(adminContract.entries).sort()).toEqual(['deleteDocumentVersion', 'getDocumentLink', 'getDocumentVersionLink', 'getRequester', 'getWorkerServices', 'listDocumentVersions', 'listRequesters', 'listSuspendedWorkers', 'listUsers', 'searchWorkers', 'setRequestStatus', 'setWorkerActivation', 'setWorkerSuspension'])
+    expect(Object.keys(adminContract.entries).sort()).toEqual(['deleteDocumentVersion', 'getDocumentLink', 'getDocumentVersionLink', 'getRequester', 'getWorkerRates', 'getWorkerServices', 'listDocumentVersions', 'listRequesters', 'listSuspendedWorkers', 'listUsers', 'searchWorkers', 'setRequestStatus', 'setWorkerActivation', 'setWorkerSuspension'])
     const fresh = new Set(['setWorkerActivation', 'setWorkerSuspension', 'listRequesters', 'getRequester', 'setRequestStatus', 'deleteDocumentVersion'])
     for (const [name, e] of Object.entries(adminContract.entries)) {
       expect(e.method, name).toBe(name.startsWith('set') ? 'PUT' : name.startsWith('delete') ? 'DELETE' : name.startsWith('get') || name.startsWith('list') || name === 'searchWorkers' ? 'GET' : 'POST')

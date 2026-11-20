@@ -15,6 +15,7 @@ import { writeHomeAddress, writeServiceArea } from './application/addresses'
 import { getProfile, type GetProfileDeps } from './application/get-profile'
 import { claimAsAdditional, claimAsPhoto, deleteStoredPhoto, makeAdditionalMain, removeAdditional, removeOne, workerPhotosOf } from './application/photos'
 import { replaceSection } from './application/replace-section'
+import { readRates, writeRates } from './application/sections/rates'
 import { GROUPS_WITH_COMPLETION, writeAdditionalInfo, writeBankAccount } from './application/sections/additional-info'
 import { deleteEducationEntry, deleteExperienceArea, deleteJobHistoryEntry, writeAvailability, writeEducation, writeExperience, writeJobHistory } from './application/sections/lists'
 import { ApiError } from '../../platform/errors'
@@ -273,6 +274,14 @@ export function workerHandlers(deps: WorkerModuleDeps) {
     },
 
     putBankAccount: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putBankAccount', completion: false }, (tx, p) => writeBankAccount(tx, p.id, req.body)) }),
+    // worker-rates (2026-11-20): its own read, never cached; not part of completion.
+    getRates: async (_req, ctx) => {
+      const started = Date.now()
+      const body = await readRates(deps.db, ctx.principal!, ctx.log)
+      ctx.log.info({ entry: 'worker.getRates', durationMs: Date.now() - started, userId: ctx.principal!.userId, saved: body.rates.updatedAt !== null }, 'worker rates read')
+      return { status: 200, body }
+    },
+    putRates: async (req, ctx) => ({ status: 200, body: await replaceSection(s, ctx, { section: 'putRates', completion: false }, (tx, p) => writeRates(tx, p.id, req.body)) }),
 
     // onboarding-tour C1: completion declared once (CR-9); the pipeline sets the private cache and the ETag.
     getCompletion: async (_req, ctx) => {

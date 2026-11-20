@@ -15,7 +15,7 @@ import { LocalityDirectory } from '../../src/modules/localities/locality-directo
 import type { BreachCheck } from '../../src/modules/registration/adapters/pwned-passwords'
 import { EMAIL_CODE_MESSAGES } from '../../src/modules/registration/application/email-code'
 import { EMAIL_NOT_VERIFIED } from '../../src/modules/registration/application/register-worker'
-import { EMAIL_CODE_TTL_MS, signEmailCode } from '../../src/modules/registration/domain/email-code'
+import { EMAIL_CODE_TTL_MS, signEmailCode, VERIFIED_EMAIL_GRACE_MS } from '../../src/modules/registration/domain/email-code'
 import { registrationHandlers } from '../../src/modules/registration/registration.handlers'
 import type { Email } from '../../src/platform/email/mailer'
 import { PermanentFailure } from '../../src/platform/errors'
@@ -281,6 +281,23 @@ describe.skipIf(!local)('registration on PostGIS', () => {
       const badCodeNew = await register(await body({ emailVerification: { ...proof, code: proof.code === '000000' ? '000001' : '000000' } }))
       expect(badCode.statusCode).toBe(400)
       expect(badCode.json().error.fields).toEqual(badCodeNew.json().error.fields)
+    })
+
+    it('a verified address stays verified for the sign-up after the code\'s ten minutes, up to the grace (2026-11-19)', async () => {
+      const proofAged = (email: string, ageMs: number) => {
+        const expiresAt = Date.now() - ageMs
+        return { email, emailVerification: { token: signEmailCode(CODE_SECRET, { email, code: '123456', expiresAt }), expiresAt, code: '123456' } }
+      }
+      const late = email()
+      const ok = await register(await body(proofAged(late, 15 * 60_000))) // finished the form 25 minutes after the code was sent
+      expect(ok.statusCode).toBe(202)
+      expect(await db.user.count({ where: { email: late } })).toBe(1)
+
+      const tooLate = email()
+      const refused = await register(await body(proofAged(tooLate, VERIFIED_EMAIL_GRACE_MS + 60_000)))
+      expect(refused.statusCode).toBe(400)
+      expect(refused.json().error.fields).toEqual({ emailVerification: [EMAIL_NOT_VERIFIED] })
+      expect(await db.user.count({ where: { email: tooLate } })).toBe(0)
     })
 
     it('a sign-up without the proof is refused by the contract, naming the field', async () => {

@@ -12,6 +12,7 @@ import { deleteDocumentVersion, documentVersionLink, listDocumentVersions } from
 import { listSuspendedWorkers, listUsers } from './application/lists'
 import { getRequester, listRequesters, setRequestStatus } from './application/requesters'
 import { searchWorkers } from './application/search-workers'
+import { getWorkerRates } from './application/worker-rates'
 import { getWorkerServices } from './application/worker-services'
 import { setWorkerActivation, setWorkerSuspension } from './application/worker-status'
 
@@ -69,6 +70,13 @@ export function adminHandlers(deps: AdminModuleDeps) {
     getWorkerServices: async (req, ctx) => {
       const body = await getWorkerServices(deps, req.params.workerId)
       ctx.log.info({ entry: 'admin.getWorkerServices', workerProfileId: req.params.workerId, services: body.services.length }, 'admin worker services')
+      return { status: 200, body }
+    },
+
+    // worker-rates (2026-11-20): the worker's Show profile; logged with the profile id.
+    getWorkerRates: async (req, ctx) => {
+      const body = await getWorkerRates(deps, req.params.workerId)
+      ctx.log.info({ entry: 'admin.getWorkerRates', workerProfileId: req.params.workerId, saved: body.rates.updatedAt !== null }, 'admin worker rates')
       return { status: 200, body }
     },
 
