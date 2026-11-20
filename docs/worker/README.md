@@ -104,6 +104,17 @@ completion flag recompute and persist it in the same transaction. After a save t
 | `PUT /v1/worker/additional-info/personality` | `{personality, nonSmoker, petFriendly}` | one entry per group since 2026-10-14 (was one `:group` entry); writes only its own `worker_additional_info` columns; audit section `putAdditionalInfo.personality`; used by the Personality page; completion |
 | `PUT /v1/worker/bank-account` | `{accountName, bankName, bsb, accountNumber}` | all four; BSB 6 digits (one dash allowed), number 6-10 digits; stored as today's JSON; the answer and every read are masked to the last three digits |
 
+### Rates (worker-rates, 2026-11-20)
+
+One set per worker in `worker_rates` (one row, amounts in **cents**, a CHECK of 1..999,999 each). Its own read, apart
+from the profile read (the deployed app parses that strictly). Not part of completion; clients never see it (the admin
+reads it, `docs/admin/README.md`). Contract `packages/api-contract/src/rates.ts`.
+
+| Entry | Body | Rules |
+|---|---|---|
+| `GET /v1/worker/rates` | -- | `{rates: {weekday, saturday, sunday, publicHoliday, evening, inactiveSleepover, updatedAt}}` in dollars; every field null until the first save. Weekdays to Evenings per hour, the inactive sleepover per night. **Never cached** (`no-store`). 404 for a worker without a profile row |
+| `PUT /v1/worker/rates` | all six, dollars | `weekday` required; the others a number or `null`; each $0.01..$9,999.99 with at most two decimals (400 per field). Replaces all six (one upsert); 200 with the stored view. Audit `PROFILE_UPDATE` section `putRates`; `maxBodyKb 2` |
+
 ### Services (U3a, api-review)
 
 The chosen services and the registrations two of them carry. They replace the app's step-101 save, `deleteWorkerService`
