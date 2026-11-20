@@ -12,13 +12,10 @@ import NextImage from 'next/image'
 import { Fragment, useState, useCallback, useEffect } from 'react'
 import type { MaskedBankAccount } from '@/lib/bankAccount'
 import { adminApi } from '@/lib/api/admin'
-import WorkerAccountStatus, { type AccountState } from './WorkerAccountStatus'
 import WorkerToolsLine, { toolServiceNamed } from './WorkerToolsLine'
 import './contractor-profile.css'
 
 interface WorkerProfile {
-  /** worker-activation U2 (A5). */
-  account?: AccountState
   id: string
   firstName: string
   lastName: string
@@ -395,9 +392,6 @@ export default function WorkerDetailPage() {
           </button>
 
           <div className="flex items-center gap-3">
-            {/* worker-activation U2 (A5): Suspend / Restore account, at the top (user, 2026-10-23) */}
-            {worker.account && <WorkerAccountStatus workerId={worker.id} initial={worker.account} />}
-
             {/* Edit Toggle Button */}
             <button
               onClick={() => setIsEditMode(!isEditMode)}

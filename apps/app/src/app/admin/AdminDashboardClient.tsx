@@ -21,6 +21,7 @@ import WorkerAvatar from '@/components/ui/WorkerAvatar'
 import { adminApi, type ApiOutcome } from '@/lib/api/admin'
 import { noticeText, noticeTitle } from '@/lib/api/outcome-notice'
 import Pagination from '@/components/ui/Pagination'
+import WorkerAccountStatus from './WorkerAccountStatus'
 import { allPages } from '@/lib/api/allPages'
 import CsvDownloadBar from '@/features/admin-export/CsvDownloadBar'
 import { useContactsExport } from '@/features/admin-export/useContactsExport'
@@ -465,6 +466,16 @@ export default function AdminDashboard() {
     } else {
       alert('Failed to restore the account: ' + noticeText(result))
     }
+  }
+
+  // Suspend on a card (2026-11-20): the list holds ACTIVE accounts only, so the card leaves it at once and the list
+  // is reloaded past the caches (R11.7); the account is then in "Suspended accounts".
+  const removeSuspended = (contractorId: string) => {
+    queryClient.setQueryData<ApiOutcome<WorkerSearchResponse>>([QUERY_KEY, canonical], (prev) =>
+      prev?.kind === 'ok' ? { ...prev, body: { ...prev.body, data: prev.body.data.filter((w) => w.id !== contractorId) } } : prev,
+    )
+    reloadRef.current = true
+    queryClient.invalidateQueries({ queryKey: [QUERY_KEY] })
   }
 
   const notice = outcome && outcome.kind !== 'ok' && outcome.kind !== 'unauthenticated' ? outcome : null
@@ -1450,6 +1461,9 @@ export default function AdminDashboard() {
                               </svg>
                               Contact Info
                             </button>
+
+                            {/* Suspend account (user, 2026-11-20: was on the Edit Profile page) */}
+                            <WorkerAccountStatus workerId={contractor.id} initial={{ status: 'ACTIVE' }} onChange={(suspended) => suspended && removeSuspended(contractor.id)} />
                           </div>
 
                           {/* Contact Information Expandable */}

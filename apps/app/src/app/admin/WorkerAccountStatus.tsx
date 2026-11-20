@@ -1,16 +1,15 @@
 'use client'
 
-// Suspend / Restore the worker's account (no sign-in) from the worker's admin page (worker-activation U2, A5), in the
-// page's header actions (user, 2026-10-23: the button only, no status lines). Suspend asks first, Restore does not.
-// Outside .profile-card, so never in the downloaded JPEG.
+// Suspend / Restore the worker's account (no sign-in) (worker-activation U2, A5). On each admin dashboard card
+// (user, 2026-11-20: was the worker's Edit Profile page). Suspend asks first, Restore does not. The dashboard lists
+// ACTIVE accounts only, so a card offers Suspend and `onChange` takes the card off the list; Restore stays in
+// "Suspended accounts".
 import { useState } from 'react'
 import { adminApi } from '@/lib/api/admin'
 
 export interface AccountState {
   /** users.status: ACTIVE, SUSPENDED, LOCKED or PENDING_VERIFICATION. */
   status: string
-  /** worker_profiles.isActivated (the search card's Active switch); not shown here. */
-  isActivated: boolean
 }
 
 /** The one action the button offers (pure, tested): any state other than ACTIVE can be restored. */
@@ -18,7 +17,17 @@ export function accountActionOf(s: Pick<AccountState, 'status'>): 'suspend' | 'r
   return s.status === 'ACTIVE' ? 'suspend' : 'restore'
 }
 
-export default function WorkerAccountStatus({ workerId, initial }: { workerId: string; initial: AccountState }) {
+const BUTTON = 'inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-md transition-colors disabled:opacity-50'
+
+export default function WorkerAccountStatus({
+  workerId,
+  initial,
+  onChange,
+}: {
+  workerId: string
+  initial: AccountState
+  onChange?: (suspended: boolean) => void
+}) {
   const [status, setStatus] = useState(initial.status)
   const [confirming, setConfirming] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -31,18 +40,21 @@ export default function WorkerAccountStatus({ workerId, initial }: { workerId: s
     const result = await adminApi.setWorkerSuspension(workerId, suspended)
     setBusy(false)
     setConfirming(false)
-    if (result.kind === 'ok') setStatus(result.body.suspended ? 'SUSPENDED' : 'ACTIVE')
-    else setError(suspended ? 'The account could not be suspended. Please try again.' : 'The account could not be restored. Please try again.')
+    if (result.kind === 'ok') {
+      setStatus(result.body.suspended ? 'SUSPENDED' : 'ACTIVE')
+      onChange?.(result.body.suspended)
+    } else setError(suspended ? 'The account could not be suspended. Please try again.' : 'The account could not be restored. Please try again.')
   }
 
   return (
-    <div className="relative">
+    // The card is clickable; the button and its confirmation are not part of that click.
+    <div className="relative" onClick={(e) => e.stopPropagation()}>
       {action === 'restore' ? (
-        <button type="button" disabled={busy} onClick={() => void write(false)} className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50">
+        <button type="button" disabled={busy} onClick={() => void write(false)} className={`${BUTTON} bg-indigo-600 text-white hover:bg-indigo-700`}>
           {busy ? 'Restoring...' : 'Restore account'}
         </button>
       ) : (
-        <button type="button" disabled={busy} onClick={() => setConfirming(true)} className="rounded-md border border-red-300 bg-white px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50">
+        <button type="button" disabled={busy} onClick={() => setConfirming(true)} className={`${BUTTON} border border-red-300 bg-white text-red-700 hover:bg-red-50`}>
           Suspend account
         </button>
       )}
@@ -59,7 +71,7 @@ export default function WorkerAccountStatus({ workerId, initial }: { workerId: s
           </div>
         </div>
       )}
-      {error && <p className="absolute right-0 mt-2 w-72 text-sm text-red-700">{error}</p>}
+      {error && <p className="absolute right-0 z-20 mt-2 w-72 rounded-md bg-white text-sm text-red-700">{error}</p>}
     </div>
   )
 }
