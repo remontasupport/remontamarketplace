@@ -63,6 +63,17 @@ describe('shapeRow', () => {
     expect(shapeRow(raw({ homeSuburb: null, homeState: null, homePostcode: null }), NOW, false)).toMatchObject({ city: null, state: null, postalCode: null })
   })
 
+  it('rates (worker-rates) only with withRates: dollars from the joined row, every field null without one', () => {
+    expect(shapeRow(raw(), NOW, false)).not.toHaveProperty('rates')
+    const at = new Date('2026-11-20T01:00:00.000Z')
+    const saved = shapeRow(raw({ weekdayCents: 4550, saturdayCents: null, sundayCents: 6000, publicHolidayCents: null, eveningCents: null, inactiveSleepoverCents: 25000, ratesUpdatedAt: at }), NOW, false, { rates: true })
+    expect(saved.rates).toEqual({ weekday: 45.5, saturday: null, sunday: 60, publicHoliday: null, evening: null, inactiveSleepover: 250, updatedAt: at.toISOString() })
+    expect(workerRowSchema.safeParse(saved).success).toBe(true)
+    const none = shapeRow(raw({ ratesUpdatedAt: null }), NOW, false, { rates: true })
+    expect(none.rates).toEqual({ weekday: null, saturday: null, sunday: null, publicHoliday: null, evening: null, inactiveSleepover: null, updatedAt: null })
+    expect(workerSearchQuerySchema.parse({ withRates: 'true' }).withRates).toBe(true)
+  })
+
   it('G10: for any raw row the shaped row matches the contract and never carries abn or dateOfBirth', () => {
     const rowArb = fc.record({
       gender: fc.option(fc.constantFrom('Male', 'Female'), { nil: null }),

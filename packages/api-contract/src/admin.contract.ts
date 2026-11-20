@@ -10,7 +10,7 @@ import { FUNDING_TYPES, SERVICE_REQUEST_STATUSES } from '@remonta/schemas/data/s
 import { OTHER_TOOL_MAX_CHARS, OTHER_TOOLS_MAX, TOOL_IDS, TOOL_SEARCH_MAX_CHARS } from '@remonta/schemas/data/serviceTools'
 import { createServiceRequestSchema } from '@remonta/schemas/schema/serviceRequestSchema'
 import * as z from 'zod'
-import { ratesReadSchema } from './rates'
+import { ratesReadSchema, ratesViewSchema } from './rates'
 import { defineContract } from './define'
 import { meta, ROLES } from './meta'
 
@@ -131,6 +131,8 @@ export const workerSearchQuerySchema = z.strictObject({
   services: completionFilter,
   /** admin-completion-filters U1 (FR-3): each row carries `completion`; opt-in for the reason `withActivation` is. */
   withCompletion: flag.optional(),
+  /** worker-rates (2026-11-20): each row carries `rates` (the dashboard's cards); opt-in for the reason `withActivation` is. */
+  withRates: flag.optional(),
   /**
    * worker-activation U1 (BR-6): each row carries `activated`. Opt-in because the app on production parses rows
    * strictly and would refuse the new key; to become unconditional once no pre-activation build can be promoted.
@@ -169,6 +171,8 @@ export const workerRowSchema = z.strictObject({
   activated: z.boolean().optional(),
   /** admin-completion-filters U1 (FR-3): the four stored flags, present only when the query had `withCompletion`. */
   completion: z.strictObject({ accountDetails: z.boolean(), compliance: z.boolean(), trainings: z.boolean(), services: z.boolean() }).optional(),
+  /** worker-rates (2026-11-20): the worker's rates (every field null when none saved), present only when the query had `withRates`. */
+  rates: ratesViewSchema.optional(),
   /** Present when a suburb was given and the worker is placed; one decimal (R6.4). */
   distanceKm: z.number().optional(),
   /** Present when the worker has a HOME row (R6.5). */

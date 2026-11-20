@@ -24,8 +24,8 @@ const js = (s: z.ZodType) => z.toJSONSchema(s, { io: 'output', unrepresentable: 
 const compat = JSON.parse(readFileSync(new URL('./fixtures/compat-2026-10-23.json', import.meta.url), 'utf8'))
 
 /**
- * The row schema inside a list response, with the optional `activated` and `completion` (admin-completion-filters FR-3,
- * sent only with `withCompletion`) checked and removed.
+ * The row schema inside a list response, with the optional `activated`, `completion` (admin-completion-filters FR-3,
+ * sent only with `withCompletion`) and `rates` (worker-rates, sent only with `withRates`) checked and removed.
  */
 function withoutActivated(response: Obj): Obj {
   const row = response.properties.data!.items!
@@ -35,6 +35,9 @@ function withoutActivated(response: Obj): Obj {
   expect(row.properties.completion).toMatchObject({ type: 'object', required: ['accountDetails', 'compliance', 'trainings', 'services'] })
   expect(row.required ?? []).not.toContain('completion')
   delete row.properties.completion
+  expect(row.properties.rates).toMatchObject({ type: 'object', required: ['weekday', 'saturday', 'sunday', 'publicHoliday', 'evening', 'inactiveSleepover', 'updatedAt'] })
+  expect(row.required ?? []).not.toContain('rates')
+  delete row.properties.rates
   return response
 }
 
