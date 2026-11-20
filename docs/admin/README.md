@@ -114,6 +114,13 @@ chosen service in the worker's order; `toolIds` (list order, ids no longer liste
 for a service without a tool list. `:workerId` is the worker **profile** id (the admin page's `[id]`); 404 when none.
 Limits 120 / 300 per minute; privately cacheable for a minute. Logged with the profile id.
 
+### `GET /v1/admin/workers/:workerId/rates` -- one worker's rates (worker-rates, 2026-11-20)
+
+For the worker's Show profile: `{rates: {weekday, saturday, sunday, publicHoliday, evening, inactiveSleepover,
+updatedAt}}` in dollars (the inactive sleepover per night, the rest per hour); every field null when the worker has not
+saved rates. `:workerId` is the worker **profile** id; 404 when none. Limits 120 / 300 per minute; privately cacheable
+for a minute. Logged with the profile id.
+
 ### Past documents (document-history U1, 2026-11-11)
 
 A worker's re-upload, a worker's delete and a removed service no longer delete anything: the old

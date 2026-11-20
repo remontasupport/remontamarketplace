@@ -17,6 +17,7 @@ import { defineContract } from './define'
 import { workerPhotosSchema } from './photos'
 import { meta } from './meta'
 import { photoTicketRequestSchema, photoTicketResponseSchema } from './registration.contract'
+import { ratesBodySchema, ratesReadSchema, ratesViewSchema } from './rates'
 import {
   educationRowParamsSchema,
   jobHistoryRowParamsSchema,
@@ -424,6 +425,10 @@ export const workerContract = defineContract('worker', {
   signContract: { method: 'POST', path: '/v1/worker/contract', summary: 'Sign the contract of agreement: the signed PDF (uploaded by ticket) kept privately and the engagement (ABN or TFN) marked signed, together. No tax file number is stored.', body: json(signContractSchema), responses: { 201: signedContractSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 2 }) },
   getDocumentLink: { method: 'GET', path: '/v1/worker/documents/:documentId/link', summary: "A five-minute link to view any of the worker's own documents (a legacy row answers its stored URL).", pathParams: serviceDocumentParamsSchema, responses: { 200: documentLinkSchema }, meta: workerRead({ privateCacheSeconds: 30 }) },
   putBankAccount: { method: 'PUT', path: '/v1/worker/bank-account', summary: 'Replace the bank account (all four fields); every read returns it masked.', body: json(bankAccountSchema), responses: { 200: maskedBankAccountSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 4 }) },
+  // worker-rates (2026-11-20): the worker's own rates (Services -> Rates). Their own read: the profile read stays as it
+  // is, because the deployed app parses it strictly (as getServiceTools, getTour). Not part of completion.
+  getRates: { method: 'GET', path: '/v1/worker/rates', summary: "The worker's rates in dollars: weekdays, Saturdays, Sundays, public holidays and evenings per hour, the inactive sleepover per night; every field null until saved. Never cached.", responses: { 200: ratesReadSchema }, meta: workerRead({ noCache: true }) },
+  putRates: { method: 'PUT', path: '/v1/worker/rates', summary: 'Replace the rates (all six; the weekday rate required, a blank other null). Dollars, at most two decimals, $0.01 to $9,999.99. Not part of completion.', body: json(ratesBodySchema), responses: { 200: ratesViewSchema }, meta: workerWrite(PROFILE_UPDATE, { maxBodyKb: 2 }) },
 
   // ---- onboarding-tour C1: completion declared once (its own entry; the profile read is unchanged).
   getCompletion: { method: 'GET', path: '/v1/worker/completion', summary: 'How complete the worker is: every My Profile page, the three checklist groups (My Profile, Services, Compliance) with their next step, the percent over the 10 required pages, and each service’s documents. Privately cacheable for a minute with ETag/304.', responses: { 200: completionViewSchema }, meta: workerRead() },

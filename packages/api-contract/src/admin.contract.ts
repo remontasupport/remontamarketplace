@@ -10,6 +10,7 @@ import { FUNDING_TYPES, SERVICE_REQUEST_STATUSES } from '@remonta/schemas/data/s
 import { OTHER_TOOL_MAX_CHARS, OTHER_TOOLS_MAX, TOOL_IDS, TOOL_SEARCH_MAX_CHARS } from '@remonta/schemas/data/serviceTools'
 import { createServiceRequestSchema } from '@remonta/schemas/schema/serviceRequestSchema'
 import * as z from 'zod'
+import { ratesReadSchema } from './rates'
 import { defineContract } from './define'
 import { meta, ROLES } from './meta'
 
@@ -510,6 +511,16 @@ export const adminContract = defineContract('admin', {
     summary: "One worker's chosen services in their order, with the sub-categories and, for Cleaning Services and Home and Yard Maintenance, the tools; 404 when no worker has that id.",
     pathParams: adminWorkerParamsSchema,
     responses: { 200: adminWorkerServicesSchema },
+    meta: adminRead({ user: 120, ip: 300 }),
+  },
+
+  // worker-rates (2026-11-20): the worker's own rates, shown on the admin's Show profile.
+  getWorkerRates: {
+    method: 'GET',
+    path: '/v1/admin/workers/:workerId/rates',
+    summary: "One worker's rates in dollars (weekdays, Saturdays, Sundays, public holidays and evenings per hour, the inactive sleepover per night); every field null when the worker has not saved them; 404 when no worker has that id.",
+    pathParams: adminWorkerParamsSchema,
+    responses: { 200: ratesReadSchema },
     meta: adminRead({ user: 120, ip: 300 }),
   },
 

@@ -249,6 +249,24 @@ model DocumentVersion {
   @@map("document_versions")
 }
 
+/// worker-rates (2026-11-20): the worker's own rates, one set per worker, in cents. Weekdays, Saturdays, Sundays,
+/// Public Holidays and Evenings per hour; the inactive sleepover per night. Null = not set (only the weekday rate is
+/// required, by the api). Read by the worker and the admin; not part of completion; clients never see it.
+model WorkerRates {
+  workerProfileId        String        @id
+  weekdayCents           Int?
+  saturdayCents          Int?
+  sundayCents            Int?
+  publicHolidayCents     Int?
+  eveningCents           Int?
+  inactiveSleepoverCents Int?
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+  workerProfile          WorkerProfile @relation(fields: [workerProfileId], references: [id], onDelete: Cascade)
+
+  @@map("worker_rates")
+}
+
 enum DocumentVersionReason {
   REPLACED
   DELETED_BY_WORKER
@@ -295,6 +313,7 @@ model WorkerProfile {
   verificationRequirements VerificationRequirement[]
   documentVersions         DocumentVersion[]
   workerAdditionalInfo     WorkerAdditionalInfo?
+  rates                    WorkerRates?
   user                     User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
   workerServices           WorkerService[]
 
