@@ -12,6 +12,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { formatRate, RATE_ROWS, savedRates } from '@/lib/rates'
+import { matchesNameOrEmail } from '@/features/admin-search/suspended'
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { PAGE_SIZE_MAX, type WorkerRow, type WorkerSearchResponse } from '@remonta/api-contract'
@@ -156,12 +157,15 @@ export default function AdminDashboard() {
   const [showToggleForContractor, setShowToggleForContractor] = useState<string | null>(null)
 
   // Inactive (suspended) workers modal state (grouped)
+  // The Suspended accounts search: name or email, over the loaded list (2026-11-20).
+  const [suspendedSearch, setSuspendedSearch] = useState('')
   const [inactiveWorkersState, setInactiveWorkersState] = useState({
     isOpen: false,
     workers: [] as Contractor[],
     total: 0,
     isLoading: false,
   })
+  const suspendedShown = inactiveWorkersState.workers.filter((w) => matchesNameOrEmail(w, suspendedSearch))
 
   // Suburb autocomplete states; the picked suburb lives in pendingFilters.locality (R11.3)
   const [suburbSearch, setSuburbSearch] = useState(() => filters.locality?.label ?? '')
@@ -431,9 +435,11 @@ export default function AdminDashboard() {
 
   const fetchInactiveWorkers = async () => {
     setInactiveWorkersState(prev => ({ ...prev, isLoading: true }))
-    const result = await adminApi.listSuspendedWorkers({ page: 1, pageSize: 100 }, { cache: 'reload' })
+    setSuspendedSearch('')
+    // Every page (2026-11-20): the search filters the whole list in the browser.
+    const result = await allPages((page) => adminApi.listSuspendedWorkers({ page, pageSize: PAGE_SIZE_MAX }, { cache: 'reload' }))
     if (result.kind === 'ok') {
-      setInactiveWorkersState({ isOpen: true, workers: result.body.data, total: result.body.pagination.total, isLoading: false })
+      setInactiveWorkersState({ isOpen: true, workers: result.body, total: result.body.length, isLoading: false })
     } else {
       setInactiveWorkersState(prev => ({ ...prev, isLoading: false }))
       if (result.kind === 'unauthenticated') {
@@ -1521,15 +1527,33 @@ export default function AdminDashboard() {
                 </button>
               </div>
 
+              {/* Search: name or email (2026-11-20) */}
+              {inactiveWorkersState.workers.length > 0 && (
+                <div className="px-6 pt-4">
+                  <input
+                    type="search"
+                    value={suspendedSearch}
+                    onChange={(e) => setSuspendedSearch(e.target.value)}
+                    placeholder="Search by name or email address"
+                    aria-label="Search suspended accounts by name or email address"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                </div>
+              )}
+
               {/* Content */}
               <div className="overflow-y-auto max-h-[60vh] p-6">
                 {inactiveWorkersState.workers.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     No suspended accounts
                   </div>
+                ) : suspendedShown.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    No suspended account matches &ldquo;{suspendedSearch.trim()}&rdquo;
+                  </div>
                 ) : (
                   <div className="space-y-3">
-                    {inactiveWorkersState.workers.map((worker) => (
+                    {suspendedShown.map((worker) => (
                       <div
                         key={worker.id}
                         className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
@@ -1558,8 +1582,8 @@ export default function AdminDashboard() {
                         </button>
                       </div>
                     ))}
-                    {inactiveWorkersState.total > inactiveWorkersState.workers.length && (
-                      <p className="text-center text-xs text-gray-500">Showing the first {inactiveWorkersState.workers.length} of {inactiveWorkersState.total}.</p>
+                    {suspendedShown.length < inactiveWorkersState.workers.length && (
+                      <p className="text-center text-xs text-gray-500">Showing {suspendedShown.length} of {inactiveWorkersState.workers.length}.</p>
                     )}
                   </div>
                 )}
