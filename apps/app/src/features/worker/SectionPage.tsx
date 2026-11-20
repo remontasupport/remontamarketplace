@@ -30,7 +30,8 @@ import { useLocalitySearch } from "@/features/forms/adapters/useLocalitySearch";
 import { workerApi } from "./api";
 import { savePair } from "./pair";
 import { ROW_DELETES } from "./rowDeletes";
-import { UNAVAILABLE_MESSAGE, useSection, type SaveState } from "./useSection";
+import { UNAVAILABLE_MESSAGE, useSection, type SaveState, type SectionSource } from "./useSection";
+import { useStepForm } from "./stepForms";
 
 const choices = (options: readonly (string | { value: string; label?: string })[]): ChoiceOption[] =>
   options.map((o) => (typeof o === "string" ? { value: o, label: o } : { value: o.value, label: o.label ?? o.value }));
@@ -65,6 +66,7 @@ function LocalitySlot({ field, value, onPick, error }: { field: SectionFieldDef;
       }}
       error={error}
       placeholder={field.kind === "locality" ? field.placeholder : undefined}
+      optional={field.kind === "locality" && field.optional === true}
     />
   );
 }
@@ -92,7 +94,7 @@ function FieldSlot({ field, path, row, errors, setValue, picked, onDeleteRow }: 
     case "date":
       return <DateField label={label} hint={field.hint} value={String(v ?? "")} onChange={set} error={error} />;
     case "number":
-      return <NumberField label={label} hint={field.hint} value={typeof v === "number" ? v : null} onChange={set} min={field.min} max={field.max} unit={field.unit} error={error} />;
+      return <NumberField label={label} hint={field.hint} value={typeof v === "number" ? v : null} onChange={set} min={field.min} max={field.max} unit={field.unit} decimals={field.decimals} prefix={field.prefix} error={error} />;
     case "abn":
       return <AbnField label={label} hint={field.hint} value={String(v ?? "")} onChange={set} error={error} />;
     case "maskedSecret": {
@@ -171,14 +173,18 @@ function OrderedListSlot({ field, path, rows, set, errors, setValue, picked, onD
   );
 }
 
-function SaveBar({ save, onSave, disabled }: { save: SaveState; onSave: () => void; disabled: boolean }) {
+/** `statusOnly`: a My Profile step saves when the worker leaves it (stepForms.tsx), so only the outcome shows. */
+function SaveBar({ save, onSave, disabled, statusOnly = false }: { save: SaveState; onSave: () => void; disabled: boolean; statusOnly?: boolean }) {
   const saving = save.kind === "saving";
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3 pt-2">
-      <button type="button" onClick={onSave} disabled={disabled || saving} className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-[#0C1628] text-white font-poppins font-medium hover:bg-[#1a2740] disabled:opacity-50">
-        {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-        {saving ? (save.retrying ? "Still saving..." : "Saving...") : "Save"}
-      </button>
+      {!statusOnly && (
+        <button type="button" onClick={onSave} disabled={disabled || saving} className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg bg-[#0C1628] text-white font-poppins font-medium hover:bg-[#1a2740] disabled:opacity-50">
+          {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+          {saving ? (save.retrying ? "Still saving..." : "Saving...") : "Save"}
+        </button>
+      )}
+      {statusOnly && saving && <span className="text-sm font-poppins text-gray-600">{save.retrying ? "Still saving..." : "Saving..."}</span>}
       <div role="status" aria-live="polite" className="text-sm font-poppins">
         {save.kind === "saving" && save.offline && <span className="text-amber-700">You are offline. We will save as soon as you are back online.</span>}
         {save.kind === "saved" && (
@@ -213,6 +219,9 @@ export function SectionSkeleton() {
 
 type Section = ReturnType<typeof useSection>;
 
+/** An empty answer: nothing typed, nothing chosen. */
+export const isBlank = (v: unknown): boolean => v == null || (typeof v === "string" && v.trim() === "") || (Array.isArray(v) && v.length === 0);
+
 /** One section's description and fields, without a Save of its own (a two-section page). */
 function SectionFields({ def, s }: { def: SectionDefinition; s: Section }) {
   const picked = pickPath(s.profile, def.pick);
@@ -245,6 +254,7 @@ export function SectionPair({ title, first, second }: { title: string; first: Se
   const a = useSection(first);
   const b = useSection(second);
   const onSave = () => savePair([a, b]);
+  const savesOnLeave = useStepForm(a.changed || b.changed, onSave);
 
   return (
     <section className="space-y-5">
@@ -263,7 +273,7 @@ export function SectionPair({ title, first, second }: { title: string; first: Se
         >
           <SectionFields def={first} s={a} />
           <SectionFields def={second} s={b} />
-          <SaveBar save={pairState(a.save, b.save)} onSave={() => void onSave()} disabled={false} />
+          <SaveBar save={pairState(a.save, b.save)} onSave={() => void onSave()} disabled={false} statusOnly={savesOnLeave} />
         </form>
       )}
     </section>
@@ -274,8 +284,11 @@ export function SectionPair({ title, first, second }: { title: string; first: Se
  * A section's form. Its title is for screen readers only: the sidebar names the page (user, 2026-10-13).
  * `onSaved` runs once a Save is stored (Service Area then goes to the dashboard, user 2026-10-16).
  */
-export default function SectionPage({ def, onSaved }: { def: SectionDefinition; onSaved?: () => void }) {
-  const { profile, isLoading, readError, values, errors, setValue, submit: saveSection, save, deleteRow } = useSection(def);
+export default function SectionPage({ def, onSaved, source }: { def: SectionDefinition; onSaved?: () => void; source?: SectionSource }) {
+  const { profile, isLoading, readError, values, errors, setValue, submit: saveSection, save, deleteRow, changed } = useSection(def, source);
+  // Nothing saved before and nothing entered now (an optional address typed then cleared): nothing to save on leave.
+  const blank = !!values && def.fields.every((f) => isBlank(values[f.name])) && pickPath(profile, def.pick) == null;
+  const savesOnLeave = useStepForm(changed && !blank, saveSection);
   const submit = async () => {
     if ((await saveSection()) && onSaved) onSaved();
   };
@@ -333,7 +346,7 @@ export default function SectionPage({ def, onSaved }: { def: SectionDefinition; 
             {deleting && <p className="text-sm text-gray-600 font-poppins">Deleting…</p>}
             {deleteError && <p className="text-sm text-red-600 font-poppins">{deleteError}</p>}
           </div>
-          <SaveBar save={save} onSave={() => void submit()} disabled={!values || deleting} />
+          <SaveBar save={save} onSave={() => void submit()} disabled={!values || deleting} statusOnly={savesOnLeave} />
         </form>
       )}
       {rowDelete && (

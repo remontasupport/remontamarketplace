@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useCatalogue } from "@/features/forms/adapters/useServiceCategories";
+import { serviceLabel } from "@/lib/serviceLabel";
 
 interface AddServiceDialogProps {
   open: boolean;
@@ -138,7 +139,7 @@ export function AddServiceDialog({
                       htmlFor={service.id}
                       className="text-base font-poppins font-semibold text-gray-900 cursor-pointer"
                     >
-                      {service.title}
+                      {serviceLabel(service.title)}
                     </Label>
                     <p className="text-sm text-gray-600 font-poppins mt-1 leading-relaxed">
                       {service.description}

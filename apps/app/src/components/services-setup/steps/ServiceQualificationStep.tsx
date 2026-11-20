@@ -39,6 +39,7 @@ import {
 import { serviceNameToSlug } from "@/utils/serviceSlugMapping";
 import "@/app/styles/profile-building.css";
 import { useState } from "react";
+import { serviceLabel } from "@/lib/serviceLabel";
 
 interface ServiceQualificationStepProps {
   serviceTitle: string;
@@ -73,6 +74,8 @@ export default function ServiceQualificationStep({
   onChange,
   errors = {},
 }: ServiceQualificationStepProps) {
+  // Shown to the worker; serviceTitle stays the key (requirement types, lookups).
+  const serviceName = serviceLabel(serviceTitle);
   const { data: session } = useSession();
   const queryClient = useQueryClient();
 
@@ -744,7 +747,7 @@ export default function ServiceQualificationStep({
         <div className="form-column">
           <div className="account-form">
             <h3 className="text-xl font-poppins font-semibold text-gray-900 mb-2">
-              Supporting Documents for {serviceTitle}
+              Supporting Documents for {serviceName}
             </h3>
 
             {/* Special message for services with only optional documents */}
@@ -753,15 +756,15 @@ export default function ServiceQualificationStep({
                 <InformationCircleIcon className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                 <p className="text-sm text-blue-800 font-poppins">
                   <strong>At least one document required:</strong> While all documents below are optional,
-                  you must upload at least one to demonstrate your qualifications for {serviceTitle}.
+                  you must upload at least one to demonstrate your qualifications for {serviceName}.
                 </p>
               </div>
             )}
 
             <p className="text-sm text-gray-600 font-poppins mb-6">
               {hasRequiredDocs
-                ? `Upload the required documents for ${serviceTitle}. Required documents are marked with an asterisk (*).`
-                : `Upload at least one document to demonstrate your qualifications for ${serviceTitle}.`
+                ? `Upload the required documents for ${serviceName}. Required documents are marked with an asterisk (*).`
+                : `Upload at least one document to demonstrate your qualifications for ${serviceName}.`
               }
             </p>
 
@@ -878,7 +881,7 @@ export default function ServiceQualificationStep({
           <div className="info-box">
             <h3 className="info-box-title">About Supporting Documents</h3>
             <p className="info-box-text">
-              Upload certificates, qualifications, and supporting documents for {serviceTitle}.
+              Upload certificates, qualifications, and supporting documents for {serviceName}.
             </p>
             <p className="info-box-text mt-3">
               <strong>Required documents</strong> are marked with an asterisk (*) and must be uploaded before you can proceed.
@@ -926,10 +929,10 @@ export default function ServiceQualificationStep({
         <div className="form-column">
           <div className="account-form">
             <h3 className="text-xl font-poppins font-semibold text-gray-900 mb-2">
-              Service Offerings for {serviceTitle}
+              Service Offerings for {serviceName}
             </h3>
             <p className="text-sm text-gray-600 font-poppins mb-6">
-              Below are the specific services you provide under {serviceTitle}.
+              Below are the specific services you provide under {serviceName}.
             </p>
 
             {selectedSubcategories.length === 0 ? (
@@ -1080,7 +1083,7 @@ export default function ServiceQualificationStep({
           <div className="info-box">
             <h3 className="info-box-title">About Service Offerings</h3>
             <p className="info-box-text">
-              These are the specific services you're qualified and willing to provide under {serviceTitle}.
+              These are the specific services you're qualified and willing to provide under {serviceName}.
             </p>
             <p className="info-box-text mt-3">
               To add or remove service offerings, please go to the Services Management page.
@@ -1099,10 +1102,10 @@ export default function ServiceQualificationStep({
       <div className="form-column">
         <div className="account-form">
           <h3 className="text-xl font-poppins font-semibold text-gray-900 mb-2">
-            Qualifications for {serviceTitle}
+            Qualifications for {serviceName}
           </h3>
           <p className="text-sm text-gray-600 font-poppins mb-6">
-            Select all qualifications and certifications you hold for {serviceTitle}.
+            Select all qualifications and certifications you hold for {serviceName}.
           </p>
 
           <div className="space-y-4">
@@ -1217,9 +1220,9 @@ export default function ServiceQualificationStep({
       {/* Right Column - Info Box */}
       <div className="info-column">
         <div className="info-box">
-          <h3 className="info-box-title">About {serviceTitle} Qualifications</h3>
+          <h3 className="info-box-title">About {serviceName} Qualifications</h3>
           <p className="info-box-text">
-            These qualifications help demonstrate your expertise in {serviceTitle} and
+            These qualifications help demonstrate your expertise in {serviceName} and
             build trust with clients.
           </p>
           <p className="info-box-text mt-3">

@@ -6,10 +6,12 @@
 // retries; the wizard clears the value again when the address changes (resetsOf).
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
-import { checkEmailAvailability, confirmEmailCode, EMAIL_TAKEN, requestEmailCode, type Backend, type EmailCodeField, type EmailCodeTicket, type FormDefinition, type RetryOptions } from "@remonta/form-engine";
+import { checkEmailAvailability, confirmEmailCode, EMAIL_TAKEN, formSchemaFor, requestEmailCode, type Backend, type EmailCodeField, type EmailCodeTicket, type FormDefinition, type RetryOptions } from "@remonta/form-engine";
 import type { EmailAvailability, EmailCodeStatus } from "@/components/ui/form-wizard/fields";
 
 export const RESEND_AFTER_SECONDS = 60;
+/** How long typing must pause before a valid address is checked (2026-11-19: "Send code" no longer waits for a blur). */
+export const AVAILABILITY_PAUSE_MS = 500;
 
 /**
  * The step's own validation error to show under the field. An address that already
@@ -40,7 +42,7 @@ export function useEmailCode(
   const [message, setMessage] = useState<string | null>(null);
   const ticket = useRef<EmailCodeTicket | null>(null);
 
-  // ---- availability: asked when the address field loses focus, once per address ----
+  // ---- availability: asked once per address, when typing pauses on a valid one or the field loses focus ----
   const checks = !!field.availabilityEntry;
   const [availability, setAvailability] = useState<EmailAvailability>(checks ? "unknown" : "available");
   const checked = useRef<string | null>(null);
@@ -55,12 +57,13 @@ export function useEmailCode(
       setMessage(null);
     }
   }, [checks, email]);
-  useEffect(() => {
-    if (!checks) return;
-    return deps.onFieldBlur(field.for, async () => {
+  const check = useCallback(
+    async (quiet: boolean) => {
       const address = latest.current;
       if (!address || checked.current === address) return;
-      if (!(await form.trigger(field.for))) return;
+      // While typing, a not-yet-valid address is simply not checked (no error is forced on the field); on blur it is shown.
+      const valid = quiet ? formSchemaFor(def).shape[field.for]?.safeParse(address).success === true : await form.trigger(field.for);
+      if (!valid || latest.current !== address || checked.current === address) return;
       checked.current = address;
       setAvailability("checking");
       const r = await checkEmailAvailability(def, backend, field, address);
@@ -72,8 +75,18 @@ export function useEmailCode(
       }
       setAvailability(r.available ? "available" : "taken");
       setMessage(r.available ? null : EMAIL_TAKEN);
-    });
-  }, [checks, deps, field, form, def, backend]);
+    },
+    [def, backend, field, form],
+  );
+  useEffect(() => {
+    if (!checks) return;
+    return deps.onFieldBlur(field.for, () => void check(false));
+  }, [checks, deps, field.for, check]);
+  useEffect(() => {
+    if (!checks || !email) return;
+    const t = setTimeout(() => void check(true), AVAILABILITY_PAUSE_MS);
+    return () => clearTimeout(t);
+  }, [checks, email, check]);
 
   // The wizard cleared the proof (the address changed, or a restored draft has none): start over.
   useEffect(() => {

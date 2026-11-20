@@ -9,12 +9,16 @@ import ServiceSelectionModal from "@/components/modals/ServiceSelectionModal";
 import UniqueServiceSelectionModal from "@/components/modals/UniqueServiceSelectionModal";
 import InfoItemSelectionModal from "@/components/modals/InfoItemSelectionModal";
 import { LANGUAGES, CULTURAL_BACKGROUNDS, RELIGIONS, INTERESTS } from "@/constants/moreInfoOptions";
+import type { RatesView } from "@remonta/api-contract";
+import { formatRate, RATE_ROWS, savedRates } from "@/lib/rates";
 
 interface WorkerProfileViewProps {
   profile: any;
   services: any[];
   qualifications: any[];
   additionalInfo: any;
+  /** worker-rates: shown on the admin's view only, and only when the worker saved some. */
+  rates?: RatesView | null;
   isAdminView?: boolean;
   isPublicView?: boolean;
   isEditMode?: boolean;
@@ -38,6 +42,7 @@ export default function WorkerProfileView({
   services,
   qualifications,
   additionalInfo,
+  rates = null,
   isAdminView = false,
   isPublicView = false,
   isEditMode = false,
@@ -170,10 +175,42 @@ export default function WorkerProfileView({
     return categoryNameMap[categoryName] || categoryName;
   };
 
+  // Admin and client views show only the sections with something in them (user, 2026-11-19); the admin's edit mode
+  // shows them all, so an empty one can be filled, and the worker's own preview keeps its "not added yet" prompts.
+  const hideEmpty = (isAdminView || isPublicView) && !isEditMode
+  const filled = (a: unknown) => Array.isArray(a) && a.length > 0
+  const has = {
+    // About Me and Basic Information always show (user, 2026-11-19).
+    'about-me': true,
+    'basic-information': true,
+    experience: Object.values((additionalInfo?.experience ?? {}) as Record<string, { description?: unknown } | null>).some((d) => !!d?.description) || filled(editableState?.editableExperienceItems),
+    'job-history': yearsOfExperience.length > 0,
+    'education-history': filled(additionalInfo?.education),
+    'more-information':
+      [
+        editableState?.editableLanguages ?? additionalInfo?.languages,
+        editableState?.editableCulturalBackground ?? additionalInfo?.culturalBackground,
+        editableState?.editableReligion ?? additionalInfo?.religion,
+        editableState?.editableInterests ?? additionalInfo?.interests,
+      ].some(filled) || !!(editableState?.personality ?? additionalInfo?.personality),
+    'services-offered': filled(editableState?.editableServices ?? servicesWithSubcategories),
+    'unique-service': filled(editableState?.editableUniqueServices ?? additionalInfo?.uniqueService),
+    'fun-fact': !!(editableState?.funFact ?? additionalInfo?.funFact),
+    'working-hours': Object.keys(additionalInfo?.availability ?? {}).length > 0,
+    'good-to-know': !!(additionalInfo?.lgbtqiaSupport || additionalInfo?.nonSmoker || additionalInfo?.petFriendly),
+  }
+  const shows = (sectionId: keyof typeof has) => !isHidden(sectionId) && (!hideEmpty || has[sectionId])
+  // A column with nothing to show gives its width to the other (one column, as on a phone).
+  const leftShown = (['basic-information', 'experience', 'job-history', 'education-history', 'more-information'] as const).some(shows)
+  // Rates: the admin only (never a client or the public), whatever the edit mode, and only when some are saved.
+  const shownRates = isAdminView ? savedRates(rates) : []
+  const ratesShown = shownRates.length > 0
+  const rightShown = (['services-offered', 'unique-service', 'fun-fact', 'working-hours', 'good-to-know'] as const).some(shows) || ratesShown
+
   return (
     <div className="profile-preview-content">
       {/* About Section */}
-      {!isHidden('about-me') && <div className="profile-preview-section">
+      {shows('about-me') && <div className="profile-preview-section">
         <div className="flex items-center justify-between">
           <h2 className="profile-preview-section-title">About Me</h2>
           <SectionRemoveButton sectionId="about-me" />
@@ -211,11 +248,11 @@ export default function WorkerProfileView({
       </div>}
 
       {/* Two Column Layout */}
-      <div className="profile-preview-grid">
+      <div className={`profile-preview-grid${leftShown && rightShown ? '' : ' profile-preview-grid-single'}`}>
         {/* Left Column */}
         <div className="profile-preview-column">
           {/* Basic Information Section */}
-          {!isHidden('basic-information') && <div className="profile-preview-section about-me-section">
+          {shows('basic-information') && <div className="profile-preview-section about-me-section">
             <div className="flex items-center justify-between">
               <h3 className="profile-preview-subsection-title">Basic Information</h3>
               <SectionRemoveButton sectionId="basic-information" />
@@ -247,7 +284,7 @@ export default function WorkerProfileView({
           </div>}
 
           {/* Experience */}
-          {!isHidden('experience') && (() => {
+          {shows('experience') && (() => {
             const hasRealExperience = Object.entries(additionalInfo?.experience ?? {}).some(
               ([, data]: [string, any]) => data?.description
             )
@@ -406,7 +443,7 @@ export default function WorkerProfileView({
           })()}
 
           {/* Job History */}
-          {!isHidden('job-history') && (
+          {shows('job-history') && (
             <div className="profile-preview-section">
               <div className="flex items-center justify-between">
                 <h3 className="profile-preview-subsection-title">Job History</h3>
@@ -428,7 +465,7 @@ export default function WorkerProfileView({
           )}
 
           {/* Education History */}
-          {!isHidden('education-history') && <div className="profile-preview-section">
+          {shows('education-history') && <div className="profile-preview-section">
             <div className="flex items-center justify-between">
               <h3 className="profile-preview-subsection-title">Education History</h3>
               <SectionRemoveButton sectionId="education-history" />
@@ -463,7 +500,7 @@ export default function WorkerProfileView({
           </div>}
 
           {/* More Information */}
-          {!isHidden('more-information') && <div className="profile-preview-section">
+          {shows('more-information') && <div className="profile-preview-section">
             <div className="flex items-center justify-between">
               <h3 className="profile-preview-subsection-title">More information</h3>
               <SectionRemoveButton sectionId="more-information" />
@@ -658,7 +695,7 @@ export default function WorkerProfileView({
           {/* Services Offered */}
           {(() => {
             const displayServices = editableState?.editableServices ?? servicesWithSubcategories;
-            if (isHidden('services-offered')) return null;
+            if (!shows('services-offered')) return null;
             return (
               <div className="profile-preview-section services-offered-section">
                 <div className="flex items-center justify-between">
@@ -739,7 +776,7 @@ export default function WorkerProfileView({
           )}
 
           {/* Unique Service */}
-          {!isHidden('unique-service') && (
+          {shows('unique-service') && (
             <div className="profile-preview-section">
               <div className="flex items-center justify-between">
                 <h3 className="profile-preview-subsection-title">Unique Service</h3>
@@ -807,7 +844,7 @@ export default function WorkerProfileView({
           )}
 
           {/* Fun Fact */}
-          {!isHidden('fun-fact') && (
+          {shows('fun-fact') && (
             <div className="profile-preview-section">
               <div className="flex items-center justify-between">
                 <h3 className="profile-preview-subsection-title">Fun Fact</h3>
@@ -839,7 +876,7 @@ export default function WorkerProfileView({
           )}
 
           {/* Working Hours */}
-          {!isHidden('working-hours') && (
+          {shows('working-hours') && (
             <div className="profile-preview-section">
               <div className="flex items-center justify-between">
                 <h3 className="profile-preview-subsection-title">Working Hours</h3>
@@ -884,8 +921,25 @@ export default function WorkerProfileView({
             </div>
           )}
 
+          {/* Rates (worker-rates, 2026-11-20): admin only */}
+          {ratesShown && (
+            <div className="profile-preview-section">
+              <h3 className="profile-preview-subsection-title">Rates</h3>
+              <dl className="space-y-2">
+                {shownRates.map(({ name: n, amount }) => (
+                  <div key={n} className="flex items-baseline justify-between gap-4">
+                    <dt className="text-base font-poppins text-gray-700">{RATE_ROWS[n].label}</dt>
+                    <dd className="text-base font-poppins font-semibold text-gray-900">
+                      {formatRate(amount)} <span className="text-sm font-normal text-gray-500">{RATE_ROWS[n].unit}</span>
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          )}
+
           {/* Good to Know */}
-          {!isHidden('good-to-know') && (
+          {shows('good-to-know') && (
             <div className="profile-preview-section">
               <div className="flex items-center justify-between">
                 <h3 className="profile-preview-subsection-title">Good to know</h3>

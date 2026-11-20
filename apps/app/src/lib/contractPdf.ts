@@ -255,3 +255,140 @@ export function drawContractTable(
   doc.setDrawColor(0, 0, 0);
   return y;
 }
+
+// ---- The signed agreement (signup-abn-agreement U2) ---------------------------------------------------------------
+// Moved from ContractPage so the dashboard's agreement page and the sign-up's last step build the same document.
+
+/** What the worker fills in above the contract text. */
+export interface ContractPreamble {
+  /** yyyy-mm-dd */
+  agreementDate: string;
+  partyName: string;
+  /** The ABN (or, on the dashboard, the TFN) as typed. */
+  partyTaxId: string;
+  gstRegistered: "yes" | "no" | "";
+  partyAddress: string;
+  /** yyyy-mm-dd */
+  signatureDate: string;
+}
+
+/** "27th January 2026" */
+export function formatContractDate(date: Date): string {
+  const day = date.getDate();
+  const month = date.toLocaleString("en-AU", { month: "long" });
+  const suffix = ["th", "st", "nd", "rd"][day % 10 > 3 || Math.floor((day % 100) / 10) === 1 ? 0 : day % 10];
+  return `${day}${suffix} ${month} ${date.getFullYear()}`;
+}
+
+/** Today's checks before signing, in the order and words the dashboard page has always shown; null when complete. */
+export function preambleProblem(type: "abn" | "tfn", p: ContractPreamble, signature: string | null, agreed: boolean): string | null {
+  const isContractor = type === "abn";
+  if (!p.partyName.trim()) return isContractor ? "Please enter the Company / Business / Sole Trader (Provider) name" : "Please enter the Employee name";
+  if (!p.partyTaxId.trim()) return `Please enter the ${isContractor ? "ABN" : "TFN"}`;
+  if (isContractor && !p.gstRegistered) return "Please confirm whether you are registered for GST";
+  if (!p.partyAddress.trim()) return "Please enter the address";
+  if (!signature) return "Please provide your signature";
+  if (!agreed) return "Please confirm that you agree to the terms";
+  return null;
+}
+
+/** The signed agreement as a PDF file, named as the dashboard has always named it. */
+export async function buildContractPdf(type: "abn" | "tfn", p: ContractPreamble, signature: string): Promise<File> {
+  const { jsPDF } = await import("jspdf");
+  const { getContractContent } = await import("@/config/contractContent");
+  const contract = getContractContent(type);
+  const isContractor = type === "abn";
+  const partyLabel = isContractor ? "Provider" : "Employee";
+  const doc = new jsPDF();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 20;
+  const contentWidth = pageWidth - margin * 2;
+  let yPosition = margin;
+
+  const addText = (text: string, fontSize: number, isBold = false, indent = 0) => {
+    doc.setFontSize(fontSize);
+    doc.setFont("helvetica", isBold ? "bold" : "normal");
+    const lines = doc.splitTextToSize(text, contentWidth - indent);
+    const lineHeight = fontSize * 0.5;
+    if (yPosition + lines.length * lineHeight > pageHeight - margin) {
+      doc.addPage();
+      yPosition = margin;
+    }
+    doc.text(lines, margin + indent, yPosition);
+    yPosition += lines.length * lineHeight + 2;
+  };
+  const addSpacing = (space: number) => {
+    yPosition += space;
+    if (yPosition > pageHeight - margin) {
+      doc.addPage();
+      yPosition = margin;
+    }
+  };
+
+  doc.setFontSize(18);
+  doc.setFont("helvetica", "bold");
+  doc.text(contract.title, pageWidth / 2, yPosition, { align: "center" });
+  yPosition += 8;
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "normal");
+  doc.text(contract.subtitle, pageWidth / 2, yPosition, { align: "center" });
+  yPosition += 15;
+
+  addText(`This ${contract.title} ("Agreement") is made and entered into on ${formatContractDate(new Date(p.agreementDate))}`, 10, false);
+  addSpacing(5);
+  addText("by and between:", 10, false);
+  addSpacing(3);
+  addText('Remonta Group Pty Ltd (trading as Remonta) ("Company")', 10, true);
+  addText("Located at: 3 Montrose Place, St Andrews, NSW 2566", 10, false);
+  addSpacing(5);
+  addText("and", 10, false);
+  addSpacing(3);
+  addText(`${p.partyName} ("${partyLabel}")`, 10, true);
+  if (isContractor) {
+    addText(`Active ABN: ${p.partyTaxId}`, 10, false);
+    addText(`GST Registered: ${p.gstRegistered === "yes" ? "Yes" : "No"}`, 10, false);
+  } else {
+    addText(`TFN: ${p.partyTaxId}`, 10, false);
+  }
+  addText(`Located at: ${p.partyAddress}`, 10, false);
+  addSpacing(10);
+
+  contract.sections.forEach((section) => {
+    addText(section.title, 11, true);
+    addSpacing(2);
+    section.content.forEach((paragraph) => {
+      const indent = paragraph.startsWith("•") || paragraph.startsWith("-") ? 10 : 0;
+      addText(paragraph, 9, false, indent);
+    });
+    yPosition = drawSectionExtras(doc, section, { margin, pageWidth, pageHeight, startY: yPosition });
+    addSpacing(5);
+  });
+
+  addSpacing(5);
+  doc.setDrawColor(200, 200, 200);
+  doc.line(margin, yPosition, pageWidth - margin, yPosition);
+  yPosition += 5;
+  addText(contract.closingStatement, 9, false);
+  addSpacing(10);
+
+  addText("SIGNED:", 10, true);
+  addSpacing(5);
+  try {
+    if (yPosition + 40 > pageHeight - margin) {
+      doc.addPage();
+      yPosition = margin;
+    }
+    doc.addImage(signature, "PNG", margin, yPosition, 60, 30);
+    yPosition += 35;
+  } catch (e) {
+    console.error("Error adding signature to PDF:", e);
+  }
+  addText(`Name: ${p.partyName}`, 10, false);
+  addText(`Date: ${formatContractDate(new Date(p.signatureDate))}`, 10, false);
+
+  // The api takes a plain name (no path separators or control characters, at most 200): a business name may hold a "/".
+  const safeName = p.partyName.replace(/\s+/g, "_").replace(/[\p{Cc}/\\]/gu, "-").slice(0, 120);
+  const fileName = `${contract.title.replace(/\s+/g, "_")}_${safeName}_${p.signatureDate}.pdf`;
+  return new File([doc.output("blob")], fileName, { type: "application/pdf" });
+}

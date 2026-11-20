@@ -148,7 +148,7 @@ export const registrationContract = defineContract('registration', {
   checkEmailAvailability: {
     method: 'POST',
     path: '/v1/registrations/worker/email-availability',
-    summary: 'Whether an address can sign up (no account yet). Asked when the email field loses focus. One indexed lookup, nothing else.',
+    summary: 'Whether an address can sign up (no account yet). Asked once typing pauses on a valid address or the email field loses focus. One indexed lookup, nothing else.',
     body: { kind: 'json', schema: emailAvailabilitySchema },
     responses: { 200: z.strictObject({ available: z.boolean() }) },
     meta: meta({

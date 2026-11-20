@@ -3,7 +3,7 @@
 // a 401 with a fresh token, and a typed outcome instead of a thrown error. The section
 // saves go through the form engine (saveSection); this client holds the read and the
 // photo calls, which upload files rather than save a body.
-import { createClient, workerContract, type CitizenshipBody, type ComplianceDocument, type ConfirmComplianceDocumentBody, type ConfirmServiceDocumentBody, type SignContractBody, type SignedContract, type TourView, type ActivationView, type WorkerPhotos, type DocumentLink, type Profile, type ServiceDocument, type ServiceDocumentTicketRequest, type ServiceDocumentTicketResponse, type ServiceRegistrationBody, type ServiceRegistrationView, type ServicesBody, type ServiceTools, type ServiceToolsBody, type ServiceToolsView } from "@remonta/api-contract";
+import { createClient, workerContract, type CitizenshipBody, type ComplianceDocument, type ConfirmComplianceDocumentBody, type ConfirmServiceDocumentBody, type SignContractBody, type SignedContract, type TourView, type ActivationView, type RatesRead, type WorkerPhotos, type DocumentLink, type Profile, type ServiceDocument, type ServiceDocumentTicketRequest, type ServiceDocumentTicketResponse, type ServiceRegistrationBody, type ServiceRegistrationView, type ServicesBody, type ServiceTools, type ServiceToolsBody, type ServiceToolsView } from "@remonta/api-contract";
 import { apiToken } from "@/lib/api/admin";
 import { failure, type ApiOutcome } from "@/lib/api/outcome";
 import { Unauthenticated, type TokenSource } from "@/lib/api/token";
@@ -65,6 +65,8 @@ export interface WorkerApi {
   getServiceTools(opts?: { signal?: AbortSignal }): Promise<ApiOutcome<ServiceToolsView>>;
   /** worker-tools: replace one service's tools; 404 when the service is not chosen. */
   putServiceTools(categoryId: ServiceTools["categoryId"], body: ServiceToolsBody): Promise<ApiOutcome<ServiceTools>>;
+  /** worker-rates: the worker's rates, every field null until saved (never cached by the api). Saved through the form engine. */
+  getRates(opts?: { cache?: "default" | "reload"; signal?: AbortSignal }): Promise<ApiOutcome<RatesRead>>;
 }
 
 export interface WorkerApiDeps {
@@ -99,7 +101,8 @@ type EntryName =
   | "getActivation"
   | "putTourSeen"
   | "getServiceTools"
-  | "putServiceTools";
+  | "putServiceTools"
+  | "getRates";
 
 export function createWorkerApi(deps: WorkerApiDeps): WorkerApi {
   const doFetch = deps.fetch ?? ((input: RequestInfo | URL, init?: RequestInit) => globalThis.fetch(input, init));
@@ -172,6 +175,7 @@ export function createWorkerApi(deps: WorkerApiDeps): WorkerApi {
     putTourSeen: () => call("putTourSeen", {}),
     getServiceTools: (opts) => call("getServiceTools", {}, opts),
     putServiceTools: (categoryId, body) => call("putServiceTools", { body, params: { categoryId } }),
+    getRates: (opts) => call("getRates", {}, opts),
   };
 }
 

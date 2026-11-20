@@ -33,6 +33,14 @@ export type FieldDef =
       title?: string;
       /** Words shown under the list while any of `whenAny` (service ids) is ticked; display only, never sent (worker-tools UR-10). */
       notes?: readonly { whenAny: readonly string[]; text: string }[];
+      /** At most this many services on this form (the contract may allow more): 1 = once one is picked, the others are off until it is un-picked. */
+      max?: number;
+      /**
+       * Shown when a picked service has required documents (the platform's list, the one its dashboard asks for):
+       * `text` (`{service}` is the service's name), the documents, then `after`; `unavailable` in place of `text` and
+       * the list when they cannot be loaded.
+       */
+      documentsNotice?: { title: string; text: string; after: string; unavailable: string; button: string };
     })
   /**
    * A photo uploaded straight to storage (U3): `ticketEntry` names the key the browser
@@ -40,6 +48,12 @@ export type FieldDef =
    */
   | (FieldBase & { kind: "photo"; ticketEntry: string; confirmEntry: string })
   | (FieldBase & { kind: "consent"; statement: string; paragraphs?: string[] })
+  /**
+   * The signed Contractor Agreement (signup-abn-agreement U2): the platform draws the dashboard's agreement, builds the
+   * signed PDF and uploads it by `ticketEntry` (no confirm); the value is `{ uploadId, fileName, abn }`. `nameFrom`:
+   * the fields whose values start the agreement's name (first, last).
+   */
+  | (FieldBase & { kind: "agreement"; ticketEntry: string; nameFrom: readonly [string, string] })
   /**
    * A code emailed to the `for` field's address and checked before the step can
    * continue. The value is the proof the sign-up sends: the code and its signed
@@ -50,7 +64,7 @@ export type FieldDef =
       for: string;
       sendEntry: string;
       verifyEntry: string;
-      /** Asked when the address field loses focus; the code can be sent only for an available address. */
+      /** Asked when typing pauses on a valid address or the field loses focus; the code can be sent only for an available address. */
       availabilityEntry?: string;
     });
 
@@ -106,7 +120,8 @@ export interface FormDefinition<C extends ContractDef = ContractDef> {
   constants?: Record<string, unknown>;
   /** Body fields taken from the page URL: { zohoLeadId: "id" } reads ?id=. */
   fromQuery?: Record<string, string>;
-  intro?: { title: string; text: string; button: string };
+  /** `notice`: shown in a dialog when the intro's button is pressed; `proceed` starts the form, `cancel` closes it. */
+  intro?: { title: string; text: string; button: string; notice?: { title: string; text: string; proceed: string; cancel: string } };
   steps: StepDef[];
   successRedirect: string;
 }

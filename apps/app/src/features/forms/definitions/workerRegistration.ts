@@ -18,6 +18,13 @@ export const workerRegistrationForm = defineForm({
     title: "Welcome to Remonta",
     text: "There are thousands of people on Remonta looking for support workers just like you. Create your account today and tell us more about yourself",
     button: "Continue",
+    // signup-abn-agreement R1: the ABN is asked for on the last step.
+    notice: {
+      title: "Please Note:",
+      text: "Before you begin, please have your ABN handy. You’ll need it in the final step of the sign-up process.",
+      proceed: "Proceed",
+      cancel: "Cancel",
+    },
   },
   steps: [
     {
@@ -60,7 +67,16 @@ export const workerRegistrationForm = defineForm({
           kind: "services",
           subcategoriesName: "supportWorkerCategories",
           title: "What services can you offer?",
-          hint: "You can select more than one, but make sure you have the relevant qualifications.",
+          // 2026-11-19: one service at sign-up; more are added on the dashboard (Services > + Add services).
+          hint: "Choose the one service you'd like to start with. You can add more services from your dashboard after signing up.",
+          max: 1,
+          documentsNotice: {
+            title: "Please Note:",
+            text: "{service} requires the following documents and checks:",
+            after: "After signing up, go to Compliance on your dashboard to upload them.",
+            unavailable: "{service} requires documents and checks. After signing up, go to Compliance on your dashboard to see the full list and upload them.",
+            button: "OK",
+          },
           // worker-tools (FR-10, UR-10): only a note; the tools themselves are on the dashboard.
           notes: [{ whenAny: ["cleaning-services", "home-yard-maintenance"], text: "Some jobs require your own tools, so please be ready to bring them." }],
         },
@@ -89,6 +105,11 @@ export const workerRegistrationForm = defineForm({
           statement: "I acknowledge and consent to my profile and photo will be shared with clients for matching purposes.",
         },
       ],
+    },
+    {
+      // signup-abn-agreement U2: the dashboard's ABN Contractor Agreement, signed here and recorded with the account.
+      title: "Contractor Agreement",
+      fields: [{ name: "agreement", kind: "agreement", ticketEntry: "createAgreementUploadTicket", nameFrom: ["firstName", "lastName"], neverSaved: true }],
     },
   ],
 });

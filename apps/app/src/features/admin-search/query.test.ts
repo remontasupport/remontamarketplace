@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
 import * as fc from 'fast-check'
 import { AGE_RANGES, COMPLETION_FLAGS, workerSearchQuerySchema } from '@remonta/api-contract'
 import { SERVICE_TOOLS, TOOL_IDS, TOOL_SERVICES, toolSearchOf } from '@remonta/schemas/data/serviceTools'
-import { canonicalOf, COMPLETION_OPTIONS, completionChips, DEFAULT_FILTERS, searchRequestOf, TOOL_GROUPS, toggleCompletion, unfinishedOf, toolGroupFor, toolSearchView, EXPERIENCE_OPTIONS, experienceAreasOfLabel, filtersFromURL, toQuery, urlFromFilters, type AdminFilters } from './query'
+import { canonicalOf, servicesShown, COMPLETION_OPTIONS, completionChips, DEFAULT_FILTERS, searchRequestOf, TOOL_GROUPS, toggleCompletion, unfinishedOf, toolGroupFor, toolSearchView, EXPERIENCE_OPTIONS, experienceAreasOfLabel, filtersFromURL, toQuery, urlFromFilters, type AdminFilters } from './query'
 
 /** Any combination of the four dropdowns ("Any" = the key left out). */
 const filterValue = fc.constantFrom('complete' as const, 'incomplete' as const)
@@ -226,8 +226,9 @@ describe('the completion dropdowns and badges (admin-completion-filters FR-4, FR
 
   it('every request asks for the rows\' flags, and the URL bar never carries it', () => {
     const f = { ...DEFAULT_FILTERS, completion: { trainings: 'incomplete' as const } }
-    expect(searchRequestOf(f)).toEqual({ ...toQuery(f), withActivation: true, withCompletion: true })
+    expect(searchRequestOf(f)).toEqual({ ...toQuery(f), withActivation: true, withCompletion: true, withRates: true })
     expect(urlFromFilters(f)).not.toContain('withCompletion')
+    expect(urlFromFilters(f)).not.toContain('withRates')
   })
 
   it('one dropdown: a pick sets its item, the same pick again clears it, other items untouched; chips in checklist order', () => {
@@ -264,7 +265,7 @@ describe('the activation tab (worker-activation A2, A3)', () => {
     fc.assert(
       fc.property(fc.constantFrom('all' as const, 'active' as const, 'inactive' as const), (activation) => {
         const f = { ...DEFAULT_FILTERS, activation }
-        expect(searchRequestOf(f)).toEqual({ ...toQuery(f), withActivation: true, withCompletion: true })
+        expect(searchRequestOf(f)).toEqual({ ...toQuery(f), withActivation: true, withCompletion: true, withRates: true })
         expect(urlFromFilters(f)).not.toContain('withActivation')
       }),
     )
@@ -285,3 +286,24 @@ describe('the nurse type (2026-10-23)', () => {
     expect(toQuery({ ...nursing, nursingType: 'all' })).not.toHaveProperty('nursingType')
   })
 })
+
+describe("servicesShown (2026-11-19: a search by service shows only the searched services under the name)", () => {
+  const categories = [
+    { id: "support-worker", name: "Support Worker" },
+    { id: "cleaning-services", name: "Cleaning Services" },
+    { id: "home-yard-maintenance", name: "Home and Yard Maintenance" },
+  ];
+  const services = ["Cleaning Services", "Home and Yard Maintenance", "Support Worker"];
+
+  it("without a service search, every service", () => {
+    expect(servicesShown(services, [], categories)).toEqual(services);
+  });
+  it("searching one service shows that one only; two show those two, in the worker's order", () => {
+    expect(servicesShown(services, ["support-worker"], categories)).toEqual(["Support Worker"]);
+    expect(servicesShown(services, ["support-worker", "cleaning-services"], categories)).toEqual(["Cleaning Services", "Support Worker"]);
+  });
+  it("shows everything rather than nothing when the searched one cannot be matched (catalogue not loaded, a rename)", () => {
+    expect(servicesShown(services, ["support-worker"], undefined)).toEqual(services);
+    expect(servicesShown(services, ["nursing-services"], categories)).toEqual(services);
+  });
+});

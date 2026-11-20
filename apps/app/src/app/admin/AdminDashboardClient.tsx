@@ -11,6 +11,8 @@
 // The cards can be ticked and downloaded as CSV, or every worker matching the filters (features/admin-export).
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { formatRate, RATE_ROWS, savedRates } from '@/lib/rates'
+import { matchesNameOrEmail } from '@/features/admin-search/suspended'
 import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { PAGE_SIZE_MAX, type WorkerRow, type WorkerSearchResponse } from '@remonta/api-contract'
@@ -19,6 +21,7 @@ import WorkerAvatar from '@/components/ui/WorkerAvatar'
 import { adminApi, type ApiOutcome } from '@/lib/api/admin'
 import { noticeText, noticeTitle } from '@/lib/api/outcome-notice'
 import Pagination from '@/components/ui/Pagination'
+import WorkerAccountStatus from './WorkerAccountStatus'
 import { allPages } from '@/lib/api/allPages'
 import CsvDownloadBar from '@/features/admin-export/CsvDownloadBar'
 import { useContactsExport } from '@/features/admin-export/useContactsExport'
@@ -42,6 +45,7 @@ import {
   unfinishedOf,
   urlFromFilters,
   type AdminFilters,
+  servicesShown,
 } from '@/features/admin-search/query'
 import type { ExtraColumn } from '@/features/admin-export/contactsCsv'
 import { estimatedDriveMinutes, formatDrive } from '@/features/admin-search/travel'
@@ -108,6 +112,30 @@ const QUERY_KEY = 'admin-workers'
 
 const SEARCH_NOTICE = { name: 'search', plural: 'searches' }
 
+/** worker-rates (2026-11-20): a card's saved rates, one per line, labels and amounts in aligned columns; nothing when none saved. */
+function CardRates({ rates }: { rates: WorkerRow['rates'] }) {
+  const saved = savedRates(rates)
+  if (saved.length === 0) return null
+  return (
+    <div className="mt-2 flex items-start gap-1 text-xs text-gray-600">
+      <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <dl className="grid grid-cols-[auto_auto] gap-x-3 gap-y-0.5" aria-label="Rates">
+        {saved.map(({ name, amount }) => (
+          <div key={name} className="contents">
+            <dt>{RATE_ROWS[name].label}</dt>
+            <dd className="text-right tabular-nums text-gray-800">
+              {formatRate(amount)}
+              <span className="text-gray-500">{RATE_ROWS[name].short}</span>
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  )
+}
+
 export default function AdminDashboard() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -130,12 +158,15 @@ export default function AdminDashboard() {
   const [showToggleForContractor, setShowToggleForContractor] = useState<string | null>(null)
 
   // Inactive (suspended) workers modal state (grouped)
+  // The Suspended accounts search: name or email, over the loaded list (2026-11-20).
+  const [suspendedSearch, setSuspendedSearch] = useState('')
   const [inactiveWorkersState, setInactiveWorkersState] = useState({
     isOpen: false,
     workers: [] as Contractor[],
     total: 0,
     isLoading: false,
   })
+  const suspendedShown = inactiveWorkersState.workers.filter((w) => matchesNameOrEmail(w, suspendedSearch))
 
   // Suburb autocomplete states; the picked suburb lives in pendingFilters.locality (R11.3)
   const [suburbSearch, setSuburbSearch] = useState(() => filters.locality?.label ?? '')
@@ -405,9 +436,11 @@ export default function AdminDashboard() {
 
   const fetchInactiveWorkers = async () => {
     setInactiveWorkersState(prev => ({ ...prev, isLoading: true }))
-    const result = await adminApi.listSuspendedWorkers({ page: 1, pageSize: 100 }, { cache: 'reload' })
+    setSuspendedSearch('')
+    // Every page (2026-11-20): the search filters the whole list in the browser.
+    const result = await allPages((page) => adminApi.listSuspendedWorkers({ page, pageSize: PAGE_SIZE_MAX }, { cache: 'reload' }))
     if (result.kind === 'ok') {
-      setInactiveWorkersState({ isOpen: true, workers: result.body.data, total: result.body.pagination.total, isLoading: false })
+      setInactiveWorkersState({ isOpen: true, workers: result.body, total: result.body.length, isLoading: false })
     } else {
       setInactiveWorkersState(prev => ({ ...prev, isLoading: false }))
       if (result.kind === 'unauthenticated') {
@@ -433,6 +466,16 @@ export default function AdminDashboard() {
     } else {
       alert('Failed to restore the account: ' + noticeText(result))
     }
+  }
+
+  // Suspend on a card (2026-11-20): the list holds ACTIVE accounts only, so the card leaves it at once and the list
+  // is reloaded past the caches (R11.7); the account is then in "Suspended accounts".
+  const removeSuspended = (contractorId: string) => {
+    queryClient.setQueryData<ApiOutcome<WorkerSearchResponse>>([QUERY_KEY, canonical], (prev) =>
+      prev?.kind === 'ok' ? { ...prev, body: { ...prev.body, data: prev.body.data.filter((w) => w.id !== contractorId) } } : prev,
+    )
+    reloadRef.current = true
+    queryClient.invalidateQueries({ queryKey: [QUERY_KEY] })
   }
 
   const notice = outcome && outcome.kind !== 'ok' && outcome.kind !== 'unauthenticated' ? outcome : null
@@ -1287,9 +1330,10 @@ export default function AdminDashboard() {
                           </div>
 
                           {/* Services */}
+                          {/* Searched by service: only the searched ones (user, 2026-11-19) */}
                           {contractor.services && contractor.services.length > 0 && (
                             <p className="text-xs text-gray-600 mb-2">
-                              {contractor.services.join(' / ')}
+                              {servicesShown(contractor.services, filters.typeOfSupport ? [filters.typeOfSupport] : [], categories).join(' / ')}
                             </p>
                           )}
 
@@ -1361,6 +1405,9 @@ export default function AdminDashboard() {
                             )}
                           </div>
 
+                          {/* Rates (worker-rates, 2026-11-20): under the address row, one per line (user) */}
+                          <CardRates rates={contractor.rates} />
+
                           {/* Action Buttons */}
                           <div className="flex flex-wrap gap-2 mt-3">
                             <a
@@ -1414,6 +1461,9 @@ export default function AdminDashboard() {
                               </svg>
                               Contact Info
                             </button>
+
+                            {/* Suspend account (user, 2026-11-20: was on the Edit Profile page) */}
+                            <WorkerAccountStatus workerId={contractor.id} initial={{ status: 'ACTIVE' }} onChange={(suspended) => suspended && removeSuspended(contractor.id)} />
                           </div>
 
                           {/* Contact Information Expandable */}
@@ -1491,15 +1541,33 @@ export default function AdminDashboard() {
                 </button>
               </div>
 
+              {/* Search: name or email (2026-11-20) */}
+              {inactiveWorkersState.workers.length > 0 && (
+                <div className="px-6 pt-4">
+                  <input
+                    type="search"
+                    value={suspendedSearch}
+                    onChange={(e) => setSuspendedSearch(e.target.value)}
+                    placeholder="Search by name or email address"
+                    aria-label="Search suspended accounts by name or email address"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                </div>
+              )}
+
               {/* Content */}
               <div className="overflow-y-auto max-h-[60vh] p-6">
                 {inactiveWorkersState.workers.length === 0 ? (
                   <div className="text-center py-8 text-gray-500">
                     No suspended accounts
                   </div>
+                ) : suspendedShown.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    No suspended account matches &ldquo;{suspendedSearch.trim()}&rdquo;
+                  </div>
                 ) : (
                   <div className="space-y-3">
-                    {inactiveWorkersState.workers.map((worker) => (
+                    {suspendedShown.map((worker) => (
                       <div
                         key={worker.id}
                         className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
@@ -1528,8 +1596,8 @@ export default function AdminDashboard() {
                         </button>
                       </div>
                     ))}
-                    {inactiveWorkersState.total > inactiveWorkersState.workers.length && (
-                      <p className="text-center text-xs text-gray-500">Showing the first {inactiveWorkersState.workers.length} of {inactiveWorkersState.total}.</p>
+                    {suspendedShown.length < inactiveWorkersState.workers.length && (
+                      <p className="text-center text-xs text-gray-500">Showing {suspendedShown.length} of {inactiveWorkersState.workers.length}.</p>
                     )}
                   </div>
                 )}

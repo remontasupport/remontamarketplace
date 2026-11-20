@@ -21,23 +21,26 @@ were removed on 2026-10-02, after the api had served production since that morni
 
 | # | Screen (form step) | The worker does | Call to apps/api | Writes? |
 |---|---|---|---|---|
-| 0 | "Welcome to Remonta" intro | Clicks Continue | — | — |
+| 0 | "Welcome to Remonta" intro | Clicks Continue; a notice says "Before you begin, please have your ABN handy. You’ll need it in the final step of the sign-up process." **Proceed** starts the form, **Cancel** closes the notice | — | — |
 | 1 | "Where are you located?" | Types 2+ letters of a suburb or postcode, picks one | `GET /v1/localities?q=…` (debounced 300 ms, every keystroke) | no |
 | 2 | "Please provide your details" | Types first name, last name, mobile | — | — |
-| 2 | (same) | Types email, leaves the field | `POST /v1/registrations/worker/email-availability` | no |
+| 2 | (same) | Types a valid email (checked once typing pauses for half a second, or when the field is left; **Send code** is enabled as soon as the address is free) | `POST /v1/registrations/worker/email-availability` | no |
 | 2 | (same) | Clicks **Send code** (only if the address is available) | `POST /v1/registrations/worker/email-codes` (with a reCAPTCHA token) → a signed ticket | no (an email is sent) |
 | 2 | (same) | Types the 6-digit code, clicks **Verify** | `POST /v1/registrations/worker/email-codes/verify` | no |
 | 2 | (same) | Types the password (enabled only after the email is verified) | — | — |
-| 3 | "What services can you offer?" | Picks services; sub-services through a dialog. While Cleaning Services or Home and Yard Maintenance is ticked, a blue note: "Some jobs require your own tools, so please be ready to bring them." (display only; the tools are on the dashboard, worker-tools) | `GET /v1/service-categories` (once, cached) | no |
+| 3 | "What services can you offer?" | Picks **one** service (2026-11-19: once one is ticked the others are dimmed and cannot be picked until it is un-ticked; more are added on the dashboard); sub-services through a dialog. A "Please Note:" dialog then lists what the service will ask for, in the dashboard's groups (Compliance, Trainings with the NDIS induction modules, the service's documents, Additional credentials; a conditional item such as a driver's licence marked "if applicable"), from `GET /v1/service-requirements`, and points to Compliance on the dashboard. No dialog when the service asks for nothing. While Cleaning Services or Home and Yard Maintenance is ticked, a blue note: "Some jobs require your own tools, so please be ready to bring them." (display only; the tools are on the dashboard, worker-tools) | `GET /v1/service-categories` (once, cached) | no |
 | 4 | Photo + consent | Uploads a photo | `POST …/photo-tickets` → the browser POSTs the file straight to the bucket (a progress bar) → `POST …/photo-confirmations` → `photoUploadId` (U3; HEIC is refused on the device) | **yes**: `registration_photo_uploads` (+ the file in the bucket until the sign-up claims it) |
-| 4 | (same) | Ticks the consent, clicks **Complete Signup** | `POST /v1/registrations/worker` (with a fresh reCAPTCHA token) | **yes**: everything in [03 §2](03-data-model.md#2-tables-written-by-a-sign-up) |
-| 5 | `/registration/worker/success` | — | — | — |
+| 4 | (same) | Ticks the consent, clicks Next | — | — |
+| 5 | "Contractor Agreement" | Fills the dashboard's ABN agreement (name prefilled from step 2, ABN checked on the device: 11 digits + the ATO check, GST, address), signs, ticks the agreement box, clicks **Sign & Accept Agreement**: the browser builds the signed PDF | `POST …/agreement-tickets` → the browser POSTs the PDF straight to the bucket → the step shows "Agreement signed" | no (the file waits in the bucket's staging area) |
+| 5 | (same) | Clicks **Complete Signup** | `POST /v1/registrations/worker` (with a fresh reCAPTCHA token and `agreement`) | **yes**: everything in [03 §2](03-data-model.md#2-tables-written-by-a-sign-up), the signed agreement included |
+| 6 | `/registration/worker/success` | — | — | — |
 
-**signup-abn-agreement (api 2026-11-19; the wizard's notice and its final "Contractor Agreement" step follow in U2):** the
-submit also accepts the signed agreement (`POST …/agreement-tickets` → the browser POSTs the PDF straight to the bucket →
-`agreement` in the submit; [02 §4.6c](02-api-reference.md)).
+**signup-abn-agreement (2026-11-19):** the notice and step 5 are the wizard's (`workerRegistration.ts`: `intro.notice`,
+the `agreement` field kind); the agreement form and its PDF are the dashboard's own (`ContractAgreementForm`,
+`buildContractPdf`), so the file is the one the dashboard's signing makes. The signature, the ABN and the upload id are
+never kept in the on-device draft. Reference: [02 §4.6c](02-api-reference.md).
 
-After step 4 the account exists and can sign in at once. Emails and other follow-ups run in the
+After step 5 the account exists and can sign in at once; its dashboard shows the agreement signed, with the file. Emails and other follow-ups run in the
 background from the outbox ([05](05-events-and-emails.md)).
 
 ### What the page keeps between visits

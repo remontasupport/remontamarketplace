@@ -19,6 +19,7 @@ import {
   stepOfKey,
   submitToApi,
   stagePhoto,
+  stageAgreement,
   HEIC_MESSAGE,
   isHeicHeader,
   PhotoFieldError,
@@ -160,6 +161,23 @@ export function useFormWizard(def: FormDefinition, backend: Backend) {
     [backend, def, retry, form],
   );
 
+  /**
+   * The signed agreement's upload (signup-abn-agreement U2): the PDF the step built, straight to storage by ticket
+   * (the photo's loop, no confirm). Tracked like a photo, so the submit waits for one in flight.
+   */
+  const agreementUploaderFor = useCallback(
+    (field: Extract<FieldDef, { kind: "agreement" }>) => async (pdf: File) => {
+      const p = stageAgreement(def, backend, field, pdf, { uploader: xhrUploader, retry });
+      uploads.current.add(p);
+      try {
+        return await p;
+      } finally {
+        uploads.current.delete(p);
+      }
+    },
+    [backend, def, retry],
+  );
+
   // ---- navigation ---------------------------------------------------------------------
   const scrollToError = () => setTimeout(() => document.querySelector("[aria-invalid='true'], .text-red-500")?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
 
@@ -230,5 +248,5 @@ export function useFormWizard(def: FormDefinition, backend: Backend) {
     [form, backend, def, apply, query, getCaptchaToken, retry, showFirstInvalidStep],
   );
 
-  return { form, step, showIntro, start: () => setShowIntro(false), stepMessage, status, online, next, back, submit, uploaderFor, backend, getCaptchaToken, retry, fieldBlurred, onFieldBlur };
+  return { form, step, showIntro, start: () => setShowIntro(false), stepMessage, status, online, next, back, submit, uploaderFor, agreementUploaderFor, backend, getCaptchaToken, retry, fieldBlurred, onFieldBlur };
 }

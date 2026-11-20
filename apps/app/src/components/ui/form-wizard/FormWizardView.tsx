@@ -3,15 +3,25 @@
 // The wizard's layout: intro card, banners, progress, the current step's fields,
 // status messages and navigation. Presentational only -- everything it shows and
 // does comes in through props (see features/forms/FormWizard for the wiring).
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 
 export type WizardStatus = { kind: "idle" } | { kind: "sending" } | { kind: "uploading" } | { kind: "retrying" } | { kind: "waiting-for-connection" } | { kind: "failed"; message: string };
 
-export function WizardIntro({ title, text, button, onStart }: { title: string; text: string; button: string; onStart: () => void }) {
+export interface WizardNotice {
+  title: string;
+  text: string;
+  proceed: string;
+  cancel: string;
+}
+
+/** The intro card; with a `notice`, its button first shows the notice (signup-abn-agreement R1): Proceed starts, Cancel closes. */
+export function WizardIntro({ title, text, button, notice, onStart }: { title: string; text: string; button: string; notice?: WizardNotice; onStart: () => void }) {
+  const [noticeOpen, setNoticeOpen] = useState(false);
   return (
     <div className="bg-gray-50 min-h-screen flex items-center justify-center">
       <div className="max-w-2xl mx-auto px-4">
@@ -22,13 +32,36 @@ export function WizardIntro({ title, text, button, onStart }: { title: string; t
               <p className="text-lg text-center text-[#0C1628] font-poppins font-medium mb-4">{text}</p>
             </div>
             <div className="pt-4">
-              <Button onClick={onStart} className="bg-[#0C1628] hover:bg-[#A3DEDE] text-white px-8 py-3 text-lg font-poppins font-medium rounded-lg transition-colors duration-200 border-0">
+              <Button onClick={notice ? () => setNoticeOpen(true) : onStart} className="bg-[#0C1628] hover:bg-[#A3DEDE] text-white px-8 py-3 text-lg font-poppins font-medium rounded-lg transition-colors duration-200 border-0">
                 {button}
               </Button>
             </div>
           </CardContent>
         </Card>
       </div>
+      {notice && (
+        <Dialog open={noticeOpen} onOpenChange={setNoticeOpen}>
+          {/* Fades in from just above (user 2026-11-19), instead of the shared dialog's slide in from the side and zoom. */}
+          <DialogContent className="sm:max-w-md data-[state=open]:[--tw-enter-translate-x:0]! data-[state=open]:[--tw-enter-translate-y:-1.5rem]! data-[state=open]:[--tw-enter-scale:1]! data-[state=closed]:[--tw-exit-translate-x:0]! data-[state=closed]:[--tw-exit-translate-y:-1.5rem]! data-[state=closed]:[--tw-exit-scale:1]! duration-300">
+            <DialogTitle className="font-cooper text-2xl text-gray-900">{notice.title}</DialogTitle>
+            <DialogDescription className="font-poppins text-base text-[#0C1628]">{notice.text}</DialogDescription>
+            <DialogFooter className="gap-2 sm:gap-2">
+              <Button variant="outline" onClick={() => setNoticeOpen(false)} className="font-poppins">
+                {notice.cancel}
+              </Button>
+              <Button
+                onClick={() => {
+                  setNoticeOpen(false);
+                  onStart();
+                }}
+                className="bg-[#0C1628] hover:bg-[#1a2740] text-white font-poppins"
+              >
+                {notice.proceed}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

@@ -58,24 +58,48 @@ export type ProfileGroup = keyof typeof PROFILE_GROUPS;
  * Professional Information (date of birth, gender and vehicle access: a page and a write each); the
  * additional-details sections in Additional Information. The photo, preferred hours and bank account keep a place (user choice).
  */
-export const EDIT_PROFILE_CHILDREN: readonly { slug: string; label: string; done: (p: Profile) => boolean; group?: ProfileGroup }[] = [
+/**
+ * A step whose answers must be saved before "Next" moves on (2026-11-19: About you and Fun fact could be left blank).
+ * Read from the saved profile, so typed but unsaved text does not count.
+ */
+export interface RequiredBeforeNext {
+  /** What must hold; the step's own `done` when absent (user, 2026-11-19: Date of Birth to Preferences). */
+  ok?: (p: Profile) => boolean;
+  message: string;
+}
+
+/** Whether a step's required answers are saved in `p`. */
+export function requiredMet(step: { done: (p: Profile) => boolean; requiredBeforeNext?: RequiredBeforeNext }, p: Profile): boolean {
+  return !step.requiredBeforeNext || (step.requiredBeforeNext.ok ?? step.done)(p);
+}
+
+export const EDIT_PROFILE_CHILDREN: readonly { slug: string; label: string; done: (p: Profile) => boolean; group?: ProfileGroup; requiredBeforeNext?: RequiredBeforeNext }[] = [
   { slug: "name", label: "Name", group: "personal-information", done: (p) => !!p.names.firstName && !!p.names.lastName },
   { slug: "photo", label: "Profile Photo", group: "personal-information", done: (p) => !!p.photos.main },
-  { slug: "bio", label: "Bio", group: "personal-information", done: (p) => (p.bio?.trim().length ?? 0) >= 50 },
+  {
+    slug: "bio",
+    label: "Bio",
+    group: "personal-information",
+    done: (p) => (p.bio?.trim().length ?? 0) >= 50,
+    requiredBeforeNext: {
+      ok: (p) => !!p.bio?.trim() && (info(p)?.funFact?.trim().length ?? 0) >= 50,
+      message: "Please fill in About you and your Fun fact (50 characters or more) before continuing.",
+    },
+  },
   { slug: "address", label: "Address", group: "personal-information", done: (p) => !!p.homeAddress },
-  { slug: "date-of-birth", label: "Date of Birth", group: "personal-information", done: (p) => !!p.personalInfo.dateOfBirth },
-  { slug: "gender", label: "Gender", group: "personal-information", done: (p) => !!p.personalInfo.gender },
-  { slug: "languages", label: "Language", group: "personal-information", done: (p) => filled(info(p)?.languages) },
+  { slug: "date-of-birth", label: "Date of Birth", group: "personal-information", done: (p) => !!p.personalInfo.dateOfBirth, requiredBeforeNext: { message: "Please enter your date of birth before continuing." } },
+  { slug: "gender", label: "Gender", group: "personal-information", done: (p) => !!p.personalInfo.gender, requiredBeforeNext: { message: "Please choose your gender before continuing." } },
+  { slug: "languages", label: "Language", group: "personal-information", done: (p) => filled(info(p)?.languages), requiredBeforeNext: { message: "Please choose at least one language before continuing." } },
   { slug: "experience", group: "professional-information", label: "Experience", done: (p) => filled(p.sections.experience) },
   { slug: "work-history", group: "professional-information", label: "Work History", done: (p) => filled(p.sections.jobHistory) },
   { slug: "education", group: "professional-information", label: "Education", done: (p) => filled(p.sections.education) },
-  { slug: "preferred-hours", group: "professional-information", label: "Preferred Hours", done: (p) => filled(p.sections.availability) },
-  { slug: "vehicle", group: "professional-information", label: "Vehicle Access", done: (p) => !!p.personalInfo.hasVehicle },
-  { slug: "cultural-background", label: "Cultural Background", group: "additional-information", done: (p) => filled(info(p)?.culturalBackground) },
-  { slug: "religion", label: "Religion", group: "additional-information", done: (p) => filled(info(p)?.religion) },
-  { slug: "interests", label: "Interests", group: "additional-information", done: (p) => filled(info(p)?.interests) },
-  { slug: "about-me", label: "Support & Activities", group: "additional-information", done: (p) => filled(info(p)?.uniqueService) },
-  { slug: "preferences", label: "Preferences", group: "additional-information", done: (p) => filled(info(p)?.workPreferences) },
+  { slug: "preferred-hours", group: "professional-information", label: "Preferred Hours", done: (p) => filled(p.sections.availability), requiredBeforeNext: { message: "Please add your preferred hours before continuing." } },
+  { slug: "vehicle", group: "professional-information", label: "Vehicle Access", done: (p) => !!p.personalInfo.hasVehicle, requiredBeforeNext: { message: "Please tell us whether you have access to a vehicle before continuing." } },
+  { slug: "cultural-background", label: "Cultural Background", group: "additional-information", done: (p) => filled(info(p)?.culturalBackground), requiredBeforeNext: { message: "Please choose your cultural background before continuing." } },
+  { slug: "religion", label: "Religion", group: "additional-information", done: (p) => filled(info(p)?.religion), requiredBeforeNext: { message: "Please choose your religion before continuing." } },
+  { slug: "interests", label: "Interests", group: "additional-information", done: (p) => filled(info(p)?.interests), requiredBeforeNext: { message: "Please choose at least one interest before continuing." } },
+  { slug: "about-me", label: "Support & Activities", group: "additional-information", done: (p) => filled(info(p)?.uniqueService), requiredBeforeNext: { message: "Please choose at least one thing you can offer before continuing." } },
+  { slug: "preferences", label: "Preferences", group: "additional-information", done: (p) => filled(info(p)?.workPreferences), requiredBeforeNext: { message: "Please choose who you prefer to work with before continuing." } },
   { slug: "personality", label: "Personality", group: "additional-information", done: (p) => !!info(p)?.personality },
 ];
 
@@ -119,12 +143,16 @@ export const EDIT_SERVICES_LINK: MenuLink = { id: "edit-services", label: "+ Add
 /** The suburb clients find the worker at and how far they travel: in Services, not the address (user, 2026-10-13). */
 export const SERVICE_AREA_LINK: MenuLink = { id: "service-area", label: "Service Area", href: sectionHref("service-area") };
 
+/** worker-rates (2026-11-20): the worker's rates, before Service Area (user, 2026-11-20; its own read, so no done state from the profile). */
+export const RATES_LINK: MenuLink = { id: "rates", label: "Rates", href: sectionHref("rates") };
+
 /**
- * The Services group (user, 2026-10-16): one setup step per chosen service, then Service Area (was a "Modify Services"
+ * The Services group (user, 2026-10-16): one setup step per chosen service, then Rates, then Service Area (2026-11-20; was a "Modify Services"
  * sub-group; adding and removing services moved to Account). Before any service is chosen: the link to choose them.
  */
 export const servicesChildren = (steps: readonly MenuLink[], profile?: Profile): MenuLink[] => [
   ...(steps.length ? steps : [EDIT_SERVICES_LINK]),
+  RATES_LINK,
   { ...SERVICE_AREA_LINK, done: profile ? profile.serviceArea !== null : undefined },
 ];
 
@@ -133,7 +161,7 @@ export const serviceNamesOf = (profile: Profile | undefined) => profile?.service
 
 /** Which group a path belongs to, so the sidebar opens it. */
 export function groupOfPath(path: string): string | null {
-  if (path === SERVICE_AREA_LINK.href) return "services";
+  if (path === SERVICE_AREA_LINK.href || path === RATES_LINK.href) return "services";
   if (path.startsWith(PROFILE_BASE)) return "edit-profile";
   if (path.includes("/requirements/") || path.includes("/trainings/")) return "compliance";
   if (path.includes("/services/")) return "services";

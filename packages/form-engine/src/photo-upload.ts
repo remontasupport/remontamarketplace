@@ -1,6 +1,7 @@
 // The sign-up photo's direct upload (U3, functional design R6, L6): ask the api for a
 // ticket, send the file straight to storage through the platform's Uploader, then ask
-// the api to confirm. The api never carries the bytes. Over a bad connection: up to
+// the api to confirm. The api never carries the bytes. The signed agreement
+// (signup-abn-agreement U2) uses the same loop without the confirm: the submit checks it. Over a bad connection: up to
 // two more tries on the same ticket, then one fresh ticket, then the field error; the
 // engine's retry (Retry-After, offline pause) wraps the api calls; an abort signal
 // stops everything (a new pick, leaving the form). No DOM here (P-7): the transport
@@ -25,13 +26,34 @@ export function isHeicHeader(bytes: Uint8Array): boolean {
   return sniffHeic(bytes);
 }
 
+export const AGREEMENT_UPLOAD_FAILED_MESSAGE = "Your signed agreement could not be saved. Please check your connection and sign again.";
+export const AGREEMENT_SERVICE_MESSAGE = "We couldn't save your signed agreement right now. Please try again in a moment.";
+
 /** A failure the field shows; the message is already the person's. */
-export class PhotoFieldError extends Error {
+export class UploadFieldError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "PhotoFieldError";
+    this.name = "UploadFieldError";
   }
 }
+/** The photo's name for it (U3). */
+export const PhotoFieldError = UploadFieldError;
+export type PhotoFieldError = UploadFieldError;
+
+/** What differs between the uploads that share the loop. */
+interface DirectUpload {
+  ticketEntry: string;
+  /** Absent: the upload is done once the file is in storage (the submit checks it). */
+  confirmEntry?: string;
+  /** The ticket's id key: `photoUploadId` or `uploadId`. */
+  idKey: string;
+  /** The field the api names in its errors. */
+  errorField: string;
+  messages: { failed: string; tooLarge: string; notAccepted: string; service: string };
+}
+
+const PHOTO_MESSAGES = { failed: UPLOAD_FAILED_MESSAGE, tooLarge: PHOTO_TOO_LARGE_MESSAGE, notAccepted: PHOTO_NOT_ACCEPTED_MESSAGE, service: PHOTO_SERVICE_MESSAGE };
+const AGREEMENT_MESSAGES = { failed: AGREEMENT_UPLOAD_FAILED_MESSAGE, tooLarge: AGREEMENT_UPLOAD_FAILED_MESSAGE, notAccepted: AGREEMENT_UPLOAD_FAILED_MESSAGE, service: AGREEMENT_SERVICE_MESSAGE };
 
 export interface StagePhotoDeps {
   uploader: Uploader;
@@ -43,7 +65,7 @@ export interface StagePhotoDeps {
   sleep?: (ms: number) => Promise<void>;
 }
 
-type Ticket = { photoUploadId: string; upload: UploadTarget; expiresAt: string };
+type Ticket = Record<string, unknown> & { upload: UploadTarget; expiresAt: string };
 
 /** The declared type: the sniffed one when known, else the file's, else JPEG (R7.4). */
 export function declaredTypeOf(header: Uint8Array, fileType: string | undefined): "image/jpeg" | "image/png" | "image/webp" {
@@ -60,7 +82,7 @@ export function declaredTypeOf(header: Uint8Array, fileType: string | undefined)
  * bytes (the platform reads them; the engine cannot). Throws PhotoFieldError with the
  * message to show, or the abort reason.
  */
-export async function stagePhoto(
+export function stagePhoto(
   def: FormDefinition,
   backend: Backend,
   field: Extract<FieldDef, { kind: "photo" }>,
@@ -68,17 +90,29 @@ export async function stagePhoto(
   header: Uint8Array,
   deps: StagePhotoDeps,
 ): Promise<string> {
-  const ticketCall = contractCall(def.contract, backend.apiBaseUrl, field.ticketEntry);
-  const confirmCall = contractCall(def.contract, backend.apiBaseUrl, field.confirmEntry);
+  const spec = { ticketEntry: field.ticketEntry, confirmEntry: field.confirmEntry, idKey: "photoUploadId", errorField: "photo", messages: PHOTO_MESSAGES };
+  return stageDirect(def, backend, spec, file, declaredTypeOf(header, file.type), deps);
+}
+
+/** Stages the signed agreement PDF (signup-abn-agreement U2) and returns its upload id; no confirm. */
+export function stageAgreement(def: FormDefinition, backend: Backend, field: Extract<FieldDef, { kind: "agreement" }>, pdf: Blob, deps: StagePhotoDeps): Promise<string> {
+  const spec = { ticketEntry: field.ticketEntry, idKey: "uploadId", errorField: "agreement", messages: AGREEMENT_MESSAGES };
+  return stageDirect(def, backend, spec, pdf, "application/pdf", deps);
+}
+
+async function stageDirect(def: FormDefinition, backend: Backend, spec: DirectUpload, file: Blob, contentType: string, deps: StagePhotoDeps): Promise<string> {
+  const ticketCall = contractCall(def.contract, backend.apiBaseUrl, spec.ticketEntry);
+  const confirmCall = spec.confirmEntry ? contractCall(def.contract, backend.apiBaseUrl, spec.confirmEntry) : null;
   const now = deps.now ?? (() => Date.now());
   const sleep = deps.sleep ?? deps.retry?.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms)));
   const progress = (p: UploadProgress) => deps.onProgress?.(p);
-  const contentType = declaredTypeOf(header, file.type);
+  const m = spec.messages;
 
   for (let fresh = 0; fresh <= FRESH_TICKETS; fresh++) {
     throwIfAborted(deps.signal);
     progress("indeterminate");
-    const ticket = await apiCall<Ticket>(ticketCall, { contentType, sizeBytes: file.size }, deps);
+    const ticket = await apiCall<Ticket>(ticketCall, { contentType, sizeBytes: file.size }, deps, spec);
+    const id = ticket[spec.idKey] as string;
     const expiresAt = Date.parse(ticket.expiresAt);
     let sameTicketTries = 0;
     let ticketDead = false;
@@ -95,59 +129,61 @@ export async function stagePhoto(
         await sleep(backoffMs(sameTicketTries, deps.retry?.baseDelayMs ?? 1000, deps.retry?.maxDelayMs ?? 8000));
         continue;
       }
+      if (!confirmCall) return id;
       progress("indeterminate");
-      const r = await confirm(confirmCall, ticket.photoUploadId, deps);
-      if (r.status === 200) return ticket.photoUploadId;
+      const r = await confirm(confirmCall, { [spec.idKey]: id }, deps, spec);
+      if (r.status === 200) return id;
       if (r.status === 409) {
         // R6.5: the object is not there (yet): same as an upload failure.
         if (++sameTicketTries > SAME_TICKET_RETRIES) break;
         await sleep(backoffMs(sameTicketTries, deps.retry?.baseDelayMs ?? 1000, deps.retry?.maxDelayMs ?? 8000));
         continue;
       }
-      if (r.status === 413) throw new PhotoFieldError(r.fieldMessage ?? PHOTO_TOO_LARGE_MESSAGE);
-      if (r.status === 415) throw new PhotoFieldError(r.fieldMessage ?? PHOTO_NOT_ACCEPTED_MESSAGE);
+      if (r.status === 413) throw new UploadFieldError(r.fieldMessage ?? m.tooLarge);
+      if (r.status === 415) throw new UploadFieldError(r.fieldMessage ?? m.notAccepted);
       if (r.status === 404) {
         ticketDead = true; // nothing to confirm under this id any more
         break;
       }
-      throw new PhotoFieldError(r.fieldMessage ?? PHOTO_SERVICE_MESSAGE);
+      throw new UploadFieldError(r.fieldMessage ?? m.service);
     }
   }
-  throw new PhotoFieldError(UPLOAD_FAILED_MESSAGE);
+  throw new UploadFieldError(m.failed);
 }
 
 type Answer = { status: number; body: unknown; fieldMessage?: string };
 
 /** The api call under the engine's retry (Retry-After, offline pause); 400/415 and the like are final. */
-async function apiCall<T>(call: ReturnType<typeof contractCall>, body: unknown, deps: StagePhotoDeps): Promise<T> {
+async function apiCall<T>(call: ReturnType<typeof contractCall>, body: unknown, deps: StagePhotoDeps, spec: DirectUpload): Promise<T> {
   let out: { value: { ok: boolean; status: number; body: unknown }; ok: boolean };
   try {
     out = await withRetry(async () => outcomeOf(await call({ body }, { signal: anySignal(deps.signal, AbortSignal.timeout(ATTEMPT_TIMEOUT_MS)) })), deps.retry);
   } catch (err) {
     throwIfAborted(deps.signal);
-    throw new PhotoFieldError(PHOTO_SERVICE_MESSAGE);
+    throw new UploadFieldError(spec.messages.service);
   }
   if (out.value.ok) return out.value.body as T;
-  throw new PhotoFieldError(fieldMessageOf(out.value.body) ?? (out.value.status === 413 ? PHOTO_TOO_LARGE_MESSAGE : out.value.status === 415 ? PHOTO_NOT_ACCEPTED_MESSAGE : PHOTO_SERVICE_MESSAGE));
+  const m = spec.messages;
+  throw new UploadFieldError(fieldMessageOf(out.value.body, spec.errorField) ?? (out.value.status === 413 ? m.tooLarge : out.value.status === 415 ? m.notAccepted : m.service));
 }
 
 /** Confirm: 409 and 404 are decisions for the loop, not failures; 429/503 are retried by the engine. */
-async function confirm(call: ReturnType<typeof contractCall>, photoUploadId: string, deps: StagePhotoDeps): Promise<Answer> {
+async function confirm(call: ReturnType<typeof contractCall>, body: Record<string, string>, deps: StagePhotoDeps, spec: DirectUpload): Promise<Answer> {
   try {
     const { value } = await withRetry(async () => {
-      const r = await call({ body: { photoUploadId } }, { signal: anySignal(deps.signal, AbortSignal.timeout(ATTEMPT_TIMEOUT_MS)) });
+      const r = await call({ body }, { signal: anySignal(deps.signal, AbortSignal.timeout(ATTEMPT_TIMEOUT_MS)) });
       if (r.status === 409 || r.status === 404) return { kind: "fail" as const, value: r };
       return outcomeOf(r);
     }, deps.retry);
-    return { status: value.status, body: value.body, fieldMessage: fieldMessageOf(value.body) };
+    return { status: value.status, body: value.body, fieldMessage: fieldMessageOf(value.body, spec.errorField) };
   } catch (err) {
     throwIfAborted(deps.signal);
-    throw new PhotoFieldError(PHOTO_SERVICE_MESSAGE);
+    throw new UploadFieldError(spec.messages.service);
   }
 }
 
-function fieldMessageOf(body: unknown): string | undefined {
-  return (body as { error?: { fields?: { photo?: string[] } } } | null)?.error?.fields?.photo?.[0];
+function fieldMessageOf(body: unknown, field: string): string | undefined {
+  return (body as { error?: { fields?: Record<string, string[] | undefined> } } | null)?.error?.fields?.[field]?.[0];
 }
 
 function throwIfAborted(signal?: AbortSignal): void {

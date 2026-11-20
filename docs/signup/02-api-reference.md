@@ -70,6 +70,7 @@ previews); production will allow `https://app.remontaservices.com.au` only.
 |---|---|---|---|---|---|---|---|
 | 4.1 | GET | `/v1/localities` | Suburb autocomplete | — | 120/min / 6000/min | 1 h | 1 KB |
 | 4.2 | GET | `/v1/service-categories` | Services list | — | 60/min / 3000/min | 5 min | 1 KB |
+| 4.2b | GET | `/v1/service-requirements` | What one service asks of a worker (the services notice) | — | 60/min / 3000/min | 300 s | 1 KB |
 | 4.3 | POST | `/v1/registrations/worker/email-availability` | Is this email free? | — | 60/h / 6000/h | — | 1 KB |
 | 4.4 | POST | `/v1/registrations/worker/email-codes` | Email a 6-digit code | `worker_email_code` | 10/h / 1000/h | — | 4 KB |
 | 4.5 | POST | `/v1/registrations/worker/email-codes/verify` | Check the code | — | 30/h / 5000/h | — | 1 KB |
@@ -277,6 +278,17 @@ Body (JSON, strict): `{ "contentType": "application/pdf", "sizeBytes": 1 … 5 2
 `application/pdf`, at most 5 MB, 10 minutes; an unused one is removed by the bucket's lifecycle rule after a day).
 
 Errors: 400, 429, 503 (`fields.agreement`, `Retry-After: 2`).
+
+### 4.2b `GET /v1/service-requirements` — what a service asks for
+
+signup-abn-agreement (2026-11-19), for the services step's "Please Note:" dialog. Query: `categoryId` (a catalogue id),
+`subcategoryIds` (optional, comma-separated, at most 30). Built from the dashboard's own rules and the catalogue
+(`serviceRequirementsPreview`: `requirementGroups`' compliance list, the service's linked trainings including the NDIS
+induction modules, `uploadableDocuments`' required service documents, the additional credentials); required items
+only, a conditional one (`CONDITIONAL` link, e.g. a driver's licence with `hasVehicle`) as `ifApplicable: true`.
+
+**200** `{ "service": "Support Worker", "groups": [ { "title": "Compliance", "items": [ { "name": "ID verification", "ifApplicable": false } ] }, … ] }`
+(empty groups left out). 400 (malformed id), 404 (not in the catalogue), 429. Public, `Cache-Control: public, max-age=300`.
 
 ### 4.7 `POST /v1/registrations/worker` — create the account
 

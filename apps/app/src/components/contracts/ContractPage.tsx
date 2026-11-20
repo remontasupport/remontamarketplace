@@ -1,36 +1,32 @@
 /**
  * ContractPage Component
- * Main wrapper for contract viewing and signing
+ * Main wrapper for contract viewing and signing (the dashboard). The agreement itself (ContractAgreementForm) and the
+ * PDF (buildContractPdf) are shared with the sign-up's last step (signup-abn-agreement U2).
  */
 
 "use client";
 
-import { useState, useCallback } from "react";
-import { jsPDF } from "jspdf";
-import { getContractContent } from "@/config/contractContent";
-import { drawSectionExtras } from "@/lib/contractPdf";
-import ContractViewer from "./ContractViewer";
-import SignaturePad from "./SignaturePad";
+import { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
+import { getContractContent } from "@/config/contractContent";
+import { buildContractPdf, preambleProblem, type ContractPreamble } from "@/lib/contractPdf";
 import { signContract } from "@/features/worker/compliance";
+import { useWorkerProfile } from "@/features/worker/profile";
+import ContractAgreementForm, { emptyPreamble } from "./ContractAgreementForm";
 
 interface ContractPageProps {
   contractType: "abn" | "tfn";
   initialTaxId?: string;
 }
 
-// Format date as "27th January 2026"
-function formatDate(date: Date): string {
-  const day = date.getDate();
-  const month = date.toLocaleString("en-AU", { month: "long" });
-  const year = date.getFullYear();
-
-  // Add ordinal suffix
-  const suffix = ["th", "st", "nd", "rd"][
-    day % 10 > 3 || Math.floor((day % 100) / 10) === 1 ? 0 : day % 10
-  ];
-
-  return `${day}${suffix} ${month} ${year}`;
+/** The worker's copy, as the page has always given it (best effort). */
+function download(file: File) {
+  const url = URL.createObjectURL(file);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = file.name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export default function ContractPage({ contractType, initialTaxId = "" }: ContractPageProps) {
@@ -39,192 +35,37 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Preamble fields
-  const [agreementDate, setAgreementDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
-  );
-  const [partyName, setPartyName] = useState("");
-  const [partyTaxId, setPartyTaxId] = useState(initialTaxId);
-  const [partyAddress, setPartyAddress] = useState("");
-  // ABN only: clause 14.2 relies on the Provider's declared GST status
-  const [gstRegistered, setGstRegistered] = useState<"yes" | "no" | "">("");
-
-  // Signature date
-  const [signatureDate, setSignatureDate] = useState<string>(
-    new Date().toISOString().split("T")[0]
-  );
+  const [preamble, setPreamble] = useState<ContractPreamble>(() => emptyPreamble("", initialTaxId));
 
   const contract = getContractContent(contractType);
-  const isContractor = contractType === "abn";
-  const partyLabel = isContractor ? "Provider" : "Employee";
+
+  // R2a (signup-abn-agreement): the name starts as the worker's own, while the field is still empty.
+  const { profile } = useWorkerProfile();
+  useEffect(() => {
+    const n = profile?.names;
+    if (!n) return;
+    const full = `${n.firstName} ${n.lastName}`.trim();
+    setPreamble((p) => (p.partyName ? p : { ...p, partyName: full }));
+  }, [profile]);
 
   const handleSignatureChange = useCallback((dataUrl: string | null) => {
     setSignature(dataUrl);
     setError(null);
   }, []);
 
-  const handleAgreementChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setAgreed(e.target.checked);
-    setError(null);
-  }, []);
-
-  // Generate PDF document (returns doc and filename without saving/downloading)
-  const generatePdfDocument = useCallback(() => {
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 20;
-    const contentWidth = pageWidth - margin * 2;
-    let yPosition = margin;
-
-    // Helper function to add text with word wrap
-    const addText = (text: string, fontSize: number, isBold: boolean = false, indent: number = 0) => {
-      doc.setFontSize(fontSize);
-      doc.setFont("helvetica", isBold ? "bold" : "normal");
-      const lines = doc.splitTextToSize(text, contentWidth - indent);
-
-      // Check if we need a new page
-      const lineHeight = fontSize * 0.5;
-      if (yPosition + lines.length * lineHeight > pageHeight - margin) {
-        doc.addPage();
-        yPosition = margin;
-      }
-
-      doc.text(lines, margin + indent, yPosition);
-      yPosition += lines.length * lineHeight + 2;
-    };
-
-    // Helper to add spacing
-    const addSpacing = (space: number) => {
-      yPosition += space;
-      if (yPosition > pageHeight - margin) {
-        doc.addPage();
-        yPosition = margin;
-      }
-    };
-
-    // Title
-    doc.setFontSize(18);
-    doc.setFont("helvetica", "bold");
-    doc.text(contract.title, pageWidth / 2, yPosition, { align: "center" });
-    yPosition += 8;
-
-    doc.setFontSize(12);
-    doc.setFont("helvetica", "normal");
-    doc.text(contract.subtitle, pageWidth / 2, yPosition, { align: "center" });
-    yPosition += 15;
-
-    // Agreement date and parties
-    const formattedAgreementDate = formatDate(new Date(agreementDate));
-    addText(`This ${contract.title} ("Agreement") is made and entered into on ${formattedAgreementDate}`, 10, false);
-    addSpacing(5);
-    addText("by and between:", 10, false);
-    addSpacing(3);
-    addText("Remonta Group Pty Ltd (trading as Remonta) (\"Company\")", 10, true);
-    addText("Located at: 3 Montrose Place, St Andrews, NSW 2566", 10, false);
-    addSpacing(5);
-    addText("and", 10, false);
-    addSpacing(3);
-    addText(`${partyName} ("${partyLabel}")`, 10, true);
-    if (isContractor) {
-      addText(`Active ABN: ${partyTaxId}`, 10, false);
-      addText(`GST Registered: ${gstRegistered === "yes" ? "Yes" : "No"}`, 10, false);
-    } else {
-      addText(`TFN: ${partyTaxId}`, 10, false);
-    }
-    addText(`Located at: ${partyAddress}`, 10, false);
-    addSpacing(10);
-
-    // Contract sections
-    contract.sections.forEach((section) => {
-      addText(section.title, 11, true);
-      addSpacing(2);
-      section.content.forEach((paragraph) => {
-        const indent = paragraph.startsWith("•") || paragraph.startsWith("-") ? 10 : 0;
-        addText(paragraph, 9, false, indent);
-      });
-      yPosition = drawSectionExtras(doc, section, { margin, pageWidth, pageHeight, startY: yPosition });
-      addSpacing(5);
-    });
-
-    // Closing statement
-    addSpacing(5);
-    doc.setDrawColor(200, 200, 200);
-    doc.line(margin, yPosition, pageWidth - margin, yPosition);
-    yPosition += 5;
-    addText(contract.closingStatement, 9, false);
-    addSpacing(10);
-
-    // Signature section
-    addText("SIGNED:", 10, true);
-    addSpacing(5);
-
-    // Add signature image if available
-    if (signature) {
-      try {
-        // Check if we need a new page for signature
-        if (yPosition + 40 > pageHeight - margin) {
-          doc.addPage();
-          yPosition = margin;
-        }
-        doc.addImage(signature, "PNG", margin, yPosition, 60, 30);
-        yPosition += 35;
-      } catch (e) {
-        console.error("Error adding signature to PDF:", e);
-      }
-    }
-
-    // Signature details
-    const formattedSignatureDate = formatDate(new Date(signatureDate));
-    addText(`Name: ${partyName}`, 10, false);
-    addText(`Date: ${formattedSignatureDate}`, 10, false);
-
-    const fileName = `${contract.title.replace(/\s+/g, "_")}_${partyName.replace(/\s+/g, "_")}_${signatureDate}.pdf`;
-    return { doc, fileName };
-  }, [contract, agreementDate, partyName, partyTaxId, gstRegistered, partyAddress, partyLabel, isContractor, signature, signatureDate]);
-
   const handleSubmit = useCallback(async () => {
-    // Validate preamble fields
-    if (!partyName.trim()) {
-      setError(
-        isContractor
-          ? "Please enter the Company / Business / Sole Trader (Provider) name"
-          : "Please enter the Employee name"
-      );
+    const problem = preambleProblem(contractType, preamble, signature, agreed);
+    if (problem) {
+      setError(problem);
       return;
     }
-    if (!partyTaxId.trim()) {
-      setError(`Please enter the ${isContractor ? "ABN" : "TFN"}`);
-      return;
-    }
-    if (isContractor && !gstRegistered) {
-      setError("Please confirm whether you are registered for GST");
-      return;
-    }
-    if (!partyAddress.trim()) {
-      setError("Please enter the address");
-      return;
-    }
-    if (!signature) {
-      setError("Please provide your signature");
-      return;
-    }
-    if (!agreed) {
-      setError("Please confirm that you agree to the terms");
-      return;
-    }
-
     setIsSubmitting(true);
     setError(null);
 
     // ── Step 1: Generate the PDF (the signed contract is what proves the engagement) ──
-    let doc: import("jspdf").jsPDF;
-    let fileName: string;
+    let pdf: File;
     try {
-      const result = generatePdfDocument();
-      doc = result.doc;
-      fileName = result.fileName;
+      pdf = await buildContractPdf(contractType, preamble, signature!);
     } catch (pdfErr) {
       console.error("[Contract] PDF generation failed:", pdfErr);
       setError("We couldn't prepare your contract. Please try again.");
@@ -236,7 +77,7 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
     // recorded together. No tax number is sent; the PDF carries it. Nothing is marked signed unless this succeeds. ──
     let signed;
     try {
-      signed = await signContract(new File([doc.output("blob")], fileName, { type: "application/pdf" }), contractType);
+      signed = await signContract(pdf, contractType);
     } catch {
       signed = { ok: false as const, message: "Unable to reach the server. Please check your connection and try again.", retryable: true };
     }
@@ -248,10 +89,9 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
 
     // ── Step 3: Download PDF for worker's records (non-critical) ──
     try {
-      doc.save(fileName);
+      download(pdf);
     } catch (downloadErr) {
       console.error("[Contract] PDF download failed:", downloadErr);
-      // Browser may have blocked it — not actionable, silently ignore
     }
 
     // ── Step 4: Notify setup tab (best-effort) ──
@@ -265,7 +105,7 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
 
     setIsSubmitting(false);
     setIsSuccess(true);
-  }, [contractType, signature, agreed, partyName, partyTaxId, gstRegistered, partyAddress, agreementDate, signatureDate, partyLabel, isContractor, generatePdfDocument]);
+  }, [contractType, preamble, signature, agreed]);
 
   const handleClose = useCallback(() => {
     window.close();
@@ -344,167 +184,24 @@ export default function ContractPage({ contractType, initialTaxId = "" }: Contra
           <p className="contract-subtitle">{contract.subtitle}</p>
         </div>
 
-        {/* Preamble Section */}
-        <div className="contract-preamble">
-          <div className="preamble-intro">
-            <p className="preamble-text">
-              This {contract.title} (&quot;Agreement&quot;) is made and entered into on the{" "}
-              <span className="preamble-required">*</span>
-            </p>
-            <div className="preamble-field">
-              <input
-                type="date"
-                value={agreementDate}
-                onChange={(e) => setAgreementDate(e.target.value)}
-                className="preamble-input preamble-date-input"
-              />
-            </div>
-          </div>
-
-          <div className="preamble-parties">
-            <p className="preamble-label">by and between:</p>
-            <div className="preamble-company">
-              <p className="preamble-company-name">
-                <strong>Remonta Group Pty Ltd</strong> (trading as Remonta)
-              </p>
-              <p className="preamble-company-role">(&quot;Company&quot;)</p>
-              <p className="preamble-company-address">
-                Located at: 3 Montrose Place, St Andrews, NSW 2566
-              </p>
-            </div>
-
-            <p className="preamble-separator">and</p>
-
-            <div className="preamble-party-fields">
-              <div className="preamble-field-group">
-                <label className="preamble-field-label">
-                  {isContractor
-                    ? "Company / Business / Sole Trader (Provider) Name"
-                    : "Employee Name"}{" "}
-                  <span className="preamble-required">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={partyName}
-                  onChange={(e) => setPartyName(e.target.value)}
-                  placeholder={isContractor ? "Enter company or provider name" : "Enter employee name"}
-                  className="preamble-input"
-                />
-              </div>
-
-              <div className="preamble-field-group">
-                <label className="preamble-field-label">
-                  {isContractor ? "ABN (Australian Business Number)" : "Tax File Number (TFN)"}{" "}
-                  <span className="preamble-required">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={partyTaxId}
-                  onChange={(e) => setPartyTaxId(e.target.value)}
-                  placeholder={isContractor ? "12 345 678 901" : "123 456 789"}
-                  className="preamble-input"
-                  inputMode="numeric"
-                />
-              </div>
-
-              {isContractor && (
-                <fieldset className="preamble-field-group preamble-radio-group-wrapper">
-                  <legend className="preamble-field-label">
-                    GST Registered <span className="preamble-required">*</span>
-                  </legend>
-                  <div className="preamble-radio-group">
-                    <label className="preamble-radio-option">
-                      <input
-                        type="radio"
-                        name="gstRegistered"
-                        value="yes"
-                        checked={gstRegistered === "yes"}
-                        onChange={() => setGstRegistered("yes")}
-                      />
-                      Yes
-                    </label>
-                    <label className="preamble-radio-option">
-                      <input
-                        type="radio"
-                        name="gstRegistered"
-                        value="no"
-                        checked={gstRegistered === "no"}
-                        onChange={() => setGstRegistered("no")}
-                      />
-                      No
-                    </label>
-                  </div>
-                </fieldset>
-              )}
-
-              <div className="preamble-field-group">
-                <label className="preamble-field-label">
-                  Located at (Address) <span className="preamble-required">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={partyAddress}
-                  onChange={(e) => setPartyAddress(e.target.value)}
-                  placeholder="Enter full address"
-                  className="preamble-input"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Contract Content */}
-        <ContractViewer contractType={contractType} />
-
-        {/* Signature Section */}
-        <div className="contract-signature-section">
-          <h3 className="signature-section-title">Sign this Agreement</h3>
-
-          {/* Signature Pad */}
-          <SignaturePad onSignatureChange={handleSignatureChange} />
-
-          {/* Signature Date */}
-          <div className="signature-date-field">
-            <label className="preamble-field-label">
-              Date <span className="preamble-required">*</span>
-            </label>
-            <input
-              type="date"
-              value={signatureDate}
-              onChange={(e) => setSignatureDate(e.target.value)}
-              className="preamble-input preamble-date-input"
-            />
-          </div>
-
-          {/* Agreement Checkbox */}
-          <label className="contract-agreement">
-            <input
-              type="checkbox"
-              checked={agreed}
-              onChange={handleAgreementChange}
-            />
-            <span className="contract-agreement-text">
-              I have read and understood all terms and conditions outlined in this
-              Agreement. I agree to comply with the Company&apos;s policies, procedures,
-              and obligations as stated above.
-            </span>
-          </label>
-
-          {/* Error Message */}
-          {error && <p className="contract-error">{error}</p>}
-
-          {/* Submit Button */}
-          <div className="contract-submit-section">
-            <button
-              type="button"
-              className="contract-submit-btn"
-              onClick={handleSubmit}
-              disabled={isSubmitting || !signature || !agreed}
-            >
-              {isSubmitting ? "Submitting..." : "Sign & Accept Agreement"}
-            </button>
-          </div>
-        </div>
+        <ContractAgreementForm
+          contractType={contractType}
+          preamble={preamble}
+          onPreambleChange={(patch) => {
+            setPreamble((p) => ({ ...p, ...patch }));
+            setError(null);
+          }}
+          onSignatureChange={handleSignatureChange}
+          hasSignature={!!signature}
+          agreed={agreed}
+          onAgreedChange={(v) => {
+            setAgreed(v);
+            setError(null);
+          }}
+          error={error}
+          submitting={isSubmitting}
+          onSubmit={handleSubmit}
+        />
       </div>
     </div>
   );

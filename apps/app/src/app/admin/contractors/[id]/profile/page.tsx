@@ -9,6 +9,8 @@ import WorkerProfileView from "@/components/profile/WorkerProfileView";
 import ImageCropModal from "@/components/modals/ImageCropModal";
 import { getWorkerProfilePreview } from "@/services/worker/profilePreview.service";
 import { useProfileEditor } from "@/hooks/useProfileEditor";
+import { useQuery } from "@tanstack/react-query";
+import { adminApi } from "@/lib/api/admin";
 import "@/app/styles/profile-preview.css";
 
 interface PageProps {
@@ -31,6 +33,15 @@ export default function AdminWorkerProfilePage({ params }: PageProps) {
   const [shareLink, setShareLink] = useState<string>("");
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
+
+  // worker-rates (2026-11-20): the worker's rates from apps/api; a failure leaves the Rates section out.
+  const { data: rates } = useQuery({
+    queryKey: ['worker-rates', workerId],
+    queryFn: async () => {
+      const r = await adminApi.getWorkerRates(workerId);
+      return r.kind === 'ok' ? r.body.rates : null;
+    },
+  });
 
   // Photo editing state
   const [selectedImageUrl, setSelectedImageUrl] = useState('');
@@ -515,6 +526,7 @@ export default function AdminWorkerProfilePage({ params }: PageProps) {
           services={services}
           qualifications={qualifications}
           additionalInfo={additionalInfo}
+          rates={rates ?? null}
           isAdminView={true}
           isEditMode={isEditMode}
           editableState={state}

@@ -4,7 +4,7 @@
 // worker.sections.ts); the option lists are packages/schemas'. Nothing here renders.
 // The photo section is not a definition: it uploads files rather than saving a body
 // (features/worker/PhotoSection.tsx).
-import { ADDITIONAL_INFO_ENTRIES, CARE_DOMAINS, workerContract, type AdditionalInfoGroup } from "@remonta/api-contract";
+import { ADDITIONAL_INFO_ENTRIES, CARE_DOMAINS, RATE_MAX, RATE_MIN, workerContract, type AdditionalInfoGroup } from "@remonta/api-contract";
 import { defineSection, type SectionDefinition, type SectionFieldDef } from "@remonta/form-engine";
 import { EXPERIENCE_DOMAINS } from "@remonta/schemas/data/experienceAreas";
 import {
@@ -97,7 +97,8 @@ export const homeAddressSection = defineSection({
   writeEntry: "putHomeAddress",
   fields: [
     { name: "streetLine", kind: "text", label: "Street address (optional)", placeholder: "12 Example St" },
-    { name: "localityId", kind: "locality", label: "Suburb", placeholder: "Start typing your suburb" },
+    // Not required (user, 2026-11-19): no mark; an untouched address is never sent. To save one, a suburb is needed.
+    { name: "localityId", kind: "locality", label: "Suburb", placeholder: "Start typing your suburb", optional: true },
   ],
   seed: (p) => {
     const h = p as { streetLine: string | null; localityId: number; suburb: string; state: string; postcode: string } | null;
@@ -118,6 +119,26 @@ export const serviceAreaSection = defineSection({
     const s = p as { localityId: number; label: string } | null;
     return s ? { localityId: localityFromLabel(s.label, s.localityId) } : {};
   },
+});
+
+/** worker-rates (2026-11-20): the worker's own rates, under Service Area. Its own read (getRates), not the profile's. */
+const rate = (name: string, label: string, unit: string): SectionFieldDef => ({ name, kind: "number", label, prefix: "$", unit, decimals: 2, min: RATE_MIN, max: RATE_MAX });
+export const ratesSection = defineSection({
+  contract: workerContract,
+  readEntry: "getRates",
+  name: "rates",
+  title: "Rates",
+  description: "Your rates for the support you provide. Weekdays is required; leave any other rate blank if you don't offer it.",
+  pick: "rates",
+  writeEntry: "putRates",
+  fields: [
+    rate("weekday", "Weekdays", "per hour"),
+    { ...rate("saturday", "Saturdays", "per hour"), hint: "Optional" },
+    { ...rate("sunday", "Sundays", "per hour"), hint: "Optional" },
+    { ...rate("publicHoliday", "Public Holidays", "per hour"), hint: "Optional" },
+    { ...rate("evening", "Evenings", "per hour"), hint: "Optional" },
+    { ...rate("inactiveSleepover", "Inactive Sleepovers", "per night"), hint: "Optional" },
+  ],
 });
 
 // ---- Edit profile sections ---------------------------------------------------------------
@@ -274,6 +295,7 @@ export const SECTIONS: readonly SectionDefinition[] = [
   bioSection,
   homeAddressSection,
   serviceAreaSection,
+  ratesSection,
   dateOfBirthSection,
   genderSection,
   vehicleSection,

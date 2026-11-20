@@ -6,6 +6,7 @@
 import Step2OtherDocuments from "@/components/services-setup/steps/Step2OtherDocuments";
 import ServiceQualificationStep from "@/components/services-setup/steps/ServiceQualificationStep";
 import { serviceNameToSlug } from "@/utils/serviceSlugMapping";
+import { serviceLabel } from "@/lib/serviceLabel";
 
 export interface ServicesSetupStep {
   id: number;
@@ -44,7 +45,7 @@ export function generateServicesSetupSteps(selectedServices: string[]): Services
     steps.push({
       id: stepId++,
       slug: slug,
-      title: serviceTitle,
+      title: serviceLabel(serviceTitle),
       component: ServiceQualificationStep,
       serviceTitle: serviceTitle,
     });

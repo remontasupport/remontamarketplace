@@ -199,3 +199,27 @@ describe("contract structure", () => {
     expect(withTables[0].title).toMatch(/^Annexure A/);
   });
 });
+
+describe("the signed agreement (signup-abn-agreement U2: shared by the dashboard and the sign-up)", () => {
+  const preamble = { agreementDate: "2026-11-19", partyName: "Mary O'Connor", partyTaxId: "51 824 753 556", gstRegistered: "no" as const, partyAddress: "1 Church St, Parramatta NSW 2150", signatureDate: "2026-11-19" };
+  const SIGNATURE = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+
+  it("checks the preamble in the order and words the dashboard has always shown", async () => {
+    const { preambleProblem } = await import("./contractPdf");
+    expect(preambleProblem("abn", { ...preamble, partyName: " " }, SIGNATURE, true)).toBe("Please enter the Company / Business / Sole Trader (Provider) name");
+    expect(preambleProblem("abn", { ...preamble, partyTaxId: "" }, SIGNATURE, true)).toBe("Please enter the ABN");
+    expect(preambleProblem("abn", { ...preamble, gstRegistered: "" }, SIGNATURE, true)).toBe("Please confirm whether you are registered for GST");
+    expect(preambleProblem("tfn", { ...preamble, gstRegistered: "" }, SIGNATURE, true)).toBeNull();
+    expect(preambleProblem("abn", preamble, null, true)).toBe("Please provide your signature");
+    expect(preambleProblem("abn", preamble, SIGNATURE, false)).toBe("Please confirm that you agree to the terms");
+    expect(preambleProblem("abn", preamble, SIGNATURE, true)).toBeNull();
+  });
+
+  it("builds a PDF named as before, safe for the api's file-name rule (no path separators)", async () => {
+    const { buildContractPdf } = await import("./contractPdf");
+    const file = await buildContractPdf("abn", { ...preamble, partyName: "A/B Care" }, SIGNATURE);
+    expect(file.type).toBe("application/pdf");
+    expect(file.name).toMatch(/^Remonta_Platform_Provider_Agreement_A-B_Care_2026-11-19\.pdf$/);
+    expect(new TextDecoder().decode(new Uint8Array(await file.arrayBuffer()).subarray(0, 5))).toBe("%PDF-");
+  });
+});

@@ -6,9 +6,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Controller, useController, useWatch, type Control, type FieldErrors } from "react-hook-form";
 import { KINDS, type Backend, type EmailCodeField as EmailCodeDef, type FieldDef, type FormDefinition, type LocalityValue, type UploadProgress } from "@remonta/form-engine";
+import { AgreementSlot } from "./AgreementSlot";
 import { ConsentField, EmailCodeField, FieldLoading, LocalityField, PasswordField, PhotoField, ServicesField, TextField } from "@/components/ui/form-wizard/fields";
 import { FormWizardView, WizardIntro } from "@/components/ui/form-wizard/FormWizardView";
 import { SERVICE_OPTIONS } from "@/constants";
+import { fetchServiceRequirements } from "./adapters/serviceRequirements";
 import { transformCategoriesToServiceOptions } from "@/hooks/queries/useCategories";
 import { useServiceCategories } from "./adapters/useServiceCategories";
 import { useLocalitySearch } from "./adapters/useLocalitySearch";
@@ -108,6 +110,8 @@ function FieldSlot({ field, control, errors, backend, uploader, wizard, definiti
       return <ServicesSlot field={field} control={control} backend={backend} error={error ?? errorOf(errors, field.subcategoriesName)} />;
     case "photo":
       return <PhotoSlot field={field} control={control} uploader={uploader} wizard={wizard} error={error} />;
+    case "agreement":
+      return <AgreementSlot field={field} control={control} wizard={wizard} error={error} />;
     case "consent":
       return (
         <Controller
@@ -195,6 +199,9 @@ function ServicesSlot({ field, control, backend, error }: { field: Extract<Field
       services={picked}
       subcategories={pickedSubs}
       notes={field.notes}
+      single={field.max === 1}
+      documentsNotice={field.documentsNotice}
+      requirementsOf={(c, subs) => fetchServiceRequirements(backend, c.id, subs)}
       onChange={(s, c) => {
         services.field.onChange(s);
         subs.field.onChange(c);

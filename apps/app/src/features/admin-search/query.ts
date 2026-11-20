@@ -211,11 +211,12 @@ export function toQuery(f: AdminFilters): WorkerSearchQuery {
 }
 
 /**
- * What the dashboard sends (A2): the filters plus `withActivation` and `withCompletion`, so every row carries the flag
- * the card's switch shows and the checklist the badges show. Kept out of toQuery so the URL bar holds filters only.
+ * What the dashboard sends (A2): the filters plus `withActivation`, `withCompletion` and `withRates`, so every row carries
+ * the flag the card's switch shows, the checklist the badges show and the rates (worker-rates, 2026-11-20). Kept out of
+ * toQuery so the URL bar holds filters only.
  */
 export function searchRequestOf(f: AdminFilters): WorkerSearchQuery {
-  return { ...toQuery(f), withActivation: true, withCompletion: true }
+  return { ...toQuery(f), withActivation: true, withCompletion: true, withRates: true }
 }
 
 /** The canonical query string of the state (R11.2). */
@@ -279,4 +280,16 @@ export function filtersFromURL(params: URLSearchParams): AdminFilters {
   f.completion = {}
   for (const flag of COMPLETION_FLAGS) if (q[flag]) f.completion[flag] = q[flag]
   return f
+}
+
+/**
+ * The services shown under a worker's name in the results (user, 2026-11-19): when the search is by service, only the
+ * searched ones; otherwise all of them. `searched` are catalogue ids, the row's services are names. When none of the
+ * worker's services can be matched to a searched one (a renamed category), all are shown rather than none.
+ */
+export function servicesShown(services: readonly string[], searched: readonly string[], categories: readonly { id: string; name: string }[] | undefined): string[] {
+  if (searched.length === 0) return [...services];
+  const names = new Set(searched.map((id) => categories?.find((c) => c.id === id)?.name).filter((n): n is string => !!n));
+  const shown = services.filter((s) => names.has(s));
+  return shown.length > 0 ? shown : [...services];
 }

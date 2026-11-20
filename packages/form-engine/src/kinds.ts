@@ -64,6 +64,8 @@ export const localityValue = z.object({
 export type LocalityValue = z.infer<typeof localityValue>;
 
 const CHOOSE_SUBURB = "Please choose your suburb from the list";
+export const ONE_SERVICE_ONLY = (max: number) => (max === 1 ? "Please choose one service. You can add more on your dashboard after signing up." : `Please choose at most ${max} services.`);
+export const SIGN_THE_AGREEMENT = "Please sign the agreement";
 
 export const KINDS: Record<FieldDef["kind"], KindRules> = {
   text: plain,
@@ -87,7 +89,10 @@ export const KINDS: Record<FieldDef["kind"], KindRules> = {
     defaults: (f) => ({ [f.name]: [], ...(f.kind === "services" ? { [f.subcategoriesName]: [] } : {}) }),
     schemas: (ctx) => {
       const f = ctx.field as Extract<FieldDef, { kind: "services" }>;
-      return { [f.name]: ruleFor(ctx, f.name), [f.subcategoriesName]: ruleFor(ctx, f.subcategoriesName) };
+      const max = f.max;
+      // The form's own limit on top of the contract's (the sign-up takes one service; the dashboard adds more).
+      const services = max === undefined ? ruleFor(ctx, f.name) : ruleFor(ctx, f.name).refine((v) => !Array.isArray(v) || v.length <= max, ONE_SERVICE_ONLY(max));
+      return { [f.name]: services, [f.subcategoriesName]: ruleFor(ctx, f.subcategoriesName) };
     },
     toBody: (f, v) => {
       const s = f as Extract<FieldDef, { kind: "services" }>;
@@ -106,6 +111,13 @@ export const KINDS: Record<FieldDef["kind"], KindRules> = {
     defaults: (f) => ({ [f.name]: false }),
     schemas: (ctx) => ({ [ctx.field.name]: ruleFor(ctx, ctx.field.name) }),
     toBody: (f) => ({ [f.name]: true }),
+  },
+
+  // signup-abn-agreement U2: required on the form although the contract keeps it optional until every app sends it.
+  agreement: {
+    defaults: (f) => ({ [f.name]: null }),
+    schemas: (ctx) => ({ [ctx.field.name]: ruleFor(ctx, ctx.field.name).refine((v) => v != null, SIGN_THE_AGREEMENT) }),
+    toBody: (f, v) => ({ [f.name]: v[f.name] }),
   },
 
   emailCode: {
