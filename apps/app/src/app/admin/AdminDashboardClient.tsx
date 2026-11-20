@@ -110,23 +110,27 @@ const QUERY_KEY = 'admin-workers'
 
 const SEARCH_NOTICE = { name: 'search', plural: 'searches' }
 
-/** worker-rates (2026-11-20): a card's saved rates on one line ("Weekdays $45.50/hr, ..."); nothing when none saved. */
+/** worker-rates (2026-11-20): a card's saved rates, one per line, labels and amounts in aligned columns; nothing when none saved. */
 function CardRates({ rates }: { rates: WorkerRow['rates'] }) {
   const saved = savedRates(rates)
   if (saved.length === 0) return null
   return (
-    <span className="inline-flex flex-wrap items-center gap-x-1" title="The worker's rates">
-      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className="mt-2 flex items-start gap-1 text-xs text-gray-600">
+      <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
-      {saved.map(({ name, amount }, i) => (
-        <span key={name}>
-          {RATE_ROWS[name].label} {formatRate(amount)}
-          {RATE_ROWS[name].short}
-          {i < saved.length - 1 ? ',' : ''}
-        </span>
-      ))}
-    </span>
+      <dl className="grid grid-cols-[auto_auto] gap-x-3 gap-y-0.5" aria-label="Rates">
+        {saved.map(({ name, amount }) => (
+          <div key={name} className="contents">
+            <dt>{RATE_ROWS[name].label}</dt>
+            <dd className="text-right tabular-nums text-gray-800">
+              {formatRate(amount)}
+              <span className="text-gray-500">{RATE_ROWS[name].short}</span>
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </div>
   )
 }
 
@@ -1382,10 +1386,10 @@ export default function AdminDashboard() {
                                 {contractor.age} years old
                               </span>
                             )}
-
-                            {/* Rates (worker-rates, 2026-11-20): the saved ones, after the address, gender and age */}
-                            <CardRates rates={contractor.rates} />
                           </div>
+
+                          {/* Rates (worker-rates, 2026-11-20): under the address row, one per line (user) */}
+                          <CardRates rates={contractor.rates} />
 
                           {/* Action Buttons */}
                           <div className="flex flex-wrap gap-2 mt-3">
