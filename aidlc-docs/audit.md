@@ -6439,3 +6439,6 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 
 **User Input (2026-11-20):** "leave it as is for now" (about `/remontaadmin/findsupport` having no page protection)
 **AI Response:** Left as is; added to the follow-ups: `/remontaadmin/findsupport` ("Admin access only") is outside the middleware and has no layout check; since `a00e54a` its data (`/api/contractors`) needs a sign-in.
+
+**User Input (2026-11-20):** "merged, with all the changes we made including yesterday, is it live already?"
+**AI Response:** Checked: only #171 (`fix/middleware-location`) is merged (`main` = `4d67e36`); Vercel production builds success. Live and verified signed out on production: /dashboard/worker/profile/bio, /dashboard/worker/profile/rates and /admin answer 307 to /login?callbackUrl=<page>; /api/contractors 401 "Sign in required". **Not live:** U2 PR #169 (`feat/signup-agreement-app`, yesterday's and today's app changes) is open, not merged; the rates page itself is in U2. The api for it (`626dd09`) is already in production.
