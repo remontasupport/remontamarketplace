@@ -6399,3 +6399,6 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 
 **User Input (2026-11-20):** "all four passed"
 **AI Response:** Recorded: `20261120120000_worker_rates` down.sql tested on a Neon branch of production (create, drop, table gone, re-create clean). The api PR may merge once CI is green.
+
+**User Input (2026-11-20):** "merged"
+**AI Response:** Checked: `main` = `bbeec8e` (#168, contains `df8895d` and `9a01efd`). deploy-api for `bbeec8e` completed success (staging; migration `20261120120000_worker_rates` applied to rehearse-w1). Staging `/v1/worker/rates` and `/v1/admin/workers/x/rates` now 401 without a token (were 404: the routes exist). Promotion sha after the U2 preview checklist: `bbeec8ec35badc6d8338b2ac5712c982d1027dbf`.
