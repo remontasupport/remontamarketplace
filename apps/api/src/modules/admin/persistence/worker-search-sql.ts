@@ -32,6 +32,14 @@ export interface RawWorkerRow {
   activated?: boolean
   /** admin-completion-filters U1: the stored completion flags (absent where a caller builds the row without them). */
   setupProgress?: unknown
+  /** worker-rates: the worker_rates row's columns (null without a row; absent where a caller builds the row without them). */
+  weekdayCents?: number | null
+  saturdayCents?: number | null
+  sundayCents?: number | null
+  publicHolidayCents?: number | null
+  eveningCents?: number | null
+  inactiveSleepoverCents?: number | null
+  ratesUpdatedAt?: Date | null
   infoLanguages: string[] | null
   serviceNames: string[] | null
   serviceIds: string[] | null
@@ -78,6 +86,8 @@ export function searchStatement(q: SearchQuery, localityId: number | undefined):
            p."createdAt", p."updatedAt",
            u.email, u.status AS "userStatus", p."isActivated" AS activated, p."setupProgress",
            wai.languages AS "infoLanguages",
+           wr."weekdayCents", wr."saturdayCents", wr."sundayCents", wr."publicHolidayCents", wr."eveningCents",
+           wr."inactiveSleepoverCents", wr."updatedAt" AS "ratesUpdatedAt",
            (SELECT array_agg(DISTINCT ws."categoryName") FROM worker_services ws WHERE ws."workerProfileId" = p.id) AS "serviceNames",
            (SELECT array_agg(DISTINCT ws."categoryId") FROM worker_services ws WHERE ws."workerProfileId" = p.id) AS "serviceIds",
            al.suburb AS "homeSuburb", al.state AS "homeState", al.postcode AS "homePostcode",
@@ -85,6 +95,7 @@ export function searchStatement(q: SearchQuery, localityId: number | undefined):
            ${distance} AS distance_m,
            COUNT(*) OVER()::int AS total
     ${FROM}
+    LEFT JOIN worker_rates wr ON wr."workerProfileId" = p.id
     WHERE ${whereOf(q)}
     ${locationTerm(q, localityId)}
     ORDER BY ${order}, p.id ASC

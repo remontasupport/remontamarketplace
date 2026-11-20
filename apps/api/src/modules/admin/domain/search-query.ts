@@ -64,6 +64,8 @@ export interface SearchQuery {
   completion: Partial<Record<CompletionFlag, CompletionFilter>>
   /** FR-3: the rows carry `completion` (opt-in, as withActivation). */
   withCompletion: boolean
+  /** worker-rates: the rows carry `rates` (opt-in, as withActivation). */
+  withRates: boolean
 }
 
 export interface LocalityRef {
@@ -145,6 +147,7 @@ export function normaliseQuery(raw: WorkerSearchQueryParsed, now: Date): SearchQ
     ...(raw.nursingType !== undefined ? { nursingType: raw.nursingType } : {}),
     completion,
     withCompletion: raw.withCompletion === true,
+    withRates: raw.withRates === true,
   }
 }
 
