@@ -23,7 +23,16 @@ import {
 import { browserStore, isOnline, waitUntilOnline } from "@/features/forms/adapters/browser";
 import type { ApiOutcome } from "@/lib/api/outcome";
 import { workerApi } from "./api";
+import type { Profile } from "@remonta/api-contract";
 import { useWorkerProfile } from "./profile";
+
+/** Where a section seeds from when it is not the profile read (worker-rates: its own read, features/worker/rates.ts). */
+export interface SectionSource {
+  data: unknown;
+  isLoading: boolean;
+  error: { kind: string } | null;
+  reload: () => Promise<void>;
+}
 
 export type SaveState =
   | { kind: "idle" }
@@ -34,8 +43,11 @@ export type SaveState =
 export const UNAVAILABLE_MESSAGE = "Editing your profile is temporarily unavailable. Please try again in a few minutes.";
 const SESSION_ENDED_MESSAGE = "Your session has ended. Please sign in again; what you typed is kept on this device.";
 
-export function useSection(def: SectionDefinition) {
-  const { profile, isLoading, error: readError, reload } = useWorkerProfile();
+export function useSection(def: SectionDefinition, source?: SectionSource) {
+  const own = useWorkerProfile();
+  // `profile` is the read the section picks from: the profile, or the section's own read (cast: only `pick` reads it then).
+  const { data, isLoading, error: readError, reload } = source ?? { data: own.profile, isLoading: own.isLoading, error: own.error, reload: own.reload };
+  const profile = data as Profile | undefined;
   const draftId = sectionDraftId(def);
   const neverSaved = useMemo(() => sectionNeverSaved(def), [def]);
   const store = useMemo(() => browserStore(draftId), [draftId]);

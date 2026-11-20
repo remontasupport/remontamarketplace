@@ -30,7 +30,7 @@ import { useLocalitySearch } from "@/features/forms/adapters/useLocalitySearch";
 import { workerApi } from "./api";
 import { savePair } from "./pair";
 import { ROW_DELETES } from "./rowDeletes";
-import { UNAVAILABLE_MESSAGE, useSection, type SaveState } from "./useSection";
+import { UNAVAILABLE_MESSAGE, useSection, type SaveState, type SectionSource } from "./useSection";
 import { useStepForm } from "./stepForms";
 
 const choices = (options: readonly (string | { value: string; label?: string })[]): ChoiceOption[] =>
@@ -94,7 +94,7 @@ function FieldSlot({ field, path, row, errors, setValue, picked, onDeleteRow }: 
     case "date":
       return <DateField label={label} hint={field.hint} value={String(v ?? "")} onChange={set} error={error} />;
     case "number":
-      return <NumberField label={label} hint={field.hint} value={typeof v === "number" ? v : null} onChange={set} min={field.min} max={field.max} unit={field.unit} error={error} />;
+      return <NumberField label={label} hint={field.hint} value={typeof v === "number" ? v : null} onChange={set} min={field.min} max={field.max} unit={field.unit} decimals={field.decimals} prefix={field.prefix} error={error} />;
     case "abn":
       return <AbnField label={label} hint={field.hint} value={String(v ?? "")} onChange={set} error={error} />;
     case "maskedSecret": {
@@ -284,8 +284,8 @@ export function SectionPair({ title, first, second }: { title: string; first: Se
  * A section's form. Its title is for screen readers only: the sidebar names the page (user, 2026-10-13).
  * `onSaved` runs once a Save is stored (Service Area then goes to the dashboard, user 2026-10-16).
  */
-export default function SectionPage({ def, onSaved }: { def: SectionDefinition; onSaved?: () => void }) {
-  const { profile, isLoading, readError, values, errors, setValue, submit: saveSection, save, deleteRow, changed } = useSection(def);
+export default function SectionPage({ def, onSaved, source }: { def: SectionDefinition; onSaved?: () => void; source?: SectionSource }) {
+  const { profile, isLoading, readError, values, errors, setValue, submit: saveSection, save, deleteRow, changed } = useSection(def, source);
   // Nothing saved before and nothing entered now (an optional address typed then cleared): nothing to save on leave.
   const blank = !!values && def.fields.every((f) => isBlank(values[f.name])) && pickPath(profile, def.pick) == null;
   const savesOnLeave = useStepForm(changed && !blank, saveSection);

@@ -11,6 +11,7 @@ import {
   createClient,
   serializeCanonical,
   type AdminWorkerServices,
+  type RatesRead,
   type DocumentLink,
   type DocumentVersionList,
   type RequesterDetail,
@@ -44,6 +45,8 @@ export interface AdminApi {
   listSuspendedWorkers(query: SuspendedListQuery, opts?: CallOptions): Promise<ApiOutcome<SuspendedListResponse>>
   /** worker-tools (UR-9): one worker's services and their tools, by the worker profile id. */
   getWorkerServices(workerId: string, opts?: CallOptions): Promise<ApiOutcome<AdminWorkerServices>>
+  /** worker-rates: one worker's rates (every field null when not saved), by the worker profile id. */
+  getWorkerRates(workerId: string, opts?: CallOptions): Promise<ApiOutcome<RatesRead>>
   /** worker-activation U2 (A1): the admin's activation flag. Since 2026-10-28 the public worker list no longer reads it (it lists every unsuspended worker); sign-in is untouched. */
   setWorkerActivation(workerId: string, activated: boolean): Promise<ApiOutcome<WorkerActivation>>
   /** worker-activation U2 (A4, A5): suspend the account (no sign-in) or restore it; the activation flag is untouched. */
@@ -71,7 +74,7 @@ export interface AdminApiDeps {
 }
 
 type QueryEntryName = 'searchWorkers' | 'listUsers' | 'listSuspendedWorkers' | 'listRequesters'
-type EntryName = QueryEntryName | 'getWorkerServices' | 'setWorkerActivation' | 'setWorkerSuspension' | 'getRequester' | 'setRequestStatus' | 'listDocumentVersions' | 'getDocumentVersionLink' | 'deleteDocumentVersion'
+type EntryName = QueryEntryName | 'getWorkerServices' | 'getWorkerRates' | 'setWorkerActivation' | 'setWorkerSuspension' | 'getRequester' | 'setRequestStatus' | 'listDocumentVersions' | 'getDocumentVersionLink' | 'deleteDocumentVersion'
 const QUERY_ENTRIES: ReadonlySet<EntryName> = new Set<EntryName>(['searchWorkers', 'listUsers', 'listSuspendedWorkers', 'listRequesters'])
 
 export function createAdminApi(deps: AdminApiDeps): AdminApi {
@@ -138,6 +141,7 @@ export function createAdminApi(deps: AdminApiDeps): AdminApi {
     listUsers: (query, opts) => call('listUsers', query, opts),
     listSuspendedWorkers: (query, opts) => call('listSuspendedWorkers', query, opts),
     getWorkerServices: (workerId, opts) => call('getWorkerServices', undefined, opts, { workerId }),
+    getWorkerRates: (workerId, opts) => call('getWorkerRates', undefined, opts, { workerId }),
     // Writes are never cached: the browser does not cache a PUT, and the api answers no-store.
     setWorkerActivation: (workerId, activated) => call('setWorkerActivation', undefined, undefined, { workerId }, { activated }),
     setWorkerSuspension: (workerId, suspended) => call('setWorkerSuspension', undefined, undefined, { workerId }, { suspended }),

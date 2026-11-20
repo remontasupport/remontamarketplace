@@ -6,7 +6,7 @@ import { profileSchema, type Profile } from "@remonta/api-contract";
 import { describe, expect, it } from "vitest";
 import { PROFILE_REDIRECTS, profileRedirects } from "@/config/profileRedirects";
 import { isProfilePage } from "@/features/worker/definitions";
-import { applyReadiness, EDIT_PROFILE_CHILDREN, requiredMet, EDIT_SERVICES_LINK, editProfileBadge, editProfileChildren, groupOfPath, requirementsForSteps, SERVICE_AREA_LINK, servicesChildren, WORKER_MENU } from "./workerMenu";
+import { applyReadiness, EDIT_PROFILE_CHILDREN, requiredMet, EDIT_SERVICES_LINK, editProfileBadge, editProfileChildren, groupOfPath, requirementsForSteps, RATES_LINK, SERVICE_AREA_LINK, servicesChildren, WORKER_MENU } from "./workerMenu";
 
 const APP = join(__dirname, "../../app");
 // A page file at the path, or in a route group under it ("(home)", 2026-10-16): groups do not change the URL.
@@ -94,16 +94,18 @@ describe("WORKER_MENU", () => {
     expect(groupOfPath("/dashboard/worker/trainings/setup")).toBe("compliance"); // one group since 2026-10-13
   });
 
-  it("Services: each chosen service, then Service Area (user, 2026-10-16: no Modify Services sub-group; adding and removing is in Account)", () => {
+  it("Services: each chosen service, then Service Area, then Rates (user, 2026-10-16: no Modify Services sub-group; adding and removing is in Account; Rates 2026-11-20)", () => {
     const nursing = { id: "nursing", label: "Nursing", href: "/dashboard/worker/services/setup?step=nursing" };
     const cleaning = { id: "cleaning", label: "Cleaning", href: "/dashboard/worker/services/setup?step=cleaning" };
-    expect(servicesChildren([nursing, cleaning]).map((l) => l.label)).toEqual(["Nursing", "Cleaning", "Service Area"]);
+    expect(servicesChildren([nursing, cleaning]).map((l) => l.label)).toEqual(["Nursing", "Cleaning", "Service Area", "Rates"]);
     expect(servicesChildren([nursing]).some((l) => l.children)).toBe(false);
-    expect(servicesChildren([]).map((l) => l.label)).toEqual(["+ Add services", "Service Area"]); // none chosen yet: the way to choose
+    expect(servicesChildren([]).map((l) => l.label)).toEqual(["+ Add services", "Service Area", "Rates"]); // none chosen yet: the way to choose
     expect(EDIT_SERVICES_LINK.href).toBe("/dashboard/worker/account?tab=services");
     expect(pageExists("/dashboard/worker/account")).toBe(true);
     expect(isProfilePage(profileSlug(SERVICE_AREA_LINK.href) ?? "")).toBe(true);
     expect(groupOfPath(SERVICE_AREA_LINK.href)).toBe("services"); // a profile URL, in the Services group (user, 2026-10-13)
+    expect(isProfilePage(profileSlug(RATES_LINK.href) ?? "")).toBe(true);
+    expect(groupOfPath(RATES_LINK.href)).toBe("services");
     expect(servicesChildren([], base)[1]!.done).toBe(false);
     expect(servicesChildren([], { ...base, serviceArea: { localityId: 1, label: "Parramatta, NSW 2150", travelRadiusKm: 20, precision: "LOCALITY" } } as Profile)[1]!.done).toBe(true);
     expect(groupOfPath("/dashboard/worker/services/manage")).toBe("services");

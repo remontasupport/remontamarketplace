@@ -35,7 +35,8 @@ export type SectionFieldDef =
   | (SectionFieldBase & { kind: "multiSelect"; options: readonly string[]; max?: number; allowOwn?: boolean; /** Show this many options, the rest behind a "show all" toggle (presentation only). */ collapseAfter?: number })
   | (SectionFieldBase & { kind: "checkbox" })
   | (SectionFieldBase & { kind: "date" })
-  | (SectionFieldBase & { kind: "number"; min?: number; max?: number; unit?: string })
+  /** `decimals`: digits after the point the input accepts (none = whole numbers); `prefix`: shown before it ("$", worker-rates). */
+  | (SectionFieldBase & { kind: "number"; min?: number; max?: number; unit?: string; decimals?: number; prefix?: string })
   /** `optional`: shown without the required mark (the home address, user 2026-11-19); the contract still needs a suburb to save. */
   | (SectionFieldBase & { kind: "locality"; placeholder?: string; optional?: boolean })
   | (SectionFieldBase & { kind: "timeRanges" })

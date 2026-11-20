@@ -151,19 +151,22 @@ export function DateField({ label, hint, value, onChange, error }: { label: stri
   );
 }
 
-export function NumberField({ label, hint, value, onChange, min, max, unit, error }: { label: string; hint?: string; value: number | null; onChange: (v: number | null) => void; min?: number; max?: number; unit?: string; error?: string }) {
+/** A whole number, or with `decimals` an amount such as a rate (worker-rates, 2026-11-20: `prefix` "$", two decimals). */
+export function NumberField({ label, hint, value, onChange, min, max, unit, decimals, prefix, error }: { label: string; hint?: string; value: number | null; onChange: (v: number | null) => void; min?: number; max?: number; unit?: string; decimals?: number; prefix?: string; error?: string }) {
   return (
     <div>
       <Heading label={label} hint={hint} />
       <div className="mt-2 flex items-center gap-2">
+        {prefix && <span className="text-sm font-poppins text-gray-600">{prefix}</span>}
         <Input
           type="number"
-          inputMode="numeric"
+          inputMode={decimals ? "decimal" : "numeric"}
+          step={decimals ? 1 / 10 ** decimals : undefined}
           className="text-base font-poppins max-w-[8rem]"
           min={min}
           max={max}
           value={value ?? ""}
-          onChange={(e) => onChange(e.target.value === "" ? null : Math.trunc(Number(e.target.value)))}
+          onChange={(e) => onChange(e.target.value === "" ? null : decimals ? Number(e.target.value) : Math.trunc(Number(e.target.value)))}
           aria-invalid={!!error}
         />
         {unit && <span className="text-sm font-poppins text-gray-600">{unit}</span>}

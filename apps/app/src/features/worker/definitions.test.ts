@@ -8,7 +8,7 @@
 import { profileSchema, type Profile } from "@remonta/api-contract";
 import { sectionBody, sectionBodySchema, seedSection, validateSection } from "@remonta/form-engine";
 import { describe, expect, it } from "vitest";
-import { bankAccountSection, dateOfBirthSection, educationSection, experienceSection, genderSection, vehicleSection, hoursSection, jobHistorySection, nameSection, SECTIONS, sectionBySlug } from "./definitions";
+import { ratesSection, bankAccountSection, dateOfBirthSection, educationSection, experienceSection, genderSection, vehicleSection, hoursSection, jobHistorySection, nameSection, SECTIONS, sectionBySlug } from "./definitions";
 
 const profile: Profile = profileSchema.parse({
   id: "wp_1",
@@ -48,11 +48,21 @@ describe("the section definitions", () => {
     expect(sectionBySlug("nope")).toBeUndefined();
   });
 
-  it.each(SECTIONS.filter((s) => s !== bankAccountSection).map((s) => [s.name, s] as const))("%s: a stored profile seeds into a body the contract accepts", (_name, def) => {
+  it.each(SECTIONS.filter((s) => s !== bankAccountSection && s !== ratesSection).map((s) => [s.name, s] as const))("%s: a stored profile seeds into a body the contract accepts", (_name, def) => {
     const body = sectionBody(def, seedSection(def, profile));
     const r = sectionBodySchema(def).safeParse(body);
     expect(r.success, JSON.stringify(r.success ? null : r.error.issues)).toBe(true);
     expect(validateSection(def, seedSection(def, profile))).toEqual({});
+  });
+
+  it("rates (worker-rates): seed from their own read; Weekdays required, the others optional; cents only", () => {
+    const empty = seedSection(ratesSection, { rates: { weekday: null, saturday: null, sunday: null, publicHoliday: null, evening: null, inactiveSleepover: null, updatedAt: null } });
+    expect(Object.keys(validateSection(ratesSection, empty))).toEqual(["weekday"]);
+    const saved = seedSection(ratesSection, { rates: { weekday: 42.5, saturday: null, sunday: 60, publicHoliday: null, evening: null, inactiveSleepover: 250, updatedAt: "2026-11-20T00:00:00.000Z" } });
+    expect(validateSection(ratesSection, saved)).toEqual({});
+    expect(sectionBody(ratesSection, saved)).toEqual({ weekday: 42.5, saturday: null, sunday: 60, publicHoliday: null, evening: null, inactiveSleepover: 250 });
+    expect(Object.keys(validateSection(ratesSection, { ...saved, saturday: 12.345 }))).toEqual(["saturday"]);
+    expect(ratesSection.fields.map((f) => f.label)).toEqual(["Weekdays", "Saturdays", "Sundays", "Public Holidays", "Evenings", "Inactive Sleepovers"]);
   });
 
   it("the bank account seeds empty (nothing is shown back) and needs all four fields", () => {

@@ -9,12 +9,26 @@ import ServiceSelectionModal from "@/components/modals/ServiceSelectionModal";
 import UniqueServiceSelectionModal from "@/components/modals/UniqueServiceSelectionModal";
 import InfoItemSelectionModal from "@/components/modals/InfoItemSelectionModal";
 import { LANGUAGES, CULTURAL_BACKGROUNDS, RELIGIONS, INTERESTS } from "@/constants/moreInfoOptions";
+import { RATE_NAMES, type RateName, type RatesView } from "@remonta/api-contract";
+
+/** worker-rates (2026-11-20): the labels and units of the admin's Rates section, in page order. */
+const RATE_ROWS: Record<RateName, { label: string; unit: string }> = {
+  weekday: { label: "Weekdays", unit: "per hour" },
+  saturday: { label: "Saturdays", unit: "per hour" },
+  sunday: { label: "Sundays", unit: "per hour" },
+  publicHoliday: { label: "Public Holidays", unit: "per hour" },
+  evening: { label: "Evenings", unit: "per hour" },
+  inactiveSleepover: { label: "Inactive Sleepovers", unit: "per night" },
+};
+const money = new Intl.NumberFormat("en-AU", { style: "currency", currency: "AUD" });
 
 interface WorkerProfileViewProps {
   profile: any;
   services: any[];
   qualifications: any[];
   additionalInfo: any;
+  /** worker-rates: shown on the admin's view only, and only when the worker saved some. */
+  rates?: RatesView | null;
   isAdminView?: boolean;
   isPublicView?: boolean;
   isEditMode?: boolean;
@@ -38,6 +52,7 @@ export default function WorkerProfileView({
   services,
   qualifications,
   additionalInfo,
+  rates = null,
   isAdminView = false,
   isPublicView = false,
   isEditMode = false,
@@ -197,7 +212,9 @@ export default function WorkerProfileView({
   const shows = (sectionId: keyof typeof has) => !isHidden(sectionId) && (!hideEmpty || has[sectionId])
   // A column with nothing to show gives its width to the other (one column, as on a phone).
   const leftShown = (['basic-information', 'experience', 'job-history', 'education-history', 'more-information'] as const).some(shows)
-  const rightShown = (['services-offered', 'unique-service', 'fun-fact', 'working-hours', 'good-to-know'] as const).some(shows)
+  // Rates: the admin only (never a client or the public), whatever the edit mode, and only when some are saved.
+  const ratesShown = isAdminView && !!rates && RATE_NAMES.some((n) => rates[n] !== null)
+  const rightShown = (['services-offered', 'unique-service', 'fun-fact', 'working-hours', 'good-to-know'] as const).some(shows) || ratesShown
 
   return (
     <div className="profile-preview-content">
@@ -910,6 +927,23 @@ export default function WorkerProfileView({
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          {/* Rates (worker-rates, 2026-11-20): admin only */}
+          {ratesShown && rates && (
+            <div className="profile-preview-section">
+              <h3 className="profile-preview-subsection-title">Rates</h3>
+              <dl className="space-y-2">
+                {RATE_NAMES.filter((n) => rates[n] !== null).map((n) => (
+                  <div key={n} className="flex items-baseline justify-between gap-4">
+                    <dt className="text-base font-poppins text-gray-700">{RATE_ROWS[n].label}</dt>
+                    <dd className="text-base font-poppins font-semibold text-gray-900">
+                      {money.format(rates[n]!)} <span className="text-sm font-normal text-gray-500">{RATE_ROWS[n].unit}</span>
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             </div>
           )}
 

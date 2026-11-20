@@ -5,30 +5,43 @@
 // (CLAUDE.md's trap), so the definition is imported here.
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { bioSection, funFactSection, goodToKnowSection, homeAddressSection, interestsSection, sectionBySlug, serviceAreaSection } from "./definitions";
+import { bioSection, funFactSection, goodToKnowSection, homeAddressSection, interestsSection, ratesSection, sectionBySlug, serviceAreaSection } from "./definitions";
 import PhotoSection from "./PhotoSection";
 import ProfileShell from "./ProfileShell";
 import { useWorkerProfile } from "./profile";
+import { useRatesRead } from "./rates";
+import { RATES_LINK } from "@/features/navigation/workerMenu";
 import SectionPage, { Notice, SectionPair } from "./SectionPage";
 import { startNavigationProgress } from "@/components/ui/NavigationProgress";
 
+function useGoTo(href: string) {
+  const router = useRouter();
+  return () => {
+    startNavigationProgress();
+    router.push(href);
+  };
+}
+
 /**
  * In the Services group (user, 2026-10-13): the suburb clients find the worker at, and how far they travel. The last
- * step of the services setup comes here, and a Save goes on to the dashboard (user, 2026-10-16).
+ * step of the services setup comes here; a Save goes on to Rates (worker-rates, 2026-11-20; was the dashboard).
  */
 function ServiceAreaPage() {
   const { profile } = useWorkerProfile();
-  const router = useRouter();
-  const toDashboard = () => {
-    startNavigationProgress();
-    router.push("/dashboard/worker");
-  };
+  const toRates = useGoTo(RATES_LINK.href);
   return (
     <div className="space-y-5">
       {profile && profile.serviceArea === null && <Notice tone="warn">Clients cannot find you until you set the suburb you work around.</Notice>}
-      <SectionPage def={serviceAreaSection} onSaved={toDashboard} />
+      <SectionPage def={serviceAreaSection} onSaved={toRates} />
     </div>
   );
+}
+
+/** worker-rates (2026-11-20): after Service Area, from its own read; a Save goes on to the dashboard. */
+function RatesPage() {
+  const source = useRatesRead();
+  const toDashboard = useGoTo("/dashboard/worker");
+  return <SectionPage def={ratesSection} source={source} onSaved={toDashboard} />;
 }
 
 /** The slugs another page shows. Interests (with Good to Know) and Bio (with the fun fact) are two sections with one Save (user, 2026-10-13). */
@@ -55,6 +68,8 @@ export default function ProfileSectionView({ slug }: { slug: string }) {
         <SectionPage def={homeAddressSection} />
       ) : page === "service-area" ? (
         <ServiceAreaPage />
+      ) : page === "rates" ? (
+        <RatesPage />
       ) : page === "interests" ? (
         <SectionPair title="Interests" first={interestsSection} second={goodToKnowSection} />
       ) : page === "bio" ? (
