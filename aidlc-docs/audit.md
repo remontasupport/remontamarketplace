@@ -6381,3 +6381,9 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 
 **User Input (2026-11-20):** "I want to add more function in this same branch before promoting."
 **AI Response:** Agreed; promotion held. Asked which function to add. Noted that the promotion (api `9a01efd`, already on `main`) does not depend on this app branch; only the U2 merge must wait for it.
+
+**User Input (2026-11-20):** "The feature is a rate in the worker's dashboard. I think we need another table for this? [Weekdays: / Saturdays: / Sundays: / Public Holidays: / Evenings: / Inactive Sleepovers:], place the fields under the Services step below the Service Area"
+**AI Response:** Checked: no rate storage exists; the strict profile read cannot take a new field (deployed app parses it strictly). Asked four questions.
+
+**User Input (2026-11-20, answers):** Scope "One set per worker"; Units "Hourly; sleepover per night"; Required "Weekdays required, rest optional"; Visibility "Admin (worker page)".
+**AI Response:** Plan `inception/plans/worker-rates-plan.md`: new table `worker_rates` (six numeric(7,2)), `getRates`/`putRates` + admin `getWorkerRates`, an api branch from `main` first, the app on `feat/signup-agreement-app`, one promotion of the rates merge sha (contains `9a01efd`). Asked for approval.
