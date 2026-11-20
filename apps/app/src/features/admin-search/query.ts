@@ -211,11 +211,12 @@ export function toQuery(f: AdminFilters): WorkerSearchQuery {
 }
 
 /**
- * What the dashboard sends (A2): the filters plus `withActivation` and `withCompletion`, so every row carries the flag
- * the card's switch shows and the checklist the badges show. Kept out of toQuery so the URL bar holds filters only.
+ * What the dashboard sends (A2): the filters plus `withActivation`, `withCompletion` and `withRates`, so every row carries
+ * the flag the card's switch shows, the checklist the badges show and the rates (worker-rates, 2026-11-20). Kept out of
+ * toQuery so the URL bar holds filters only.
  */
 export function searchRequestOf(f: AdminFilters): WorkerSearchQuery {
-  return { ...toQuery(f), withActivation: true, withCompletion: true }
+  return { ...toQuery(f), withActivation: true, withCompletion: true, withRates: true }
 }
 
 /** The canonical query string of the state (R11.2). */

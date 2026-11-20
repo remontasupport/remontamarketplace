@@ -226,8 +226,9 @@ describe('the completion dropdowns and badges (admin-completion-filters FR-4, FR
 
   it('every request asks for the rows\' flags, and the URL bar never carries it', () => {
     const f = { ...DEFAULT_FILTERS, completion: { trainings: 'incomplete' as const } }
-    expect(searchRequestOf(f)).toEqual({ ...toQuery(f), withActivation: true, withCompletion: true })
+    expect(searchRequestOf(f)).toEqual({ ...toQuery(f), withActivation: true, withCompletion: true, withRates: true })
     expect(urlFromFilters(f)).not.toContain('withCompletion')
+    expect(urlFromFilters(f)).not.toContain('withRates')
   })
 
   it('one dropdown: a pick sets its item, the same pick again clears it, other items untouched; chips in checklist order', () => {
@@ -264,7 +265,7 @@ describe('the activation tab (worker-activation A2, A3)', () => {
     fc.assert(
       fc.property(fc.constantFrom('all' as const, 'active' as const, 'inactive' as const), (activation) => {
         const f = { ...DEFAULT_FILTERS, activation }
-        expect(searchRequestOf(f)).toEqual({ ...toQuery(f), withActivation: true, withCompletion: true })
+        expect(searchRequestOf(f)).toEqual({ ...toQuery(f), withActivation: true, withCompletion: true, withRates: true })
         expect(urlFromFilters(f)).not.toContain('withActivation')
       }),
     )

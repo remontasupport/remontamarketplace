@@ -94,20 +94,20 @@ describe("WORKER_MENU", () => {
     expect(groupOfPath("/dashboard/worker/trainings/setup")).toBe("compliance"); // one group since 2026-10-13
   });
 
-  it("Services: each chosen service, then Service Area, then Rates (user, 2026-10-16: no Modify Services sub-group; adding and removing is in Account; Rates 2026-11-20)", () => {
+  it("Services: each chosen service, then Rates, then Service Area (user, 2026-10-16: no Modify Services sub-group; adding and removing is in Account; Rates 2026-11-20)", () => {
     const nursing = { id: "nursing", label: "Nursing", href: "/dashboard/worker/services/setup?step=nursing" };
     const cleaning = { id: "cleaning", label: "Cleaning", href: "/dashboard/worker/services/setup?step=cleaning" };
-    expect(servicesChildren([nursing, cleaning]).map((l) => l.label)).toEqual(["Nursing", "Cleaning", "Service Area", "Rates"]);
+    expect(servicesChildren([nursing, cleaning]).map((l) => l.label)).toEqual(["Nursing", "Cleaning", "Rates", "Service Area"]);
     expect(servicesChildren([nursing]).some((l) => l.children)).toBe(false);
-    expect(servicesChildren([]).map((l) => l.label)).toEqual(["+ Add services", "Service Area", "Rates"]); // none chosen yet: the way to choose
+    expect(servicesChildren([]).map((l) => l.label)).toEqual(["+ Add services", "Rates", "Service Area"]); // none chosen yet: the way to choose
     expect(EDIT_SERVICES_LINK.href).toBe("/dashboard/worker/account?tab=services");
     expect(pageExists("/dashboard/worker/account")).toBe(true);
     expect(isProfilePage(profileSlug(SERVICE_AREA_LINK.href) ?? "")).toBe(true);
     expect(groupOfPath(SERVICE_AREA_LINK.href)).toBe("services"); // a profile URL, in the Services group (user, 2026-10-13)
     expect(isProfilePage(profileSlug(RATES_LINK.href) ?? "")).toBe(true);
     expect(groupOfPath(RATES_LINK.href)).toBe("services");
-    expect(servicesChildren([], base)[1]!.done).toBe(false);
-    expect(servicesChildren([], { ...base, serviceArea: { localityId: 1, label: "Parramatta, NSW 2150", travelRadiusKm: 20, precision: "LOCALITY" } } as Profile)[1]!.done).toBe(true);
+    expect(servicesChildren([], base)[2]!.done).toBe(false);
+    expect(servicesChildren([], { ...base, serviceArea: { localityId: 1, label: "Parramatta, NSW 2150", travelRadiusKm: 20, precision: "LOCALITY" } } as Profile)[2]!.done).toBe(true);
     expect(groupOfPath("/dashboard/worker/services/manage")).toBe("services");
     expect(groupOfPath("/dashboard/worker/services/setup")).toBe("services");
   });

@@ -10,7 +10,7 @@ import PhotoSection from "./PhotoSection";
 import ProfileShell from "./ProfileShell";
 import { useWorkerProfile } from "./profile";
 import { useRatesRead } from "./rates";
-import { RATES_LINK } from "@/features/navigation/workerMenu";
+import { SERVICE_AREA_LINK } from "@/features/navigation/workerMenu";
 import SectionPage, { Notice, SectionPair } from "./SectionPage";
 import { startNavigationProgress } from "@/components/ui/NavigationProgress";
 
@@ -23,25 +23,25 @@ function useGoTo(href: string) {
 }
 
 /**
- * In the Services group (user, 2026-10-13): the suburb clients find the worker at, and how far they travel. The last
- * step of the services setup comes here; a Save goes on to Rates (worker-rates, 2026-11-20; was the dashboard).
+ * In the Services group (user, 2026-10-13): the suburb clients find the worker at, and how far they travel. After
+ * Rates (user, 2026-11-20); a Save goes on to the dashboard (user, 2026-10-16).
  */
 function ServiceAreaPage() {
   const { profile } = useWorkerProfile();
-  const toRates = useGoTo(RATES_LINK.href);
+  const toDashboard = useGoTo("/dashboard/worker");
   return (
     <div className="space-y-5">
       {profile && profile.serviceArea === null && <Notice tone="warn">Clients cannot find you until you set the suburb you work around.</Notice>}
-      <SectionPage def={serviceAreaSection} onSaved={toRates} />
+      <SectionPage def={serviceAreaSection} onSaved={toDashboard} />
     </div>
   );
 }
 
-/** worker-rates (2026-11-20): after Service Area, from its own read; a Save goes on to the dashboard. */
+/** worker-rates (2026-11-20): before Service Area (user), from its own read; the last service step comes here, a Save goes on to Service Area. */
 function RatesPage() {
   const source = useRatesRead();
-  const toDashboard = useGoTo("/dashboard/worker");
-  return <SectionPage def={ratesSection} source={source} onSaved={toDashboard} />;
+  const toServiceArea = useGoTo(SERVICE_AREA_LINK.href);
+  return <SectionPage def={ratesSection} source={source} onSaved={toServiceArea} />;
 }
 
 /** The slugs another page shows. Interests (with Good to Know) and Bio (with the fun fact) are two sections with one Save (user, 2026-10-13). */

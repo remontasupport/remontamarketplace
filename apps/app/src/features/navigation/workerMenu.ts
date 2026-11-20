@@ -143,17 +143,17 @@ export const EDIT_SERVICES_LINK: MenuLink = { id: "edit-services", label: "+ Add
 /** The suburb clients find the worker at and how far they travel: in Services, not the address (user, 2026-10-13). */
 export const SERVICE_AREA_LINK: MenuLink = { id: "service-area", label: "Service Area", href: sectionHref("service-area") };
 
-/** worker-rates (2026-11-20): the worker's rates, after Service Area (its own read, so no done state from the profile). */
+/** worker-rates (2026-11-20): the worker's rates, before Service Area (user, 2026-11-20; its own read, so no done state from the profile). */
 export const RATES_LINK: MenuLink = { id: "rates", label: "Rates", href: sectionHref("rates") };
 
 /**
- * The Services group (user, 2026-10-16): one setup step per chosen service, then Service Area, then Rates (2026-11-20; was a "Modify Services"
+ * The Services group (user, 2026-10-16): one setup step per chosen service, then Rates, then Service Area (2026-11-20; was a "Modify Services"
  * sub-group; adding and removing services moved to Account). Before any service is chosen: the link to choose them.
  */
 export const servicesChildren = (steps: readonly MenuLink[], profile?: Profile): MenuLink[] => [
   ...(steps.length ? steps : [EDIT_SERVICES_LINK]),
-  { ...SERVICE_AREA_LINK, done: profile ? profile.serviceArea !== null : undefined },
   RATES_LINK,
+  { ...SERVICE_AREA_LINK, done: profile ? profile.serviceArea !== null : undefined },
 ];
 
 /** The service names the services steps are generated from. */
