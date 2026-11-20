@@ -6378,3 +6378,6 @@ path closed). `fix/h2-setup-password-takeover-v2` and `fix/h1-bank-details-v2` d
 
 **User Input (2026-11-20):** "start/continue the ai dlc"
 **AI Response:** Resumed signup-abn-agreement at Current Stage step 1. Checked: `origin/main` = `9a01efd`; production api /v1/health 200 but `/v1/service-requirements?categoryId=support-worker` 404, so production still runs `fcc503a` (not promoted). `gcloud` needs a re-login. Asked the user to run the deploy-api dispatch (stage prod, imageTag `9a01efd1a454b716df8b2cea3edd7782a8756432`) before the U2 PR.
+
+**User Input (2026-11-20):** "I want to add more function in this same branch before promoting."
+**AI Response:** Agreed; promotion held. Asked which function to add. Noted that the promotion (api `9a01efd`, already on `main`) does not depend on this app branch; only the U2 merge must wait for it.
