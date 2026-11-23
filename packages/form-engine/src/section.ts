@@ -70,6 +70,8 @@ export interface SectionDefinition<C extends ContractDef = ContractDef> {
   name: string;
   title: string;
   description?: string;
+  /** A second line under the description, shown in italics. */
+  note?: string;
   contract: Contract<C>;
   /** The read entry the section seeds from (the profile read). */
   readEntry: keyof C & string;
