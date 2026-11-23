@@ -100,7 +100,7 @@ export const EDIT_PROFILE_CHILDREN: readonly { slug: string; label: string; done
   { slug: "interests", label: "Interests", group: "additional-information", done: (p) => filled(info(p)?.interests), requiredBeforeNext: { message: "Please choose at least one interest before continuing." } },
   { slug: "about-me", label: "Support & Activities", group: "additional-information", done: (p) => filled(info(p)?.uniqueService), requiredBeforeNext: { message: "Please choose at least one thing you can offer before continuing." } },
   { slug: "preferences", label: "Preferences", group: "additional-information", done: (p) => filled(info(p)?.workPreferences), requiredBeforeNext: { message: "Please choose who you prefer to work with before continuing." } },
-  { slug: "personality", label: "Personality", group: "additional-information", done: (p) => !!info(p)?.personality },
+  { slug: "personality", label: "Personality", group: "additional-information", done: (p) => !!info(p)?.personality, requiredBeforeNext: { message: "Please choose your personality before finishing." } },
 ];
 
 /** My Profile's links: a group's sections fold into one entry with `children` (done when all of them are). */
