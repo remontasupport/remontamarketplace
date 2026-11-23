@@ -227,8 +227,8 @@ function SectionFields({ def, s }: { def: SectionDefinition; s: Section }) {
   const picked = pickPath(s.profile, def.pick);
   return (
     <>
-      {def.description && <p className="text-sm text-gray-600 font-poppins">{def.description}</p>}
-      {def.note && <p className="text-sm text-gray-600 font-poppins italic">{def.note}</p>}
+      {def.description && <p className="text-sm text-gray-800 font-poppins">{def.description}</p>}
+      {def.note && <p className="text-sm text-gray-800 font-poppins italic">{def.note}</p>}
       {def.fields.map((f) => (
         <FieldSlot key={f.name} field={f} path={f.name} row={s.values!} errors={s.errors} setValue={s.setValue} picked={picked} />
       ))}
@@ -316,8 +316,8 @@ export default function SectionPage({ def, onSaved, source }: { def: SectionDefi
     <section className="space-y-5">
       <header className={def.description ? undefined : "sr-only"}>
         <h1 className="sr-only">{def.title}</h1>
-        {def.description && <p className="text-sm text-gray-600 font-poppins mt-1">{def.description}</p>}
-        {def.note && <p className="text-sm text-gray-600 font-poppins italic mt-2">{def.note}</p>}
+        {def.description && <p className="text-sm text-gray-800 font-poppins mt-1">{def.description}</p>}
+        {def.note && <p className="text-sm text-gray-800 font-poppins italic mt-2">{def.note}</p>}
       </header>
       {readError && !profile ? (
         <Notice tone="warn">{readError.kind === "unauthenticated" ? "Your session has ended. Please sign in again." : UNAVAILABLE_MESSAGE}</Notice>
