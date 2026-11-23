@@ -120,10 +120,13 @@ describe("WORKER_MENU", () => {
     expect(requiredMet(bioStep, { ...withInfo("x".repeat(50)), bio: "  " } as Profile)).toBe(false);
     expect(requiredMet(bioStep, { ...withInfo("too short"), bio: "Hello" } as Profile)).toBe(false);
     expect(requiredMet(bioStep, { ...withInfo("x".repeat(50)), bio: "Hello" } as Profile)).toBe(true);
-    // The required steps (user, 2026-11-19): Bio, then Date of Birth to Preferences; the rest move on as before.
+    // The required steps (user, 2026-11-19): Bio, then Date of Birth to Preferences; Personality too (user, 2026-11-23).
     expect(EDIT_PROFILE_CHILDREN.filter((c) => c.requiredBeforeNext).map((c) => c.slug)).toEqual([
-      "bio", "date-of-birth", "gender", "languages", "preferred-hours", "vehicle", "cultural-background", "religion", "interests", "about-me", "preferences",
+      "bio", "date-of-birth", "gender", "languages", "preferred-hours", "vehicle", "cultural-background", "religion", "interests", "about-me", "preferences", "personality",
     ]);
+    const personality = EDIT_PROFILE_CHILDREN.find((c) => c.slug === "personality")!;
+    expect(requiredMet(personality, withInfo(null))).toBe(false);
+    expect(requiredMet(personality, { ...withInfo(null), sections: { ...withInfo(null).sections, additionalInfo: { ...info, funFact: null, personality: "Calm and relaxed" } } } as unknown as Profile)).toBe(true);
     // Each of those but Bio is required by its own done rule.
     const religion = EDIT_PROFILE_CHILDREN.find((c) => c.slug === "religion")!;
     expect(requiredMet(religion, withInfo(null))).toBe(false);
