@@ -128,7 +128,9 @@ export const ratesSection = defineSection({
   readEntry: "getRates",
   name: "rates",
   title: "Rates",
-  description: "Your rates for the support you provide. Weekdays is required; leave any other rate blank if you don't offer it.",
+  description:
+    "Enter the lowest hourly rate you're willing to accept and your preferred hourly rate. These figures help us match you with suitable bookings. They are not a fixed price, and clients won't be charged these amounts automatically.",
+  note: "Rates are confirmed per booking and depend on the client's NDIS funding, the service type and the location.",
   pick: "rates",
   writeEntry: "putRates",
   fields: [
