@@ -64,11 +64,9 @@ async function main() {
 
   // BOTH keys, always.
   //
-  // CACHE_KEYS.activeJobs() is `active_jobs:${CACHE_VERSION}`. NewsSliderAsync
-  // appends ":fake-only" when SHOW_ONLY_FAKE_JOBS is set, so the filtered and
-  // unfiltered lists never share an entry. Clearing only one means adding a
-  // seeded row, clearing the cache, and seeing nothing change — because the
-  // entry actually being read was the other one.
+  // CACHE_KEYS.activeJobs() is `active_jobs:${CACHE_VERSION}`, the only key
+  // lib/jobs.ts reads today. ":fake-only" belonged to the SHOW_ONLY_FAKE_JOBS
+  // mode, removed on 2026-11-25; it is still cleared so a leftover entry dies.
   const keys = ['active_jobs:v3', 'active_jobs:v3:fake-only']
 
   console.log('upstash :', new URL(url).host)
