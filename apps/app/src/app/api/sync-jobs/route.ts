@@ -16,9 +16,8 @@ import { zohoService } from '@/lib/zoho'
 import { authPrisma } from '@/lib/auth-prisma'
 import { invalidateCache, CACHE_KEYS } from '@/lib/redis'
 
-// Zoho Lead statuses whose leads are posted as jobs. Zoho renumbered its
-// statuses ("4. For Posting"); "Recruitment End" stays for any lead still on it.
-const POSTED_STATUSES = ['4. For Posting', 'Recruitment End']
+// Every Zoho Lead is posted as a job unless its Lead_Status is one of these.
+const HIDDEN_STATUSES = ['Archived', 'Cancelled', 'Unresponsive']
 
 // ── In-memory mutex — prevents concurrent syncs ───────────────────────────
 let isSyncing = false
@@ -58,10 +57,8 @@ export async function POST(request: NextRequest) {
   const stats = { created: 0, updated: 0, deactivated: 0, errors: 0 }
 
   try {
-    // 3. Fetch every lead in a posted status from Zoho
-    const leads = (
-      await Promise.all(POSTED_STATUSES.map((s) => zohoService.getLeadsByStage(s)))
-    ).flat()
+    // 3. Fetch every lead not in a hidden status from Zoho
+    const leads = await zohoService.getLeadsExcludingStatuses(HIDDEN_STATUSES)
     const zohoIds = leads.map((lead) => String(lead['id']))
 
     // 4. Fetch all existing zohoIds in ONE batch query
@@ -77,7 +74,7 @@ export async function POST(request: NextRequest) {
       leads.map((lead) => {
         const jobData = {
           zohoId:           String(lead['id']),
-          status:           String(lead['Lead_Status'] ?? POSTED_STATUSES[0]),
+          status:           String(lead['Lead_Status'] ?? ''),
           firstName:        lead['First_Name']        ? String(lead['First_Name'])        : null,
           lastName:         lead['Last_Name']         ? String(lead['Last_Name'])         : null,
           recruitmentTitle: lead['Recruitment_Title'] ? String(lead['Recruitment_Title']) : null,
@@ -108,11 +105,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 7. Deactivate jobs no longer in a posted status — single query
+    // 7. Deactivate jobs whose lead is gone or now hidden — single query.
+    //    Seeded FAKE- rows never come from Zoho, so the sync leaves them alone.
     const deactivated = await authPrisma.job.updateMany({
       where: {
         active: true,
         zohoId: { notIn: zohoIds },
+        NOT: { zohoId: { startsWith: 'FAKE-' } },
       },
       data: {
         active:      false,

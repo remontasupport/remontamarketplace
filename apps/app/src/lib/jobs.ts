@@ -3,7 +3,8 @@
  *
  * One query for every reader: the dashboard (NewsSliderAsync) and the public
  * GET /api/jobs, which the marketing site's /provide-support page reads. Both
- * show the same list, with the same FAKE- rule and the same cache entry.
+ * show the same list, with the same FAKE- rule (real jobs first, seeded
+ * FAKE- jobs after them) and the same cache entry.
  *
  * The select below is the whole public shape. Never add participant names
  * (firstName, lastName) or anything else that must not leave the app.
@@ -74,22 +75,13 @@ export async function fetchActiveJobs(): Promise<ActiveJob[]> {
           where: {
             active: true,
             // Seeded rows carry a FAKE- zohoId. In fake-jobs mode they are the
-            // ONLY thing shown; everywhere else they are EXCLUDED.
+            // ONLY thing shown; everywhere else they are shown AFTER the real
+            // listings (sorted below), by decision on 2026-11-25.
             //
-            // The exclusion is the important half. Seed rows live in the same
-            // production table as real listings — there is no separate database —
-            // so without this a worker on the live site sees them among genuine
-            // vacancies and can apply to one. They read as real: "Support Worker —
-            // Morning Personal Care", "Home Cleaner — Weekly General Clean".
-            //
-            // This filters on zohoId rather than the primary key deliberately.
+            // The rule keys on zohoId rather than the primary key deliberately.
             // zohoId is the upsert key the Zoho sync owns, so a real listing can
-            // never arrive carrying FAKE-; ids are free-form and were being set by
-            // hand, which is exactly why they ended up leaking "fake" into
-            // /dashboard/worker?apply=fake-job-0024 in the first place.
-            ...(ONLY_FAKE_JOBS
-              ? { zohoId: { startsWith: 'FAKE-' } }
-              : { NOT: { zohoId: { startsWith: 'FAKE-' } } }),
+            // never arrive carrying FAKE-.
+            ...(ONLY_FAKE_JOBS ? { zohoId: { startsWith: 'FAKE-' } } : {}),
           },
           select: {
             id:               true,
@@ -104,6 +96,11 @@ export async function fetchActiveJobs(): Promise<ActiveJob[]> {
           },
           orderBy: { postedAt: "desc" },
         });
+
+        // Real listings first, each group newest first (the query's order;
+        // Array.prototype.sort is stable).
+        const isFake = (zohoId: string) => zohoId.startsWith('FAKE-')
+        jobs.sort((a, b) => Number(isFake(a.zohoId)) - Number(isFake(b.zohoId)))
 
         return jobs.map((job) => ({
           ...job,
