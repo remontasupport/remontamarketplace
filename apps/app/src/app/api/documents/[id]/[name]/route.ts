@@ -3,7 +3,8 @@
 // every page that opens `documentUrl` directly -- the admin compliance review (link, iframe for a PDF, img for a photo)
 // and the worker's Services and Compliance pages -- keeps working. The route checks the session, asks apps/api for a
 // five-minute signed link (any of the worker's own documents, or any document for an admin) and redirects to it.
-// Nothing is cached; the name segment is only for the viewer and is not trusted.
+// Nothing is cached; the name segment is only for the viewer and is not trusted. An automation without a session sends
+// the x-documents-secret header instead and acts as the service admin account (lib/documentsService.ts).
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { adminContract, createClient, workerContract } from "@remonta/api-contract";
@@ -11,6 +12,7 @@ import { authOptions } from "@/lib/auth.config";
 import { authPrisma, withRetry } from "@/lib/auth-prisma";
 import { mintApiToken } from "@/lib/api/mint";
 import { checkServerActionRateLimit, publicApiRateLimit } from "@/lib/ratelimit";
+import { DOCUMENTS_SECRET_HEADER, serviceSessionFor } from "@/lib/documentsService";
 
 export const dynamic = "force-dynamic";
 
@@ -21,10 +23,16 @@ function answer(status: number, message: string): NextResponse {
   return new NextResponse(message, { status, headers: { ...NO_STORE, "content-type": "text/plain; charset=utf-8" } });
 }
 
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string; name: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string; name: string }> }) {
   const { id } = await params;
   if (!ID.test(id)) return answer(404, "Document not found.");
-  const session = await getServerSession(authOptions);
+  const session =
+    (await getServerSession(authOptions)) ??
+    serviceSessionFor(
+      request.headers.get(DOCUMENTS_SECRET_HEADER),
+      { secret: process.env.DOCUMENTS_SERVICE_SECRET, userId: process.env.DOCUMENTS_SERVICE_USER_ID },
+      Math.floor(Date.now() / 1000),
+    );
   if (!session?.user?.id) return answer(401, "Please sign in to view this document.");
 
   const minted = await mintApiToken({
