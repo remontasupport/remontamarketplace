@@ -107,31 +107,27 @@ class ZohoService {
   }
 
   // ============================================
-  // LEADS — FETCH BY STAGE
+  // LEADS — FETCH BY STATUS
   // ============================================
 
   /**
-   * Fetches all Leads from Zoho CRM where Lead_Status equals the given stage.
+   * Fetches all Leads from Zoho CRM whose Lead_Status is NOT one of the
+   * given statuses (e.g. Archived). Zoho's search returns at most 2,000
+   * records; the caller's filter must keep the result under that.
    *
-   * NOTE: Zoho Leads use `Lead_Status` as the standard status field.
-   * If your Zoho instance has a *custom* field named "Stage", swap the
-   * criteria field name to match (e.g., `Stage`, `Stage__s`, etc.).
-   * You will see the correct API field names in the raw Postman response.
-   *
-   * @param stage - The stage value to filter on, e.g. "Recruitment End"
+   * @param excluded - Lead_Status values to leave out
    * @returns Array of raw Zoho Lead records (paginated automatically)
    */
-  async getLeadsByStage(stage: string): Promise<ZohoLead[]> {
+  async getLeadsExcludingStatuses(excluded: string[]): Promise<ZohoLead[]> {
     const token = await this.getAccessToken()
     const allLeads: ZohoLead[] = []
     let page = 1
     let moreRecords = true
 
-    // Zoho search criteria syntax: (field:operator:value)
-    // Using Lead_Status — the standard Zoho Leads stage field.
-    // If this returns 0 results, check the raw field names in the response
-    // and update this criteria to match your custom field.
-    const criteria = encodeURIComponent(`(Lead_Status:equals:${stage})`)
+    // Zoho search criteria syntax: ((field:operator:value)and(...))
+    const criteria = encodeURIComponent(
+      `(${excluded.map((s) => `(Lead_Status:not_equal:${s})`).join('and')})`
+    )
 
     while (moreRecords) {
       const url = `${this.apiUrl}/Leads/search?criteria=${criteria}&page=${page}&per_page=200`
