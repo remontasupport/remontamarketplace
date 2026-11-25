@@ -16,6 +16,10 @@ import { zohoService } from '@/lib/zoho'
 import { authPrisma } from '@/lib/auth-prisma'
 import { invalidateCache, CACHE_KEYS } from '@/lib/redis'
 
+// Zoho Lead statuses whose leads are posted as jobs. Zoho renumbered its
+// statuses ("4. For Posting"); "Recruitment End" stays for any lead still on it.
+const POSTED_STATUSES = ['4. For Posting', 'Recruitment End']
+
 // ── In-memory mutex — prevents concurrent syncs ───────────────────────────
 let isSyncing = false
 let lastSyncTime: string | null = null
@@ -54,8 +58,10 @@ export async function POST(request: NextRequest) {
   const stats = { created: 0, updated: 0, deactivated: 0, errors: 0 }
 
   try {
-    // 3. Fetch all "Recruitment End" leads from Zoho
-    const leads = await zohoService.getLeadsByStage('Recruitment End')
+    // 3. Fetch every lead in a posted status from Zoho
+    const leads = (
+      await Promise.all(POSTED_STATUSES.map((s) => zohoService.getLeadsByStage(s)))
+    ).flat()
     const zohoIds = leads.map((lead) => String(lead['id']))
 
     // 4. Fetch all existing zohoIds in ONE batch query
@@ -71,7 +77,7 @@ export async function POST(request: NextRequest) {
       leads.map((lead) => {
         const jobData = {
           zohoId:           String(lead['id']),
-          status:           String(lead['Lead_Status'] ?? 'Recruitment End'),
+          status:           String(lead['Lead_Status'] ?? POSTED_STATUSES[0]),
           firstName:        lead['First_Name']        ? String(lead['First_Name'])        : null,
           lastName:         lead['Last_Name']         ? String(lead['Last_Name'])         : null,
           recruitmentTitle: lead['Recruitment_Title'] ? String(lead['Recruitment_Title']) : null,
@@ -102,7 +108,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 7. Deactivate jobs no longer in "Recruitment End" — single query
+    // 7. Deactivate jobs no longer in a posted status — single query
     const deactivated = await authPrisma.job.updateMany({
       where: {
         active: true,
