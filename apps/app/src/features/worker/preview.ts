@@ -29,6 +29,7 @@ export function previewOf(p: Profile) {
     profile: {
       firstName: p.names.firstName,
       lastName: p.names.lastName,
+      mobile: p.mobile,
       photos: p.photos.main,
       introduction: p.bio,
       ...placeOf(p.serviceArea?.label),
