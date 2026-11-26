@@ -5,6 +5,7 @@ import { placeOf, previewOf } from "./preview";
 const profile = {
   id: "wp1",
   names: { firstName: "Sam", middleName: null, lastName: "Lee" },
+  mobile: "0400000000",
   photos: { main: "https://img/x.jpg" },
   bio: "Hello",
   personalInfo: { dateOfBirth: null, age: null, gender: null, hasVehicle: "Yes", languages: [] },
@@ -27,7 +28,7 @@ const profile = {
 describe("previewOf", () => {
   it("the card, the services by name, the completion flags", () => {
     const v = previewOf(profile);
-    expect(v.profile).toEqual({ firstName: "Sam", lastName: "Lee", photos: "https://img/x.jpg", introduction: "Hello", city: "Parramatta", state: "NSW", postalCode: "2150", hasVehicle: "Yes" });
+    expect(v.profile).toEqual({ firstName: "Sam", lastName: "Lee", mobile: "0400000000", photos: "https://img/x.jpg", introduction: "Hello", city: "Parramatta", state: "NSW", postalCode: "2150", hasVehicle: "Yes" });
     expect(v.services.map((s) => s.categoryName)).toEqual(["Cleaning Services", "Support Worker"]);
     expect(v.services[1]!.subcategories).toEqual([{ subcategoryId: "personal-care", subcategoryName: "Personal care" }]);
     expect(v.setupProgress).toEqual({ accountDetails: true, compliance: false, trainings: true, services: false });

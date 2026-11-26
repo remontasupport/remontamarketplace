@@ -58,6 +58,8 @@ function ApplyModalContent({ jobTitle, jobId, jobZohoId, jobService, onClose, on
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           fullName,
+          email: session?.user?.email ?? '',
+          mobile: profile?.mobile ?? '',
           userId,
           zohoId: jobZohoId,
         }),
